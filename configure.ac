@@ -83,7 +83,7 @@ AC_ARG_WITH(mysql,
     [ MYSQL_PREFIX=$with_mysql ],
     [ MYSQL_PREFIX=/usr ])
 
-AC_PATH_PROG(mysqlconfig,mysql_config,,[$PATH:$MYSQL_PREFIX/bin])
+AC_PATH_PROG(mysqlconfig,mysql_config,,[$MYSQL_PREFIX/bin:$PATH])
 if test [ -z "$mysqlconfig" ]
 then
     AC_MSG_ERROR([mysql_config executable not found: MySQL 4.1.0 or greater is required.])

@@ -1,3 +1,11 @@
+2005-02-24  Nathan Fredrickson  <nathan@silverorange.com>
+	
+	* po/roadster.pot: Removed, this is generated.
+	* po/POTFILES.in: Add glade file to the translatable files.
+	* data/.cvsignore: Added.
+	* .cvsignore: Add some more build files.
+	* configure.ac: Look for MySQL in given prefix before $PATH.
+
 2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 	
 	* data/Makefile.am: Added.

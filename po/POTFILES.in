@@ -1,4 +1,5 @@
 # List of source files containing translatable strings.
+data/roadster.glade
 src/main.c
 src/db.c
 src/gui.c
