@@ -10,7 +10,7 @@
 		<property name="width" level="8" value="6.0" />
 		<property name="width" level="9" value="17.0" />
 		<property name="width" level="10" value="35.0" />
-		<property name="color" value="#898f8dff" />
+		<property name="color" value="#797e7dff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
 	</sublayer>
@@ -18,14 +18,14 @@
 		<property name="width" level="7" value="3.0" />
 		<property name="width" level="8" value="4.0" />
 		<property name="width" level="9" value="15.0" />
-		<property name="width" level="10" value="32.0" />
+		<property name="width" level="10" value="33.0" />
 		<property name="color" value="#fffbffff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
 	</sublayer>
 	<label>
 		<property name="color" value="#00000000" />
-		<property name="font-size" level="8" value="10" />
+		<property name="font-size" level="8" value="12" />
 		<property name="font-size" level="9" value="14" />
 		<property name="font-size" level="10" value="24" />
 	</label>

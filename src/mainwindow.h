@@ -70,6 +70,12 @@ void mainwindow_statusbar_update_position(void);
 // Map
 void mainwindow_set_centerpoint(mappoint_t* pPoint);
 
+#define SIDEBAR_TAB_SEARCH_RESULTS	0
+#define SIDEBAR_TAB_GPS			1
+#define SIDEBAR_TAB_LOCATIONSETS	2
+
+void mainwindow_sidebar_set_tab(gint nTab);
+
 G_END_DECLS
 
 #endif /* _MAINWINDOW_H */

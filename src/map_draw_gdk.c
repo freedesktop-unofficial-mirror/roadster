@@ -156,7 +156,7 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	if(fLineWidth < 8) {
 		// Set line style
 		gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-				   ((gint)fLineWidth), GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER);
+				   ((gint)fLineWidth), GDK_LINE_SOLID, GDK_CAP_PROJECTING, GDK_JOIN_MITER);
 	}
 	else {
 		// Set line style

@@ -190,7 +190,7 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 			map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_LABELS);
 		}
 	}
-	else {
+	else {	// nRenderMode == RENDERMODE_PRETTY
 		map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, nDrawFlags);
 	}
 	gtk_widget_queue_draw(pMap->m_pTargetWidget);

@@ -1,3 +1,10 @@
+2005-03-04  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/mainwindow.c: Added click-and-hold to scroll at map window edge.
+	* src/map_draw_cairo.c: Switch from cairo_text_path/cairo_fill to cairo_show_text.  Much faster!
+	* src/map_draw_gdk.c: Switch from hardcoding GDK_CAP_BUTT line ends to GDK_CAP_PROJECTING.
+	* src/searchwindow.c: Auto-show sidebar and choose search results tab on search.  Preview search result on select (no need to double-click).
+
 2005-03-03  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 	
 	* src/*.c: Use gtk/gtk.h instead of gnome.h where possible.

@@ -91,6 +91,23 @@ static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfi
 static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
 static void mainwindow_setup_selected_tool(void);
 
+#define DRAW_PRETTY_TIMEOUT_MS		(110)	// how long after stopping various movements should we redraw in high-quality mode
+#define SCROLL_TIMEOUT_MS		(100)	// how often (in MS) to move (SHORTER THAN ABOVE TIME)
+#define SCROLL_DISTANCE_IN_PIXELS	(100)	// how far to move every (above) MS
+#define BORDER_SCROLL_CLICK_TARGET_SIZE	(25)	// the size of the click target (distance from edge of map view) to begin scrolling
+
+typedef enum {
+	DIRECTION_NONE, DIRECTION_N, DIRECTION_NE, DIRECTION_E, DIRECTION_SE, DIRECTION_S, DIRECTION_SW, DIRECTION_W, DIRECTION_NW
+} EDirection;
+
+struct {
+	gint m_nX;
+	gint m_nY;
+} g_aDirectionMultipliers[] = {{0,0}, {0,-1}, {1,-1}, {1,0}, {1,1}, {0,1}, {-1,1}, {-1,0}, {-1,-1}};
+
+struct {
+	gint m_nCursor;
+} g_aDirectionCursors[] = {GDK_LEFT_PTR, GDK_TOP_SIDE, GDK_TOP_RIGHT_CORNER, GDK_RIGHT_SIDE, GDK_BOTTOM_RIGHT_CORNER, GDK_BOTTOM_SIDE, GDK_BOTTOM_LEFT_CORNER, GDK_LEFT_SIDE, GDK_TOP_LEFT_CORNER};
 
 struct {
 	GtkWindow* m_pWindow;
@@ -111,6 +128,7 @@ struct {
 	// "Draw" Sidebar
 	GtkTreeView* m_pLayersListTreeView;
 	GtkTreeView* m_pLocationSetsTreeView;
+	GtkNotebook* m_pSidebarNotebook;
 
 	// "GPS" sidebar
 	GtkLabel* m_pSpeedLabel;
@@ -132,12 +150,16 @@ struct {
 
 	EToolType m_eSelectedTool;
 
+	gboolean m_bScrolling;
+	EDirection m_eScrollDirection;
+	
 	gboolean m_bMouseDragging;
 	screenpoint_t m_ptClickLocation;
 
 	gint m_nCurrentGPSPath;
 	gint m_nGPSLocationGlyph;
 	gint m_nDrawPrettyTimeoutID;
+	gint m_nScrollTimeoutID;
 } g_MainWindow = {0};
 
 
@@ -215,6 +237,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	g_MainWindow.m_pToolbar				= GTK_TOOLBAR(glade_xml_get_widget(pGladeXML, "maintoolbar"));			g_return_if_fail(g_MainWindow.m_pToolbar != NULL);
 	g_MainWindow.m_pStatusbar			= GTK_VBOX(glade_xml_get_widget(pGladeXML, "statusbar"));				g_return_if_fail(g_MainWindow.m_pStatusbar != NULL);
 	g_MainWindow.m_pSidebox				= GTK_WIDGET(glade_xml_get_widget(pGladeXML, "mainwindowsidebox"));		g_return_if_fail(g_MainWindow.m_pSidebox != NULL);
+	g_MainWindow.m_pSidebarNotebook			= GTK_NOTEBOOK(glade_xml_get_widget(pGladeXML, "sidebarnotebook"));		g_return_if_fail(g_MainWindow.m_pSidebarNotebook != NULL);
 //	g_MainWindow.m_pSearchBox			= GTK_ENTRY(glade_xml_get_widget(pGladeXML, "searchbox"));		g_return_if_fail(g_MainWindow.m_pSearchBox != NULL);
 //	g_MainWindow.m_pProgressBar			= GTK_PROGRESS_BAR(glade_xml_get_widget(pGladeXML, "mainwindowprogressbar"));		g_return_if_fail(g_MainWindow.m_pProgressBar != NULL);
 	g_MainWindow.m_pTooltips			= gtk_tooltips_new();
@@ -227,7 +250,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	map_new(&g_MainWindow.m_pMap, GTK_WIDGET(g_MainWindow.m_pDrawingArea));
 
 	// add signal handlers to drawing area
-	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
+	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
@@ -338,7 +361,9 @@ void mainwindow_set_sensitive(gboolean bSensitive)
 	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pWindow), bSensitive);
 }
 
-#define DRAW_PRETTY_TIMEOUT_MS	(300)
+//
+// the "draw pretty" timeout lets us draw ugly/fast graphics while moving, then redraw pretty after we stop
+//
 gboolean mainwindow_on_draw_pretty_timeout(gpointer _unused)
 {
 	g_MainWindow.m_nDrawPrettyTimeoutID = 0;
@@ -360,6 +385,43 @@ void mainwindow_set_draw_pretty_timeout()
 
 	g_MainWindow.m_nDrawPrettyTimeoutID = g_timeout_add(DRAW_PRETTY_TIMEOUT_MS, mainwindow_on_draw_pretty_timeout, NULL);
 	g_assert(g_MainWindow.m_nDrawPrettyTimeoutID != 0);
+}
+
+
+//
+// the "scroll" timeout
+//
+gboolean mainwindow_on_scroll_timeout(gpointer _unused)
+{
+	if(g_MainWindow.m_eScrollDirection != DIRECTION_NONE) {
+		gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
+		gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
+
+		gint nDeltaX = SCROLL_DISTANCE_IN_PIXELS * g_aDirectionMultipliers[g_MainWindow.m_eScrollDirection].m_nX;
+		gint nDeltaY = SCROLL_DISTANCE_IN_PIXELS * g_aDirectionMultipliers[g_MainWindow.m_eScrollDirection].m_nY;
+		
+		map_center_on_windowpoint(g_MainWindow.m_pMap,
+			(nWidth / 2) + nDeltaX,
+			(nHeight / 2) + nDeltaY);
+
+		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+		mainwindow_set_draw_pretty_timeout();
+	}
+	return TRUE;	// more events, please
+}
+void mainwindow_cancel_scroll_timeout()
+{
+	if(g_MainWindow.m_nScrollTimeoutID != 0) {
+		g_source_remove(g_MainWindow.m_nScrollTimeoutID);
+	}
+}
+void mainwindow_set_scroll_timeout()
+{
+	// cancel existing one, if one exists
+	mainwindow_cancel_scroll_timeout();
+
+	g_MainWindow.m_nScrollTimeoutID = g_timeout_add(SCROLL_TIMEOUT_MS, mainwindow_on_scroll_timeout, NULL);
+	g_assert(g_MainWindow.m_nScrollTimeoutID != 0);
 }
 
 
@@ -568,6 +630,49 @@ void mainwindow_on_reloadstylesmenuitem_activate(GtkMenuItem *menuitem, gpointer
 	mainwindow_draw_map(DRAWFLAG_ALL);
 }
 
+EDirection match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorderSize)
+{
+	EDirection eDirection;
+
+	// LEFT EDGE?
+	if(nX <= nBorderSize) {
+		if(nY <= nBorderSize) {
+			eDirection = DIRECTION_NW;
+		}
+		else if((nY+nBorderSize) >= nHeight) {
+			eDirection = DIRECTION_SW;
+		}
+		else {
+			eDirection = DIRECTION_W;
+		}
+	}
+	// RIGHT EDGE?
+	else if((nX+nBorderSize) >= nWidth) {
+		if(nY <= BORDER_SCROLL_CLICK_TARGET_SIZE) {
+			eDirection = DIRECTION_NE;
+		}
+		else if((nY+nBorderSize) >= nHeight) {
+			eDirection = DIRECTION_SE;
+		}
+		else {
+			eDirection = DIRECTION_E;
+		}
+	}
+	// TOP?
+	else if(nY <= nBorderSize) {
+		eDirection = DIRECTION_N;
+	}
+	// BOTTOM?
+	else if((nY+nBorderSize) >= nHeight) {
+		eDirection = DIRECTION_S;
+	}
+	// center.
+	else {
+		eDirection = DIRECTION_NONE;
+	}
+	return eDirection;
+}
+
 static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event)
 {
 	gint nX;
@@ -575,20 +680,54 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 
 	gdk_window_get_pointer(w->window, &nX, &nY, NULL);
 
-	// Left double-click
+	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
+	gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
+	EDirection eScrollDirection = DIRECTION_NONE;
+
 	if(event->button == 1) {
+		// Left mouse button down?
 		if(event->type == GDK_BUTTON_PRESS) {
-			GdkCursor* pCursor = gdk_cursor_new(GDK_HAND2);
-			if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
-				g_MainWindow.m_bMouseDragging = TRUE;
-				g_MainWindow.m_ptClickLocation.m_nX = nX;
-				g_MainWindow.m_ptClickLocation.m_nY = nY;
+
+			// Is it at a border?
+			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+			if(eScrollDirection != DIRECTION_NONE) {
+				// begin a scroll
+				GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
+				if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
+					g_MainWindow.m_bScrolling = TRUE;
+					g_MainWindow.m_eScrollDirection = eScrollDirection;
+
+					mainwindow_set_scroll_timeout();
+				}
+				gdk_cursor_unref(pCursor);
+
 			}
-			gdk_cursor_unref(pCursor);
+			else {
+				// else begin a drag
+				GdkCursor* pCursor = gdk_cursor_new(GDK_HAND2);
+				if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
+					g_MainWindow.m_bMouseDragging = TRUE;
+					g_MainWindow.m_ptClickLocation.m_nX = nX;
+					g_MainWindow.m_ptClickLocation.m_nY = nY;
+				}
+				gdk_cursor_unref(pCursor);
+			}
 		}
+		// Left mouse button up?
 		else if(event->type == GDK_BUTTON_RELEASE) {
+			// end mouse dragging, if active
 			if(g_MainWindow.m_bMouseDragging == TRUE) {
 				g_MainWindow.m_bMouseDragging = FALSE;
+				gdk_pointer_ungrab(GDK_CURRENT_TIME);
+
+				mainwindow_cancel_draw_pretty_timeout();
+				mainwindow_draw_map(DRAWFLAG_ALL);
+			}
+
+			// end scrolling, if active
+			if(g_MainWindow.m_bScrolling == TRUE) {
+				g_MainWindow.m_bScrolling = FALSE;
+				g_MainWindow.m_eScrollDirection = DIRECTION_NONE;
 				gdk_pointer_ungrab(GDK_CURRENT_TIME);
 
 				mainwindow_cancel_draw_pretty_timeout();
@@ -616,6 +755,9 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
         gint nX,nY;
 	gdk_window_get_pointer(w->window, &nX, &nY, NULL);
 
+	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
+	gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
+
 	if(g_MainWindow.m_bMouseDragging) {
 		gint nDeltaX = g_MainWindow.m_ptClickLocation.m_nX - nX;
                 gint nDeltaY = g_MainWindow.m_ptClickLocation.m_nY - nY;
@@ -623,13 +765,34 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		if(nDeltaX == 0 && nDeltaY == 0) return TRUE;
 
 		map_center_on_windowpoint(g_MainWindow.m_pMap,
-			(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width) / 2 + nDeltaX,
-			(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height) / 2 + nDeltaY);
+			(nWidth / 2) + nDeltaX,
+			(nHeight / 2) + nDeltaY);
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 //		mainwindow_set_draw_pretty_timeout();
 
 		g_MainWindow.m_ptClickLocation.m_nX = nX;
 		g_MainWindow.m_ptClickLocation.m_nY = nY;
+	}
+
+	EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+	
+	// set appropriate mouse cursor whether scrolling or not
+	if(g_MainWindow.m_bScrolling) {
+		if(g_MainWindow.m_eScrollDirection != eScrollDirection) {
+			// update direction if actively scrolling
+			g_MainWindow.m_eScrollDirection = eScrollDirection;
+			
+			GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
+			gdk_pointer_ungrab(GDK_CURRENT_TIME);
+			gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME);
+			gdk_cursor_unref(pCursor);
+		}
+	}
+	else {
+		// just set the cursor the window
+		GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
+		gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+		gdk_cursor_unref(pCursor);
 	}
 	return FALSE;
 }
@@ -820,6 +983,7 @@ static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 void mainwindow_set_centerpoint(mappoint_t* pPoint)
 {
 	map_set_centerpoint(g_MainWindow.m_pMap, pPoint);
+	mainwindow_statusbar_update_position();
 }
 
 void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* __unused)
@@ -838,6 +1002,12 @@ void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* __unu
 		g_print("insert failed\n");
 	}
 }
+
+void mainwindow_sidebar_set_tab(gint nTab)
+{
+	gtk_notebook_set_current_page(g_MainWindow.m_pSidebarNotebook, nTab);
+}
+
 
 #ifdef ROADSTER_DEAD_CODE
 /*

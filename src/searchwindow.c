@@ -107,6 +107,10 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 	search_road_execute(pszSearch);
 	mainwindow_set_not_busy(&pBusy);
 
+	// ensure the search results are visible
+	mainwindow_sidebar_set_tab(SIDEBAR_TAB_SEARCH_RESULTS);
+	mainwindow_set_sidebox_visible(TRUE);
+
 	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.m_pSearchButton), TRUE);
 }
 
@@ -155,8 +159,14 @@ void searchwindow_on_gobutton_clicked(GtkWidget *pWidget, gpointer* p)
 	searchwindow_go_to_selected_result();
 }
 
+#define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
+
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data)
 {
-	/* set "Remove" button sensitive if >0 items selected */
-	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.m_pGoButton), gtk_tree_selection_count_selected_rows(treeselection) > 0);	
+	GTK_PROCESS_MAINLOOP;
+
+	searchwindow_go_to_selected_result();
+
+	/* set "Go" button sensitive if >0 items selected */
+//	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.m_pGoButton), gtk_tree_selection_count_selected_rows(treeselection) > 0);	
 }

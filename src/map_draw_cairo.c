@@ -103,16 +103,6 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 		}
 		else if(nRenderType == SUBLAYER_RENDERTYPE_LINE_LABELS) {
 			if(nDrawFlags & DRAWFLAG_LABELS) {
-				
-//                                 cairo_select_font(pCairo, ROAD_FONT, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-//                                 cairo_scale_font(pCairo, 12);
-//                                 gint t;
-//                                 for(t=0 ; t<10 ; t++) {
-//                                         cairo_move_to(pCairo, 10,1*t);
-//                                         cairo_text_path(pCairo, "Washington St");
-//                                         cairo_fill(pCairo);
-//                                 }
-
 				map_draw_cairo_layer_line_labels(pMap, pCairo,
 						pRenderMetrics,
 				/* geometry */  pMap->m_apLayerData[nLayer]->m_pPointStringsArray,
@@ -386,7 +376,7 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 			cairo_set_rgb_color(pCairo, 0.0,0.0,0.0);
 			cairo_set_alpha(pCairo, 1.0);
 			cairo_rotate(pCairo, fAngleInRadians);
-			cairo_text_path(pCairo, azLabelSegment);
+			//cairo_text_path(pCairo, azLabelSegment);
 
 			gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 			if(fHaloSize >= 0) {
@@ -398,7 +388,8 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 					cairo_stroke(pCairo);
 				cairo_restore(pCairo);
 			}
-			cairo_fill(pCairo);
+			cairo_show_text(pCairo, azLabelSegment);
+			//cairo_fill(pCairo);
 		cairo_restore(pCairo);
 	}
 	cairo_restore(pCairo);
@@ -485,7 +476,7 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 		cairo_move_to(pCairo, fDrawX, fDrawY);
 		cairo_set_rgb_color(pCairo, pLabelStyle->m_clrColor.m_fRed, pLabelStyle->m_clrColor.m_fGreen, pLabelStyle->m_clrColor.m_fBlue);
 		cairo_set_alpha(pCairo, fAlpha);
-		cairo_text_path(pCairo, pszLabel);
+		//cairo_text_path(pCairo, pszLabel);
 
 		gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 		if(fHaloSize >= 0) {
@@ -497,7 +488,8 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 				cairo_stroke(pCairo);
 			cairo_restore(pCairo);
 		}
-		cairo_fill(pCairo);
+		cairo_show_text(pCairo, pszLabel);
+		//cairo_fill(pCairo);
 	cairo_restore(pCairo);
 
         scenemanager_label_drawn(pMap->m_pSceneManager, pszLabel);
