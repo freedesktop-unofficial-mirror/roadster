@@ -45,6 +45,7 @@
 #include "glyph.h"
 #include "animator.h"
 #include "history.h"
+#include "tooltip.h"
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
@@ -70,8 +71,7 @@
 
 #define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
 #define	SLIDE_TIME_IN_SECONDS		(0.7)	// how long the whole slide should take, in seconds
-
-#define	SLIDE_TIME_IN_SECONDS_AUTO	(1.3)
+#define	SLIDE_TIME_IN_SECONDS_AUTO	(0.5)	// time for sliding to search results, etc.
 
 // Layerlist columns
 #define LAYERLIST_COLUMN_ENABLED	(0)
@@ -82,7 +82,10 @@
 #define SPEED_LABEL_FORMAT		("<span font_desc='32'>%.0f</span>")
 
 // Settings
-#define TIMER_GPS_REDRAW_INTERVAL_MS	(2500)		// lower this (to 1?) when it's faster to redraw track
+#define TIMER_GPS_REDRAW_INTERVAL_MS	(2500)		// lower this (to 1000?) when it's faster to redraw track
+
+#define	TOOLTIP_OFFSET_X (20)
+#define	TOOLTIP_OFFSET_Y (0)
 
 #define MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS	(3500.0)
 
@@ -111,6 +114,9 @@ static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfi
 static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
 static gboolean mainwindow_callback_on_slide_timeout(gpointer pData);
 static void mainwindow_setup_selected_tool(void);
+
+static gboolean mainwindow_on_enter_notify(GtkWidget* w, GdkEventCrossing *event);
+static gboolean mainwindow_on_leave_notify(GtkWidget* w, GdkEventCrossing *event);
 
 void mainwindow_add_history();
 
@@ -169,7 +175,7 @@ struct {
 
 	// Drawing area
 	GtkDrawingArea* m_pDrawingArea;
-
+	tooltip_t* m_pTooltip;
 	map_t* m_pMap;
 
 	EToolType m_eSelectedTool;
@@ -293,17 +299,21 @@ void mainwindow_init(GladeXML* pGladeXML)
 
 	// create drawing area
 	g_MainWindow.m_pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());
+	g_MainWindow.m_pTooltip = tooltip_new();
+
 	// create map
 	map_new(&g_MainWindow.m_pMap, GTK_WIDGET(g_MainWindow.m_pDrawingArea));
 
 	// add signal handlers to drawing area
-	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
+	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "button_release_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "motion_notify_event", G_CALLBACK(mainwindow_on_mouse_motion), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "scroll_event", G_CALLBACK(mainwindow_on_mouse_scroll), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "enter_notify_event", G_CALLBACK(mainwindow_on_enter_notify), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "leave_notify_event", G_CALLBACK(mainwindow_on_leave_notify), NULL);
 
 	// Pack canvas into application window
 	gtk_box_pack_end(GTK_BOX(g_MainWindow.m_pContentBox), GTK_WIDGET(g_MainWindow.m_pDrawingArea),
@@ -714,12 +724,16 @@ EDirection match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorde
 {
 	EDirection eDirection;
 
+	// Corner hit targets are L shaped and 1/3 of the two borders it touches
+	gint nXCorner = nWidth/3;
+	gint nYCorner = nHeight/3;
+
 	// LEFT EDGE?
 	if(nX <= nBorderSize) {
-		if(nY <= nBorderSize) {
+		if(nY <= nYCorner) {
 			eDirection = DIRECTION_NW;
 		}
-		else if((nY+nBorderSize) >= nHeight) {
+		else if((nY+nYCorner) >= nHeight) {
 			eDirection = DIRECTION_SW;
 		}
 		else {
@@ -728,10 +742,10 @@ EDirection match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorde
 	}
 	// RIGHT EDGE?
 	else if((nX+nBorderSize) >= nWidth) {
-		if(nY <= BORDER_SCROLL_CLICK_TARGET_SIZE) {
+		if(nY <= nYCorner) {
 			eDirection = DIRECTION_NE;
 		}
-		else if((nY+nBorderSize) >= nHeight) {
+		else if((nY+nYCorner) >= nHeight) {
 			eDirection = DIRECTION_SE;
 		}
 		else {
@@ -740,11 +754,27 @@ EDirection match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorde
 	}
 	// TOP?
 	else if(nY <= nBorderSize) {
-		eDirection = DIRECTION_N;
+		if(nX <= nXCorner) {
+			eDirection = DIRECTION_NW;
+		}
+		else if((nX+nXCorner) >= nWidth) {
+			eDirection = DIRECTION_NE;
+		}
+		else {
+			eDirection = DIRECTION_N;
+		}
 	}
 	// BOTTOM?
 	else if((nY+nBorderSize) >= nHeight) {
-		eDirection = DIRECTION_S;
+		if(nX <= nXCorner) {
+			eDirection = DIRECTION_SW;
+		}
+		else if((nX+nXCorner) >= nWidth) {
+			eDirection = DIRECTION_SE;
+		}
+		else {
+			eDirection = DIRECTION_S;
+		}
 	}
 	// center.
 	else {
@@ -767,6 +797,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 	if(event->button == 1) {
 		// Left mouse button down?
 		if(event->type == GDK_BUTTON_PRESS) {
+			tooltip_hide(g_MainWindow.m_pTooltip);
 
 			// Is it at a border?
 			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
@@ -806,6 +837,9 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 		}
 		// Left mouse button up?
 		else if(event->type == GDK_BUTTON_RELEASE) {
+			//tooltip_set_upper_left_corner(g_MainWindow.m_pTooltip, (gint)(event->x_root) + TOOLTIP_OFFSET_X, (gint)(event->y_root) + TOOLTIP_OFFSET_Y);
+			//tooltip_show(g_MainWindow.m_pTooltip);
+
 			// restore cursor
 			GdkCursor* pCursor = gdk_cursor_new(GDK_LEFT_PTR);
 			gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
@@ -927,15 +961,59 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		}
 	}
 	else {
-		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
+		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 		// just set cursor based on what we're hovering over
 		GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
 		gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
 		gdk_cursor_unref(pCursor);
+
+		if(eScrollDirection == DIRECTION_NONE) {
+			// get mouse position on screen
+			screenpoint_t screenpoint;
+			screenpoint.m_nX = nX;
+			screenpoint.m_nY = nY;
+			mappoint_t mappoint;
+			map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &screenpoint, &mappoint);
+	
+			// try to "hit" something on the map. a road, a location, whatever!
+			gchar* pszReturnString = NULL;
+			if(map_hit_test(g_MainWindow.m_pMap, &mappoint, &pszReturnString)) {
+				// A hit!  Move the tooltip here, format the text, and show it.
+				tooltip_set_upper_left_corner(g_MainWindow.m_pTooltip, (gint)(event->x_root) + TOOLTIP_OFFSET_X, (gint)(event->y_root) + TOOLTIP_OFFSET_Y);
+
+				gchar* pszMarkup = g_strdup_printf(" %s ", pszReturnString);
+				tooltip_set_markup(g_MainWindow.m_pTooltip, pszMarkup);
+				g_free(pszMarkup);
+
+				tooltip_show(g_MainWindow.m_pTooltip);	// ensure it's visible
+				g_free(pszReturnString); pszReturnString = NULL;
+			}
+			else {
+				// no hit. hide the tooltip
+				tooltip_hide(g_MainWindow.m_pTooltip);
+			}
+			g_assert(pszReturnString == NULL);
+
+		}
+		else {
+			// using a funky cursor. hide the tooltip
+			tooltip_hide(g_MainWindow.m_pTooltip);
+		}
 	}
 	return FALSE;
 }
+
+static gboolean mainwindow_on_enter_notify(GtkWidget* w, GdkEventCrossing *event)
+{
+	tooltip_show(g_MainWindow.m_pTooltip);
+}
+
+static gboolean mainwindow_on_leave_notify(GtkWidget* w, GdkEventCrossing *event)
+{
+	tooltip_hide(g_MainWindow.m_pTooltip);
+}
+
 
 static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 {
@@ -1300,6 +1378,20 @@ void mainwindow_go_to_current_history_item()
 	mainwindow_map_center_on_mappoint(&point);
 	mainwindow_draw_map(DRAWFLAG_ALL);
 //	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+}
+
+void mainwindow_on_backmenuitem_activate(GtkWidget* _unused, gpointer* __unused)
+{
+	history_go_back(g_MainWindow.m_pHistory);
+	mainwindow_go_to_current_history_item();
+	mainwindow_update_forward_back_buttons();
+}
+
+void mainwindow_on_forwardmenuitem_activate(GtkWidget* _unused, gpointer* __unused)
+{
+	history_go_forward(g_MainWindow.m_pHistory);
+	mainwindow_go_to_current_history_item();
+	mainwindow_update_forward_back_buttons();
 }
 
 void mainwindow_on_backbutton_clicked(GtkWidget* _unused, gpointer* __unused)

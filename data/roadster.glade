@@ -1287,12 +1287,13 @@ Restaurants</property>
 
 		  <child>
 		    <widget class="GtkImageMenuItem" id="import_maps">
+		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Import _Map Data...</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="mainwindow_on_import_maps_activate" last_modification_time="Fri, 04 Mar 2005 04:28:20 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image9570">
+			<widget class="GtkImage" id="image9594">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -1313,7 +1314,7 @@ Restaurants</property>
 		      <property name="use_underline">True</property>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image9571">
+			<widget class="GtkImage" id="image9595">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -1340,7 +1341,7 @@ Restaurants</property>
 		      <signal name="activate" handler="mainwindow_on_quitmenuitem_activate" last_modification_time="Sat, 12 Mar 2005 06:47:26 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image9572">
+			<widget class="GtkImage" id="image9596">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-quit</property>
 			  <property name="icon_size">1</property>
@@ -1405,6 +1406,59 @@ Restaurants</property>
 		  </child>
 
 		  <child>
+		    <widget class="GtkImageMenuItem" id="backmenuitem">
+		      <property name="visible">True</property>
+		      <property name="sensitive">False</property>
+		      <property name="label" translatable="yes">Back</property>
+		      <property name="use_underline">True</property>
+		      <signal name="activate" handler="mainwindow_on_backmenuitem_activate" last_modification_time="Mon, 21 Mar 2005 00:07:20 GMT"/>
+		      <accelerator key="Left" modifiers="GDK_MOD1_MASK" signal="activate"/>
+
+		      <child internal-child="image">
+			<widget class="GtkImage" id="image9597">
+			  <property name="visible">True</property>
+			  <property name="stock">gtk-go-back</property>
+			  <property name="icon_size">1</property>
+			  <property name="xalign">0.5</property>
+			  <property name="yalign">0.5</property>
+			  <property name="xpad">0</property>
+			  <property name="ypad">0</property>
+			</widget>
+		      </child>
+		    </widget>
+		  </child>
+
+		  <child>
+		    <widget class="GtkImageMenuItem" id="forwardmenuitem">
+		      <property name="visible">True</property>
+		      <property name="sensitive">False</property>
+		      <property name="label" translatable="yes">Forward</property>
+		      <property name="use_underline">True</property>
+		      <signal name="activate" handler="mainwindow_on_forwardmenuitem_activate" last_modification_time="Mon, 21 Mar 2005 00:07:32 GMT"/>
+		      <accelerator key="Right" modifiers="GDK_MOD1_MASK" signal="activate"/>
+
+		      <child internal-child="image">
+			<widget class="GtkImage" id="image9598">
+			  <property name="visible">True</property>
+			  <property name="stock">gtk-go-forward</property>
+			  <property name="icon_size">1</property>
+			  <property name="xalign">0.5</property>
+			  <property name="yalign">0.5</property>
+			  <property name="xpad">0</property>
+			  <property name="ypad">0</property>
+			</widget>
+		      </child>
+		    </widget>
+		  </child>
+
+		  <child>
+		    <widget class="GtkSeparatorMenuItem" id="separator7">
+		      <property name="visible">True</property>
+		      <property name="sensitive">False</property>
+		    </widget>
+		  </child>
+
+		  <child>
 		    <widget class="GtkMenuItem" id="zoominmenuitem">
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">Zoom _In</property>
@@ -1457,7 +1511,7 @@ Restaurants</property>
 		      <accelerator key="g" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image9573">
+			<widget class="GtkImage" id="image9599">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-jump-to</property>
 			  <property name="icon_size">1</property>
@@ -1531,7 +1585,7 @@ Restaurants</property>
 		      <accelerator key="F5" modifiers="0" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image9574">
+			<widget class="GtkImage" id="image9600">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-refresh</property>
 			  <property name="icon_size">1</property>
@@ -1801,7 +1855,7 @@ Restaurants</property>
 		      <property name="digits">0</property>
 		      <property name="update_policy">GTK_UPDATE_CONTINUOUS</property>
 		      <property name="inverted">False</property>
-		      <property name="adjustment">8 6 11 1 1 1</property>
+		      <property name="adjustment">8 6 10 1 1 1</property>
 		      <signal name="value_changed" handler="mainwindow_on_zoomscale_value_changed" last_modification_time="Fri, 04 Mar 2005 04:21:33 GMT"/>
 		    </widget>
 		  </child>
@@ -1907,15 +1961,15 @@ Restaurants</property>
 	  <property name="spacing">0</property>
 
 	  <child>
-	    <widget class="GtkHBox" id="mainwindowsidebox">
-	      <property name="width_request">220</property>
+	    <widget class="GtkVBox" id="mainwindowsidebox">
+	      <property name="border_width">1</property>
+	      <property name="width_request">190</property>
 	      <property name="visible">True</property>
 	      <property name="homogeneous">False</property>
-	      <property name="spacing">0</property>
+	      <property name="spacing">8</property>
 
 	      <child>
 		<widget class="GtkNotebook" id="sidebarnotebook">
-		  <property name="border_width">1</property>
 		  <property name="visible">True</property>
 		  <property name="show_tabs">True</property>
 		  <property name="show_border">True</property>
@@ -1924,7 +1978,7 @@ Restaurants</property>
 		  <property name="enable_popup">False</property>
 
 		  <child>
-		    <widget class="GtkVBox" id="vbox8860">
+		    <widget class="GtkVBox" id="vbox211">
 		      <property name="border_width">2</property>
 		      <property name="visible">True</property>
 		      <property name="homogeneous">False</property>
@@ -2037,41 +2091,6 @@ Restaurants</property>
 		      <property name="spacing">8</property>
 
 		      <child>
-			<widget class="GtkFrame" id="frame32">
-			  <property name="visible">True</property>
-			  <property name="label_xalign">0</property>
-			  <property name="label_yalign">0.5</property>
-			  <property name="shadow_type">GTK_SHADOW_IN</property>
-
-			  <child>
-			    <widget class="GtkAlignment" id="alignment64">
-			      <property name="visible">True</property>
-			      <property name="xalign">0.5</property>
-			      <property name="yalign">0.5</property>
-			      <property name="xscale">1</property>
-			      <property name="yscale">1</property>
-			      <property name="top_padding">0</property>
-			      <property name="bottom_padding">0</property>
-			      <property name="left_padding">0</property>
-			      <property name="right_padding">0</property>
-
-			      <child>
-				<widget class="GtkDrawingArea" id="drawingarea1">
-				  <property name="height_request">160</property>
-				  <property name="visible">True</property>
-				</widget>
-			      </child>
-			    </widget>
-			  </child>
-			</widget>
-			<packing>
-			  <property name="padding">0</property>
-			  <property name="expand">False</property>
-			  <property name="fill">True</property>
-			</packing>
-		      </child>
-
-		      <child>
 			<widget class="GtkHBox" id="gpsstatushbox">
 			  <property name="visible">True</property>
 			  <property name="homogeneous">False</property>
@@ -2079,7 +2098,7 @@ Restaurants</property>
 
 			  <child>
 			    <widget class="GtkLabel" id="speedlabel">
-			      <property name="width_request">100</property>
+			      <property name="width_request">89</property>
 			      <property name="visible">True</property>
 			      <property name="label" translatable="yes">&lt;span font_desc='32'&gt;199&lt;/span&gt;</property>
 			      <property name="use_underline">False</property>
@@ -2427,10 +2446,9 @@ Restaurants</property>
 
 		  <child>
 		    <widget class="GtkVBox" id="drawtabvbox">
-		      <property name="border_width">4</property>
 		      <property name="visible">True</property>
 		      <property name="homogeneous">False</property>
-		      <property name="spacing">12</property>
+		      <property name="spacing">0</property>
 
 		      <child>
 			<widget class="GtkFrame" id="locationsframe">
@@ -2473,25 +2491,6 @@ Restaurants</property>
 				</widget>
 			      </child>
 			    </widget>
-			  </child>
-
-			  <child>
-			    <widget class="GtkLabel" id="label23394">
-			      <property name="visible">True</property>
-			      <property name="label" translatable="yes">&lt;span size=&quot;small&quot;&gt;&lt;b&gt;Points of Interest&lt;/b&gt;&lt;/span&gt;</property>
-			      <property name="use_underline">False</property>
-			      <property name="use_markup">True</property>
-			      <property name="justify">GTK_JUSTIFY_LEFT</property>
-			      <property name="wrap">False</property>
-			      <property name="selectable">False</property>
-			      <property name="xalign">0</property>
-			      <property name="yalign">0.5</property>
-			      <property name="xpad">0</property>
-			      <property name="ypad">0</property>
-			    </widget>
-			    <packing>
-			      <property name="type">label_item</property>
-			    </packing>
 			  </child>
 			</widget>
 			<packing>
@@ -2542,25 +2541,6 @@ Restaurants</property>
 			      </child>
 			    </widget>
 			  </child>
-
-			  <child>
-			    <widget class="GtkLabel" id="label23395">
-			      <property name="visible">True</property>
-			      <property name="label" translatable="yes">&lt;span size=&quot;small&quot;&gt;&lt;b&gt;Map Layers&lt;/b&gt;&lt;/span&gt;</property>
-			      <property name="use_underline">False</property>
-			      <property name="use_markup">True</property>
-			      <property name="justify">GTK_JUSTIFY_LEFT</property>
-			      <property name="wrap">False</property>
-			      <property name="selectable">False</property>
-			      <property name="xalign">0.5</property>
-			      <property name="yalign">0.5</property>
-			      <property name="xpad">0</property>
-			      <property name="ypad">0</property>
-			    </widget>
-			    <packing>
-			      <property name="type">label_item</property>
-			    </packing>
-			  </child>
 			</widget>
 			<packing>
 			  <property name="padding">0</property>
@@ -2597,6 +2577,33 @@ Restaurants</property>
 		<packing>
 		  <property name="padding">0</property>
 		  <property name="expand">True</property>
+		  <property name="fill">True</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkFrame" id="frame32">
+		  <property name="height_request">135</property>
+		  <property name="visible">True</property>
+		  <property name="label_xalign">0</property>
+		  <property name="label_yalign">0.5</property>
+		  <property name="shadow_type">GTK_SHADOW_IN</property>
+
+		  <child>
+		    <widget class="GtkHBox" id="minimapcontentbox">
+		      <property name="visible">True</property>
+		      <property name="homogeneous">False</property>
+		      <property name="spacing">0</property>
+
+		      <child>
+			<placeholder/>
+		      </child>
+		    </widget>
+		  </child>
+		</widget>
+		<packing>
+		  <property name="padding">0</property>
+		  <property name="expand">False</property>
 		  <property name="fill">True</property>
 		</packing>
 	      </child>

@@ -165,7 +165,6 @@ gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* p
 		g_warning("mysql_real_connect failed: %s\n", mysql_error(pMySQLConnection));
 		return FALSE;
 	}
-//	db_enable_keys(); // just in case
 
 	// on success, alloc our connection struct and fill it
 	db_connection_t* pNewConnection = g_new0(db_connection_t, 1);
@@ -523,74 +522,68 @@ void db_create_tables()
 
 	// Road
 	db_query("CREATE TABLE IF NOT EXISTS Road("
-		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
+		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"	// XXX: can we get away with INT3 ?
 		" TypeID INT1 UNSIGNED NOT NULL,"
 
-		" RoadNameID INT4 UNSIGNED NOT NULL,"
+		" RoadNameID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
 
 		" AddressLeftStart INT2 UNSIGNED NOT NULL,"
 		" AddressLeftEnd INT2 UNSIGNED NOT NULL,"
 		" AddressRightStart INT2 UNSIGNED NOT NULL,"
 		" AddressRightEnd INT2 UNSIGNED NOT NULL,"
-		
-		" CityLeftID INT4 UNSIGNED NOT NULL,"
-		" CityRightID INT4 UNSIGNED NOT NULL,"
-		
+
+		" CityLeftID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
+		" CityRightID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
+
 		" ZIPCodeLeft CHAR(6) NOT NULL,"
 		" ZIPCodeRight CHAR(6) NOT NULL,"
 
 		" Coordinates point NOT NULL,"
 
 	    // lots of indexes:
-		" PRIMARY KEY (ID),"
-		" INDEX(TypeID),"
+		" PRIMARY KEY (ID),"	// XXX: we'll probably want to keep a unique ID, but we don't use this for anything yet.
+
 		" INDEX(RoadNameID),"	// to get roads when we've matched a RoadName
-		" INDEX(AddressLeftStart, AddressLeftEnd),"
-		" INDEX(AddressRightStart, AddressRightEnd),"
+//	" INDEX(AddressLeftStart, AddressLeftEnd)," 	// drop these?  they reduce a few seeks on address searches IF the
+//	" INDEX(AddressRightStart, AddressRightEnd),"	// user puts in a street #. they take up 8*roadsegments bytes of 
+							// disk and eat up precious index cache memory
+
 		" SPATIAL KEY (Coordinates));", NULL);
 
 	// RoadName
 	db_query("CREATE TABLE IF NOT EXISTS RoadName("
-		" ID INT4 UNSIGNED NOT NULL auto_increment,"
+		" ID INT3 UNSIGNED NOT NULL auto_increment,"	// NOTE: 3 bytes
 		" Name VARCHAR(30) NOT NULL,"
 		" SuffixID INT1 UNSIGNED NOT NULL,"
-		" PRIMARY KEY (ID),"
-		" UNIQUE KEY (Name(15), SuffixID));", NULL);
-
-	// Road_RoadName
-//         db_query("CREATE TABLE IF NOT EXISTS Road_RoadName("
-//                 " RoadID INT4 UNSIGNED NOT NULL,"
-//                 " RoadNameID INT4 UNSIGNED NOT NULL,"
-//
-//                 " PRIMARY KEY (RoadID, RoadNameID),"    // allows search on (RoadID,RoadName) and just (RoadID)
-//                 " INDEX(RoadNameID));", NULL);          // allows search the other way, going from a Name to a RoadID
+		" PRIMARY KEY (ID),"			// for joining RoadName to Road 
+		" UNIQUE KEY (Name(7)));", NULL);	// for searching by RoadName. 7 is enough for decent uniqueness(?)
 
 	// City
 	db_query("CREATE TABLE IF NOT EXISTS City("
 		// a unique ID for the value
-		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
-		" StateID INT4 UNSIGNED NOT NULL,"
-		" Name CHAR(60) NOT NULL,"
+		" ID INT3 UNSIGNED NOT NULL AUTO_INCREMENT,"	// NOTE: 3 bytes
+		" StateID INT2 UNSIGNED NOT NULL,"		// NOTE: 2 bytes
+		" Name CHAR(60) NOT NULL,"			// are city names ever 60 chars anyway??  TIGER think so
 		" PRIMARY KEY (ID),"
-		" INDEX (StateID),"	// for finding all cities by state (needed?)
-		" INDEX (Name(15)));"	// only index the first X chars of name (who types more than that?) (are city names ever 60 chars anyway??  TIGER think so)
+		" INDEX (StateID),"				// for finding all cities by state (needed?)
+		" INDEX (Name(6)));"				// 6 is enough for decent uniqueness.
 	    ,NULL);
 
 	// State
 	db_query("CREATE TABLE IF NOT EXISTS State("
 		// a unique ID for the value
-		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
+		" ID INT2 UNSIGNED NOT NULL AUTO_INCREMENT,"	// NOTE: 2 bytes (enough to go global..?)
 		" Name CHAR(40) NOT NULL,"
-		" Code CHAR(3) NOT NULL,"
-		" CountryID INT4 NOT NULL,"
+		" Code CHAR(3) NOT NULL,"			// eg. "MA"
+		" CountryID INT2 NOT NULL,"			// NOTE: 2 bytes
 		" PRIMARY KEY (ID),"
-		" INDEX (Name(15)));"	// only index the first X chars of name (who types more than that?)
+		" INDEX (Name(5)));"				// 4 is enough for decent uniqueness.
 	    ,NULL);
 
 	// Location
 	db_query("CREATE TABLE IF NOT EXISTS Location("
 		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
-		" LocationSetID INT4 NOT NULL,"
+		" LocationSetID INT3 NOT NULL,"				// NOTE: 3 bytes
 		" Coordinates point NOT NULL,"
 		" PRIMARY KEY (ID),"
 		" INDEX(LocationSetID),"
@@ -598,7 +591,7 @@ void db_create_tables()
 
 	// Location Attribute Name
 	db_query("CREATE TABLE IF NOT EXISTS LocationAttributeName("
-		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
+		" ID INT3 UNSIGNED NOT NULL AUTO_INCREMENT,"		// NOTE: 3 bytes. (16 million possibilities)
 		" Name VARCHAR(30) NOT NULL,"
 		" PRIMARY KEY (ID),"
 		" UNIQUE INDEX (Name));", NULL);
@@ -610,34 +603,18 @@ void db_create_tables()
 		// which location this value applies to
 		" LocationID INT4 UNSIGNED NOT NULL,"
 		// type 'name' of this name=value pair
-		" AttributeNameID INT4 UNSIGNED NOT NULL,"
+		" AttributeNameID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes.
 		// the actual value, a text blob
 		" Value TEXT NOT NULL,"
-		" PRIMARY KEY (ID),"	// for fast updates/deletes (needed only if POIs can have multiple values per name)
-		" INDEX (LocationID),"	// for searching values for a given POI
-		" FULLTEXT(Value));", NULL);
+		" PRIMARY KEY (ID),"			// for fast updates/deletes (needed only if POIs can have multiple values per name, otherwise LocationID_AttributeID is unique)
+		" INDEX (LocationID),"			// for searching values for a given POI
+		" FULLTEXT(Value));", NULL);		// for sexy fulltext searching of values!
 
 	// Location Set
 	db_query("CREATE TABLE IF NOT EXISTS LocationSet("
-		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
+		" ID INT3 UNSIGNED NOT NULL AUTO_INCREMENT,"		// NOTE: 3 bytes.	(would 2 be enough?)
 		" Name VARCHAR(60) NOT NULL,"
 		" PRIMARY KEY (ID));", NULL);
-}
-
-void db_enable_keys(void)
-{
-//	g_print("Enabling keys\n");
-//	db_query("ALTER TABLE Road ENABLE KEYS", NULL);
-//	db_query("ALTER TABLE RoadName ENABLE KEYS", NULL);
-//	db_query("ALTER TABLE Road_RoadName ENABLE KEYS", NULL);
-}
-
-void db_disable_keys(void)
-{
-//	g_print("Disabling keys\n");
-//	db_query("ALTER TABLE Road DISABLE KEYS", NULL);
-//	db_query("ALTER TABLE RoadName DISABLE KEYS", NULL);
-//	db_query("ALTER TABLE Road_RoadName DISABLE KEYS", NULL);
 }
 
 #ifdef ROADSTER_DEAD_CODE

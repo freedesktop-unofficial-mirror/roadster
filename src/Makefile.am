@@ -50,7 +50,8 @@ roadster_SOURCES = \
 	prefs.c\
 	animator.c\
 	gfreelist.c\
-	history.c
+	history.c\
+	tooltip.c
 
 roadster_LDADD = \
 	$(GNOME_LIBS) \

@@ -27,12 +27,13 @@
 #include <math.h>
 
 //#define THREADED_RENDERING
+//#define SCENEMANAGER_DEBUG_TEST
 
-// #ifdef THREADED_RENDERING
-// #define RENDERING_THREAD_YIELD          g_thread_yield()
-// #else
+#ifdef THREADED_RENDERING
+#define RENDERING_THREAD_YIELD          g_thread_yield()
+#else
 #define RENDERING_THREAD_YIELD
-// #endif
+#endif
 
 #include "gui.h"
 #include "map.h"
@@ -45,6 +46,9 @@
 #include "locationset.h"
 #include "scenemanager.h"
 
+#define	RENDERMODE_FAST 	1	// Use 'fast' until Cairo catches up. :)
+#define	RENDERMODE_PRETTY 	2
+
 // NOTE on choosing tile size.
 // A) It is arbitrary and could be changed (even at runtime, although this would render useless everything in the cache)
 // B) Too big, and you'll see noticable pauses while scrolling.
@@ -56,16 +60,18 @@
 #define TILE_MODULUS			(23)		// how many of the above units each tile is on a side
 #define MAP_TILE_WIDTH			(TILE_MODULUS / TILE_SHIFT)	// width and height of a tile, in degrees
 
-//#define ROUND_FLOAT_TO_DECIMAL_PLACE(f,d)	(floor((f)*(d))/(d))	// d should be like 10 or 100.  10 will drop all but the first decimal.
+#define MIN_ROAD_HIT_TARGET_WIDTH	(4)	// make super thin roads a bit easier to hover over/click, in pixels
 
-// ADD:
-// 'Mal' - ?
-// 'Trce - Trace
 
 /* Prototypes */
 
+// data loading
 static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect);	// ensure tiles
 static gboolean map_data_load(map_t* pMap, maprect_t* pRect);
+
+// hit testing
+static gboolean map_hit_test_layer_lines(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, gchar** ppReturnString);
+static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fDistance);
 
 static void map_data_clear(map_t* pMap);
 void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics);
@@ -168,9 +174,6 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 	return TRUE;
 }
 
-#define	RENDERMODE_FAST 	1
-#define	RENDERMODE_PRETTY 	2
-
 void map_draw(map_t* pMap, gint nDrawFlags)
 {
 	g_assert(pMap != NULL);
@@ -182,7 +185,7 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	map_get_render_metrics(pMap, &renderMetrics);
 	rendermetrics_t* pRenderMetrics = &renderMetrics;
 
-//g_print("drawing at %f,%f\n", pMap->m_MapCenter.m_fLatitude, pMap->m_MapCenter.m_fLongitude);
+	//g_print("drawing at %f,%f\n", pMap->m_MapCenter.m_fLatitude, pMap->m_MapCenter.m_fLongitude);
 
 	//
 	// Load geometry
@@ -195,9 +198,10 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 
 	gint nRenderMode = RENDERMODE_FAST;
 
-	// XXX test
-//         GdkRectangle rect = {200,200,100,100};
-//         scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
+#ifdef SCENEMANAGER_DEBUG_TEST
+        GdkRectangle rect = {200,200,100,100};
+        scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
+#endif
 
 	if(nRenderMode == RENDERMODE_FAST) {
 		// 
@@ -212,10 +216,11 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	else {	// nRenderMode == RENDERMODE_PRETTY
 		map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, nDrawFlags);
 	}
-	
-	// XXX test
-//         gdk_draw_rectangle(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-//                         FALSE, 200,200, 100, 100);
+
+#ifdef SCENEMANAGER_DEBUG_TEST
+        gdk_draw_rectangle(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+                           FALSE, 200,200, 100, 100);
+#endif
 
 	gtk_widget_queue_draw(pMap->m_pTargetWidget);
 }
@@ -226,13 +231,12 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 
 GdkPixmap* map_get_pixmap(map_t* pMap)
 {
-//	g_mutex_lock(pMap->m_pPixmapMutex);
 	return pMap->m_pPixmap;
 }
 
 void map_release_pixmap(map_t* pMap)
 {
-//	g_mutex_unlock(pMap->m_pPixmapMutex);
+	// nothing since we're not using mutexes
 }
 
 
@@ -242,8 +246,6 @@ void map_release_pixmap(map_t* pMap)
 
 void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel)
 {
-//         g_mutex_lock(pMap->m_pDataMutex);
-
 	if(uZoomLevel > MAX_ZOOMLEVEL) uZoomLevel = MAX_ZOOMLEVEL;
 	else if(uZoomLevel < MIN_ZOOMLEVEL) uZoomLevel = MIN_ZOOMLEVEL;
 
@@ -251,7 +253,6 @@ void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel)
 		pMap->m_uZoomLevel = uZoomLevel;
 //		map_set_redraw_needed(TRUE);
 	}
-//	g_mutex_unlock(pMap->m_pDataMutex);
 }
 
 guint16 map_get_zoomlevel(map_t* pMap)
@@ -371,9 +372,6 @@ void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions)
 {
 	g_assert(pDimensions != NULL);
 
-//         g_mutex_lock(pMap->m_pDataMutex);
-//         g_mutex_lock(pMap->m_pPixmapMutex);
-
 	pMap->m_MapDimensions.m_uWidth = pDimensions->m_uWidth;
 	pMap->m_MapDimensions.m_uHeight = pDimensions->m_uHeight;
 
@@ -381,9 +379,6 @@ void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions)
 			pMap->m_pTargetWidget->window,
 			pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight,
 			-1);
-
-//         g_mutex_unlock(pMap->m_pPixmapMutex);
-//         g_mutex_unlock(pMap->m_pDataMutex);
 }
 
 // ========================================================
@@ -411,50 +406,6 @@ void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics)
 	pMetrics->m_rWorldBoundingBox.m_B.m_fLongitude = pMap->m_MapCenter.m_fLongitude + pMetrics->m_fScreenLongitude/2;
 	pMetrics->m_rWorldBoundingBox.m_B.m_fLatitude = pMap->m_MapCenter.m_fLatitude + pMetrics->m_fScreenLatitude/2;	
 }
-
-/*
-void map_draw(map_t* pMap, cairo_t *pCairo)
-{
-	// Get render metrics
-	rendermetrics_t renderMetrics = {0};
-	map_get_render_metrics(pMap, &renderMetrics);
-	rendermetrics_t* pRenderMetrics = &renderMetrics;
-
-	scenemanager_clear(pMap->m_pSceneManager);
-
-	//
-	// Load geometry
-	//
-	TIMER_BEGIN(loadtimer, "--- BEGIN ALL DB LOAD");
-	map_data_load(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
-	locationset_load_locations(&(pRenderMetrics->m_rWorldBoundingBox));
-	TIMER_END(loadtimer, "--- END ALL DB LOAD");
-
-//	const GPtrArray* pLocationSets = locationset_get_set_array();
-
-	//
-	// Draw map
-	//
-
-//         TIMER_BEGIN(loctimer, "\nBEGIN RENDER LOCATIONS");
-//                 // Render Locations
-//                 gint iLocationSet;
-//                 for(iLocationSet=0 ; iLocationSet<pLocationSets->len ; iLocationSet++) {
-//                         RENDERING_THREAD_YIELD;
-//
-//                         locationset_t* pLocationSet = g_ptr_array_index(pLocationSets, iLocationSet);
-//                         map_draw_layer_points(pMap, pCairo, pRenderMetrics, pLocationSet->m_pLocationsArray);
-//                 }
-//         TIMER_END(loctimer, "END RENDER LOCATIONS");
-
-//         map_draw_crosshair(pMap, pCairo, pRenderMetrics);
-
-	cairo_restore(pCairo);
-
-	// We don't need another redraw until something changes
-//	map_set_redraw_needed(FALSE);
-}
-*/
 
 static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect)
 {
@@ -538,44 +489,8 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 
 	TIMER_BEGIN(mytimer, "BEGIN Geometry LOAD");
 
-	// HACKY: make a list of layer IDs "2,3,5,6"
-//         gchar azLayerNumberList[200] = {0};
-//         gint nActiveLayerCount = 0;
-//         gint i;
-//         for(i=LAYER_FIRST ; i <= LAYER_LAST ;i++) {
-//                 if(g_aLayers[i]->m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
-//                    g_aLayers[i]->m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
-//                 {
-//                         gchar azLayerNumber[10];
-//
-//                         if(nActiveLayerCount > 0) g_snprintf(azLayerNumber, 10, ",%d", i);
-//                         else g_snprintf(azLayerNumber, 10, "%d", i);
-//
-//                         g_strlcat(azLayerNumberList, azLayerNumber, 200);
-//                         nActiveLayerCount++;
-//                 }
-//         }
-//         if(nActiveLayerCount == 0) {
-//                 g_print("no visible layers!\n");
-//                 return TRUE;
-//         }
-
-	// MySQL doesn't optimize away GeomFromText(...) and instead executes this ONCE PER ROW.
-	// That's a whole lot of parsing and was causing my_strtod to eat up 9% of Roadster's CPU time.
-	// Assinging it to a temp variable alleviates that problem.
-
-	gchar* pszSQL;
-//         pszSQL = g_strdup_printf("SET @wkb=GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))')",
-//                 pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude,        // upper left
-//                 pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude,        // upper right
-//                 pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude,        // bottom right
-//                 pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude,        // bottom left
-//                 pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude         // upper left again
-//                 );
-//         db_query(pszSQL, NULL);
-//         g_free(pszSQL);
-
 	// generate SQL
+	gchar* pszSQL;
 	pszSQL = g_strdup_printf(
 		"SELECT Road.ID, Road.TypeID, AsBinary(Road.Coordinates), RoadName.Name, RoadName.SuffixID"
 		" FROM Road "
@@ -584,7 +499,6 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 		//" TypeID IN (%s) AND"
                 //" MBRIntersects(@wkb, Coordinates)"
 		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)"
-//		azLayerNumberList,
 		,pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
 		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
 		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
@@ -678,8 +592,6 @@ static void map_data_clear(map_t* pMap)
 
 double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 {
-//	g_assert_not_reached();	// unused/tested
-
 	// This functions calculates the length of the arc of the "greatcircle" that goes through
 	// the two points A and B and whos center is the center of the sphere, O.
 
@@ -730,152 +642,146 @@ void map_add_track(map_t* pMap, gint hTrack)
 	g_array_append_val(pMap->m_pTracksArray, hTrack);
 }
 
-#if ROADSTER_DEAD_CODE
-/*
-
 // ========================================================
-//  Redraw
+//  Hit Testing
 // ========================================================
 
-void map_set_redraw_needed(gboolean bNeeded)
+// XXX: perhaps make map_hit_test return a more complex structure indicating what type of hit it is?
+gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, gchar** ppReturnString)
 {
-	pMap->m_bRedrawNeeded = bNeeded;
-}
-
-gboolean map_get_redraw_needed()
-{
-	return pMap->m_bRedrawNeeded;
-}
-
-gpointer map_draw_thread(gpointer);
-
-void map_draw_thread_begin(map_t* pMap, GtkWidget* pTargetWidget)
-{
-#ifdef THREADED_RENDERING
-	g_thread_create(map_draw_thread, pMap, FALSE, NULL);
-#else
-	map_draw_thread(pMap);
-#endif
-}
-
-#include <gdk/gdk.h>
-
-gpointer map_draw_thread(gpointer pData)
-{
-g_print("THREAD: begin\n");
-	map_t* pMap = (map_t*)pData;
-	g_assert(pMap != NULL);
-
-//	db_lock();
-
-#ifdef THREADED_RENDERING
-	db_begin_thread();	// database needs to know we're a new thread
-#endif
-
-	g_mutex_lock(pMap->m_pDataMutex);
-
-#ifdef THREADED_RENDERING
-        gdk_threads_enter();
-#endif
-		// create pixel buffer of appropriate size
-		GdkPixmap* pPixmapTemp = gdk_pixmap_new(pMap->m_pTargetWidget->window, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight, -1);
-		g_assert(pPixmapTemp);
-	
-		Display* dpy;
-		Drawable drawable;
-		dpy = gdk_x11_drawable_get_xdisplay(pPixmapTemp);
-		drawable = gdk_x11_drawable_get_xid(pPixmapTemp);
-
-g_print("THREAD: creating cairo...\n");
-	cairo_t* pCairo = cairo_create ();
-
-g_print("THREAD: calling cairo_set_target_drawable...\n");
-	// draw on the off-screen buffer
-	cairo_set_target_drawable(pCairo, dpy, drawable);
-#ifdef THREADED_RENDERING
-        gdk_threads_leave();
-#endif
-
-g_print("THREAD: drawing...\n");
-	map_draw(pMap, pCairo);
-
-g_print("THREAD: destroying cairo...\n");
-#ifdef THREADED_RENDERING
-        gdk_threads_enter();
-#endif
-	cairo_destroy(pCairo);
-#ifdef THREADED_RENDERING
-        gdk_threads_leave();
-#endif
-
-	// Copy final image to (pMap->m_pPixmap)
-g_print("THREAD: copying pixmap\n");
-	g_mutex_lock(pMap->m_pPixmapMutex);
-
-#ifdef THREADED_RENDERING
-        gdk_threads_enter();
-#endif
-		gdk_draw_pixmap(pMap->m_pPixmap,
-		  pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-		  pPixmapTemp,
-		  0, 0,
-		  0, 0,
-		  pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
-		gdk_pixmap_unref(pPixmapTemp);
-#ifdef THREADED_RENDERING
-        gdk_threads_leave();
-#endif
-
-	g_mutex_unlock(pMap->m_pDataMutex);
-	g_mutex_unlock(pMap->m_pPixmapMutex);
-//	db_unlock();
-
-g_print("THREAD: done drawing\n");
-#ifdef THREADED_RENDERING
-        gdk_threads_enter();
-#endif
-	gtk_widget_queue_draw(pMap->m_pTargetWidget);
-#ifdef THREADED_RENDERING
-        gdk_threads_leave();
-	db_end_thread();
-#endif
-}
-
-	TIMER_BEGIN(gdktimer, "starting gdk");
+	// Test things in the REVERSE order they are drawn (otherwise we'll match things that have been painted-over)
 	gint i;
+	for(i=NUM_ELEMS(layerdraworder)-1 ; i>=0 ; i--) {
+		gint nLayer = layerdraworder[i].nLayer;
 
-	for(i=0 ; i<500 ; i++) {
-	GdkPoint points[5];
-	points[0].x = random() % 10000;
-	points[0].y = random() % 10000;
-	points[1].x = random() % 10000;
-	points[1].y = random() % 10000;
-	points[2].x = random() % 10000;
-	points[2].y = random() % 10000;
-	points[3].x = random() % 10000;
-	points[3].y = random() % 10000;
-	points[4].x = random() % 10000;
-	points[4].y = random() % 10000;
+		// use width from whichever layer it's wider in
+		gdouble fLineWidth = max(g_aLayers[nLayer]->m_Style.m_aSubLayers[0].m_afLineWidths[pMap->m_uZoomLevel],
+					 g_aLayers[nLayer]->m_Style.m_aSubLayers[1].m_afLineWidths[pMap->m_uZoomLevel]);
 
-		GdkColor clr;
-		clr.red = clr.green = clr.blue = 45535;
-		gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
-		
-		gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-                                           12,GDK_LINE_SOLID,GDK_CAP_ROUND,GDK_JOIN_MITER);
-		gdk_draw_lines(pPixmapTemp, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			//TRUE,
-			points, 5);
+		// make thin roads a little easier to hit
+		fLineWidth = max(fLineWidth, MIN_ROAD_HIT_TARGET_WIDTH);
 
-		gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-					   9,GDK_LINE_SOLID,GDK_CAP_ROUND,GDK_JOIN_MITER);
+		// XXX: hack, map_pixels should really take a floating point instead.
+		gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->m_uZoomLevel) * (fLineWidth/2);	// half width on each side
 
-		clr.red = clr.green = clr.blue = 65535;
-		gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
-		gdk_draw_lines(pPixmapTemp, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			//TRUE,
-			points, 5);
+		if(map_hit_test_layer_lines(pMap->m_apLayerData[nLayer]->m_pPointStringsArray, fMaxDistance, pMapPoint, ppReturnString)) {
+			return TRUE;
+		}
 	}
-	TIMER_END(gdktimer, "ending gdk");
-*/
-#endif /* ROADSTER_DEAD_CODE */
+	return FALSE;
+}
+
+static gboolean map_hit_test_layer_lines(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, gchar** ppReturnString)
+{
+	g_assert(ppReturnString != NULL);
+	g_assert(*ppReturnString == NULL);	// pointer to null pointer
+
+	/* this is helpful for testing with the g_print()s in map_hit_test_line() */
+/*         mappoint_t p1 = {2,2};                */
+/*         mappoint_t p2 = {-10,10};             */
+/*         mappoint_t p3 = {0,10};               */
+/*         map_hit_test_line(&p1, &p2, &p3, 20); */
+/*         return FALSE;                         */
+
+	// Loop through line strings, order doesn't matter here since they're all on the same level.
+	gint iString;
+	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
+		pointstring_t* pPointString = g_ptr_array_index(pPointStringsArray, iString);
+		if(pPointString->m_pPointsArray->len < 2) continue;
+
+		// start on 1 so we can do -1 trick below
+		gint iPoint;
+		for(iPoint=1 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
+			mappoint_t* pPoint1 = g_ptr_array_index(pPointString->m_pPointsArray, iPoint-1);
+			mappoint_t* pPoint2 = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);
+
+			// hit test this line
+			if(map_hit_test_line(pPoint1, pPoint2, pHitPoint, fMaxDistance)) {
+				// got a hit
+				if(pPointString->m_pszName[0] == '\0') {
+					*ppReturnString = g_strdup("<i>unnamed road</i>");
+				}
+				else {
+					*ppReturnString = g_strdup(pPointString->m_pszName);
+				}
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
+
+// Does the given point come close enough to the line segment to be considered a hit?
+static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance)
+{
+	// Some bad ASCII art demonstrating the situation:
+	//
+	//             / (u)
+	//          /  |
+	//       /     |
+	// (0,0) =====(a)========== (v)
+
+	// v is the translated-to-origin vector of line (road)
+	// u is the translated-to-origin vector of the hitpoint
+	// a is the closest point on v to the end of u (the hit point)
+
+	//
+	// 1. Convert p1->p2 vector into a vector (v) that is assumed to come out of the origin (0,0)
+	//
+	mappoint_t v;
+	v.m_fLatitude = pPoint2->m_fLatitude - pPoint1->m_fLatitude;	// 10->90 becomes 0->80 (just store 80)
+	v.m_fLongitude = pPoint2->m_fLongitude - pPoint1->m_fLongitude;
+
+	gdouble fLengthV = sqrt((v.m_fLatitude*v.m_fLatitude) + (v.m_fLongitude*v.m_fLongitude)); 
+	if(fLengthV == 0.0) return FALSE;	// bad data: a line segment with no length?
+
+	//
+	// 2. Make a unit vector out of v (meaning same direction but length=1) by dividing v by v's length
+	//
+	mappoint_t unitv;
+	unitv.m_fLatitude = v.m_fLatitude / fLengthV;
+	unitv.m_fLongitude = v.m_fLongitude / fLengthV;	// unitv is now a unit (=1.0) length v
+
+	//
+	// 3. Translate the hitpoint in the same way we translated v
+	//
+	mappoint_t u;
+	u.m_fLatitude = pHitPoint->m_fLatitude - pPoint1->m_fLatitude;
+	u.m_fLongitude = pHitPoint->m_fLongitude - pPoint1->m_fLongitude;
+
+	//
+	// 4. Use the dot product of (unitv) and (u) to find (a), the point along (v) that is closest to (u). see diagram above.
+	//
+	gdouble fLengthAlongV = (unitv.m_fLatitude * u.m_fLatitude) + (unitv.m_fLongitude * u.m_fLongitude);
+
+	// Does it fall along the length of the line *segment* v?  (we know it falls along the infinite line v, but that does us no good.)
+	// (This produces false negatives on round/butt end caps, but that's better that a false positive when another line is actually there!)
+	if(fLengthAlongV > 0 && fLengthAlongV < fLengthV) {
+		mappoint_t a;
+		a.m_fLatitude = v.m_fLatitude * (fLengthAlongV / fLengthV);	// multiply each component by the percentage
+		a.m_fLongitude = v.m_fLongitude * (fLengthAlongV / fLengthV);
+		// NOTE: (a) is *not* where it actually hit on the *map*.  don't draw this point!  we'd have to translate it back away from the origin.
+
+		//
+		// 5. Calculate the distance from the end of (u) to (a).  If it's less than the fMaxDistance, it's a hit.
+		//
+		gdouble fRise = u.m_fLatitude - a.m_fLatitude;
+		gdouble fRun = u.m_fLongitude - a.m_fLongitude;
+		gdouble fDistanceSquared = fRise*fRise + fRun*fRun;	// compare squared distances. same results but without the sqrt.
+
+		if(fDistanceSquared <= (fMaxDistance*fMaxDistance)) {
+			/* debug aids */
+			/* g_print("pPoint1 (%f,%f)\n", pPoint1->m_fLatitude, pPoint1->m_fLongitude);       */
+			/* g_print("pPoint2 (%f,%f)\n", pPoint2->m_fLatitude, pPoint2->m_fLongitude);       */
+			/* g_print("pHitPoint (%f,%f)\n", pHitPoint->m_fLatitude, pHitPoint->m_fLongitude); */
+			/* g_print("v (%f,%f)\n", v.m_fLatitude, v.m_fLongitude);                           */
+			/* g_print("u (%f,%f)\n", u.m_fLatitude, u.m_fLongitude);                           */
+			/* g_print("unitv (%f,%f)\n", unitv.m_fLatitude, unitv.m_fLongitude);               */
+			/* g_print("fDotProduct = %f\n", fDotProduct);                                      */
+			/* g_print("a (%f,%f)\n", a.m_fLatitude, a.m_fLongitude);                           */
+			/* g_print("fDistance = %f\n", sqrt(fDistanceSquared));                             */
+			return TRUE;
+		}
+	}
+	return FALSE;
+}

@@ -218,4 +218,6 @@ gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2);
 
 void map_add_track(map_t* pMap, gint hTrack);
 
+gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, gchar** ppReturnString);
+
 #endif

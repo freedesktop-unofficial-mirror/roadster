@@ -1,5 +1,13 @@
 2005-03-20  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/tooltip.h:
+	* src/tooltip.c: Added.
+	* src/mainwindow.c: Added tooltip (currently only showing name of road under mouse).  Change border-scroll corner hit targets to be L shaped and take 1/3 of each border.
+	* src/map.c: Added hit testing: the ability to test a point for proximity to lines (roads).
+	* src/*: Cleanup and code commenting.
+
+2005-03-20  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/history.h:
 	* src/history.c: Added.  Stores a list of places for the back/forward buttons.
 	* src/Makefile.am: Added history.c.

@@ -153,7 +153,7 @@ typedef struct tiger_record_rtc
 	// store a list of city names
 	gint m_nFIPS55;	// index
 	char m_achName[TIGER_CITY_NAME_LEN + 1];	// note the +1!!
-	gint m_nCityID;								// a database ID, stored here after it is inserted
+	gint m_nCityID;					// a database ID, stored here after it is inserted
 } tiger_record_rtc_t;
 
 
