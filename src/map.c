@@ -183,8 +183,8 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	gint nRenderMode = RENDERMODE_FAST;
 
 	// XXX test
-	GdkRectangle rect = {200,200,100,100};
-	scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
+//         GdkRectangle rect = {200,200,100,100};
+//         scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
 
 	if(nRenderMode == RENDERMODE_FAST) {
 		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
@@ -199,8 +199,8 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	}
 	
 	// XXX test
-	gdk_draw_rectangle(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			FALSE, 200,200, 100, 100);
+//         gdk_draw_rectangle(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+//                         FALSE, 200,200, 100, 100);
 
 	gtk_widget_queue_draw(pMap->m_pTargetWidget);
 }

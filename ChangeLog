@@ -1,3 +1,7 @@
+2005-03-10  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/map.c: Commented out scenemanager demo (rectangle).
+
 2005-03-09  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/map.c: MySQL optimization regarding GeomFromText() which saves about 10% total application CPU time. (Not as big of a deal as it sounds since we're currently disk-bound.)

@@ -28,6 +28,8 @@
 
 #define NUM_ELEMS(a) (sizeof(a) / sizeof(a[0]))
 
+#define SWAP(x, y)                   { (x) ^= (y) ^= (x) ^= (y); }
+
 void util_random_color(void* pColor);
 
 //#define ENABLE_TIMING

@@ -58,7 +58,7 @@
 
 #define DRAW_PRETTY_TIMEOUT_MS		(180)	// how long after stopping various movements should we redraw in high-quality mode
 #define SCROLL_TIMEOUT_MS		(100)	// how often (in MS) to move (SHORTER THAN ABOVE TIME)
-#define SCROLL_DISTANCE_IN_PIXELS	(100)	// how far to move every (above) MS
+#define SCROLL_DISTANCE_IN_PIXELS	(80)	// how far to move every (above) MS
 #define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)	// the size of the click target (distance from edge of map view) to begin scrolling
 
 // Layerlist columns
