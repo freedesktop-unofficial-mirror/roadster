@@ -24,10 +24,7 @@
 #ifndef _GPSCLIENT_H
 #define _GPSCLIENT_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 #include "map.h"
 
@@ -66,8 +63,6 @@ typedef struct gpsdata {
 void gpsclient_init(void);
 const gpsdata_t* gpsclient_getdata(void);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _GPSCLIENT_H */

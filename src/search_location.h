@@ -24,15 +24,10 @@
 #ifndef _SEARCH_LOCATION_H
 #define _SEARCH_LOCATION_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 void search_location_execute(const gchar* pszSearch, gint nLocationSetID, gfloat fDistance, gint nDistanceUnit);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _SEARCH_LOCATION_H */

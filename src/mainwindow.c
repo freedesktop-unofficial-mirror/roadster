@@ -33,6 +33,7 @@
 #include "gotowindow.h"
 #include "db.h"
 #include "map.h"
+#include "layers.h"
 #include "importwindow.h"
 #include "datasetwindow.h"
 #include "welcomewindow.h"
@@ -616,6 +617,12 @@ void mainwindow_on_gotomenuitem_activate(GtkMenuItem *menuitem, gpointer user_da
 //	g_print("mainwindow_on_gotomenuitem_activate\n");
 	gotowindow_show();
 }
+
+void on_reloadstylesmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+	layers_reload();
+}
+
 
 // void on_gotobutton_clicked(GtkToolButton *toolbutton,  gpointer user_data)
 // {

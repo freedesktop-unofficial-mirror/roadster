@@ -24,17 +24,12 @@
 #ifndef _SEARCH_H
 #define _SEARCH_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 void search_clean_string(gchar* p);
 
 gboolean search_address_number_atoi(const gchar* pszText, gint* pnReturn);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _SEARCH_H */

@@ -24,10 +24,7 @@
 #ifndef _SEARCHWINDOW_H
 #define _SEARCHWINDOW_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 #include <glade/glade.h>
 #include "gpsclient.h"
@@ -50,8 +47,6 @@ void searchwindow_on_searchtypecombo_changed(GtkWidget *pWidget, gpointer* p);
 void searchwindow_on_addressresultstreeview_row_activated(GtkWidget *pWidget, gpointer* p);
 void searchwindow_on_gobutton_clicked(GtkWidget *pWidget, gpointer* p);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _SEARCHWINDOW_H */

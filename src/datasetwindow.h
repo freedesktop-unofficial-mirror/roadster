@@ -26,10 +26,7 @@
 
 #include <glade/glade.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 void datasetwindow_init(GladeXML* pGladeXML);
 void datasetwindow_show(void);
@@ -42,8 +39,6 @@ void datasetwindow_show(void);
 void datasetwindow_on_datasetdeletebutton_clicked(GtkWidget *widget, gpointer user_data);
 void datasetwindow_on_datasetimportbutton_clicked(GtkWidget *widget, gpointer user_data);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _DATASETWINDOW_H */

@@ -24,15 +24,10 @@
 #ifndef _IMPORT_H
 #define _IMPORT_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 gboolean import_from_uri(const gchar* pszURI);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _IMPORT_H */

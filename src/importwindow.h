@@ -26,10 +26,7 @@
 
 #include <glade/glade.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 void importwindow_init(GladeXML* pGladeXML);
 void importwindow_show(void);
@@ -39,9 +36,7 @@ void importwindow_log_append(const gchar* pszText, ...);
 void importwindow_progress_pulse(void);
 
 // void importwindow_progress_callback(gdouble fPercent, gpointer pData);
-	
-#ifdef __cplusplus
-}
-#endif
+
+G_END_DECLS
 
 #endif /* _IMPORTWINDOW_H */

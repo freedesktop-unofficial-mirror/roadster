@@ -27,10 +27,7 @@
 
 #include <gtk/gtk.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 #define LAYER_NONE				(0)
 
@@ -100,9 +97,8 @@ extern layer_t * g_aLayers[NUM_LAYERS+1];
 
 void layers_init(void);
 void layers_deinit(void);
+void layers_reload(void);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _LAYERS_H_ */

@@ -39,7 +39,7 @@ dashstyle_t g_aDashStyles[NUM_DASH_STYLES] = {
 	{pDash_10_10, 2},
 };
 
-static void layers_load_style(const gchar * file);
+static void layers_load_from_file();
 static layer_t* layers_new(gint index, gchar *name);
 
 static void layers_parse_layers(xmlDocPtr doc, xmlNodePtr node);
@@ -74,15 +74,20 @@ layers_init(void)
 	/* init libxml */
 	LIBXML_TEST_VERSION
 
-	layers_load_style(PACKAGE_SOURCE_DIR"/data/styles/road.xml");
+	layers_load_from_file();
 
-	xmlCleanupParser();
 }
 
 void 
 layers_deinit(void)
 {
+	xmlCleanupParser();
+}
 
+void 
+layers_reload(void)
+{
+	layers_load_from_file();
 }
 
 static layer_t*
@@ -98,7 +103,7 @@ layers_new(gint index, gchar *name)
 }
 
 static void
-layers_load_style(const gchar * file)
+layers_load_from_file()
 {
 	xmlDocPtr doc = NULL;
 	xmlNodePtr root_element = NULL;

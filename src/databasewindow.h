@@ -24,10 +24,7 @@
 #ifndef _DATABASEWINDOW_H
 #define _DATABASEWINDOW_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 #ifdef ROADSTER_DEAD_CODE
 
@@ -45,8 +42,6 @@ void databasewindow_on_connectbutton_clicked(void);
 
 
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _DATABASEWINDOW_H */

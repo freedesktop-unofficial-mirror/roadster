@@ -27,10 +27,7 @@
 #include <glade/glade.h>
 #include "map.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 void mainwindow_init(GladeXML* pGladeXML);
 void mainwindow_draw_map(void);
@@ -96,8 +93,6 @@ void mainwindow_on_datasetmenuitem_activate(GtkWidget *pWidget, gpointer* p);
 
 void mainwindow_set_centerpoint(mappoint_t* pPoint);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _MAINWINDOW_H */

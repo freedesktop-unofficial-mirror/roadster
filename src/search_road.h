@@ -24,15 +24,10 @@
 #ifndef _SEARCH_ROAD_H
 #define _SEARCH_ROAD_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 void search_road_execute(const gchar* pszSentence);
-	
-#ifdef __cplusplus
-}
-#endif
+
+G_END_DECLS
 
 #endif /* _SEARCH_ROAD_H */

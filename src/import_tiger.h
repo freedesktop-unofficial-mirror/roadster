@@ -24,18 +24,13 @@
 #ifndef _IMPORT_TIGER_H
 #define _IMPORT_TIGER_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 #include <gtk/gtk.h>
 #include "db.h"
 
 gboolean import_tiger_from_uri(const gchar* pszURI, gint nTigerSetNumber);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _IMPORT_TIGER_H */

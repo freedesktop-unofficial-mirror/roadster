@@ -24,10 +24,7 @@
 #ifndef _LOCATIONSET_H
 #define _LOCATIONSET_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+G_BEGIN_DECLS
 
 #include "map.h"
 	
@@ -59,8 +56,6 @@ gboolean locationset_load_locations(maprect_t* pRect);
 gboolean locationset_add_location(gint nLocationSetID, mappoint_t* pPoint, gint* pReturnID);
 const GPtrArray* locationset_get_set_array(void);
 
-#ifdef __cplusplus
-}
-#endif
+G_END_DECLS
 
 #endif /* _LOCATIONSET_H */

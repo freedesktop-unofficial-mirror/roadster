@@ -1,4 +1,11 @@
 2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
+	* src/*.h: Change extern "C" to G_BEGIN_DECLS/G_END_DECLS
+	* src/layers.h:
+	* src/layers.c: Add layers_reload() to reload the layer styles.
+	* data/roadster.glade
+	* src/mainwindow.c: Add "Debug" menu and "Reload Styles" menuitem.
+
+2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
 	* data/Makefile.am:
 	* configure.ac: Add dependency on libxml-2.0.
 	* data/layers.xml: Map layer styles defined in XML.
