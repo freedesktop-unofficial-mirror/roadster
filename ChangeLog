@@ -1,5 +1,12 @@
 2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* include/.cvsignore: Removed.
+	* intl/.cvsignore: Removed.
+	* macros/* Removed.
+	* macros/ax_compare_version.m4: Added.
+
+2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* roadster.desktop.in:
 	* roadster.glade:
 	* roadster.glade.scrap: Moved to new data directory.
