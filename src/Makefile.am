@@ -9,6 +9,7 @@ INCLUDES= \
 	-I. \
 	$(GNOME_CFLAGS) \
 	$(CAIRO_CFLAGS) \
+	$(LIBSVG_CFLAGS) \
 	$(MYSQL_CFLAGS) \
 	$(GPSD_CFLAGS) \
 	$(ROADSTER_DISABLE_DEPRECATED) \
@@ -47,6 +48,7 @@ roadster_SOURCES = \
 roadster_LDADD = \
 	$(GNOME_LIBS) \
 	$(CAIRO_LIBS) \
+	$(LIBSVG_LIBS) \
 	$(MYSQL_LIBS) \
 	$(GPSD_LIBS) \
 	$(NULL)

@@ -1,3 +1,7 @@
+2005-02-28  Nathan Fredrickson  <nathan@silverorange.com>
+	* src/Makefile.am:
+	* configure.ac: Check separately for libsvg and continue if not found. Define HAVE_LIBSVG if present.
+
 2005-03-02  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* search_road.c:

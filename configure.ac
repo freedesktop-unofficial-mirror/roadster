@@ -42,7 +42,7 @@ AC_SUBST(GNOME_LIBS)
 AC_SUBST(GNOME_CFLAGS)
 
 dnl ========= check for cairo ==================================================
-PKG_CHECK_MODULES(CAIRO, cairo libsvg libsvg-cairo,,exit)
+PKG_CHECK_MODULES(CAIRO, cairo,,exit)
 
 AC_SUBST(CAIRO_LIBS)
 AC_SUBST(CAIRO_CFLAGS)
@@ -51,6 +51,14 @@ PKG_CHECK_MODULES(, cairo > 0.2.0,
     [AC_DEFINE([HAVE_CAIRO_0_2_0], [1], [Newer Cairo])],
     continue
 )
+
+dnl ========= check for libsvg =================================================
+PKG_CHECK_MODULES(LIBSVG, libsvg libsvg-cairo,
+	[AC_DEFINE([HAVE_LIBSVG], [1], [Have libsvg])],
+	continue
+)
+AC_SUBST(LIBSVG_LIBS)
+AC_SUBST(LIBSVG_CFLAGS)
 
 dnl ========= deprecated options ===============================================
 AC_ARG_ENABLE(deprecated,
