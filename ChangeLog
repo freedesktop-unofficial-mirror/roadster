@@ -1,3 +1,8 @@
+2005-03-06  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* mainwindow.c: Scroll once when user clicks map border.
+	* map_draw_cairo.c: Fix halo drawing.
+
 2005-03-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* README: Provide URL to Wiki for help with compiling.

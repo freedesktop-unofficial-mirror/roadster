@@ -55,6 +55,11 @@
 #define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
 #define PROGRAM_DESCRIPTION		"Mapping for everyone!"
 
+#define DRAW_PRETTY_TIMEOUT_MS		(110)	// how long after stopping various movements should we redraw in high-quality mode
+#define SCROLL_TIMEOUT_MS		(100)	// how often (in MS) to move (SHORTER THAN ABOVE TIME)
+#define SCROLL_DISTANCE_IN_PIXELS	(100)	// how far to move every (above) MS
+#define BORDER_SCROLL_CLICK_TARGET_SIZE	(17)	// the size of the click target (distance from edge of map view) to begin scrolling
+
 // Layerlist columns
 #define LAYERLIST_COLUMN_ENABLED	(0)
 #define LAYERLIST_COLUMN_NAME		(1)
@@ -90,15 +95,6 @@ static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpo
 static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfigure *event);
 static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
 static void mainwindow_setup_selected_tool(void);
-
-#define DRAW_PRETTY_TIMEOUT_MS		(110)	// how long after stopping various movements should we redraw in high-quality mode
-#define SCROLL_TIMEOUT_MS		(100)	// how often (in MS) to move (SHORTER THAN ABOVE TIME)
-#define SCROLL_DISTANCE_IN_PIXELS	(100)	// how far to move every (above) MS
-#define BORDER_SCROLL_CLICK_TARGET_SIZE	(17)	// the size of the click target (distance from edge of map view) to begin scrolling
-
-typedef enum {
-	DIRECTION_NONE, DIRECTION_N, DIRECTION_NE, DIRECTION_E, DIRECTION_SE, DIRECTION_S, DIRECTION_SW, DIRECTION_W, DIRECTION_NW
-} EDirection;
 
 struct {
 	gint m_nX;
@@ -180,7 +176,7 @@ static void util_set_image_to_stock(GtkImage* pImage, gchar* pszStockIconID, Gtk
 {
 	GdkPixbuf* pPixbuf = gtk_widget_render_icon(GTK_WIDGET(g_MainWindow.m_pStatusbarGPSIcon),pszStockIconID, nSize, "name");
 	gtk_image_set_from_pixbuf(pImage, pPixbuf);
-	gdk_pixbuf_unref(pPixbuf);
+	g_object_unref(pPixbuf);
 }
 
 static void mainwindow_set_statusbar_position(gchar* pMessage)
@@ -391,15 +387,15 @@ void mainwindow_set_draw_pretty_timeout()
 //
 // the "scroll" timeout
 //
-gboolean mainwindow_on_scroll_timeout(gpointer _unused)
+void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels)
 {
-	if(g_MainWindow.m_eScrollDirection != DIRECTION_NONE) {
+	if(eScrollDirection != DIRECTION_NONE) {
 		gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
 		gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
 
-		gint nDeltaX = SCROLL_DISTANCE_IN_PIXELS * g_aDirectionMultipliers[g_MainWindow.m_eScrollDirection].m_nX;
-		gint nDeltaY = SCROLL_DISTANCE_IN_PIXELS * g_aDirectionMultipliers[g_MainWindow.m_eScrollDirection].m_nY;
-		
+		gint nDeltaX = nPixels * g_aDirectionMultipliers[eScrollDirection].m_nX;
+		gint nDeltaY = nPixels * g_aDirectionMultipliers[eScrollDirection].m_nY;
+
 		map_center_on_windowpoint(g_MainWindow.m_pMap,
 			(nWidth / 2) + nDeltaX,
 			(nHeight / 2) + nDeltaY);
@@ -407,6 +403,11 @@ gboolean mainwindow_on_scroll_timeout(gpointer _unused)
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 		mainwindow_set_draw_pretty_timeout();
 	}
+}
+
+gboolean mainwindow_on_scroll_timeout(gpointer _unused)
+{
+	mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
 	return TRUE;	// more events, please
 }
 void mainwindow_cancel_scroll_timeout()
@@ -692,6 +693,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 			if(eScrollDirection != DIRECTION_NONE) {
 				// begin a scroll
+				
 				//GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
 				//if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
 				GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
@@ -701,6 +703,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				g_MainWindow.m_bScrolling = TRUE;
 				g_MainWindow.m_eScrollDirection = eScrollDirection;
 
+				mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
 				mainwindow_set_scroll_timeout();
 				//}
 				//gdk_cursor_unref(pCursor);
@@ -710,7 +713,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				// else begin a drag
 //                                 GdkCursor* pCursor = gdk_cursor_new(GDK_HAND2);
 //                                 if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
-				GdkCursor* pCursor = gdk_cursor_new(GDK_HAND2);
+				GdkCursor* pCursor = gdk_cursor_new(GDK_FLEUR);
 				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
 				gdk_cursor_unref(pCursor);
 
@@ -760,6 +763,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 //                 return TRUE;
 //         }
 	//	map_redraw_if_needed();
+
 	return TRUE;
 }
 

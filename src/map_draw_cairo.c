@@ -145,7 +145,7 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 	if(pPointString->m_pPointsArray->len < 2) return;
 
 #define ROAD_MAX_SEGMENTS 100
-	if(pPointString->m_pPointsArray->len > ROAD_MAX_SEGMENTS) { g_warning("road %s has > %d segments!\n", pszLabel, ROAD_MAX_SEGMENTS); return; }
+	if(pPointString->m_pPointsArray->len > ROAD_MAX_SEGMENTS) { g_warning("not drawing label for road '%s' with > %d segments.\n", pszLabel, ROAD_MAX_SEGMENTS); return; }
 
 	gfloat fFontSize = pLabelStyle->m_afFontSizeAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 	if(fFontSize == 0) return;
@@ -376,11 +376,11 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 			cairo_set_rgb_color(pCairo, 0.0,0.0,0.0);
 			cairo_set_alpha(pCairo, 1.0);
 			cairo_rotate(pCairo, fAngleInRadians);
-			//cairo_text_path(pCairo, azLabelSegment);
 
 			gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 			if(fHaloSize >= 0) {
 				cairo_save(pCairo);
+					cairo_text_path(pCairo, azLabelSegment);
 					cairo_set_line_width(pCairo, fHaloSize);
 					cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
 					cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
@@ -476,11 +476,11 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 		cairo_move_to(pCairo, fDrawX, fDrawY);
 		cairo_set_rgb_color(pCairo, pLabelStyle->m_clrColor.m_fRed, pLabelStyle->m_clrColor.m_fGreen, pLabelStyle->m_clrColor.m_fBlue);
 		cairo_set_alpha(pCairo, fAlpha);
-		//cairo_text_path(pCairo, pszLabel);
 
 		gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 		if(fHaloSize >= 0) {
 			cairo_save(pCairo);
+				cairo_text_path(pCairo, pszLabel);
 				cairo_set_line_width(pCairo, fHaloSize);
 				cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
 				cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
