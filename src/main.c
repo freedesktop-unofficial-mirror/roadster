@@ -28,59 +28,49 @@
 #include <gnome.h>
 #include "gui.h"
 #include "db.h"
-#include "mainwindow.h"
 #include "map.h"
-#include "import.h"
 #include "gpsclient.h"
-#include "locationset.h"
 #include "scenemanager.h"
-#include "point.h"
-#include "pointstring.h"
-#include "track.h"
 
 static gboolean main_init(void);
 static void main_deinit(void);
 
 int main (int argc, char *argv[])
 {
-	int ret;
 
 	#ifdef ENABLE_NLS
 		bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
 		textdomain(PACKAGE);
 	#endif
 
-//         g_thread_init(NULL);
-//         gdk_threads_init();
+//	g_thread_init(NULL);
+//	gdk_threads_init();
 
 	gnome_init(PACKAGE, VERSION, argc, argv);
 
-	if(!main_init()) {
+	if(!main_init())
 		return 1;
-	}
 
 	gui_run();
-	main_deinit();	// usually doesn't get here
+	main_deinit();
+
 	return 0;
 }
 
 gboolean main_init(void)
 {
 	// Initialize GLib thread system
-	// g_thread_init(NULL);
+	//g_thread_init(NULL);
 
 	if(!gnome_vfs_init()) {	
 		g_warning("gnome_vfs_init failed\n");
 		return FALSE;
 	}
-	gchar* pszApplicationDir = g_strdup_printf("%s/.roadster", g_get_home_dir());
-	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszApplicationDir, 0700)) {
-		// no big deal, it probably exists.
-	}
 
-	/*
-	** init our modules
-	*/
+	gchar* pszApplicationDir = g_strdup_printf("%s/.roadster", g_get_home_dir());
+	gnome_vfs_make_directory(pszApplicationDir, 0700);
+	g_free(pszApplicationDir);
+
 	g_print("initializing points\n");
 	point_init();
 	g_print("initializing pointstrings\n");
@@ -96,7 +86,6 @@ gboolean main_init(void)
 
 	g_print("initializing scenemanager\n");
 	scenemanager_init();
-	//geometryset_init();
 
 	g_print("initializing locationsets\n");
 	locationset_init();
@@ -120,6 +109,9 @@ gboolean main_init(void)
 
 static void main_deinit(void)
 {
+	g_print("deinitializating database\n");
 	db_deinit();
 	// others?
+
+	g_print("deinitialization complete\n");
 }

@@ -31,6 +31,7 @@ struct {
 } g_GPSClient = {0};
 
 gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condition, gpointer data);
+static void gpsclient_connect(void);
 
 void gpsclient_init()
 {

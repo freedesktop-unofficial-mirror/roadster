@@ -21,17 +21,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <glade/glade.h>
-
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
+#include <glade/glade.h>
 #include <gnome.h>
 
 #include "gui.h"
-#include "map.h"
-#include "util.h"
 #include "db.h"
 
 #include "mainwindow.h"
@@ -40,21 +37,20 @@
 #include "datasetwindow.h"
 #include "welcomewindow.h"
 #include "searchwindow.h"
-#include "databasewindow.h"
 
 void gui_init()
 {
 	GladeXML *pGladeXML;
 
 	// Load glade UI definition file and connect to callback functions	
-	pGladeXML = glade_xml_new (PACKAGE_DATA_DIR"/roadster.glade", NULL, NULL);
+	// try source directory first (good for development)
+	pGladeXML = glade_xml_new (PACKAGE_SOURCE_DIR"/data/roadster.glade", NULL, NULL);
 	if(pGladeXML == NULL) {
-		// try source directory if user hasn't done a 'make install' (good for development, too!)
-		pGladeXML = glade_xml_new (PACKAGE_SOURCE_DIR"/data/roadster.glade", NULL, NULL);
+		pGladeXML = glade_xml_new (PACKAGE_DATA_DIR"/roadster.glade", NULL, NULL);
 
 		if(pGladeXML == NULL) {
 			g_message("cannot find file roadster.glade\n");
-			gtk_exit(0);
+			gtk_main_quit();
 		}
 	}
 	glade_xml_signal_autoconnect(pGladeXML);
@@ -66,7 +62,6 @@ void gui_init()
 	importwindow_init(pGladeXML);
 	datasetwindow_init(pGladeXML);
 	welcomewindow_init(pGladeXML);
-//	databasewindow_init(pGladeXML);
 }
 
 void gui_run()
@@ -86,6 +81,6 @@ void gui_exit()
 	mainwindow_hide();
 	gotowindow_hide();
 
-	gtk_exit(0);
+	gtk_main_quit();
 }
 

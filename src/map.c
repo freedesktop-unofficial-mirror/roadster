@@ -53,6 +53,7 @@
 
 static gboolean map_data_load(map_t* pMap, maprect_t* pRect);
 static void map_data_clear(map_t* pMap);
+void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics);
 
 // Each zoomlevel has a scale and an optional name (name isn't used for anything)
 zoomlevel_t g_sZoomLevels[NUM_ZOOMLEVELS+1] = {

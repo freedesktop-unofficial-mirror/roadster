@@ -1,3 +1,10 @@
+2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
+	* src/gui.c: Call gtk_main_quit() to shutdown properly and look for glade file in source dir first.
+	* src/main.c: Clean up.
+	* src/layers.c: Look for style file in source dir first.
+	* src/gpsclient.c
+	* src/map.c: Add prototype.
+
 2005-03-03  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* map.c: Removed drawing code, added two rendering backends.

@@ -110,12 +110,12 @@ layers_load_from_file()
 	//int i;
 
 	// Load style definition file
-	doc = xmlReadFile(PACKAGE_DATA_DIR"/data/layers.xml", NULL, 0);
-	if(doc == NULL) {
-		// try source directory if user hasn't done a 'make install' (good for development, too!)
-		doc = xmlReadFile(PACKAGE_SOURCE_DIR"/data/layers.xml", NULL, 0);
+	// try source directory first (good for development)
+	doc = xmlReadFile(PACKAGE_SOURCE_DIR"/data/layers.xml", NULL, 0);
+	if (doc == NULL) {
+		doc = xmlReadFile(PACKAGE_DATA_DIR"/data/layers.xml", NULL, 0);
 
-		if(doc == NULL) {
+		if (doc == NULL) {
 			g_message("cannot load file layers.xml\n");
 			gtk_exit(0);
 		}
