@@ -25,16 +25,20 @@
 #define _SCENEMANAGER_H_
 
 typedef struct scenemanager {
-	GPtrArray* m_p;
+	GdkRegion* m_pTakenRegion;
+
 	GHashTable* m_pLabelHash;
 } scenemanager_t;
 
 void scenemanager_init(void);
 void scenemanager_new(scenemanager_t** ppReturn);
 
-gboolean scenemanager_can_draw_label(scenemanager_t* pSceneManager, const gchar* pszLabel);
-void scenemanager_label_drawn(scenemanager_t* pSceneManager, const gchar* pszLabel);
-void scenemanager_clear(scenemanager_t* pSceneManager);
+gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* pScreenLocation);
+gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints);
+void scenemanager_claim_label(scenemanager_t* pSceneManager, const gchar* pszLabel);
+void scenemanager_claim_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints);
+void scenemanager_claim_rectangle(scenemanager_t* pSceneManager, GdkRectangle* pRect);
 
+void scenemanager_clear(scenemanager_t* pSceneManager);
 
 #endif

@@ -226,12 +226,12 @@
 
 <layer name="rivers">
 	<sublayer>
-		<property name="width" level="5" value="1.0" />
-		<property name="width" level="6" value="4.0" />
-		<property name="width" level="7" value="6.0" />
-		<property name="width" level="8" value="10.0" />
-		<property name="width" level="9" value="14.0" />
-		<property name="width" level="10" value="18.0" />
+		<property name="width" level="5" value="3.0" />
+		<property name="width" level="6" value="3.0" />
+		<property name="width" level="7" value="3.0" />
+		<property name="width" level="8" value="3.0" />
+		<property name="width" level="9" value="6.0" />
+		<property name="width" level="10" value="8.0" />
 		<property name="color" value="#C2C0F8ff" />
 		<property name="join-style" value="round" />
 		<property name="cap-style" value="round" />

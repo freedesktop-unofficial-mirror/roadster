@@ -578,7 +578,7 @@ void mainwindow_on_aboutmenuitem_activate(GtkMenuItem *menuitem, gpointer user_d
 	const gchar *ppAuthors[] = {
 		"Ian McIntosh <ian_mcintosh@linuxadvocate.org>",
 		"Nathan Fredrickson <nathan@silverorange.com>",
-	    NULL
+		NULL
 	};
 
   	GtkWidget *pAboutWindow = gnome_about_new(

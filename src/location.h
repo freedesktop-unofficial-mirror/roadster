@@ -1,5 +1,5 @@
 /***************************************************************************
- *            locationset.h
+ *            location.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -21,34 +21,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _LOCATIONSET_H
-#define _LOCATIONSET_H
+#ifndef _LOCATION_H
+#define _LOCATION_H
+
+#include "map.h"
 
 G_BEGIN_DECLS
 
-#include "map.h"
-	
-typedef struct locationsetstyle {
-	// icon?
-	int a;
-} locationsetstyle_t;
-
-// a set of locations (eg. "Coffee Shops")
-typedef struct locationset {
+// a single location (eg. "Someday Cafe")
+typedef struct location {
 	gint m_nID;
 	gchar* m_pszName;
-
-	locationsetstyle_t m_Style;
-
-	GPtrArray* m_pLocationsArray;
-} locationset_t;
-
-void locationset_init(void);
-void locationset_load_locationsets(void);
-gboolean locationset_load_locations(maprect_t* pRect);
-gboolean locationset_add_location(gint nLocationSetID, mappoint_t* pPoint, gint* pReturnID);
-const GPtrArray* locationset_get_set_array(void);
+	mappoint_t m_Coordinates;
+} location_t;
 
 G_END_DECLS
 
-#endif /* _LOCATIONSET_H */
+#endif /* _LOCATION_H */

@@ -1,9 +1,17 @@
+2005-03-08  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/location.c:
+	* src/location.h: Added.
+	* src/locationset.c: location code moved to location.c.  Code cleanup.
+	* src/scenemanager.c: Implement using GdkRegion to prevent overlapping labels.
+	* src/map_draw_cairo.c: Add new scenemanager calls.
+
 2005-03-07  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/prefs.c:
 	* src/prefs.h: Added. (Not currently used.)
 	* src/main.c: Add init for prefs.
-	* src/mainwindow.c: Squelch redraw user drags 0 distance.
+	* src/mainwindow.c: Squelch redraw if user drags 0 distance.
 
 2005-03-07  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 

@@ -41,6 +41,7 @@
 #include "road.h"
 #include "point.h"
 #include "layers.h"
+#include "location.h"
 #include "locationset.h"
 #include "scenemanager.h"
 
@@ -150,7 +151,7 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 	gfloat fFontSize = pLabelStyle->m_afFontSizeAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 	if(fFontSize == 0) return;
 
-	if(!scenemanager_can_draw_label(pMap->m_pSceneManager, pszLabel)) {
+	if(!scenemanager_can_draw_label_at(pMap->m_pSceneManager, pszLabel, NULL)) {
 		//g_print("dup label: %s\n", pszLabel);
 		return;
 	}
@@ -389,10 +390,12 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 			cairo_show_text(pCairo, azLabelSegment);
 			//cairo_fill(pCairo);
 		cairo_restore(pCairo);
+
+		// scenemanager_claim_polygon(pMap->m_pSceneManager, GdkPoint *pPoints, gint nNumPoints);
 	}
 	cairo_restore(pCairo);
 
-	scenemanager_label_drawn(pMap->m_pSceneManager, pszLabel);
+	scenemanager_claim_label(pMap->m_pSceneManager, pszLabel);
 }
 
 void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, const gchar* pszLabel)
@@ -405,7 +408,7 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 	gdouble fAlpha = pLabelStyle->m_clrColor.m_fAlpha;
 	if(fAlpha == 0.0) return;
 
-	if(!scenemanager_can_draw_label(pMap->m_pSceneManager, pszLabel)) {
+	if(!scenemanager_can_draw_label_at(pMap->m_pSceneManager, pszLabel, NULL)) {
 		//g_print("dup label: %s\n", pszLabel);
 		return;
 	}
@@ -488,9 +491,10 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 		}
 		cairo_show_text(pCairo, pszLabel);
 		//cairo_fill(pCairo);
+//		scenemanager_claim_polygon(pMap->m_pSceneManager, GdkPoint *pPoints, gint nNumPoints);
 	cairo_restore(pCairo);
 
-        scenemanager_label_drawn(pMap->m_pSceneManager, pszLabel);
+        scenemanager_claim_label(pMap->m_pSceneManager, pszLabel);
 }
 
 #define CROSSHAIR_LINE_RELIEF   (6)

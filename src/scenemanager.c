@@ -41,44 +41,70 @@ void scenemanager_init(void)
 
 void scenemanager_new(scenemanager_t** ppReturn)
 {
+	// create new scenemanager and return it
 	scenemanager_t* pNew = g_new0(scenemanager_t, 1);
 	pNew->m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
+	pNew->m_pTakenRegion = gdk_region_new();
 	*ppReturn = pNew;
 }
 
-gboolean scenemanager_can_draw_label(scenemanager_t* pSceneManager, const gchar* pszLabel)
+gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* pScreenLocation)
 {
 	g_assert(pSceneManager != NULL);
+	g_assert(pszLabel != NULL);
+	
+	// g_assert(pScreenLocation != NULL);
+	// NOTE: ignore pScreenLocation for now
 
-	gpointer pKey;
-	gpointer pValue;
+	gpointer pKey, pValue;
 
-	// can draw if it doesn't exist in table
-	gboolean bOK = (g_hash_table_lookup_extended(pSceneManager->m_pLabelHash,
-                                        pszLabel, &pKey, &pValue) == FALSE);
+	// Can draw if it doesn't exist in table
+	return (FALSE == g_hash_table_lookup_extended(pSceneManager->m_pLabelHash, pszLabel, &pKey, &pValue));
+}
 
-//	g_print("permission for %s: %s\n", pszLabel, bOK ? "YES" : "NO");
+gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints)
+{
+	GdkRegion* pNewRegion = gdk_region_polygon(pPoints, nNumPoints, GDK_WINDING_RULE);
+	
+	// Set pNewRegion to the intersection of it and the 'taken region'
+	gdk_region_intersect(pNewRegion, pSceneManager->m_pTakenRegion);
+	gboolean bOK = gdk_region_empty(pNewRegion);	// it's ok to draw here if the intersection is empty
+        gdk_region_destroy(pNewRegion);
+
 	return bOK;
 }
 
-void scenemanager_label_drawn(scenemanager_t* pSceneManager, const gchar* pszLabel)
+void scenemanager_claim_label(scenemanager_t* pSceneManager, const gchar* pszLabel)
 {
 	g_assert(pSceneManager != NULL);
-//	g_print("drawn! %s\n", pszLabel);
+
+	// Just putting the label into the hash is enough
 	g_hash_table_insert(pSceneManager->m_pLabelHash, pszLabel, NULL);
+}
+
+void scenemanager_claim_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints)
+{
+	// Create a GdkRegion from the given points and union it with the 'taken region'
+	GdkRegion* pNewRegion = gdk_region_polygon(pPoints, nNumPoints, GDK_WINDING_RULE);
+	gdk_region_union(pSceneManager->m_pTakenRegion, pNewRegion);
+        gdk_region_destroy(pNewRegion);
+}
+
+void scenemanager_claim_rectangle(scenemanager_t* pSceneManager, GdkRectangle* pRect)
+{
+	// Add the area of the rectangle to the region
+	gdk_region_union_with_rect(pSceneManager->m_pTakenRegion, pRect);
 }
 
 void scenemanager_clear(scenemanager_t* pSceneManager)
 {
 	g_assert(pSceneManager != NULL);
 
+	// destroy and recreate hash table (better way to clear it?)
 	g_hash_table_destroy(pSceneManager->m_pLabelHash);
 	pSceneManager->m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
+
+	// Empty the region (better way?)
+	gdk_region_destroy(pSceneManager->m_pTakenRegion);
+	pSceneManager->m_pTakenRegion = gdk_region_new();
 }
-
-
-#if ROADSTER_DEAD_CODE
-static void scenemanager_add_label_line(geometryset_t* pGeometry, gchar* pszLabel) {}
-static void scenemanager_add_label_polygon(geometryset_t* pGeometry, gchar* pszLabel) {}
-static void scenemanager_draw(void) {}
-#endif /* ROADSTER_DEAD_CODE */

@@ -32,6 +32,7 @@ roadster_SOURCES = \
 	datasetwindow.c\
 	welcomewindow.c\
 	gpsclient.c\
+	location.c\
 	locationset.c\
 	searchwindow.c\
 	search_road.c\

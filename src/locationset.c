@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <gtk/gtk.h>
+#include "location.h"
 #include "locationset.h"
 #include "db.h"
 #include "util.h"
@@ -34,7 +35,6 @@ struct {
 	GPtrArray* m_pLocationSetArray;	// an array of locationsets
 	GHashTable* m_pLocationSetHash;	// stores pointers to locationsets, indexed by ID
 
-	GMemChunk* m_pLocationChunkAllocator;	// allocs location_t objects
 	GMemChunk* m_pLocationSetChunkAllocator;	// allocs locationset_t objects
 } g_LocationSet;
 
@@ -43,50 +43,21 @@ void locationset_init()
 	g_LocationSet.m_pLocationSetArray = g_ptr_array_new();
 	g_LocationSet.m_pLocationSetHash = g_hash_table_new(g_int_hash, g_int_equal);
 
-	// create memory allocators
-	g_LocationSet.m_pLocationChunkAllocator = g_mem_chunk_new("location chunk allocator",
-			sizeof(location_t), 1000, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_LocationSet.m_pLocationChunkAllocator != NULL);
-
+	// create memory allocator
 	g_LocationSet.m_pLocationSetChunkAllocator = g_mem_chunk_new("locationset chunk allocator",
 			sizeof(locationset_t), 1000, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL);
 }
 
-// get a new point struct from the allocator
-static gboolean locationset_util_new_location(location_t** ppLocation)
-{
-	g_return_val_if_fail(ppLocation != NULL, FALSE);
-	g_return_val_if_fail(*ppLocation == NULL, FALSE);	// must be a pointer to a NULL pointer
-	g_return_val_if_fail(g_LocationSet.m_pLocationChunkAllocator != NULL, FALSE);
-
-	location_t* pNew = g_mem_chunk_alloc0(g_LocationSet.m_pLocationChunkAllocator);
-	if(pNew) {
-		*ppLocation = pNew;
-		return TRUE;
-	}
-	return FALSE;
-}
-
-// return a point struct to the allocator
-static void locationset_util_free_location(location_t* pLocation)
-{
-	g_return_if_fail(pLocation != NULL);
-	g_return_if_fail(g_LocationSet.m_pLocationChunkAllocator != NULL);
-
-	// give back to allocator
-	g_mem_chunk_free(g_LocationSet.m_pLocationChunkAllocator, pLocation);
-}
-
 // get a new locationset struct from the allocator
-static locationset_t* locationset_util_new_locationset(void)
+static locationset_t* locationset_new(void)
 {
 	g_return_val_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL, NULL);
 
 	return g_mem_chunk_alloc0(g_LocationSet.m_pLocationSetChunkAllocator);
 }
 
-static void locationset_util_clear_locationset(locationset_t* pLocationSet)
+static void locationset_clear(locationset_t* pLocationSet)
 {
 	g_return_if_fail(pLocationSet != NULL);
 	g_return_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL);
@@ -95,20 +66,18 @@ static void locationset_util_clear_locationset(locationset_t* pLocationSet)
 	gint i;
 	for(i=((pLocationSet->m_pLocationsArray->len)-1) ; i>=0 ; i--) {
 		location_t* pLocation = g_ptr_array_remove_index_fast(pLocationSet->m_pLocationsArray, i);
-		locationset_util_free_location(pLocation);
+		location_free(pLocation);
 	}
 }
 
 // return a locationset struct (and all locations) to the allocator
-#if 0
-static void locationset_util_free_locationset(locationset_t* pLocationSet)
+static void locationset_free(locationset_t* pLocationSet)
 {
-	locationset_util_clear_locationset(pLocationSet);
+	locationset_clear(pLocationSet);
 
 	// give back to allocator
 	g_mem_chunk_free(g_LocationSet.m_pLocationSetChunkAllocator, pLocationSet);
 }
-#endif
 
 static void locationset_clear_all_locations(void)
 {
@@ -116,7 +85,7 @@ static void locationset_clear_all_locations(void)
 	gint i;
 	for(i=(g_LocationSet.m_pLocationSetArray->len)-1 ; i>=0 ; i--) {
 		locationset_t* pLocationSet = g_ptr_array_index(g_LocationSet.m_pLocationSetArray, i);
-		locationset_util_clear_locationset(pLocationSet);
+		locationset_clear(pLocationSet);
 	}
 //	g_hash_table_foreach_steal(g_LocationSet.m_pLocationSets, callback_delete_pointset, NULL);
 //	g_assert(g_hash_table_size(g_LocationSet.m_pLocationSets) == 0);
@@ -131,11 +100,11 @@ void locationset_load_locationsets()
 		db_row_t aRow;
 
 		while((aRow = db_fetch_row(pResultSet))) {
-			locationset_t* pNewLocationSet = locationset_util_new_locationset();
+			locationset_t* pNewLocationSet = locationset_new();
 
 			pNewLocationSet->m_nID = atoi(aRow[0]);
 			pNewLocationSet->m_pszName = g_strdup(aRow[1]);
-			pNewLocationSet->m_pLocationsArray = g_ptr_array_new();
+			//pNewLocationSet->m_pLocationsArray = g_ptr_array_new();
 
 			// Add the new set to both data structures
 			g_ptr_array_add(g_LocationSet.m_pLocationSetArray, pNewLocationSet);
@@ -151,58 +120,6 @@ const GPtrArray* locationset_get_set_array()
 {
 	return g_LocationSet.m_pLocationSetArray;
 }
-
-/**************************************************************
-** PointSets
-***************************************************************/
-
-#if 0
-gboolean db_pointset_insert(const gchar* pszName, gint* pReturnID)
-{
-	if(!db_is_connected()) return FALSE;
-	g_assert(pszName != NULL);
-	g_assert(pReturnID != NULL);
-
-	// create query SQL
-	gchar azQuery[MAX_SQLBUFFER_LEN];
-	gchar* pszEscapedName = db_make_escaped_string(pszName);
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "INSERT INTO %s SET ID=NULL, Name='%s';", DB_LOCATIONSETS_TABLENAME, pszEscapedName);
-	db_free_escaped_string(pszEscapedName);
-
-	// run query
-	if(!db_query(azQuery, NULL)) {
-		return FALSE;
-	}
-	// return the new ID
-	*pReturnID = db_insert_id();
-	return TRUE;	
-}
-#endif
-
-#if 0
-gboolean db_pointset_delete(gint nPointSetID)
-{
-	if(!db_is_connected(g_pDB)) return FALSE;
-
-	gchar azQuery[MAX_SQLBUFFER_LEN];
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "DELETE FROM %s WHERE ID=%d;", DB_LOCATIONSETS_TABLENAME, nPointSetID);
-	if(MYSQL_RESULT_SUCCESS != mysql_query(g_pDB->m_pMySQLConnection, azQuery)) {
-		g_warning("db_pointset_delete: deleting pointset failed: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), azQuery);
-		return FALSE;
-	}
-
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "DELETE FROM %s WHERE LocationSetID=%d;", DB_LOCATIONS_TABLENAME, nPointSetID);
-	if(MYSQL_RESULT_SUCCESS != mysql_query(g_pDB->m_pMySQLConnection, azQuery)) {
-		g_warning("db_pointset_delete: deleting points failed: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), azQuery);
-		return FALSE;
-	}
-	return TRUE;
-}
-#endif
-
-/**************************************************************
-** Points
-***************************************************************/
 
 gboolean locationset_add_location(gint nLocationSetID, mappoint_t* pPoint, gint* pReturnID)
 {
@@ -307,7 +224,7 @@ gboolean locationset_load_locations(maprect_t* pRect)
 				// if found (and it should be, at least once we filter by SetID in the SQL above)
 				// allocate a new location_t and add it to the set
 				location_t* pNewLocation = NULL;
-				if(locationset_util_new_location(&pNewLocation)) {
+				if(location_new(&pNewLocation)) {
 					pNewLocation->m_nID = nLocationID;
 					db_parse_point(aRow[2], &pNewLocation->m_Coordinates);
 					g_ptr_array_add(pLocationSet->m_pLocationsArray, pNewLocation);
@@ -328,7 +245,51 @@ gboolean locationset_load_locations(maprect_t* pRect)
 	return FALSE;
 }
 
-#if 0
+/**************************************************************
+** PointSets
+***************************************************************/
+
+#ifdef ROADSTER_DEAD_CODE
+/*
+gboolean db_pointset_insert(const gchar* pszName, gint* pReturnID)
+{
+	if(!db_is_connected()) return FALSE;
+	g_assert(pszName != NULL);
+	g_assert(pReturnID != NULL);
+
+	// create query SQL
+	gchar azQuery[MAX_SQLBUFFER_LEN];
+	gchar* pszEscapedName = db_make_escaped_string(pszName);
+	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "INSERT INTO %s SET ID=NULL, Name='%s';", DB_LOCATIONSETS_TABLENAME, pszEscapedName);
+	db_free_escaped_string(pszEscapedName);
+
+	// run query
+	if(!db_query(azQuery, NULL)) {
+		return FALSE;
+	}
+	// return the new ID
+	*pReturnID = db_insert_id();
+	return TRUE;	
+}
+gboolean db_pointset_delete(gint nPointSetID)
+{
+	if(!db_is_connected(g_pDB)) return FALSE;
+
+	gchar azQuery[MAX_SQLBUFFER_LEN];
+	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "DELETE FROM %s WHERE ID=%d;", DB_LOCATIONSETS_TABLENAME, nPointSetID);
+	if(MYSQL_RESULT_SUCCESS != mysql_query(g_pDB->m_pMySQLConnection, azQuery)) {
+		g_warning("db_pointset_delete: deleting pointset failed: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), azQuery);
+		return FALSE;
+	}
+
+	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "DELETE FROM %s WHERE LocationSetID=%d;", DB_LOCATIONS_TABLENAME, nPointSetID);
+	if(MYSQL_RESULT_SUCCESS != mysql_query(g_pDB->m_pMySQLConnection, azQuery)) {
+		g_warning("db_pointset_delete: deleting points failed: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), azQuery);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 gboolean db_point_delete(gint nPointID)
 {
 	if(!db_is_connected()) return FALSE;
@@ -342,4 +303,5 @@ gboolean db_point_delete(gint nPointID)
 	}
 	return TRUE;
 }
+*/
 #endif
