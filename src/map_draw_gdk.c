@@ -149,20 +149,24 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	if(fLineWidth <= 0.0) return;	// Don't draw invisible lines
 	if(pSubLayerStyle->m_clrColor.m_fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
 
-	// Raise the tolerance way up for thin lines
-	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
+	// Use GDK dash style if ANY dash pattern is set
+	gint nDashStyle = GDK_LINE_SOLID;
+	if(pSubLayerStyle->m_nDashStyle != 0) {
+		nDashStyle = GDK_LINE_ON_OFF_DASH;
+
+		// gdk_gc_set_dashes
+	}
 
 	// XXX: Don't use round at low zoom levels
+	// gint nCapStyle = pSubLayerStyle->m_nCapStyle;
+	gint nCapStyle = GDK_CAP_ROUND;
 	if(fLineWidth < 8) {
-		// Set line style
-		gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-				   ((gint)fLineWidth), GDK_LINE_SOLID, GDK_CAP_PROJECTING, GDK_JOIN_MITER);
+		nCapStyle = GDK_CAP_PROJECTING;
 	}
-	else {
-		// Set line style
-		gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-				   ((gint)fLineWidth), GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_MITER);
-	}
+
+	// Set line style
+	gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+			   ((gint)fLineWidth), nDashStyle, nCapStyle, GDK_JOIN_MITER);
 
 	GdkColor clr;
 	clr.red = pSubLayerStyle->m_clrColor.m_fRed * 65535;

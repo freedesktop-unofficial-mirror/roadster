@@ -1,3 +1,9 @@
+2005-03-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* README: Provide URL to Wiki for help with compiling.
+	* src/mainwindow.c: Use 'implicit pointer grab' instead of gdk_pointer_grab() due to bitching of Carl, Owen and Keith :)
+	* src/map_draw_gdk.c: Better support for dashed lines (not complete).
+
 2005-03-04  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/mainwindow.c: Added click-and-hold to scroll at map window edge.

@@ -24,7 +24,7 @@
 		<property name="cap-style" value="round" />
 	</sublayer>
 	<label>
-		<property name="color" value="#00000000" />
+		<property name="color" value="#FF000000" />
 		<property name="font-size" level="8" value="12" />
 		<property name="font-size" level="9" value="14" />
 		<property name="font-size" level="10" value="24" />
@@ -230,7 +230,7 @@
 		<property name="width" level="8" value="10.0" />
 		<property name="width" level="9" value="14.0" />
 		<property name="width" level="10" value="18.0" />
-		<property name="color" value="#94b2c5ff" />
+		<property name="color" value="#C2C0F8ff" />
 		<property name="join-style" value="round" />
 		<property name="cap-style" value="round" />
 	</sublayer>
@@ -239,7 +239,7 @@
 <layer name="lakes">
 	<sublayer>
 		<property name="width" level="3" value="1.0" />
-		<property name="color" value="#94b2c5ff" />
+		<property name="color" value="#C2C0F8FF" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="butt" />
 	</sublayer>

@@ -1,11 +1,2 @@
-To compile, you will need develement packages of:
-
-- cairo
-- libpixman
-- libsvg
-- libsvg-cairo
-- libmysqld (embedded MySQL server, v4.1 or newer)
-- openssl (required by MySQL only)
-- gettext library and header files
-- gpsd (libgps library and header files)
+See http://cairographics.org/Roadster_2fBuildingIt for notes on building.
 

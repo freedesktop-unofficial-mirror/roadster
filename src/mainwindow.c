@@ -94,7 +94,7 @@ static void mainwindow_setup_selected_tool(void);
 #define DRAW_PRETTY_TIMEOUT_MS		(110)	// how long after stopping various movements should we redraw in high-quality mode
 #define SCROLL_TIMEOUT_MS		(100)	// how often (in MS) to move (SHORTER THAN ABOVE TIME)
 #define SCROLL_DISTANCE_IN_PIXELS	(100)	// how far to move every (above) MS
-#define BORDER_SCROLL_CLICK_TARGET_SIZE	(25)	// the size of the click target (distance from edge of map view) to begin scrolling
+#define BORDER_SCROLL_CLICK_TARGET_SIZE	(17)	// the size of the click target (distance from edge of map view) to begin scrolling
 
 typedef enum {
 	DIRECTION_NONE, DIRECTION_N, DIRECTION_NE, DIRECTION_E, DIRECTION_SE, DIRECTION_S, DIRECTION_SW, DIRECTION_W, DIRECTION_NW
@@ -250,7 +250,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	map_new(&g_MainWindow.m_pMap, GTK_WIDGET(g_MainWindow.m_pDrawingArea));
 
 	// add signal handlers to drawing area
-	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
+	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
@@ -692,33 +692,46 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 			if(eScrollDirection != DIRECTION_NONE) {
 				// begin a scroll
+				//GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
+				//if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
 				GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
-				if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
-					g_MainWindow.m_bScrolling = TRUE;
-					g_MainWindow.m_eScrollDirection = eScrollDirection;
-
-					mainwindow_set_scroll_timeout();
-				}
+				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
 				gdk_cursor_unref(pCursor);
+
+				g_MainWindow.m_bScrolling = TRUE;
+				g_MainWindow.m_eScrollDirection = eScrollDirection;
+
+				mainwindow_set_scroll_timeout();
+				//}
+				//gdk_cursor_unref(pCursor);
 
 			}
 			else {
 				// else begin a drag
+//                                 GdkCursor* pCursor = gdk_cursor_new(GDK_HAND2);
+//                                 if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
 				GdkCursor* pCursor = gdk_cursor_new(GDK_HAND2);
-				if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
-					g_MainWindow.m_bMouseDragging = TRUE;
-					g_MainWindow.m_ptClickLocation.m_nX = nX;
-					g_MainWindow.m_ptClickLocation.m_nY = nY;
-				}
+				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
 				gdk_cursor_unref(pCursor);
+
+				g_MainWindow.m_bMouseDragging = TRUE;
+				g_MainWindow.m_ptClickLocation.m_nX = nX;
+				g_MainWindow.m_ptClickLocation.m_nY = nY;
+//                                 }
+//                                 gdk_cursor_unref(pCursor);
 			}
 		}
 		// Left mouse button up?
 		else if(event->type == GDK_BUTTON_RELEASE) {
+			// restore cursor
+			GdkCursor* pCursor = gdk_cursor_new(GDK_LEFT_PTR);
+			gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+			gdk_cursor_unref(pCursor);
+
 			// end mouse dragging, if active
 			if(g_MainWindow.m_bMouseDragging == TRUE) {
 				g_MainWindow.m_bMouseDragging = FALSE;
-				gdk_pointer_ungrab(GDK_CURRENT_TIME);
+//                                 gdk_pointer_ungrab(GDK_CURRENT_TIME);
 
 				mainwindow_cancel_draw_pretty_timeout();
 				mainwindow_draw_map(DRAWFLAG_ALL);
@@ -728,7 +741,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			if(g_MainWindow.m_bScrolling == TRUE) {
 				g_MainWindow.m_bScrolling = FALSE;
 				g_MainWindow.m_eScrollDirection = DIRECTION_NONE;
-				gdk_pointer_ungrab(GDK_CURRENT_TIME);
+//                                 gdk_pointer_ungrab(GDK_CURRENT_TIME);
 
 				mainwindow_cancel_draw_pretty_timeout();
 				mainwindow_draw_map(DRAWFLAG_ALL);
@@ -757,6 +770,8 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 
 	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
 	gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
+	
+	EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
 	if(g_MainWindow.m_bMouseDragging) {
 		gint nDeltaX = g_MainWindow.m_ptClickLocation.m_nX - nX;
@@ -773,23 +788,27 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		g_MainWindow.m_ptClickLocation.m_nX = nX;
 		g_MainWindow.m_ptClickLocation.m_nY = nY;
 	}
-
-	EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
-	
 	// set appropriate mouse cursor whether scrolling or not
-	if(g_MainWindow.m_bScrolling) {
+	else if(g_MainWindow.m_bScrolling) {
+		// just set the cursor the window
+
 		if(g_MainWindow.m_eScrollDirection != eScrollDirection) {
+			// update cursor
+			GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
+			gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+			gdk_cursor_unref(pCursor);
+
 			// update direction if actively scrolling
 			g_MainWindow.m_eScrollDirection = eScrollDirection;
-			
-			GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
-			gdk_pointer_ungrab(GDK_CURRENT_TIME);
-			gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME);
-			gdk_cursor_unref(pCursor);
+
+			//GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
+			//gdk_pointer_ungrab(GDK_CURRENT_TIME);
+			//gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME);
+			//gdk_cursor_unref(pCursor);
 		}
 	}
 	else {
-		// just set the cursor the window
+		// just set cursor based on what we're hovering over
 		GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
 		gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
 		gdk_cursor_unref(pCursor);
