@@ -59,8 +59,9 @@
 #define TILE_MODULUS			(23)		// how many of the above units each tile is on a side
 #define MAP_TILE_WIDTH			(TILE_MODULUS / TILE_SHIFT)	// width and height of a tile, in degrees
 
-#define MIN_ROAD_HIT_TARGET_WIDTH	(4)	// make super thin roads a bit easier to hover over/click, in pixels
+#define MIN_ROAD_HIT_TARGET_WIDTH	(6)	// make super thin roads a bit easier to hover over/click, in pixels
 
+#define MIN_ZOOMLEVEL_FOR_LOCATIONS	(6)
 
 /* Prototypes */
 
@@ -71,7 +72,7 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect);
 
 // hit testing
 static gboolean map_hit_test_layer_roads(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
-static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fDistance, mappoint_t* pReturnClosestPoint);
+static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint, gdouble* pfReturnPercentAlongLine);
 static ESide map_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pClosestPointOnLine, mappoint_t* pHitPoint);
 
 static gboolean map_hit_test_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
@@ -101,13 +102,14 @@ draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW] = {
 
 	{LAYER_MISC_AREA, 0, SUBLAYER_RENDERTYPE_POLYGONS}, //map_draw_layer_polygons},
 
-	{LAYER_PARK, 0, SUBLAYER_RENDERTYPE_POLYGONS}, //map_draw_layer_polygons},
-	{LAYER_PARK, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
+	{LAYER_PARK, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
+	{LAYER_PARK, 1, SUBLAYER_RENDERTYPE_POLYGONS}, //map_draw_layer_polygons},
 
+	{LAYER_LAKE, 0, SUBLAYER_RENDERTYPE_LINES},	// NOTE: drawing lines BELOW polygons (and ~double width) lets us avoid drawing seams on top of multi-polygon lakes
 	{LAYER_RIVER, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},	// single-line rivers
-
-	{LAYER_LAKE, 0, SUBLAYER_RENDERTYPE_POLYGONS}, //map_draw_layer_polygons},	// lakes and fat rivers
-//	{LAYER_LAKE, 1, map_draw_layer_lines},
+	
+	{LAYER_LAKE, 1, SUBLAYER_RENDERTYPE_POLYGONS},
+	{LAYER_RIVER, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},	// single-line rivers
 
 	{LAYER_MINORHIGHWAY_RAMP, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
 	{LAYER_MINORSTREET, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
@@ -125,10 +127,10 @@ draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW] = {
 	{LAYER_MINORHIGHWAY, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
 
 	// LABELS
-	{LAYER_MINORSTREET, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
-	{LAYER_MAJORSTREET, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
-	{LAYER_RAILROAD, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
 	{LAYER_MINORHIGHWAY, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
+	{LAYER_MAJORSTREET, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},	// important ones first
+	{LAYER_MINORSTREET, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
+	{LAYER_RAILROAD, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
 ///     {LAYER_MAJORHIGHWAY, 0, SUBLAYER_RENDERTYPE_LABELS},
 
 	{LAYER_MISC_AREA, 0, SUBLAYER_RENDERTYPE_POLYGON_LABELS},
@@ -207,8 +209,11 @@ static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocatio
 	pLocationsArray = g_hash_table_lookup(pMap->m_pLocationArrayHashTable, &nLocationSetID);
 	if(pLocationsArray != NULL) {
 		// found existing array
+		//g_print("existing for set %d\n", nLocationSetID);
 	}
 	else {
+		//g_print("new for set %d\n", nLocationSetID);
+
 		// need a new array
 		pLocationsArray = g_ptr_array_new();
 		g_assert(pLocationsArray != NULL);
@@ -220,6 +225,7 @@ static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocatio
 
 	// add location to the array of locations!
 	g_ptr_array_add(pLocationsArray, pLocation);
+	//g_print("pLocationsArray->len = %d\n", pLocationsArray->len);
 }
 
 void map_draw(map_t* pMap, gint nDrawFlags)
@@ -630,8 +636,6 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 	}	
 }
 
-#define MIN_ZOOMLEVEL_FOR_LOCATIONS	(6)
-
 static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
 {
 	g_return_val_if_fail(pMap != NULL, FALSE);
@@ -642,7 +646,7 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
 
 	gint nZoomLevel = map_get_zoomlevel(pMap);
 
-	if(nZoomLevel <= MIN_ZOOMLEVEL_FOR_LOCATIONS) {
+	if(nZoomLevel < MIN_ZOOMLEVEL_FOR_LOCATIONS) {
 		return TRUE;
 	}
 
@@ -786,7 +790,7 @@ void map_add_track(map_t* pMap, gint hTrack)
 //  Hit Testing
 // ========================================================
 
-void map_free_hitstruct(map_t* pMap, maphit_t* pHitStruct)
+void map_hitstruct_free(map_t* pMap, maphit_t* pHitStruct)
 {
 	if(pHitStruct == NULL) return;
 
@@ -807,6 +811,8 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStr
 	// Test things in the REVERSE order they are drawn (otherwise we'll match things that have been painted-over)
 	gint i;
 	for(i=NUM_ELEMS(layerdraworder)-1 ; i>=0 ; i--) {
+		if(layerdraworder[i].eSubLayerRenderType != SUBLAYER_RENDERTYPE_LINES) continue;
+		
 		gint nLayer = layerdraworder[i].nLayer;
 
 		// use width from whichever layer it's wider in
@@ -853,9 +859,12 @@ static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDis
 			mappoint_t* pPoint2 = g_ptr_array_index(pRoad->m_pPointsArray, iPoint);
 
 			mappoint_t pointClosest;
+			gdouble fPercentAlongLine;
 
 			// hit test this line
-			if(map_hit_test_line(pPoint1, pPoint2, pHitPoint, fMaxDistance, &pointClosest)) {
+			if(map_hit_test_line(pPoint1, pPoint2, pHitPoint, fMaxDistance, &pointClosest, &fPercentAlongLine)) {
+				//g_print("fPercentAlongLine = %f\n",fPercentAlongLine);
+
 				// fill out a new maphit_t struct with details
 				maphit_t* pHitStruct = g_new0(maphit_t, 1);
 				pHitStruct->m_eHitType = MAP_HITTYPE_ROAD;
@@ -896,8 +905,11 @@ static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDis
 }
 
 // Does the given point come close enough to the line segment to be considered a hit?
-static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint)
+static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint, gdouble* pfReturnPercentAlongLine)
 {
+	if(pHitPoint->m_fLatitude < (pPoint1->m_fLatitude - fMaxDistance) && pHitPoint->m_fLatitude < (pPoint2->m_fLatitude - fMaxDistance)) return FALSE;
+	if(pHitPoint->m_fLongitude < (pPoint1->m_fLongitude - fMaxDistance) && pHitPoint->m_fLongitude < (pPoint2->m_fLongitude - fMaxDistance)) return FALSE;
+
 	// Some bad ASCII art demonstrating the situation:
 	//
 	//             / (u)
@@ -969,6 +981,9 @@ static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mapp
 				pReturnClosestPoint->m_fLongitude = a.m_fLongitude + pPoint1->m_fLongitude;
 			}
 
+			if(pfReturnPercentAlongLine) {
+				*pfReturnPercentAlongLine = (fLengthAlongV / fLengthV);
+			}
 			return TRUE;
 		}
 	}
@@ -1020,7 +1035,8 @@ static gboolean map_hit_test_locationsets(map_t* pMap, rendermetrics_t* pRenderM
 	for(i=0 ; i<pLocationSetsArray->len ; i++) {
 		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetsArray, i);
 
-		// XXX: check that it's visible
+		// the user is NOT trying to click on invisible things :)
+		if(!locationset_is_visible(pLocationSet)) continue;
 
 		// 2. Get array of Locations from the hash table using LocationSetID
 		GPtrArray* pLocationsArray;
@@ -1041,7 +1057,7 @@ static gboolean map_hit_test_locationsets(map_t* pMap, rendermetrics_t* pRenderM
 static gboolean map_hit_test_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
 {
 	gint i;
-	for(i=0 ; i<pLocationsArray->len ; i++) {
+	for(i=(pLocationsArray->len-1) ; i>=0 ; i--) {	// NOTE: test in *reverse* order so we hit the ones drawn on top first
 		location_t* pLocation = g_ptr_array_index(pLocationsArray, i);
 
 		// bounding box test

@@ -38,16 +38,18 @@ typedef struct locationsetstyle {
 typedef struct locationset {
 	gint m_nID;
 	gchar* m_pszName;
+	gint m_nLocationCount;
+	gboolean m_bVisible;
 	locationsetstyle_t m_Style;
 } locationset_t;
 
 void locationset_init(void);
-
 void locationset_load_locationsets(void);
 const GPtrArray* locationset_get_array(void);
 gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationSet);
-
 gboolean locationset_insert(const gchar* pszName, gint* pnReturnID);
+void locationset_set_visible(locationset_t* pLocationSet, gboolean bVisible);
+gboolean locationset_is_visible(locationset_t* pLocationSet);
 
 G_END_DECLS
 

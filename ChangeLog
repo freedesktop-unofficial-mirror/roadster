@@ -1,3 +1,16 @@
+2005-03-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/location.c: Inserting of POI and POI attributes.
+	* src/locationset.c: Keep track of whether a set is visible.
+	* src/search_road.c:
+	* src/search_location.c: Add basic POI searching.
+	* src/mainwindow.c: Sidebar now shows POI sets and can toggle their visibility.
+	* src/map.c: Some changes to layer draw order to facilitate river borders.  Also made important roads get labeled first.
+	* src/map_draw_cairo.c: Fixed Cairo road drawing bug from 2005-03-28's switch to road_t.
+	* src/map_draw_gdk.c: Respect a POI set's visibility status.
+	* src/searchwindow.c: Remove incorrect attempt to set results list not-sorted before adding results.
+	* data/layers.xml: Major style changes.  Changed colors and added outlines for parks, lakes, rivers.
+
 2005-03-29  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/db.c: Add parsing for WKB points.  Change an index on the LocationAttributeValue table.

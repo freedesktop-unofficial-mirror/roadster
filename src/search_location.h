@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-void search_location_execute(const gchar* pszSearch, gint nLocationSetID, gfloat fDistance, gint nDistanceUnit);
+void search_location_execute(const gchar* pszSentence);
 
 G_END_DECLS
 

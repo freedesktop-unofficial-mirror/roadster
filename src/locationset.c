@@ -56,7 +56,13 @@ static gboolean locationset_alloc(locationset_t** ppReturn)
 {
 	g_return_val_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL, NULL);
 
-	*ppReturn = g_mem_chunk_alloc0(g_LocationSet.m_pLocationSetChunkAllocator);
+	locationset_t* pNew = g_mem_chunk_alloc0(g_LocationSet.m_pLocationSetChunkAllocator);
+
+	// set defaults
+	pNew->m_bVisible = TRUE;
+
+	// return it
+	*ppReturn = pNew;
 	return TRUE;
 }
 
@@ -81,7 +87,7 @@ gboolean locationset_insert(const gchar* pszName, gint* pnReturnID)
 // Load all locationsets into memory
 void locationset_load_locationsets(void)
 {
-	gchar* pszSQL = g_strdup_printf("SELECT ID, Name FROM LocationSet;");
+	gchar* pszSQL = g_strdup_printf("SELECT LocationSet.ID, LocationSet.Name, COUNT(Location.ID) FROM LocationSet LEFT JOIN Location ON (LocationSet.ID=Location.LocationSetID) GROUP BY LocationSet.ID;");
 
 	db_resultset_t* pResultSet = NULL;
 	if(db_query(pszSQL, &pResultSet)) {
@@ -93,6 +99,7 @@ void locationset_load_locationsets(void)
 
 			pNewLocationSet->m_nID = atoi(aRow[0]);
 			pNewLocationSet->m_pszName = g_strdup(aRow[1]);
+			pNewLocationSet->m_nLocationCount = atoi(aRow[2]);
 
 			// Add the new set to both data structures
 			g_ptr_array_add(g_LocationSet.m_pLocationSetArray, pNewLocationSet);
@@ -117,6 +124,16 @@ gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationS
 		return TRUE;
 	}
 	return FALSE;	
+}
+
+gboolean locationset_is_visible(locationset_t* pLocationSet)
+{
+	return pLocationSet->m_bVisible;
+}
+
+void locationset_set_visible(locationset_t* pLocationSet, gboolean bVisible)
+{
+	pLocationSet->m_bVisible = bVisible;
 }
 
 #ifdef ROADSTER_DEAD_CODE

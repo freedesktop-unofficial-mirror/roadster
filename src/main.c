@@ -55,18 +55,28 @@ int main (int argc, char *argv[])
 	if(!main_init())
 		return 1;
 
-/*         gint nNewLocationSetID = 0;                                                                                                                             */
-/*         locationset_insert("Coffee Shops", &nNewLocationSetID);                                                                                                 */
-/*         mappoint_t pt;                                                                                                                                          */
-/*         pt.m_fLatitude = 41.54944;                                                                                                                              */
-/*         pt.m_fLongitude = -70.61409;                                                                                                                            */
-/*                                                                                                                                                                 */
-/*         gint nNewLocationID = 0;                                                                                                                                */
-/*         location_insert(nNewLocationSetID, &pt, &nNewLocationID);                                                                                               */
-/*                                                                                                                                                                 */
-/*         gchar* pszSQL = g_strdup_printf("INSERT INTO LocationAttributeValue SET LocationID=%d, AttributeNameID=1, Value='1369 Coffee House';", nNewLocationID); */
-/*         db_query(pszSQL, NULL);                                                                                                                                 */
-/*         g_free(pszSQL);                                                                                                                                         */
+	// Insert some POI for testing...
+/*
+	gint nNewLocationSetID = 0;
+	locationset_insert("Coffee Shops", &nNewLocationSetID);
+
+	gint nNewLocationID;
+
+	mappoint_t pt;
+	pt.m_fLatitude = 41.54930;  // these are in MA somewhere
+	pt.m_fLongitude = -70.61403;
+	nNewLocationID = 0;
+	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "1369 Cambridge Street\nCambridge, MA, 02141", NULL);
+
+	pt.m_fLatitude = 41.54762;
+	pt.m_fLongitude = -70.61409;
+	nNewLocationID = 0;
+	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "One Cup of Coffee", NULL);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "29 Shore Street\nCambridge, MA, 02141", NULL);
+*/
 
 	prefs_read();
 

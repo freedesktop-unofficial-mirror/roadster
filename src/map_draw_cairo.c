@@ -215,7 +215,7 @@ void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermet
 void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
 	mappoint_t* pPoint;
-	pointstring_t* pPointString;
+	road_t* pRoad;
 	gint iString;
 	gint iPoint;
 
@@ -264,19 +264,17 @@ void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* p
 	cairo_set_line_width(pCairo, fLineWidth);
 
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
-		RENDERING_THREAD_YIELD;
+		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
-		pPointString = g_ptr_array_index(pRoadsArray, iString);
-
-		if(pPointString->m_pPointsArray->len >= 2) {
-			pPoint = g_ptr_array_index(pPointString->m_pPointsArray, 0);
+		if(pRoad->m_pPointsArray->len >= 2) {
+			pPoint = g_ptr_array_index(pRoad->m_pPointsArray, 0);
 
 			// go to index 0
 			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
 
 			// start at index 1 (0 was used above)
-			for(iPoint=1 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);//~ g_print("  point (%.05f,%.05f)\n", ScaleX(pPoint->m_fLongitude), ScaleY(pPoint->m_fLatitude));
+			for(iPoint=1 ; iPoint<pRoad->m_pPointsArray->len ; iPoint++) {
+				pPoint = g_ptr_array_index(pRoad->m_pPointsArray, iPoint);//~ g_print("  point (%.05f,%.05f)\n", ScaleX(pPoint->m_fLongitude), ScaleY(pPoint->m_fLatitude));
 				cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
 			}
 #ifdef HACK_AROUND_CAIRO_LINE_CAP_BUG
@@ -516,10 +514,12 @@ static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 //	gdouble fFontHeight = font_extents.ascent;
 
         // text too big for line?       XXX: This math is not right but good enough for now ;)
+#ifdef LABEL_LIMIT_TO_ROAD
         if((fLabelWidth * fLabelWidth) > (fLineLengthSquared + (ACCEPTABLE_LINE_LABEL_OVERDRAW_IN_PIXELS_SQUARED))) {
             cairo_restore(pCairo);
             return;
         }
+#endif
         gdouble fLineLength = sqrt(fLineLengthSquared);
 
         gdouble fTotalPadding = fLineLength - fLabelWidth;

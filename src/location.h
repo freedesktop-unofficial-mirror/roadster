@@ -43,6 +43,7 @@ void location_init();
 gboolean location_alloc(location_t** ppLocation);
 void location_free(location_t* pLocation);
 gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturnID);
+gboolean location_insert_attribute(gint nLocationID, gint nAttributeID, const gchar* pszValue, gint* pnReturnID);
 
 G_END_DECLS
 

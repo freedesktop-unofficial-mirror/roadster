@@ -83,3 +83,25 @@ gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturn
 	*pnReturnID = db_get_last_insert_id();
 	return TRUE;
 }
+
+gboolean location_insert_attribute(gint nLocationID, gint nAttributeID, const gchar* pszValue, gint* pnReturnID)
+{
+	g_assert(nLocationID != 0);
+	g_assert(nAttributeID != 0);
+	g_assert(pszValue != NULL);
+
+	gchar* pszSQL = g_strdup_printf(
+		"INSERT INTO LocationAttributeValue"
+		" SET LocationID=%d, AttributeNameID=%d, Value='%s';", 
+		nLocationID, nAttributeID, pszValue
+		);
+
+	db_query(pszSQL, NULL);
+	g_free(pszSQL);
+
+	if(pnReturnID) {
+		*pnReturnID = db_get_last_insert_id();
+	}
+	return TRUE;
+}
+

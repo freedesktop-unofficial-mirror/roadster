@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#define USE_GNOME_VFS
+#define USE_GNOME_VFS		// comment this out to get a faster single-threaded compile (can't import, though)
 //#define ENABLE_TIMING
 #define USE_GFREELIST
 

@@ -163,7 +163,7 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 
 	// Claim zip code, if present
 	if(search_address_match_zipcode(aWords[iLast])) {
-		g_print("matched ZIP %s\n", aWords[iLast]);
+		//g_print("matched ZIP %s\n", aWords[iLast]);
 		roadsearch.m_pszZIPCode = aWords[iLast];
 
 		iLast--;	// last word taken
@@ -181,10 +181,10 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 	if(nRemainingWordCount >= 3) {
 		// try two-word state name
 		gchar* pszStateName = g_strjoinv_limit(" ", aWords, iLast-1, iLast);
-		g_print("trying two-word state name '%s'\n", pszStateName);
+		//g_print("trying two-word state name '%s'\n", pszStateName);
 
 		if(db_state_get_id(pszStateName, &roadsearch.m_nStateID)) {
-			g_print("matched state name!\n");
+			//g_print("matched state name!\n");
 			iLast -= 2;	// last TWO words taken
 			nRemainingWordCount -= 2;
 		}
@@ -192,9 +192,9 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 	}
 	// try a one-word state name
 	if(bGotStateName == FALSE && nRemainingWordCount >= 2) {
-		g_print("trying one-word state name '%s'\n", aWords[iLast]);
+		//g_print("trying one-word state name '%s'\n", aWords[iLast]);
 		if(db_state_get_id(aWords[iLast], &roadsearch.m_nStateID)) {
-			g_print("matched state name!\n");
+			//g_print("matched state name!\n");
 			iLast--;	// last word taken
 			nRemainingWordCount--;
 		}
@@ -240,7 +240,7 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 	}
 	else {
 		// oops, no street name
-		g_print("no street name found in search\n");
+		//g_print("no street name found in search\n");
 	}
 	g_free(roadsearch.m_pszRoadName);
 }
@@ -312,7 +312,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 
 	gchar azQuery[MAX_QUERY];
 	gchar* pszSafeRoadName = db_make_escaped_string(pRoadSearch->m_pszRoadName);
-	g_print("pRoadSearch->m_pszRoadName = %s, pszSafeRoadName = %s\n", pRoadSearch->m_pszRoadName, pszSafeRoadName);
+	//g_print("pRoadSearch->m_pszRoadName = %s, pszSafeRoadName = %s\n", pRoadSearch->m_pszRoadName, pszSafeRoadName);
 
 	gchar* pszRoadNameCondition;
 	if(strlen(pRoadSearch->m_pszRoadName) < ROAD_MIN_LENGTH_FOR_WILDCARD_SEARCH) {

@@ -10,7 +10,7 @@
 		<property name="width" level="8" value="12.0" />
 		<property name="width" level="9" value="17.0" />
 		<property name="width" level="10" value="35.0" />
-		<property name="color" value="#b0b0b0ff" />
+		<property name="color" value="#a0a0a0ff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
 	</sublayer>
@@ -26,6 +26,7 @@
 	</sublayer>
 	<label>
 		<property name="color" value="#FF000000" />
+		<property name="font-size" level="7" value="11" />
 		<property name="font-size" level="8" value="11" />
 		<property name="font-size" level="9" value="13" />
 		<property name="font-size" level="10" value="24" />
@@ -53,7 +54,7 @@
 		<property name="width" level="8" value="13.0" />
 		<property name="width" level="9" value="21.0" />
 		<property name="width" level="10" value="32.0" />
-		<property name="color" value="#FFfb73ff" />
+		<property name="color" value="#FFFB94ff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
 	</sublayer>
@@ -212,8 +213,14 @@
 
 <layer name="parks">
 	<sublayer>
+		<property name="width" level="3" value="2.0" />
+		<property name="color" value="#888888FF" />
+		<property name="join-style" value="miter" />
+		<property name="cap-style" value="butt" />
+	</sublayer>
+	<sublayer>
 		<property name="width" level="3" value="1.0" />
-		<property name="color" value="#adca94ff" />
+		<property name="color" value="#94C29Cff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="butt" />
 	</sublayer>
@@ -229,13 +236,24 @@
 
 <layer name="rivers">
 	<sublayer>
+		<property name="width" level="5" value="5.0" />
+		<property name="width" level="6" value="5.0" />
+		<property name="width" level="7" value="5.0" />
+		<property name="width" level="8" value="5.0" />
+		<property name="width" level="9" value="8.0" />
+		<property name="width" level="10" value="10.0" />
+		<property name="color" value="#777777FF" />
+		<property name="join-style" value="round" />
+		<property name="cap-style" value="round" />
+	</sublayer>
+	<sublayer>
 		<property name="width" level="5" value="3.0" />
 		<property name="width" level="6" value="3.0" />
 		<property name="width" level="7" value="3.0" />
 		<property name="width" level="8" value="3.0" />
 		<property name="width" level="9" value="6.0" />
 		<property name="width" level="10" value="8.0" />
-		<property name="color" value="#B9B9F8FF" />
+		<property name="color" value="#5AAEDEFF" />
 		<property name="join-style" value="round" />
 		<property name="cap-style" value="round" />
 	</sublayer>
@@ -243,8 +261,14 @@
 
 <layer name="lakes">
 	<sublayer>
+		<property name="width" level="3" value="2.0" />
+		<property name="color" value="#777777FF" />
+		<property name="join-style" value="miter" />
+		<property name="cap-style" value="butt" />
+	</sublayer>
+	<sublayer>
 		<property name="width" level="3" value="1.0" />
-		<property name="color" value="#C2C0F8FF" />
+		<property name="color" value="#5AAEDEFF" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="butt" />
 	</sublayer>

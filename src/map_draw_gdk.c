@@ -102,9 +102,9 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap)
 {
 	GdkColor clr;
-	clr.red = 240/255.0 * 65535;
-	clr.green = 235/255.0 * 65535;
-	clr.blue = 230/255.0 * 65535;
+	clr.red = 255/255.0 * 65535;
+	clr.green = 227/255.0 * 65535;
+	clr.blue = 181/255.0 * 65535;
 	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
 	
 	gdk_draw_rectangle(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
@@ -328,6 +328,7 @@ static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetric
 	for(i=0 ; i<pLocationSetsArray->len ; i++) {
 		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetsArray, i);
 
+		if(!locationset_is_visible(pLocationSet)) continue;
 
 		// 2. Get array of Locations from the hash table using LocationSetID
 		GPtrArray* pLocationsArray;

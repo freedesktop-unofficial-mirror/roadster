@@ -81,6 +81,11 @@
 // Locationset columns
 #define	LOCATIONSETLIST_COLUMN_ENABLED  (0)
 #define LOCATIONSETLIST_COLUMN_NAME	(1)
+#define LOCATIONSETLIST_COLUMN_ID	(2)
+
+//
+#define MOUSE_BUTTON_LEFT		(1)
+#define MOUSE_BUTTON_RIGHT		(3)
 
 // Limits
 #define MAX_SEARCH_TEXT_LENGTH		(100)
@@ -126,6 +131,7 @@ static gboolean mainwindow_callback_on_slide_timeout(gpointer pData);
 static void mainwindow_setup_selected_tool(void);
 static gboolean mainwindow_on_enter_notify(GtkWidget* w, GdkEventCrossing *event);
 static gboolean mainwindow_on_leave_notify(GtkWidget* w, GdkEventCrossing *event);
+static void mainwindow_on_locationset_visible_checkbox_clicked(GtkCellRendererToggle *cell, gchar *path_str, gpointer data);
 
 void mainwindow_add_history();
 
@@ -164,9 +170,10 @@ struct {
 
 	// Sidebar
 
-	// "Draw" Sidebar
+	// "Draw" Sidebar (currently POI)
 	GtkTreeView* m_pLayersListTreeView;
 	GtkTreeView* m_pLocationSetsTreeView;
+	GtkListStore* m_pLocationSetsListStore;
 	GtkNotebook* m_pSidebarNotebook;
 
 	// "GPS" sidebar
@@ -359,13 +366,13 @@ void mainwindow_init(GladeXML* pGladeXML)
         g_MainWindow.m_nGPSLocationGlyph = glyph_load(PACKAGE_DATA_DIR"/car.svg");
 
 	// create location sets tree view
-	GtkListStore* pLocationSetsListStore = gtk_list_store_new(2, G_TYPE_BOOLEAN, G_TYPE_STRING);
-	gtk_tree_view_set_model(g_MainWindow.m_pLocationSetsTreeView, GTK_TREE_MODEL(pLocationSetsListStore));
+	g_MainWindow.m_pLocationSetsListStore = gtk_list_store_new(3, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INT);
+	gtk_tree_view_set_model(g_MainWindow.m_pLocationSetsTreeView, GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore));
 
 	// NEW COLUMN: Visible checkbox
 	pCellRenderer = gtk_cell_renderer_toggle_new();
   	g_object_set_data(G_OBJECT(pCellRenderer), "column", (gint *)LAYERLIST_COLUMN_ENABLED);
-//	g_signal_connect(pCellRenderer, "toggled", G_CALLBACK(on_layervisible_checkbox_clicked), pLocationSetsListStore);
+	g_signal_connect(pCellRenderer, "toggled", G_CALLBACK(mainwindow_on_locationset_visible_checkbox_clicked), NULL);
 	pColumn = gtk_tree_view_column_new_with_attributes("Visible", pCellRenderer, "active", LOCATIONSETLIST_COLUMN_ENABLED, NULL);
 	gtk_tree_view_append_column(g_MainWindow.m_pLocationSetsTreeView, pColumn);
 
@@ -382,11 +389,15 @@ void mainwindow_init(GladeXML* pGladeXML)
 	for(i=0 ; i<pLocationSetArray->len ; i++) {
 		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetArray, i);
 
-		gtk_list_store_append(pLocationSetsListStore, &iter);
-		gtk_list_store_set(pLocationSetsListStore, &iter, 
-				   LOCATIONSETLIST_COLUMN_NAME, pLocationSet->m_pszName, 
+		gchar* pszName = g_strdup_printf("%s (%d)", pLocationSet->m_pszName, pLocationSet->m_nLocationCount);
+
+		gtk_list_store_append(g_MainWindow.m_pLocationSetsListStore, &iter);
+		gtk_list_store_set(g_MainWindow.m_pLocationSetsListStore, &iter, 
+				   LOCATIONSETLIST_COLUMN_NAME, pszName, 
 				   LOCATIONSETLIST_COLUMN_ENABLED, TRUE,
+				   LOCATIONSETLIST_COLUMN_ID, pLocationSet->m_nID, 
 				   -1);
+		g_free(pszName);
 	}
 
 #ifdef ROADSTER_DEAD_CODE
@@ -829,132 +840,123 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 	map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &screenpoint, &mappoint);
 	
 	maphit_t* pHitStruct = NULL;
-	if(map_hit_test(g_MainWindow.m_pMap, &mappoint, &pHitStruct) && pHitStruct->m_eHitType == MAP_HITTYPE_LOCATION) {
-		if(event->button == 1) {
-			if(event->type == GDK_BUTTON_PRESS) {
-				g_print("click on location ID #%d\n", pHitStruct->m_LocationHit.m_nLocationID);
+	gboolean bLocationHit = (map_hit_test(g_MainWindow.m_pMap, &mappoint, &pHitStruct) && pHitStruct->m_eHitType == MAP_HITTYPE_LOCATION);
+	// hitstruct free'd far below
+
+	if(event->button == MOUSE_BUTTON_LEFT) {
+		// Left mouse button down?
+		if(event->type == GDK_BUTTON_PRESS) {
+			tooltip_hide(g_MainWindow.m_pTooltip);
+
+			// Is it at a border?
+			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+			if(eScrollDirection != DIRECTION_NONE) {
+				// begin a scroll
+				GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
+				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+				gdk_cursor_unref(pCursor);
+
+				g_MainWindow.m_bScrolling = TRUE;
+				g_MainWindow.m_eScrollDirection = eScrollDirection;
+				g_MainWindow.m_bScrollMovement = FALSE;	// no movement yet
+
+				mainwindow_set_scroll_timeout();
 			}
-			else if(event->type == GDK_2BUTTON_PRESS) {
-				g_print("double-click on location ID #%d\n", pHitStruct->m_LocationHit.m_nLocationID);
+			else {
+				g_MainWindow.m_bMouseDragging = TRUE;
+				g_MainWindow.m_bMouseDragMovement = FALSE;
+				g_MainWindow.m_ptClickLocation.m_nX = nX;
+				g_MainWindow.m_ptClickLocation.m_nY = nY;
 			}
 		}
-	}
-	else {
-		if(event->button == 1) {
-			// Left mouse button down?
-			if(event->type == GDK_BUTTON_PRESS) {
-				tooltip_hide(g_MainWindow.m_pTooltip);
+		// Left mouse button up?
+		else if(event->type == GDK_BUTTON_RELEASE) {
+			// end mouse dragging, if active
+			if(g_MainWindow.m_bMouseDragging == TRUE) {
+				// restore cursor
+				GdkCursor* pCursor = gdk_cursor_new(GDK_LEFT_PTR);
+				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+				gdk_cursor_unref(pCursor);
 
-				// Is it at a border?
-				eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
-				if(eScrollDirection != DIRECTION_NONE) {
-					// begin a scroll
-					GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
-					gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
-					gdk_cursor_unref(pCursor);
-
-					g_MainWindow.m_bScrolling = TRUE;
-					g_MainWindow.m_eScrollDirection = eScrollDirection;
-					g_MainWindow.m_bScrollMovement = FALSE;	// no movement yet
-
-					mainwindow_set_scroll_timeout();
-				}
-				else {
-					g_MainWindow.m_bMouseDragging = TRUE;
-					g_MainWindow.m_bMouseDragMovement = FALSE;
-					g_MainWindow.m_ptClickLocation.m_nX = nX;
-					g_MainWindow.m_ptClickLocation.m_nY = nY;
-				}
-			}
-			// Left mouse button up?
-			else if(event->type == GDK_BUTTON_RELEASE) {
-				// end mouse dragging, if active
-				if(g_MainWindow.m_bMouseDragging == TRUE) {
-					// restore cursor
-					GdkCursor* pCursor = gdk_cursor_new(GDK_LEFT_PTR);
-					gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
-					gdk_cursor_unref(pCursor);
-
-					g_MainWindow.m_bMouseDragging = FALSE;
-					if(g_MainWindow.m_bMouseDragMovement) {
-						mainwindow_cancel_draw_pretty_timeout();
-						mainwindow_draw_map(DRAWFLAG_ALL);
-
-						mainwindow_add_history();
-					}
-				}
-
-				// end scrolling, if active
-				if(g_MainWindow.m_bScrolling == TRUE) {
-					// NOTE: don't restore cursor (mouse could *still* be over screen edge)
-
-					g_MainWindow.m_bScrolling = FALSE;
+				g_MainWindow.m_bMouseDragging = FALSE;
+				if(g_MainWindow.m_bMouseDragMovement) {
 					mainwindow_cancel_draw_pretty_timeout();
+					mainwindow_draw_map(DRAWFLAG_ALL);
 
-					// has there been any movement?
-					if(g_MainWindow.m_bScrollMovement) {
-						g_MainWindow.m_bScrollMovement = FALSE;
-						mainwindow_draw_map(DRAWFLAG_ALL);
-					}
-					else {
-						// user clicked the edge of the screen, but so far we haven't moved at all (they released the button too fast)
-						// so consider this a 'click' and just jump a bit in that direction
-						gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
-						gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
-
-						gint nDistanceInPixels;
-						if(g_MainWindow.m_eScrollDirection == DIRECTION_N || g_MainWindow.m_eScrollDirection == DIRECTION_S) {
-							// scroll half the height of the screen
-							nDistanceInPixels = nHeight/2;
-						}
-						else if(g_MainWindow.m_eScrollDirection == DIRECTION_E || g_MainWindow.m_eScrollDirection == DIRECTION_W) {
-							nDistanceInPixels = nWidth/2;
-						}
-						else {
-							// half the distance from corner to opposite corner
-							nDistanceInPixels = sqrt(nHeight*nHeight + nWidth*nWidth)/2;
-						}
-
-						mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, nDistanceInPixels);
-					}
-					g_MainWindow.m_eScrollDirection = DIRECTION_NONE;
 					mainwindow_add_history();
 				}
-			}
-			else if(event->type == GDK_2BUTTON_PRESS) {
-				// can only double click in the middle (not on a scroll border)
-				eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
-				if(eScrollDirection == DIRECTION_NONE) {
-					animator_destroy(g_MainWindow.m_pAnimator);
-
-					g_MainWindow.m_bSliding = TRUE;
-					g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS);
-
-					// set startpoint
-					map_get_centerpoint(g_MainWindow.m_pMap, &g_MainWindow.m_ptSlideStartLocation);
-
-					// set endpoint
-					screenpoint_t ptScreenPoint = {nX, nY};
-					map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &ptScreenPoint, &(g_MainWindow.m_ptSlideEndLocation));
+				else if(bLocationHit) {
+					g_print("click on location ID #%d\n", pHitStruct->m_LocationHit.m_nLocationID);
 				}
 			}
+
+			// end scrolling, if active
+			if(g_MainWindow.m_bScrolling == TRUE) {
+				// NOTE: don't restore cursor (mouse could *still* be over screen edge)
+
+				g_MainWindow.m_bScrolling = FALSE;
+				mainwindow_cancel_draw_pretty_timeout();
+
+				// has there been any movement?
+				if(g_MainWindow.m_bScrollMovement) {
+					g_MainWindow.m_bScrollMovement = FALSE;
+					mainwindow_draw_map(DRAWFLAG_ALL);
+				}
+				else {
+					// user clicked the edge of the screen, but so far we haven't moved at all (they released the button too fast)
+					// so consider this a 'click' and just jump a bit in that direction
+					gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
+					gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
+
+					gint nDistanceInPixels;
+					if(g_MainWindow.m_eScrollDirection == DIRECTION_N || g_MainWindow.m_eScrollDirection == DIRECTION_S) {
+						// scroll half the height of the screen
+						nDistanceInPixels = nHeight/2;
+					}
+					else if(g_MainWindow.m_eScrollDirection == DIRECTION_E || g_MainWindow.m_eScrollDirection == DIRECTION_W) {
+						nDistanceInPixels = nWidth/2;
+					}
+					else {
+						// half the distance from corner to opposite corner
+						nDistanceInPixels = sqrt(nHeight*nHeight + nWidth*nWidth)/2;
+					}
+
+					mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, nDistanceInPixels);
+				}
+				g_MainWindow.m_eScrollDirection = DIRECTION_NONE;
+				mainwindow_add_history();
+			}
 		}
-		/*
-		// Right-click?
-	//         else if (event->button == 3 && event->type == GDK_BUTTON_PRESS)
-	//         {
-	//                 // Save click location for use by callback
-	//                 g_MainWindow.m_ptClickLocation.m_nX = nX;
-	//                 g_MainWindow.m_ptClickLocation.m_nY = nY;
-	//
-	//                 // Show popup!
-	//                 gtk_menu_popup(g_MainWindow.m_pMapPopupMenu, NULL, NULL, NULL, NULL, event->button, event->time);
-	//                 return TRUE;
-	//         }
-		//	map_redraw_if_needed();
-		*/
+		else if(event->type == GDK_2BUTTON_PRESS) {
+			// can only double click in the middle (not on a scroll border)
+			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+			if(eScrollDirection == DIRECTION_NONE) {
+				animator_destroy(g_MainWindow.m_pAnimator);
+
+				g_MainWindow.m_bSliding = TRUE;
+				g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS);
+
+				// set startpoint
+				map_get_centerpoint(g_MainWindow.m_pMap, &g_MainWindow.m_ptSlideStartLocation);
+
+				// set endpoint
+				screenpoint_t ptScreenPoint = {nX, nY};
+				map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &ptScreenPoint, &(g_MainWindow.m_ptSlideEndLocation));
+			}
+		}
 	}
-	map_free_hitstruct(g_MainWindow.m_pMap, pHitStruct);
+	else if (event->button == MOUSE_BUTTON_RIGHT) {
+		// single right-click?
+		if(event->type == GDK_BUTTON_PRESS) {
+			// Save click location for use by callback
+	//		g_MainWindow.m_ptClickLocation.m_nX = nX;
+	//		g_MainWindow.m_ptClickLocation.m_nY = nY;
+			// Show popup!
+	//		gtk_menu_popup(g_MainWindow.m_pMapPopupMenu, NULL, NULL, NULL, NULL, event->button, event->time);
+	//		return TRUE;
+		}
+	}
+	map_hitstruct_free(g_MainWindow.m_pMap, pHitStruct);
 	return TRUE;
 }
 
@@ -1015,7 +1017,6 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		}
 	}
 	else {
-
 		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
   
 		if(eScrollDirection == DIRECTION_NONE) {
@@ -1051,7 +1052,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 
 				tooltip_show(g_MainWindow.m_pTooltip);	// ensure it's visible
 				
-				map_free_hitstruct(g_MainWindow.m_pMap, pHitStruct);
+				map_hitstruct_free(g_MainWindow.m_pMap, pHitStruct);
 			}
 			else {
 				// no hit. hide the tooltip
@@ -1497,6 +1498,37 @@ void mainwindow_add_history()
 	mainwindow_update_forward_back_buttons();
 }
 
+static void mainwindow_on_locationset_visible_checkbox_clicked(GtkCellRendererToggle *pCell, gchar *pszPath, gpointer pData)
+{
+	// get an iterator for this item
+	GtkTreePath *pPath = gtk_tree_path_new_from_string(pszPath);
+	GtkTreeIter iter;
+	gtk_tree_model_get_iter(g_MainWindow.m_pLocationSetsListStore, &iter, pPath);
+	gtk_tree_path_free (pPath);
+
+	// get locationset ID and whether it's set or not
+	gboolean bEnabled;
+	gint nLocationSetID;
+	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore), &iter, LOCATIONSETLIST_COLUMN_ENABLED, &bEnabled, -1);
+	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore), &iter, LOCATIONSETLIST_COLUMN_ID, &nLocationSetID, -1);
+
+	// toggle selection and set it
+	bEnabled = !bEnabled;
+	gtk_list_store_set(g_MainWindow.m_pLocationSetsListStore, &iter, LOCATIONSETLIST_COLUMN_ENABLED, bEnabled, -1);
+
+	locationset_t* pLocationSet = NULL;
+	if(locationset_find_by_id(nLocationSetID, &pLocationSet)) {
+		locationset_set_visible(pLocationSet, bEnabled);
+	}
+	else {
+		g_assert_not_reached();
+	}
+
+	GTK_PROCESS_MAINLOOP;
+
+	mainwindow_draw_map(DRAWFLAG_ALL);
+}
+
 #ifdef ROADSTER_DEAD_CODE
 /*
 
@@ -1506,30 +1538,6 @@ void on_importmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 	importwindow_show();
 }
 
-static void on_layervisible_checkbox_clicked(GtkCellRendererToggle *cell, gchar *path_str, gpointer data)
-{
-	GtkTreeModel *model = (GtkTreeModel *)data;
-	GtkTreePath *path = gtk_tree_path_new_from_string (path_str);
-	GtkTreeIter iter;
-	gboolean toggle_item;
-	gint *column;
-
-	column = g_object_get_data (G_OBJECT (cell), "column");
-
-	// get toggled iter
-	gtk_tree_model_get_iter (model, &iter, path);
-	gtk_tree_model_get (model, &iter, column, &toggle_item, -1);
-
-	// do something with the value
-	toggle_item ^= 1;
-
-	// set new value
-	gtk_tree_store_set (GTK_TREE_STORE (model), &iter, column,
-			  toggle_item, -1);
-
-	// clean up
-	gtk_tree_path_free (path);
-}
 
 void mainwindow_on_datasetmenuitem_activate(GtkWidget *pWidget, gpointer* p)
 {

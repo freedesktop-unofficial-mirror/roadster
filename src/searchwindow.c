@@ -100,13 +100,14 @@ void searchwindow_clear_results(void)
 void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 {
 	// make list unsorted (sorting once at the end is much faster than for each insert)
-	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), MAGIC_GTK_NO_SORT_COLUMN, GTK_SORT_ASCENDING);
+//	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), MAGIC_GTK_NO_SORT_COLUMN, GTK_SORT_ASCENDING);
 
 	const gchar* pszSearch = gtk_entry_get_text(g_SearchWindow.m_pSearchEntry);
 
 	void* pBusy = mainwindow_set_busy();
 	searchwindow_clear_results();
 	search_road_execute(pszSearch);
+	search_location_execute(pszSearch);
 	mainwindow_set_not_busy(&pBusy);
 
 	if(g_SearchWindow.m_nNumResults == 0) {
