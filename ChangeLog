@@ -1,5 +1,12 @@
 2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/layers.c: Add warning for bad color strings in layers.xml file.
+	* src/map.c: Read map in fixed-location tiles to take advantage of MySQL query caching.
+	* src/db.c: Enable query cache in embedded MySQL server.
+	* src/map_draw_cairo.c: Allowing drawing of more road labels by permitting label to go over end of road slightly (scenemanager still prevents overlapping with other labels).
+
+2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/point.c:
 	* src/track.c:
 	* src/location.c:

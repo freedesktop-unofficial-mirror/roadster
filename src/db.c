@@ -78,8 +78,8 @@ void db_init()
 		"--skip-innodb",	// don't bother with table types we don't use
 		"--skip-bdb",		//
 
-//                 "--query_cache_type=1",
-//                 "--query_cache_size=40MB",
+                "--query-cache-type=1",
+                "--query-cache-size=40MB",
 
 //		"--flush",			// seems like a good idea since users can quickly kill the app/daemon
 		pszSetDataDirCommand
@@ -423,7 +423,7 @@ gboolean db_insert_city(const gchar* pszName, gint nStateID, gint* pnReturnCityI
 //
 // insert / select state
 //
-// lookup numerical ID of a city by name
+// lookup numerical ID of a state by name
 gboolean db_state_get_id(const gchar* pszName, gint* pnReturnID)
 {
 	gint nReturnID = 0;

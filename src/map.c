@@ -45,13 +45,28 @@
 #include "locationset.h"
 #include "scenemanager.h"
 
+// NOTE on choosing tile size.
+// A) It is arbitrary and could be changed (even at runtime, although this would render useless everything in the cache)
+// B) Too big, and you'll see noticable pauses while scrolling.
+// C) Too small, and you make a ton of extra work with all the extra queries.
+// D) The current value is the result of some casual testing.
+
+// XXX: The names below aren't very clear.
+#define TILE_SHIFT			(1000.0)	// the units we care about (1000ths of a degree)
+#define TILE_MODULUS			(23)		// how many of the above units each tile is on a side
+#define MAP_TILE_WIDTH			(TILE_MODULUS / TILE_SHIFT)	// width and height of a tile, in degrees
+
+//#define ROUND_FLOAT_TO_DECIMAL_PLACE(f,d)	(floor((f)*(d))/(d))	// d should be like 10 or 100.  10 will drop all but the first decimal.
+
 // ADD:
 // 'Mal' - ?
 // 'Trce - Trace
 
 /* Prototypes */
 
+static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect);	// ensure tiles
 static gboolean map_data_load(map_t* pMap, maprect_t* pRect);
+
 static void map_data_clear(map_t* pMap);
 void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics);
 
@@ -176,7 +191,8 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	// Load geometry
 	//
 	TIMER_BEGIN(loadtimer, "--- BEGIN ALL DB LOAD");
-	map_data_load(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
+	map_data_clear(pMap);
+	map_data_load_tiles(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
 //	locationset_load_locations(&(pRenderMetrics->m_rWorldBoundingBox));
 	TIMER_END(loadtimer, "--- END ALL DB LOAD");
 
@@ -441,16 +457,84 @@ void map_draw(map_t* pMap, cairo_t *pCairo)
 }
 */
 
+static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect)
+{
+//         g_print("*****\n"
+//                 "rect is (%f,%f)(%f,%f)\n", pRect->m_A.m_fLatitude,pRect->m_A.m_fLongitude, pRect->m_B.m_fLatitude,pRect->m_B.m_fLongitude);
+	gint32 nLatStart = (gint32)(pRect->m_A.m_fLatitude * TILE_SHIFT);
+	// round it DOWN (south)
+	if(pRect->m_A.m_fLatitude > 0) {
+		nLatStart -= (nLatStart % TILE_MODULUS);
+	}
+	else {
+		nLatStart -= (nLatStart % TILE_MODULUS);
+		nLatStart -= TILE_MODULUS;
+	}
+
+	gint32 nLonStart = (gint32)(pRect->m_A.m_fLongitude * TILE_SHIFT);
+	// round it DOWN (west)
+	if(pRect->m_A.m_fLongitude > 0) {
+		nLonStart -= (nLonStart % TILE_MODULUS);
+	}
+	else {
+		nLonStart -= (nLonStart % TILE_MODULUS);
+		nLonStart -= TILE_MODULUS;
+	}
+
+	gint32 nLatEnd = (gint32)(pRect->m_B.m_fLatitude * TILE_SHIFT);
+	// round it UP (north)
+	if(pRect->m_B.m_fLatitude > 0) {
+		nLatEnd -= (nLatEnd % TILE_MODULUS);
+		nLatEnd += TILE_MODULUS;
+	}
+	else {
+		nLatEnd -= (nLatEnd % TILE_MODULUS);
+	}
+
+	gint32 nLonEnd = (gint32)(pRect->m_B.m_fLongitude * TILE_SHIFT);
+	// round it UP (east)
+	if(pRect->m_B.m_fLongitude > 0) {
+		nLonEnd -= (nLonEnd % TILE_MODULUS);
+		nLonEnd += TILE_MODULUS;
+	}
+	else {
+		nLonEnd -= (nLonEnd % TILE_MODULUS);
+	}
+
+	// how many tiles are we loading in each direction?  (nice and safe as integer math...)
+	gint nLatNumTiles = (nLatEnd - nLatStart) / TILE_MODULUS;
+	gint nLonNumTiles = (nLonEnd - nLonStart) / TILE_MODULUS;
+
+	gdouble fLatStart = (gdouble)nLatStart / TILE_SHIFT;
+	gdouble fLonStart = (gdouble)nLonStart / TILE_SHIFT;
+
+	g_assert(fLatStart <= pRect->m_A.m_fLatitude);
+        g_assert(fLonStart <= pRect->m_A.m_fLongitude);
+
+	gint nLat,nLon;
+	for(nLat = 0 ; nLat < nLatNumTiles ; nLat++) {
+		for(nLon = 0 ; nLon < nLonNumTiles ; nLon++) {
+
+			maprect_t rect;
+			rect.m_A.m_fLatitude = fLatStart + ((gdouble)(nLat) * MAP_TILE_WIDTH);
+			rect.m_A.m_fLongitude = fLonStart + ((gdouble)(nLon) * MAP_TILE_WIDTH);
+			rect.m_B.m_fLatitude = fLatStart + ((gdouble)(nLat+1) * MAP_TILE_WIDTH);
+			rect.m_B.m_fLongitude = fLonStart + ((gdouble)(nLon+1) * MAP_TILE_WIDTH);
+
+			map_data_load(pMap, &rect);
+		}
+	}
+}
+
 static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 {
+	g_return_val_if_fail(pMap != NULL, FALSE);
 	g_return_val_if_fail(pRect != NULL, FALSE);
 
 	db_resultset_t* pResultSet = NULL;
 	db_row_t aRow;
 
 	gint nZoomLevel = map_get_zoomlevel(pMap);
-
-	map_data_clear(pMap);
 
 	TIMER_BEGIN(mytimer, "BEGIN Geometry LOAD");
 
@@ -481,15 +565,15 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 	// Assinging it to a temp variable alleviates that problem.
 
 	gchar* pszSQL;
-	pszSQL = g_strdup_printf("SET @wkb=GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))')",
-		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
-		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
-		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
-		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
-		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
-		);
-	db_query(pszSQL, NULL);
-	g_free(pszSQL);
+//         pszSQL = g_strdup_printf("SET @wkb=GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))')",
+//                 pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude,        // upper left
+//                 pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude,        // upper right
+//                 pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude,        // bottom right
+//                 pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude,        // bottom left
+//                 pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude         // upper left again
+//                 );
+//         db_query(pszSQL, NULL);
+//         g_free(pszSQL);
 
 	// generate SQL
 	pszSQL = g_strdup_printf(
@@ -497,9 +581,15 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 		" FROM Road "
 		" LEFT JOIN RoadName ON (Road.RoadNameID=RoadName.ID)"
 		" WHERE"
-//		" TypeID IN (%s) AND"
-		" MBRIntersects(@wkb, Coordinates)"
+		//" TypeID IN (%s) AND"
+                //" MBRIntersects(@wkb, Coordinates)"
+		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)"
 //		azLayerNumberList,
+		,pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
+		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
+		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
+		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
+		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
 		);
 	//g_print("sql: %s\n", pszSQL);
 

@@ -25,6 +25,8 @@
 
 #define RENDERING_THREAD_YIELD	// do nothing
 
+#define	ACCEPTABLE_LINE_LABEL_OVERDRAW_IN_PIXELS_SQUARED (25*25)
+
 #define HACK_AROUND_CAIRO_LINE_CAP_BUG	// enable to ensure roads have rounded caps if the style dictates
 
 #define ROAD_FONT	"Bitstream Vera Sans"
@@ -197,12 +199,13 @@ static void map_draw_cairo_line_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 	// get total width of string
 	cairo_text_extents_t extents;
 	cairo_text_extents(pCairo, pszLabel, &extents);
+
 	cairo_font_extents_t font_extents;
 	cairo_current_font_extents(pCairo, &font_extents);
 
 	// text too big for line?
 //	if(extents.width > fLineLength) {
-	if((extents.width * extents.width) > fLineLengthSquared) {
+	if((extents.width * extents.width) > (fLineLengthSquared + (ACCEPTABLE_LINE_LABEL_OVERDRAW_IN_PIXELS_SQUARED))) {
 		cairo_restore(pCairo);
 		return;
 	}

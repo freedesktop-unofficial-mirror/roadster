@@ -78,13 +78,13 @@ layers_init(void)
 
 }
 
-void 
+void
 layers_deinit(void)
 {
 	xmlCleanupParser();
 }
 
-void 
+void
 layers_reload(void)
 {
 	layers_load_from_file();
@@ -135,7 +135,7 @@ layers_load_from_file()
 
 
 /*****************************************************************
- * layers_parse_* functions for parsing the xml 
+ * layers_parse_* functions for parsing the xml
  *****************************************************************/
 static void
 layers_parse_layers(xmlDocPtr doc, xmlNodePtr node)
@@ -307,9 +307,12 @@ layers_parse_color(color_t *color, gchar *value)
 	ptr = value;
 	if (*ptr == '#') ptr++;
 
-	if (strlen(ptr) < 8)
+	if (strlen(ptr) < 8) {
+		g_warning("bad color value found: %s\n", value);
 		return;
+	}
 
+	// Read RGBA hex doubles (eg. "H8") in reverse order
 	ptr += 6;
 	color->m_fAlpha = (gfloat)strtol(ptr, NULL, 16)/255.0;
 	*ptr = '\0';
