@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <gtk/gtk.h>
 #include <math.h>
 #include <stdlib.h>
@@ -42,7 +42,8 @@ typedef struct {
 #define SEARCH_RESULT_COUNT_LIMIT	(200)		// how many rows to get from DB
 #define MAX_QUERY 	(4000)
 
-#if 0 		// glib < 2.6
+// if glib < 2.6
+#if ((GLIB_MAJOR_VERSION <= 2) || ((GLIB_MAJOR_VERSION == 2) && (GLIB_MINOR_VERSION < 6)))
 gint g_strv_length(const gchar** a)
 {
 	gint nCount=0;
@@ -54,7 +55,6 @@ gint g_strv_length(const gchar** a)
 	return nCount;
 }
 #endif
-
 
 // prototypes
 
@@ -155,7 +155,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 			" OR (%d BETWEEN Road.AddressLeftEnd AND Road.AddressLeftStart)"
 			" OR (%d BETWEEN Road.AddressRightStart AND Road.AddressRightEnd)"
 			" OR (%d BETWEEN Road.AddressRightEnd AND Road.AddressRightStart)"
-			")", pRoadSearch->m_nNumber, pRoadSearch->m_nNumber, 
+			")", pRoadSearch->m_nNumber, pRoadSearch->m_nNumber,
 				 pRoadSearch->m_nNumber, pRoadSearch->m_nNumber);
 	}
 	else {
@@ -196,8 +196,8 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 		" %s"
 //		" %s"
 		" ORDER BY RoadName.Name"
-		" LIMIT %d;", pszAddressClause, pszSafeRoadName, pszSuffixClause, 
-			// pszGroupClause, 
+		" LIMIT %d;", pszAddressClause, pszSafeRoadName, pszSuffixClause,
+			// pszGroupClause,
 			SEARCH_RESULT_COUNT_LIMIT + 1);
 	
 	// free strings
@@ -339,9 +339,9 @@ void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint 
 	if(nRoadNumber == ROADSEARCH_NUMBER_NONE) {
 		pointstring_walk_percentage(pPointString, 0.5, ROADSIDE_CENTER, &ptAddress);
 
-		//~ g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d,%d-%d) %s %s", 
+		//~ g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d,%d-%d) %s %s",
 			//~ nAddressLeftStart, nAddressLeftEnd,
-			//~ nAddressRightStart, nAddressRightEnd, 
+			//~ nAddressRightStart, nAddressRightEnd,
 			//~ pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
 
 		if(nAddressRightStart == 0 && nAddressRightEnd == 0) {

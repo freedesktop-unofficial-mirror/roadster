@@ -2,7 +2,7 @@
  *            map.c
  *
  *  Copyright  2005  Ian McIntosh
- *  ian_mcintosh@linuxadvocate.org 
+ *  ian_mcintosh@linuxadvocate.org
  ****************************************************************************/
 
 /*
@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <gdk/gdkx.h>
 #include <cairo.h>
 #include <gnome.h>
@@ -43,7 +43,7 @@ struct {
 	windowdimensions_t 	m_WindowDimensions;					// XXX
 	guint16 			m_uZoomLevel;							// XXX
 	gboolean 			m_bRedrawNeeded;
-} g_Map = 
+} g_Map =
 {
 	{42.29886, -73.24393},
 	{0,0},
@@ -209,24 +209,23 @@ void map_draw_layer_points(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPt
 #define DEG2RAD(x)	((x) * (M_PI / 180.0))
 #define RAD2DEG(x)	((x) * (180.0 / M_PI))
 
-// Each zoomlevel has a scale and an optional name
+// Each zoomlevel has a scale and an optional name (name isn't used for anything)
 zoomlevel_t g_sZoomLevels[NUM_ZOOMLEVELS+1] = {
 	{1,"undefined"}, 	// no zoom level 0
 
-	{ 3200000, "continent"},		// 1, zoomed way out
-	{ 1600000, "country"},			// 2
-	{  800000, ""},					// 3
-	{  400000, "state"},			// 4 
-	{  200000, ""},					// 5
-	{  100000, "region"},			// 6
-	{   50000, ""},					// 7
-	{   25000, "city"}, 			// 8
-	{   10000, ""},					// 9
-	{    4000, "street"},			//10
+	{18000000, "country"},			// 1
+	{ 6000000, ""},					// 2
+	{ 1800000, "state"},			// 3
+	{  600000, ""},					// 4
+	{  200000, "region"},			// 5
+	{   70000, ""},					// 6
+	{   25000, "city"}, 			// 7
+	{   10000, ""},					// 8
+	{    4000, ""},					// 9
+	{    1000, "street"},			//10
 };
 
-
-struct gaga {
+struct {
 	gint nLayer;
 	gint nSubLayer;
 	void (*pFunc)(cairo_t*, rendermetrics_t*, geometryset_t*, sublayerstyle_t*);
@@ -519,7 +518,7 @@ void map_draw_line_label(cairo_t *pCairo, rendermetrics_t* pRenderMetrics, point
 		fTotalLineLength += fLineLength;
 	}
 
-	gfloat fFontSize = 10.0;
+	gfloat fFontSize = 14.0;
 
 	cairo_save(pCairo);
 	cairo_select_font(pCairo, "Monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
@@ -586,7 +585,7 @@ void map_draw_line_label(cairo_t *pCairo, rendermetrics_t* pRenderMetrics, point
 		gchar azLabelSegment[DRAW_LABEL_BUFFER_LEN];
 
 		//
-		// Figure out how much of the string we can put in this line segment 
+		// Figure out how much of the string we can put in this line segment
 		//
 		gboolean bFoundWorkableStringLength = FALSE;
 		gint nWorkableStringLength;
@@ -691,7 +690,7 @@ void map_draw_line_label(cairo_t *pCairo, rendermetrics_t* pRenderMetrics, point
 		//~ cairo_arc(pCairo, fX2, fY2, 3, 0, 2*M_PI);
 		//~ cairo_fill(pCairo);
 
-		// 
+		//
 		cairo_save(pCairo);
 			cairo_move_to(pCairo, fDrawX, fDrawY);
 			cairo_set_rgb_color(pCairo, 0.1,0.1,0.1);
@@ -875,7 +874,9 @@ void map_draw(cairo_t *pCairo)
 		// Render Layers
 		gint iLayerDraw;
 		for(iLayerDraw=0 ; iLayerDraw<NUM_ELEMS(layerdraworder) ; iLayerDraw++) {
-			layerdraworder[iLayerDraw].pFunc(pCairo, pRenderMetrics, g_aLayers[layerdraworder[iLayerDraw].nLayer].m_pGeometrySet, &g_aLayers[layerdraworder[iLayerDraw].nLayer].m_Style.m_aSubLayers[layerdraworder[iLayerDraw].nSubLayer]);
+			layerdraworder[iLayerDraw].pFunc(pCairo, pRenderMetrics,
+				/* geometry */ 	g_aLayers[layerdraworder[iLayerDraw].nLayer].m_pGeometrySet,
+				/* style */ 	&g_aLayers[layerdraworder[iLayerDraw].nLayer].m_Style.m_aSubLayers[layerdraworder[iLayerDraw].nSubLayer]);
 		}
 	TIMER_END(maptimer, "END RENDER MAP");
 
@@ -887,11 +888,12 @@ void map_draw(cairo_t *pCairo)
 			map_draw_layer_points(pCairo, pRenderMetrics, pLocationSet->m_pLocationsArray);
 		}			
 
-#define CROSSHAIR_LINE_RELIEF	(7)
-#define CROSSHAIR_LINE_LENGTH	(15)
+#define CROSSHAIR_LINE_RELIEF	(6)
+#define CROSSHAIR_LINE_LENGTH	(12)
+#define CROSSHAIR_CIRCLE_RADIUS (12)
 
-		cairo_set_line_width(pCairo, 2.5);
-		cairo_set_rgb_color(pCairo, 1.0, 0.0, 0.0);
+		cairo_set_line_width(pCairo, 1.0);
+		cairo_set_rgb_color(pCairo, 0.1, 0.1, 0.1);
 		cairo_set_alpha(pCairo, 1.0);
 
 		// left line
@@ -906,25 +908,10 @@ void map_draw(cairo_t *pCairo)
 		// bottom line
 		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) + (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH));
 		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) + (CROSSHAIR_LINE_RELIEF));
-		
-		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), 0);
-		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), CROSSHAIR_LINE_LENGTH);
-		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), pRenderMetrics->m_nWindowHeight);
-		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), pRenderMetrics->m_nWindowHeight-CROSSHAIR_LINE_LENGTH);
-		cairo_move_to(pCairo, 0, (pRenderMetrics->m_nWindowHeight/2));
-		cairo_line_to(pCairo, CROSSHAIR_LINE_LENGTH, (pRenderMetrics->m_nWindowHeight/2));
-		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth), (pRenderMetrics->m_nWindowHeight/2));
-		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth-CROSSHAIR_LINE_LENGTH), (pRenderMetrics->m_nWindowHeight/2));
-		
 		cairo_stroke(pCairo);
 
-	//~ // draw map center
-	//~ gfloat fRadius = 10.0;
-	//~ cairo_arc(pCairo, pRenderMetrics->m_nWindowWidth/2, pRenderMetrics->m_nWindowHeight/2, fRadius, 0, 2*M_PI);
-	//~ cairo_set_line_width(pCairo, 3.5);
-	//~ cairo_set_rgb_color(pCairo, 1.0, 0.0, 0.0);
-	//~ cairo_stroke(pCairo);
-		
+		cairo_arc(pCairo, pRenderMetrics->m_nWindowWidth/2, pRenderMetrics->m_nWindowHeight/2, CROSSHAIR_CIRCLE_RADIUS, 0, 2*M_PI);		
+		cairo_stroke(pCairo);
 	cairo_restore(pCairo);
 	TIMER_END(loctimer, "END RENDER LOCATIONS");
 
@@ -1010,7 +997,6 @@ void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, g
 				cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
 			}
 			//cairo_close_path(pCairo);
-			cairo_fill(pCairo);
 		}
 		else {
 //			g_print("pPointString->m_pPointsArray->len = %d\n", pPointString->m_pPointsArray->len);
@@ -1043,6 +1029,7 @@ void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, g
 		//~ }
 		//~ cairo_restore(pCairo);
 	}
+	cairo_fill(pCairo);
 }
 
 void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle)
@@ -1099,9 +1086,9 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 				pPoint = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);//~ g_print("  point (%.05f,%.05f)\n", ScaleX(pPoint->m_fLongitude), ScaleY(pPoint->m_fLatitude));
 				cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
 			}
-			cairo_stroke(pCairo);
 		}
 	}
+	cairo_stroke(pCairo);
 }
 
 void map_draw_layer_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle)

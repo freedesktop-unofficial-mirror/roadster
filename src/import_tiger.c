@@ -23,12 +23,12 @@
  
 // See TGR2003.PDF page 208 for county list
 
+#include <string.h>
+#include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
+
 #include "../include/util.h"
 #include "../include/import_tiger.h"
 #include "../include/importwindow.h"
-
-#include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
-
 
 #define TIGER_RT1_LINE_LENGTH 				(230)
 #define TIGER_RT2_LINE_LENGTH				(210)
@@ -123,7 +123,15 @@ gboolean import_tiger_read_float(gint8* pBuffer, gdouble* pValue)
 	gint8 buffer[10];
 	memcpy(buffer, pBuffer, 9);
 	buffer[9] = '\0';
-	gdouble fVal = atof(buffer);
+
+	gint* pEnd;
+	gdouble fVal = strtod(buffer, &pEnd);
+	if(pEnd == buffer) {
+		// if the pointer hasn't moved, it's a parsing error
+		g_assert_not_reached();
+	}
+//	gdouble fVal = atof(buffer);
+	
 	fVal /= 1000000.0;
 	*pValue = fVal;
 	return TRUE;
@@ -416,7 +424,7 @@ gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTable* pT
 		import_tiger_read_string(&pLine[50-1], 4, &achType[0]);
 //		g_print("%30s is type %s\n", pRecord->m_achName, achType);	
 		map_road_suffix_atoi(achType, &pRecord->m_nRoadNameSuffixID);
-		
+
 if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 	g_print("type '%s' couldn't be looked up\n", achType);
 }
@@ -426,10 +434,10 @@ if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 		//~ g_print("name: '%s' (%d)\n", pRecord->m_achName, nFeatureType);
 
  		// lat/lon coordinates...
-		import_tiger_read_float(&pLine[191], &pRecord->m_PointA.m_fLongitude);
-		import_tiger_read_float(&pLine[201], &pRecord->m_PointA.m_fLatitude);
-		import_tiger_read_float(&pLine[210], &pRecord->m_PointB.m_fLongitude);
-		import_tiger_read_float(&pLine[220], &pRecord->m_PointB.m_fLatitude);
+		import_tiger_read_float(&pLine[191-1], &pRecord->m_PointA.m_fLongitude);
+		import_tiger_read_float(&pLine[201-1], &pRecord->m_PointA.m_fLatitude);
+		import_tiger_read_float(&pLine[210-1], &pRecord->m_PointB.m_fLongitude);
+		import_tiger_read_float(&pLine[220-1], &pRecord->m_PointB.m_fLatitude);
 
 		// add to table
 		g_hash_table_insert(pTable, &pRecord->m_nTLID, pRecord);
@@ -445,9 +453,6 @@ gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTable *pT
 
 		gchar* pLine = &pBuffer[i];
 
-		/*
-		** read fixed fields
-		*/
 		// columns 6 to 15 is the TLID - 
 		gint nTLID;
 		import_tiger_read_int(&pLine[6-1], TIGER_TLID_LENGTH, &nTLID);
@@ -884,7 +889,7 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 	gint i;
 	gboolean bSuccess = TRUE;
 	for(i=0 ; i<NUM_ELEMS(apszExtensions) ; i++) {
-		pszFilePath = g_strdup_printf("file://%s/TGR%d.%s", pszDirectoryPath, nTigerSetNumber, apszExtensions[i]);
+		pszFilePath = g_strdup_printf("file://%s/TGR%05d.%s", pszDirectoryPath, nTigerSetNumber, apszExtensions[i]);
 		if(GNOME_VFS_OK != gnome_vfs_read_entire_file(pszFilePath, &nSizes[i], (char**)&apBuffers[i])) {
 			bSuccess = FALSE;
 		}

@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <glade/glade.h>
 #include <gnome.h>
 #include "../include/db.h"
@@ -129,8 +129,8 @@ void importwindow_begin(GSList* pSelectedFileList)
 	GTK_PROCESS_MAINLOOP;
 
 	// redraw map to show any potential new data (?)
-	
-	map_set_zoomlevel(7);
+
+//	map_set_zoomlevel(7);
 	mainwindow_draw_map();
 }
 

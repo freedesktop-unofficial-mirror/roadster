@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <cairo.h>
 #include "../include/layers.h"
 
@@ -48,10 +48,10 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 /* 1 */	{LAYER_MINORSTREET, "Minor Roads",
 			{{
 			/* line widths @ zooms	  	  						 color 									  dash, join, cap	*/
-			{{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 3.0, 6.0, 10.0,16.0}, {159/255.0, 149/255.0, 127/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
-			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 4.5, 8.5,14.0}, {255/255.0, 251/255.0, 255/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
+			{{0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 6.0, 10.0, 16.0,28.0}, {159/255.0, 149/255.0, 127/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
+			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.5,  8.5, 14.5,26.5}, {255/255.0, 251/255.0, 255/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
 			}},
-			
+
 			{{0,0,0,0,0,0,0,6,8,10},
 			 {0,0,0,0,0,0,0,1,0,0},
 			 {0,0,0,0}},
@@ -59,19 +59,19 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 
 /* 2 */	{LAYER_MAJORSTREET, "Major Roads",
 			{{
-			{{0.0, 0.0, 0.0, 2.0, 3.0, 5.0, 10.0, 14.0, 16.0,18.0}, {173/255.0, 162/255.0, 140/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
-			{{0.0, 0.0, 0.0, 1.0, 1.5, 3.7, 8.0, 12.0, 14.0,16.0}, {255/255.0, 251/255.0, 115/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
+			{{0.0, 0.0, 2.0, 3.0, 5.0, 10.0, 18.0, 22.0,24.0,32.0}, {173/255.0, 162/255.0, 140/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
+			{{0.0, 0.0, 1.0, 1.5, 3.7, 8.0,  16.0, 20.0, 22.0,30.0}, {255/255.0, 251/255.0, 115/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
 			}},
-			
+
 			{{0,0,0,0,0,0,0,6,8,10},
 			 {0,0,0,0,0,0,0,1,0,0},
 			 {0,0,0,0}},
 			NULL},
 
-/* 3 */	{LAYER_MINORHIGHWAY, "Minor Highways", 
+/* 3 */	{LAYER_MINORHIGHWAY, "Minor Highways",
 			{{
-			{{0.0, 0.0, 0.0, 4.0, 5.0, 8.0, 9.0, 12.0,18.0,27.0}, {173/255.0, 162/255.0, 140/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
-			{{0.0, 0.0, 0.0, 3.5, 4.1, 6.8, 7.5, 10.0, 16.0,25.0}, {255/255.0, 202/255.0, 58/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
+			{{0.0, 0.0, 4.0, 5.0, 8.0, 9.0, 17.0,22.0,28.0,36.0}, {173/255.0, 162/255.0, 140/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
+			{{0.0, 0.0, 3.5, 4.1, 6.8, 7.5, 15.0,20.0,26.0,34.0}, {255/255.0, 202/255.0, 58/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
 			}},
 			
 			{{0,0,0,0,0,0,0,6,8,10},
@@ -79,10 +79,10 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			 {0,0,0,0}},
 			NULL},
 
-/* 4 */	{LAYER_MINORHIGHWAY_RAMP, "Minor Highway Ramps", 
+/* 4 */	{LAYER_MINORHIGHWAY_RAMP, "Minor Highway Ramps",
 			{{
-			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 5.0,8.0}, {173/255.0, 142/255.0, 33/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
-			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.5, 3.5,6.0}, {247/255.0, 223/255.0, 74/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
+			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 5.0,8.0,10.0}, {173/255.0, 142/255.0, 33/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
+			{{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.5, 3.5,6.0,8.0}, {247/255.0, 223/255.0, 74/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
 			}},
 			
 			{{0,0,0,0,0,0,0,6,8,10},
@@ -90,10 +90,10 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			 {0,0,0,0}},
 			NULL},
 
-/* 5 */	{LAYER_MAJORHIGHWAY, "Major Highways", 
+/* 5 */	{LAYER_MAJORHIGHWAY, "Major Highways",
 			{{
-			{{0.0, 0.0, 0.0, 4.0, 10.0, 12.0, 12.0, 12.0,18.0,27.0}, {173/255.0, 162/255.0, 140/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
-			{{0.0, 0.0, 0.0, 2.0, 8.5,  10.0,  10.0, 10.0, 16.0,25.0}, {239/255.0, 190/255.0, 33/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
+			{{0.0, 0.0, 4.0, 10.0, 12.0, 16.0, 22.0,28.0,34.0,38.0}, {173/255.0, 162/255.0, 140/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
+			{{0.0, 0.0, 2.0, 8.5,  10.0, 14.0, 20.0,26.0,32.0,36.0}, {239/255.0, 190/255.0, 33/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
 			}},
 			
 			{{0,0,0,0,0,0,0,6,8,10},
@@ -101,10 +101,10 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			 {0,0,0,0}},
 			NULL},
 
-/* 6 */	{LAYER_MAJORHIGHWAY_RAMP, "Major Highway Ramps", 
+/* 6 */	{LAYER_MAJORHIGHWAY_RAMP, "Major Highway Ramps",
 			{{
 			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.0,16.0}, {173/255.0, 162/255.0, 140/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND},
-			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 5.5,13.0}, {0/255.0, 190/255.0, 0/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
+			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 5.5,14.0}, {0/255.0, 190/255.0, 0/255.0, 1.00}, 0, CAIRO_LINE_JOIN_ROUND, CAIRO_LINE_CAP_ROUND}
 			}},
 			
 			{{0,0,0,0,0,0,0,6,8,10},

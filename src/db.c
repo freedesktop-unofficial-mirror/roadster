@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <mysql.h>
 
 #if HAVE_MYSQL_EMBED
@@ -43,7 +43,7 @@
 Notes on the database:
 	- MySQL uses an R-TREE to find the data we want, this is fast
 
-	For a query that matches 690 of 85840 rows: 
+	For a query that matches 690 of 85840 rows:
 	- The query takes about 0.03 seconds
 	- Clearing out previous query's data takes about 0.001 seconds
 	- Retrieving and storing rows takes about 0.07 seconds
@@ -192,9 +192,7 @@ guint db_count_table_rows(const gchar* pszTable)
 
 gboolean db_is_empty()
 {
-	return 	(db_count_table_rows(DB_ROADS_TABLENAME) == 0) &&
-			(db_count_table_rows(DB_FEATURES_TABLENAME) == 0);
-			//(db_count_table_rows(g_pDB, DB_LOCATIONS_TABLENAME) == 0) &&
+	return 	(db_count_table_rows(DB_ROADS_TABLENAME) == 0);
 }
 
 /******************************************************
@@ -392,7 +390,7 @@ gboolean db_load_geometry(db_connection_t* pConnection, maprect_t* pRect, layer_
 	gint nActiveLayerCount = 0;
 	gint i;
 	for(i=LAYER_FIRST ; i <= LAYER_LAST ;i++) {
-		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 || 
+		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
 		   g_aLayers[i].m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
 		{
 			gchar azLayerNumber[10];
@@ -605,7 +603,7 @@ void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gbo
 	//~ ID INT8 UNSIGNED NOT NULL AUTO_INCREMENT,
 	//~ SetID INT4 UNSIGNED NOT NULL,
 
-	//~ Coordinates POINT NOT NULL, 
+	//~ Coordinates POINT NOT NULL,
 	//~ PRIMARY KEY(ID),
 	//~ SPATIAL INDEX(Coordinates)
 //~ );
@@ -617,7 +615,7 @@ void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gbo
 
 	//~ // generate SQL
 	//~ gchar azQuery[MAX_SQLBUFFER_LEN];
-	//~ g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "CREATE TABLE points_%s (ID INT8 UNSIGNED NOT NULL AUTO_INCREMENT, Coordinates POINT NOT NULL, PRIMARY KEY(ID, SPATIAL INDEX(Coordinates));", 
+	//~ g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "CREATE TABLE points_%s (ID INT8 UNSIGNED NOT NULL AUTO_INCREMENT, Coordinates POINT NOT NULL, PRIMARY KEY(ID, SPATIAL INDEX(Coordinates));",
 		//~ szDatasetName);
 
 	//~ // execute and return status
@@ -678,8 +676,8 @@ void db_create_tables()
 
 	// Road_RoadName
 	db_query("CREATE TABLE IF NOT EXISTS Road_RoadName("
-		" RoadID INT4 UNSIGNED NOT NULL," 
-		" RoadNameID INT4 UNSIGNED NOT NULL," 
+		" RoadID INT4 UNSIGNED NOT NULL,"
+		" RoadNameID INT4 UNSIGNED NOT NULL,"
 		" PRIMARY KEY (RoadID, RoadNameID),"
 		" INDEX(RoadNameID));", NULL);
 
@@ -689,7 +687,7 @@ void db_create_tables()
 		" LocationSetID INT4 NOT NULL,"
 		" Coordinates point NOT NULL,"
 		" PRIMARY KEY (ID),"
-		" INDEX(LocationSetID)," 
+		" INDEX(LocationSetID),"
 		" SPATIAL KEY (Coordinates));", NULL);
 
 	// Location Attribute Name
