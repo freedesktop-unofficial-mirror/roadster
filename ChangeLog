@@ -1,3 +1,7 @@
+2005-02-19  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* autogen.sh: Add autogen.sh.
+
 2005-02-18  Carl Worth  <cworth@cworth.org>
 
 	* .cvsignore: Ignore config.h.in.
