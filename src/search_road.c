@@ -23,6 +23,7 @@
  
 #include <gtk/gtk.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include "../include/db.h"
 #include "../include/util.h"
@@ -41,7 +42,7 @@ typedef struct {
 #define SEARCH_RESULT_COUNT_LIMIT	(200)		// how many rows to get from DB
 #define MAX_QUERY 	(4000)
 
-#if 1 		// glib < 2.6
+#if 0 		// glib < 2.6
 gint g_strv_length(const gchar** a)
 {
 	gint nCount=0;

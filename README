@@ -3,6 +3,8 @@ To compile, you will need:
 - cairo
 - libpixman
 - mysql libraries and header files (v4.1 or newer)
+- gettext library and header files
+- gpsd program and header files
 
 To run Roadster, you will need:
 - mysql server (v4.1+ or newer)

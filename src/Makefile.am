@@ -39,7 +39,6 @@ roadster_SOURCES = \
 	databasewindow.c
 
 roadster_LDFLAGS = \
-	-static\
 	 -L/usr/lib/mysql
 
 roadster_LDADD =  \

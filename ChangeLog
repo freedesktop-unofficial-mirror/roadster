@@ -1,0 +1,18 @@
+2005-02-18  Carl Worth  <cworth@cworth.org>
+
+	* src/search_road.c: Add missing include of stdlib.h.
+
+	* README: Added gettext and gpsd to the dependency list.
+
+	* .cvsignore:
+	* include/.cvsignore:
+	* intl/.cvsignore:
+	* macros/.cvsignore:
+	* pixmaps/.cvsignore:
+	* po/.cvsignore:
+	* src/.cvsignore: Add a bunch of .cvsignore files.
+
+	* config.h.in: Remove file that shouldn't have been in CVS.
+	
+	* src/Makefile.am: Don't force a static build.
+
