@@ -1,5 +1,9 @@
 2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* Header files actually removed from include/.  Phew!
+
+2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* configure.ac: Added.
 	* Header files actually moved.
 
