@@ -39,9 +39,10 @@
 #include "locationset.h"
 #include "scenemanager.h"
 
+static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap);
 static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
 static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap);
+static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 
 void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
 {
@@ -72,8 +73,7 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 				/* style */ 	&(g_aLayers[nLayer]->m_Style.m_aSubLayers[nSubLayer]),
 						&(g_aLayers[nLayer]->m_TextLabelStyle));
 			}
-			else 
-                if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_POLYGONS) {
+			else if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_POLYGONS) {
 				map_draw_gdk_layer_polygons(pMap, pPixmap,
 						pRenderMetrics,
 				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pPointStringsArray,
@@ -81,6 +81,8 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 						&(g_aLayers[nLayer]->m_TextLabelStyle));
 			}
 		}
+
+		map_draw_gdk_tracks(pMap, pPixmap, pRenderMetrics);
 	}
 
 	// 3. Labels
@@ -89,6 +91,61 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 	// 4. Cleanup
 	gdk_gc_set_values(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &gcValues, GDK_GC_FOREGROUND | GDK_GC_BACKGROUND | GDK_GC_LINE_WIDTH | GDK_GC_LINE_STYLE | GDK_GC_CAP_STYLE | GDK_GC_JOIN_STYLE);
 	TIMER_END(maptimer, "END RENDER MAP (gdk)");
+}
+
+static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics)
+{
+	gint i;
+	for(i=0 ; i<pMap->m_pTracksArray->len ; i++) {
+		gint hTrack = g_array_index(pMap->m_pTracksArray, gint, i);
+
+		GdkColor clr;
+		clr.red = (gint)(0.5 * 65535.0);
+		clr.green = (gint)(0.5 * 65535.0);
+		clr.blue = (gint)(1.0 * 65535.0);
+		gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
+
+		pointstring_t* pPointString = track_get_pointstring(hTrack);
+		if(pPointString == NULL) continue;
+
+		if(pPointString->m_pPointsArray->len >= 2) {
+			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
+			gint nMaxX=G_MININT;
+			gint nMaxY=G_MININT;
+			gint nMinX=G_MAXINT;
+			gint nMinY=G_MAXINT;
+
+			if(pPointString->m_pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+				g_warning("not drawing track with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
+				continue;
+			}
+
+			gint iPoint;
+			for(iPoint=0 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
+				mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);
+
+				gint nX,nY;
+				nX = (gint)SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
+				nY = (gint)SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
+
+				// find extents
+				nMaxX = max(nX,nMaxX);
+				nMinX = min(nX,nMinX);
+				nMaxY = max(nY,nMaxY);
+				nMinY = min(nY,nMinY);
+
+				aPoints[iPoint].x = nX;
+				aPoints[iPoint].y = nY;
+			}
+
+			// overlap test
+			if(nMaxX < 0 || nMaxY < 0 || nMinX > pRenderMetrics->m_nWindowWidth || nMinY > pRenderMetrics->m_nWindowHeight) {
+				continue;
+			}
+
+			gdk_draw_lines(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], aPoints, pPointString->m_pPointsArray->len);
+   		}
+	}
 }
 
 static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
@@ -207,7 +264,7 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		gint nMaxY=G_MININT;
 		gint nMinX=G_MAXINT;
 		gint nMinY=G_MAXINT;
-	
+
 		if(pPointString->m_pPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 

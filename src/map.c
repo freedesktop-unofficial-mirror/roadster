@@ -135,7 +135,6 @@ void map_init(void)
 {
 }
 
-
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 {
 	g_assert(ppMap != NULL);
@@ -144,8 +143,10 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 	// create a new map struct
 	map_t* pMap = g_new0(map_t, 1);
 
-//         pMap->m_pDataMutex = g_mutex_new();
-//         pMap->m_pPixmapMutex = g_mutex_new();
+	// Create array of Track handles
+	pMap->m_pTracksArray = g_array_new(FALSE, /* not zero-terminated */
+					  TRUE,  /* clear to 0 (?) */
+					  sizeof(gint));
 
 	pMap->m_pTargetWidget = pTargetWidget;
 
@@ -166,12 +167,6 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 	*ppMap = pMap;
 	return TRUE;
 }
-
-//         pointstring_t* pTrackPointString = track_get_pointstring(g_MainWindow.m_nCurrentGPSPath);
-//         if(pTrackPointString) {
-//                 map_draw_gps_trail(pCairoInstance, pTrackPointString);
-//         }
-
 
 #define	RENDERMODE_FAST 	1
 #define	RENDERMODE_PRETTY 	2
@@ -205,9 +200,11 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 //         scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
 
 	if(nRenderMode == RENDERMODE_FAST) {
+		// 
 		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 			map_draw_gdk(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_GEOMETRY);
 		}
+		// Always draw labels with Cairo
 		if(nDrawFlags & DRAWFLAG_LABELS) {
 			map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_LABELS);
 		}
@@ -726,6 +723,11 @@ gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2)
 gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2)
 {
 	return( p1->m_fLatitude == p2->m_fLatitude && p1->m_fLongitude == p2->m_fLongitude);
+}
+
+void map_add_track(map_t* pMap, gint hTrack)
+{
+	g_array_append_val(pMap->m_pTracksArray, hTrack);
 }
 
 #if ROADSTER_DEAD_CODE

@@ -66,7 +66,7 @@ gint track_new()
 
 void track_add_point(gint nTrackID, const mappoint_t *pPoint)
 {
-	g_print("adding point to track %d\n", nTrackID);
+//	g_print("adding point to track %d\n", nTrackID);
 
 	track_t* pTrack = g_hash_table_lookup(g_Tracks.m_pTracksHash, &nTrackID);
 	if(pTrack == NULL) {

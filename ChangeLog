@@ -1,3 +1,15 @@
+2005-03-20  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/history.h:
+	* src/history.c: Added.  Stores a list of places for the back/forward buttons.
+	* src/Makefile.am: Added history.c.
+	* src/gpsclient.c: Re-enabled GPS support.
+	* src/mainwindow.c: Added back/forward buttons.  Added GTK about box.
+	* src/map.c: Added basic support for tracks (for GPS track).
+	* src/map_draw_gdk.c: Added basic drawing of tracks.
+	* src/search_road.c: Improved GLib version check.
+	* src/track.c: Removed debugging message.
+
 2005-03-19  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/gfreelist.h:

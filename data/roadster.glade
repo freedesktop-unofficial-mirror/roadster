@@ -1584,12 +1584,12 @@ Restaurants</property>
 	      <property name="is_important">False</property>
 
 	      <child>
-		<widget class="GtkButton" id="button32">
+		<widget class="GtkButton" id="backbutton">
+		  <property name="visible">True</property>
 		  <property name="sensitive">False</property>
 		  <property name="relief">GTK_RELIEF_NONE</property>
 		  <property name="focus_on_click">False</property>
-		  <signal name="activate" handler="searchwindow_on_findbutton_clicked" last_modification_time="Mon, 07 Feb 2005 05:50:47 GMT"/>
-		  <signal name="clicked" handler="searchwindow_on_findbutton_clicked" last_modification_time="Mon, 07 Feb 2005 09:47:42 GMT"/>
+		  <signal name="clicked" handler="mainwindow_on_backbutton_clicked" last_modification_time="Sun, 20 Mar 2005 10:32:22 GMT"/>
 
 		  <child>
 		    <widget class="GtkImage" id="image9532">
@@ -1619,12 +1619,12 @@ Restaurants</property>
 	      <property name="is_important">False</property>
 
 	      <child>
-		<widget class="GtkButton" id="button33">
+		<widget class="GtkButton" id="forwardbutton">
+		  <property name="visible">True</property>
 		  <property name="sensitive">False</property>
 		  <property name="relief">GTK_RELIEF_NONE</property>
 		  <property name="focus_on_click">False</property>
-		  <signal name="activate" handler="searchwindow_on_findbutton_clicked" last_modification_time="Mon, 07 Feb 2005 05:50:47 GMT"/>
-		  <signal name="clicked" handler="searchwindow_on_findbutton_clicked" last_modification_time="Mon, 07 Feb 2005 09:47:42 GMT"/>
+		  <signal name="clicked" handler="mainwindow_on_forwardbutton_clicked" last_modification_time="Sun, 20 Mar 2005 10:32:35 GMT"/>
 
 		  <child>
 		    <widget class="GtkImage" id="image9531">
@@ -1648,6 +1648,7 @@ Restaurants</property>
 
 	  <child>
 	    <widget class="GtkSeparatorToolItem" id="separatortoolitem7">
+	      <property name="visible">True</property>
 	      <property name="sensitive">False</property>
 	      <property name="draw">True</property>
 	      <property name="visible_horizontal">True</property>
@@ -1800,7 +1801,7 @@ Restaurants</property>
 		      <property name="digits">0</property>
 		      <property name="update_policy">GTK_UPDATE_CONTINUOUS</property>
 		      <property name="inverted">False</property>
-		      <property name="adjustment">10 6 11 1 1 1</property>
+		      <property name="adjustment">8 6 11 1 1 1</property>
 		      <signal name="value_changed" handler="mainwindow_on_zoomscale_value_changed" last_modification_time="Fri, 04 Mar 2005 04:21:33 GMT"/>
 		    </widget>
 		  </child>
@@ -1965,7 +1966,6 @@ Restaurants</property>
 
 			  <child>
 			    <widget class="GtkCheckButton" id="checkbutton31">
-			      <property name="visible">True</property>
 			      <property name="sensitive">False</property>
 			      <property name="can_focus">True</property>
 			      <property name="relief">GTK_RELIEF_NORMAL</property>
@@ -2198,7 +2198,7 @@ Restaurants</property>
 				  <property name="spacing">0</property>
 
 				  <child>
-				    <widget class="GtkCheckButton" id="checkbutton33">
+				    <widget class="GtkCheckButton" id="gpsshowpositioncheckbutton">
 				      <property name="visible">True</property>
 				      <property name="can_focus">True</property>
 				      <property name="relief">GTK_RELIEF_NORMAL</property>
@@ -2206,6 +2206,7 @@ Restaurants</property>
 				      <property name="active">False</property>
 				      <property name="inconsistent">False</property>
 				      <property name="draw_indicator">True</property>
+				      <signal name="toggled" handler="mainwindow_on_gps_show_position_toggled" last_modification_time="Sun, 20 Mar 2005 06:20:04 GMT"/>
 
 				      <child>
 					<widget class="GtkLabel" id="label92256">
@@ -2256,7 +2257,7 @@ Restaurants</property>
 					      <property name="spacing">4</property>
 
 					      <child>
-						<widget class="GtkCheckButton" id="checkbutton34">
+						<widget class="GtkCheckButton" id="gpskeeppositioncenteredcheckbutton">
 						  <property name="visible">True</property>
 						  <property name="can_focus">True</property>
 						  <property name="relief">GTK_RELIEF_NORMAL</property>
@@ -2264,6 +2265,7 @@ Restaurants</property>
 						  <property name="active">False</property>
 						  <property name="inconsistent">False</property>
 						  <property name="draw_indicator">True</property>
+						  <signal name="toggled" handler="mainwindow_on_gps_keep_position_centered_toggled" last_modification_time="Sun, 20 Mar 2005 06:23:34 GMT"/>
 
 						  <child>
 						    <widget class="GtkLabel" id="label92257">
@@ -2289,7 +2291,7 @@ Restaurants</property>
 					      </child>
 
 					      <child>
-						<widget class="GtkCheckButton" id="checkbutton35">
+						<widget class="GtkCheckButton" id="gpsshowtrailcheckbutton">
 						  <property name="visible">True</property>
 						  <property name="can_focus">True</property>
 						  <property name="relief">GTK_RELIEF_NORMAL</property>
@@ -2297,6 +2299,7 @@ Restaurants</property>
 						  <property name="active">False</property>
 						  <property name="inconsistent">False</property>
 						  <property name="draw_indicator">True</property>
+						  <signal name="toggled" handler="mainwindow_on_gps_show_trail_toggled" last_modification_time="Sun, 20 Mar 2005 06:20:50 GMT"/>
 
 						  <child>
 						    <widget class="GtkLabel" id="label92258">
@@ -2322,7 +2325,7 @@ Restaurants</property>
 					      </child>
 
 					      <child>
-						<widget class="GtkCheckButton" id="checkbutton36">
+						<widget class="GtkCheckButton" id="gpssticktoroadscheckbutton">
 						  <property name="visible">True</property>
 						  <property name="sensitive">False</property>
 						  <property name="can_focus">True</property>
@@ -2331,6 +2334,7 @@ Restaurants</property>
 						  <property name="active">False</property>
 						  <property name="inconsistent">False</property>
 						  <property name="draw_indicator">True</property>
+						  <signal name="toggled" handler="mainwindow_on_gps_stick_to_roads_toggled" last_modification_time="Sun, 20 Mar 2005 06:21:05 GMT"/>
 
 						  <child>
 						    <widget class="GtkLabel" id="label92259">

@@ -50,7 +50,7 @@ typedef struct {
 #define ROAD_MIN_LENGTH_FOR_WILDCARD_SEARCH	(3)
 
 // if glib < 2.6
-#if ((GLIB_MAJOR_VERSION < 2) || ((GLIB_MAJOR_VERSION == 2) && (GLIB_MINOR_VERSION < 6)))
+#if(!GLIB_CHECK_VERSION(2,6,0))
 gint g_strv_length(const gchar** a)
 {
 	gint nCount=0;

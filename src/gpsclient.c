@@ -49,7 +49,6 @@ void gpsclient_init()
 
 static void gpsclient_connect(void)
 {
-return;
 	// don't do anything if already connected
 	if(g_GPSClient.m_pPublicGPSData->m_eStatus != GPS_STATUS_NO_GPSD) return;	// already connected
 
@@ -57,6 +56,8 @@ return;
 	if(g_GPSClient.m_pGPSConnection) {
 		gps_close(g_GPSClient.m_pGPSConnection);
 	}
+
+//	g_print("Attempting connection to GPSD...\n");
 
 	// connect
  	g_GPSClient.m_pGPSConnection = gps_open("localhost", DEFAULT_GPSD_PORT);
@@ -87,6 +88,8 @@ const gpsdata_t* gpsclient_getdata()
 // callback for g_io_add_watch on the GPSD file descriptor
 gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condition, gpointer data)
 {
+//	g_print("Data from GPSD...\n");
+
 	gpsdata_t* l = g_GPSClient.m_pPublicGPSData;	// our public data struct, for easy access
 
 	// is there data waiting on the socket?
@@ -146,6 +149,9 @@ gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condit
 		else {
 			l->m_eStatus = GPS_STATUS_NO_DEVICE;
 		}
+	}
+	else {
+		//g_print("condition: %d\n", condition);
 	}
 	return TRUE; // TRUE = keep socket notification coming
 }

@@ -145,6 +145,8 @@ typedef struct {
 	 GtkWidget*			m_pTargetWidget;
 	 scenemanager_t*		m_pSceneManager;
 
+	 GArray*			m_pTracksArray;
+
 	// Mutex and the data it controls (always lock before reading/writing)
 	//GMutex* m_pPixmapMutex;
 	 GdkPixmap* m_pPixmap;
@@ -168,6 +170,7 @@ typedef struct {
 // Draw flags
 #define DRAWFLAG_LABELS 	(1)
 #define DRAWFLAG_GEOMETRY	(2)
+
 // next is 4 :)
 #define DRAWFLAG_ALL 		(1|2)
 
@@ -212,5 +215,7 @@ double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
 gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2);
 
 gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2);
+
+void map_add_track(map_t* pMap, gint hTrack);
 
 #endif

@@ -44,6 +44,7 @@
 #include "mainwindow.h"
 #include "glyph.h"
 #include "animator.h"
+#include "history.h"
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
@@ -70,7 +71,7 @@
 #define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
 #define	SLIDE_TIME_IN_SECONDS		(0.7)	// how long the whole slide should take, in seconds
 
-#define	SLIDE_TIME_IN_SECONDS_AUTO	(1.4)
+#define	SLIDE_TIME_IN_SECONDS_AUTO	(1.3)
 
 // Layerlist columns
 #define LAYERLIST_COLUMN_ENABLED	(0)
@@ -111,6 +112,8 @@ static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
 static gboolean mainwindow_callback_on_slide_timeout(gpointer pData);
 static void mainwindow_setup_selected_tool(void);
 
+void mainwindow_add_history();
+
 void mainwindow_map_center_on_mappoint(mappoint_t* pPoint);
 void mainwindow_map_center_on_windowpoint(gint nX, gint nY);
 
@@ -148,6 +151,13 @@ struct {
 	GtkLabel* m_pSpeedLabel;
 	GtkProgressBar* m_pGPSSignalStrengthProgressBar;
 
+	struct {
+		GtkCheckButton* m_pShowPositionCheckButton;
+		GtkCheckButton* m_pKeepPositionCenteredCheckButton;
+		GtkCheckButton* m_pShowTrailCheckButton;
+		GtkCheckButton* m_pStickToRoadsCheckButton;
+	} m_GPS;
+
 	// Statusbar
 	GtkVBox*  m_pStatusbar;
  	GtkLabel* m_pPositionLabel;
@@ -181,6 +191,11 @@ struct {
 	mappoint_t m_ptSlideStartLocation;
 	mappoint_t m_ptSlideEndLocation;
 	animator_t* m_pAnimator;
+
+	// History (forward / back)
+	history_t* m_pHistory;
+	GtkButton* m_pForwardButton;
+	GtkButton* m_pBackButton;
 } g_MainWindow = {0};
 
 
@@ -241,7 +256,6 @@ void mainwindow_set_not_busy(void** ppCursor)
 ** Status bar
 */
 
-
 void mainwindow_init(GladeXML* pGladeXML)
 {
 	g_MainWindow.m_pWindow				= GTK_WINDOW(glade_xml_get_widget(pGladeXML, "mainwindow"));			g_return_if_fail(g_MainWindow.m_pWindow != NULL);
@@ -264,6 +278,16 @@ void mainwindow_init(GladeXML* pGladeXML)
 	g_MainWindow.m_pTooltips			= gtk_tooltips_new();
 	g_MainWindow.m_pSpeedLabel			= GTK_LABEL(glade_xml_get_widget(pGladeXML, "speedlabel"));		g_return_if_fail(g_MainWindow.m_pSpeedLabel != NULL);
 	g_MainWindow.m_pGPSSignalStrengthProgressBar = GTK_PROGRESS_BAR(glade_xml_get_widget(pGladeXML, "gpssignalprogressbar"));		g_return_if_fail(g_MainWindow.m_pGPSSignalStrengthProgressBar != NULL);
+
+	g_MainWindow.m_GPS.m_pShowPositionCheckButton	= GTK_CHECK_BUTTON(glade_xml_get_widget(pGladeXML, "gpsshowpositioncheckbutton"));		g_return_if_fail(g_MainWindow.m_GPS.m_pShowPositionCheckButton != NULL);
+	g_MainWindow.m_GPS.m_pKeepPositionCenteredCheckButton= GTK_CHECK_BUTTON(glade_xml_get_widget(pGladeXML, "gpskeeppositioncenteredcheckbutton"));		g_return_if_fail(g_MainWindow.m_GPS.m_pKeepPositionCenteredCheckButton != NULL);
+	g_MainWindow.m_GPS.m_pShowTrailCheckButton = GTK_CHECK_BUTTON(glade_xml_get_widget(pGladeXML, "gpsshowtrailcheckbutton"));		g_return_if_fail(g_MainWindow.m_GPS.m_pKeepPositionCenteredCheckButton != NULL);
+	g_MainWindow.m_GPS.m_pStickToRoadsCheckButton = GTK_CHECK_BUTTON(glade_xml_get_widget(pGladeXML, "gpssticktoroadscheckbutton"));		g_return_if_fail(g_MainWindow.m_GPS.m_pStickToRoadsCheckButton != NULL);
+
+	g_MainWindow.m_pForwardButton = GTK_BUTTON(glade_xml_get_widget(pGladeXML, "forwardbutton"));		g_return_if_fail(g_MainWindow.m_pForwardButton != NULL);
+	g_MainWindow.m_pBackButton = GTK_BUTTON(glade_xml_get_widget(pGladeXML, "backbutton"));		g_return_if_fail(g_MainWindow.m_pBackButton != NULL);
+	g_MainWindow.m_pHistory = history_new();
+	g_assert(g_MainWindow.m_pHistory);
 
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pWindow), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
 
@@ -571,6 +595,8 @@ void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
+
+	mainwindow_add_history();
 }
 
 //
@@ -578,6 +604,8 @@ void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 //
 void mainwindow_set_zoomlevel(gint nZoomLevel)
 {
+	map_set_zoomlevel(g_MainWindow.m_pMap, nZoomLevel);
+
 	// set zoomlevel scale but prevent it from calling handler (mainwindow_on_zoomscale_value_changed)
         g_signal_handlers_block_by_func(g_MainWindow.m_pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), nZoomLevel);
@@ -615,22 +643,21 @@ static void gui_set_tool(EToolType eTool)
 
 void mainwindow_on_aboutmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-//         const gchar *ppAuthors[] = {
-//                 "Ian McIntosh <ian_mcintosh@linuxadvocate.org>",
-//                 "Nathan Fredrickson <nathan@silverorange.com>",
-//                 NULL
-//         };
-//
-//         GtkWidget *pAboutWindow = gnome_about_new(
-//                                         PROGRAM_NAME,
-//                                         VERSION,
-//                                         PROGRAM_COPYRIGHT,
-//                                         PROGRAM_DESCRIPTION,
-//                                         (const gchar **) ppAuthors,
-//                                         NULL,
-//                                         NULL,
-//                                         NULL);
-//         gtk_widget_show(pAboutWindow);
+#if(GLIB_CHECK_VERSION(2,6,0))
+         const gchar *ppAuthors[] = {
+                 "Ian McIntosh <ian_mcintosh@linuxadvocate.org>",
+                 "Nathan Fredrickson <nathan@silverorange.com>",
+                 NULL
+         };
+
+         gtk_show_about_dialog(g_MainWindow.m_pWindow,
+			       "authors", ppAuthors,
+			       "comments", PROGRAM_DESCRIPTION,
+			       "copyright", PROGRAM_COPYRIGHT,
+			       "name", PROGRAM_NAME,
+			       "version", VERSION,
+			       NULL);
+#endif
 }
 
 // Toggle toolbar visibility
@@ -656,6 +683,7 @@ void mainwindow_on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data)
 	zoom_in_one();
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
+	mainwindow_add_history();
 }
 
 void mainwindow_on_zoomout_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -663,6 +691,7 @@ void mainwindow_on_zoomout_activate(GtkMenuItem *menuitem, gpointer user_data)
 	zoom_out_one();
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
+	mainwindow_add_history();
 }
 
 void mainwindow_on_fullscreenmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -788,6 +817,8 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				if(g_MainWindow.m_bMouseDragMovement) {
 					mainwindow_cancel_draw_pretty_timeout();
 					mainwindow_draw_map(DRAWFLAG_ALL);
+
+					mainwindow_add_history();
 				}
 			}
 
@@ -799,6 +830,8 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 
 				mainwindow_cancel_draw_pretty_timeout();
 				mainwindow_draw_map(DRAWFLAG_ALL);
+
+				mainwindow_add_history();
 			}
 		}
 		else if(event->type == GDK_2BUTTON_PRESS) {
@@ -1021,6 +1054,29 @@ static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpo
 	return FALSE;
 }
 
+/*
+** GPS Functions
+*/ 
+
+gboolean mainwindow_on_gps_show_position_toggled(GtkWidget* _unused, gpointer* __unused)
+{
+
+}
+
+gboolean mainwindow_on_gps_keep_position_centered_toggled(GtkWidget* _unused, gpointer* __unused)
+{
+
+}
+
+gboolean mainwindow_on_gps_show_trail_toggled(GtkWidget* _unused, gpointer* __unused)
+{
+
+}
+
+gboolean mainwindow_on_gps_stick_to_roads_toggled(GtkWidget* _unused, gpointer* __unused)
+{
+
+}
 
 static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 {
@@ -1033,17 +1089,22 @@ static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 		if(g_MainWindow.m_nCurrentGPSPath == 0) {
 			// create a new track for GPS trail
 			g_MainWindow.m_nCurrentGPSPath = track_new();
+			map_add_track(g_MainWindow.m_pMap, g_MainWindow.m_nCurrentGPSPath);
 		}
 
 		track_add_point(g_MainWindow.m_nCurrentGPSPath, &pData->m_ptPosition);
 
-		// if(keep position centered) {
-//         map_center_on_worldpoint(pData->m_ptPosition.m_fLatitude, pData->m_ptPosition.m_fLongitude);
-//         mainwindow_statusbar_update_position();
-		// }
+		// Show position?
+		if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.m_GPS.m_pShowPositionCheckButton))) {
+			// Keep it centered?
+			if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.m_GPS.m_pKeepPositionCenteredCheckButton))) {
+				map_set_centerpoint(g_MainWindow.m_pMap, &pData->m_ptPosition);
+				mainwindow_statusbar_update_position();
+			}
 
-		// redraw because GPS icon/trail may be different
-		mainwindow_draw_map(DRAWFLAG_ALL);
+			// redraw because GPS icon/trail may be different
+			mainwindow_draw_map(DRAWFLAG_ALL);
+		}
 
 		// update image and tooltip for GPS icon
 		util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_OK, GTK_ICON_SIZE_MENU);
@@ -1110,6 +1171,7 @@ static gboolean mainwindow_callback_on_slide_timeout(gpointer pData)
 
 			fPercent = 1.0;
 
+			mainwindow_add_history();
 			// should we delete the timer?
 		}
 
@@ -1187,6 +1249,9 @@ void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint)
 	}
 	else {
 		mainwindow_map_center_on_mappoint(pPoint);
+		
+		// XXX: this is kind of a hack, but the caller can't add a history item because it might be a slide... hmm
+		mainwindow_add_history();
 	}
 }
 
@@ -1219,7 +1284,48 @@ void mainwindow_sidebar_set_tab(gint nTab)
 	gtk_notebook_set_current_page(g_MainWindow.m_pSidebarNotebook, nTab);
 }
 
+void mainwindow_update_forward_back_buttons()
+{
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pForwardButton), history_can_go_forward(g_MainWindow.m_pHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pBackButton), history_can_go_back(g_MainWindow.m_pHistory));
+}
 
+void mainwindow_go_to_current_history_item()
+{
+	mappoint_t point;
+	gint nZoomLevel;
+	history_get_current(g_MainWindow.m_pHistory, &point, &nZoomLevel);
+
+	mainwindow_set_zoomlevel(nZoomLevel);
+	mainwindow_map_center_on_mappoint(&point);
+	mainwindow_draw_map(DRAWFLAG_ALL);
+//	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+}
+
+void mainwindow_on_backbutton_clicked(GtkWidget* _unused, gpointer* __unused)
+{
+	history_go_back(g_MainWindow.m_pHistory);
+	mainwindow_go_to_current_history_item();
+	mainwindow_update_forward_back_buttons();
+}
+
+void mainwindow_on_forwardbutton_clicked(GtkWidget* _unused, gpointer* __unused)
+{
+	history_go_forward(g_MainWindow.m_pHistory);
+	mainwindow_go_to_current_history_item();
+	mainwindow_update_forward_back_buttons();
+}
+
+// Add the current spot to the history
+void mainwindow_add_history()
+{
+	mappoint_t point;
+
+	map_get_centerpoint(g_MainWindow.m_pMap, &point);
+	history_add(g_MainWindow.m_pHistory, &point, map_get_zoomlevel(g_MainWindow.m_pMap));
+
+	mainwindow_update_forward_back_buttons();
+}
 #ifdef ROADSTER_DEAD_CODE
 /*
 
