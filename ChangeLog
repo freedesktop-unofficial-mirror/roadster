@@ -1,5 +1,11 @@
 2005-02-18  Carl Worth  <cworth@cworth.org>
 
+	* src/db.c:
+	(db_init, db_deinit): Wrap all mysql_embed-related code in #if
+	HAVE_MYSQL_EMBED.
+
+2005-02-18  Carl Worth  <cworth@cworth.org>
+
 	* src/search_road.c: Add missing include of stdlib.h.
 
 	* README: Added gettext and gpsd to the dependency list.

@@ -22,10 +22,15 @@
  */
  
 #include <mysql.h>
-#include <mysql_embed.h>
+
+#if HAVE_MYSQL_EMBED
+# include <mysql_embed.h>
+#endif
+
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../include/db.h"
 #include "../include/mainwindow.h"
@@ -199,19 +204,23 @@ gboolean db_is_empty()
 // call once on program start-up
 void db_init()
 {
+#if HAVE_MYSQL_EMBED
 	// Initialize the embedded server
 	// NOTE: if not linked with libmysqld, this call will do nothing (but will succeed)
  	if(mysql_server_init(0, NULL, NULL) != 0) {
 		g_print("mysql_server_init failed\n");
 		return;
 	}
+#endif
 }
 
 // call once on program shut-down
 void db_deinit()
 {
+#if HAVE_MYSQL_EMBED
 	// Close embedded server if present
 	mysql_server_end();
+#endif
 }
 
 /******************************************************
