@@ -988,10 +988,16 @@ void map_draw_layer_lines(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRender
 
 	// Raise the tolerance way up for thin lines
 	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
+	
+	// XXX: HACK
+//	nCapStyle = CAIRO_LINE_CAP_SQUARE;
 
 	gdouble fTolerance;
-	if(fLineWidth >= 6.0) {
-		fTolerance = 0.6;
+	if(fLineWidth > 12.0) {	// huge line, low tolerance
+		fTolerance = 0.55;
+	}
+	else if(fLineWidth >= 6.0) {	// medium line, medium tolerance
+		fTolerance = 1.0;
 	}
 	else {
 		if(nCapStyle == CAIRO_LINE_CAP_ROUND) {
@@ -1138,7 +1144,7 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 
 	// generate SQL
 	gchar* pszSQL = g_strdup_printf(
-		"SELECT Road.ID, Road.TypeID, AsText(Road.Coordinates), RoadName.Name, RoadName.SuffixID"
+		"SELECT Road.ID, Road.TypeID, AsBinary(Road.Coordinates), RoadName.Name, RoadName.SuffixID"
 		" FROM Road "
 		" LEFT JOIN Road_RoadName ON (Road.ID=Road_RoadName.RoadID)"
 		" LEFT JOIN RoadName ON (Road_RoadName.RoadNameID=RoadName.ID)"
@@ -1185,7 +1191,7 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 				g_warning("out of memory loading pointstrings\n");
 				continue;
 			}
-			db_parse_pointstring(aRow[2], pNewPointString, point_alloc);
+			db_parse_wkb_pointstring(aRow[2], pNewPointString, point_alloc);
 
 			// Build name by adding suffix, if one is present
 			gchar azFullName[100] = "";

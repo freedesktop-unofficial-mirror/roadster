@@ -506,49 +506,33 @@ void db_parse_point(const gchar* pszText, mappoint_t* pPoint)
 	}	
 }
 
-void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**))
+#define WKB_POINT                  1	// only two we care about
+#define WKB_LINESTRING             2
+
+void db_parse_wkb_pointstring(const gint8* data, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**))
 {
-	// parse string and add points to the string
-	const gchar* p = pszText;
-	if(p[0] == 'L') { //g_str_has_prefix(p, "LINESTRING")) {
-		// format is "LINESTRING(1.2345 5.4321, 10 10, 20 20)"
-		mappoint_t* pPoint;
+	g_assert(sizeof(double) == 8);	// mysql gives us 8 bytes per point
 
-		p += (11); 	// move past "LINESTRING("
+	gint nByteOrder = *data++;	// first byte tells us the byte order
+	g_assert(nByteOrder == 1);
 
-		while(TRUE) {
-			// g_print("reading a point...\n");
-			pPoint = NULL;
-			if(!callback_get_point(&pPoint)) return;
+	gint nGeometryType = *((gint32*)data)++;
+	g_assert(nGeometryType == WKB_LINESTRING);
 
-			// read in latitude
-			pPoint->m_fLatitude = g_ascii_strtod(p, (gchar**)&p);
+	// next 4 bytes is the point count
+	gint nNumPoints = *((gint32*)data)++;	// NOTE for later: this field doesn't exist for type POINT
 
-			// space between coordinates
-			g_return_if_fail(*p == ' ');
-			p++;
+	while(nNumPoints > 0) {
+		// g_print("reading a point...\n");
+		mappoint_t* pPoint = NULL;
+		if(!callback_get_point(&pPoint)) return;
 
-			// read in longitude
-			pPoint->m_fLongitude = g_ascii_strtod(p, (gchar**)&p);
-			
-			// g_print("got (%f,%f)\n", pPoint->m_fLatitude, pPoint->m_fLongitude);
-			
-			// add point to the list
-			g_ptr_array_add(pPointString->m_pPointsArray, pPoint);
+		pPoint->m_fLatitude = *((double*)data)++;
+		pPoint->m_fLongitude = *((double*)data)++;
 
-			if(*p == ',') {
-				p++;
+		g_ptr_array_add(pPointString->m_pPointsArray, pPoint);
 
-				// after this, we're ready to read in next point, so loop...
-				// g_print("looping for another!...\n");
-			}
-			else {
-				break;
-			}
-		}
-	}
-	else {
-		g_assert_not_reached();
+		nNumPoints--;
 	}
 }
 
@@ -828,6 +812,52 @@ g_print("sql: %s\n", azQuery);
 	else {
 		g_print(" no rows\n");
 		return FALSE;
+	}
+}
+
+void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**))
+{
+	// parse string and add points to the string
+	const gchar* p = pszText;
+	if(p[0] == 'L') { //g_str_has_prefix(p, "LINESTRING")) {
+		// format is "LINESTRING(1.2345 5.4321, 10 10, 20 20)"
+		mappoint_t* pPoint;
+
+		p += (11); 	// move past "LINESTRING("
+
+		while(TRUE) {
+			// g_print("reading a point...\n");
+			pPoint = NULL;
+			if(!callback_get_point(&pPoint)) return;
+
+			// read in latitude
+			pPoint->m_fLatitude = g_ascii_strtod(p, (gchar**)&p);
+
+			// space between coordinates
+			g_return_if_fail(*p == ' ');
+			p++;
+
+			// read in longitude
+			pPoint->m_fLongitude = g_ascii_strtod(p, (gchar**)&p);
+			
+			// g_print("got (%f,%f)\n", pPoint->m_fLatitude, pPoint->m_fLongitude);
+			
+			// add point to the list
+			g_ptr_array_add(pPointString->m_pPointsArray, pPoint);
+
+			if(*p == ',') {
+				p++;
+
+				// after this, we're ready to read in next point, so loop...
+				// g_print("looping for another!...\n");
+			}
+			else {
+				break;
+			}
+		}
+	}
+	else {
+		g_assert_not_reached();
 	}
 }
 */

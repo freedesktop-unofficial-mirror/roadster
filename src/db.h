@@ -77,7 +77,8 @@ gchar* db_make_escaped_string(const gchar* pszString);
 void db_free_escaped_string(gchar* pszString);
 
 void db_parse_point(const gchar* pszText, mappoint_t* pPoint);
-void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**));
+//void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**));
+void db_parse_wkb_pointstring(const gint8* data, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**));
 
 void db_enable_keys(void);
 void db_disable_keys(void);

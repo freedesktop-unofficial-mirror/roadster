@@ -418,8 +418,8 @@
 	      </child>
 
 	      <child>
-		<widget class="GtkSeparatorToolItem" id="separatortoolitem5">
-		  <property name="width_request">8</property>
+		<widget class="GtkSeparatorToolItem" id="separatortoolitem8">
+		  <property name="width_request">4</property>
 		  <property name="visible">True</property>
 		  <property name="sensitive">False</property>
 		  <property name="draw">False</property>

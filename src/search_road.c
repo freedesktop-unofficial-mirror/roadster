@@ -319,7 +319,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 	}
 
 	g_snprintf(azQuery, MAX_QUERY,
-		"SELECT Road.ID, RoadName.Name, RoadName.SuffixID, AsText(Road.Coordinates), Road.AddressLeftStart, Road.AddressLeftEnd, Road.AddressRightStart, Road.AddressRightEnd, CityLeft.Name, CityRight.Name"
+		"SELECT Road.ID, RoadName.Name, RoadName.SuffixID, AsBinary(Road.Coordinates), Road.AddressLeftStart, Road.AddressLeftEnd, Road.AddressRightStart, Road.AddressRightEnd, CityLeft.Name, CityRight.Name"
 		", StateLeft.Code, StateRight.Code, Road.ZIPCodeLeft, Road.ZIPCodeRight"
 		" FROM RoadName"
 		" LEFT JOIN Road_RoadName ON (RoadName.ID=Road_RoadName.RoadNameID)"
@@ -390,7 +390,8 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 			if(nCount <= SEARCH_RESULT_COUNT_LIMIT) {
 				pointstring_t* pPointString = NULL;
 				pointstring_alloc(&pPointString);
-				db_parse_pointstring(aRow[3], pPointString, point_alloc);
+				
+				db_parse_wkb_pointstring(aRow[3], pPointString, point_alloc);
 
 //	g_print("raw: %s\n", aRow[3]);
 				search_road_filter_result(aRow[1], pRoadSearch->m_nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pPointString);

@@ -1,3 +1,9 @@
+2005-03-02  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* search_road.c:
+	* map.c:
+	* db.c: Switch to binary format for MySQL geometry results.
+
 2005-03-01  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* road.c:
