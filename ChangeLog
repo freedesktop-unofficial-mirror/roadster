@@ -1,4 +1,9 @@
 2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+	
+	* data/Makefile.am: Added.
+	* configure.ac: Removed GNOME_DEBUG_CHECK.
+
+2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* include/.cvsignore: Removed.
 	* intl/.cvsignore: Removed.
