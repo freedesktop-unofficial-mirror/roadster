@@ -1,4 +1,4 @@
-2005-03-20  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+2005-03-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/tooltip.h:
 	* src/tooltip.c: Added.
