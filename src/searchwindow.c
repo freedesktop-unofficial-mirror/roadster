@@ -20,8 +20,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
-#include <gtk/gtk.h> 
+
+#include <gtk/gtk.h>
 #include <glade/glade.h>
 
 #include <gdk/gdkx.h>
@@ -100,7 +100,7 @@ void searchwindow_init(GladeXML* pGladeXML)
 	g_SearchWindow.m_pLocationDistanceSpinButton	= GTK_SPIN_BUTTON(glade_xml_get_widget(pGladeXML, "locationdistancespinbutton"));		g_return_if_fail(g_SearchWindow.m_pLocationDistanceSpinButton != NULL);	
 	g_SearchWindow.m_pLocationDistanceUnitComboBox 	= GTK_COMBO_BOX(glade_xml_get_widget(pGladeXML, "locationdistanceunitcombobox"));		g_return_if_fail(g_SearchWindow.m_pLocationDistanceUnitComboBox != NULL);	
 
-	// 
+	//
 	fill_combobox_with_distance_unit_names(g_SearchWindow.m_pLocationDistanceUnitComboBox);
 
 	gtk_combo_box_set_active(g_SearchWindow.m_pSearchTypeComboBox, SEARCH_TYPE_ADDRESS);
@@ -123,7 +123,7 @@ void searchwindow_init(GladeXML* pGladeXML)
 	GtkTreeIter iter;
 
 	gtk_list_store_append(g_SearchWindow.m_pLocationSetComboBoxModel, &iter);
-	gtk_list_store_set(g_SearchWindow.m_pLocationSetComboBoxModel, &iter, 
+	gtk_list_store_set(g_SearchWindow.m_pLocationSetComboBoxModel, &iter,
 		LOCATIONSETLIST_COLUMN_NAME, "All",
 		LOCATIONSETLIST_COLUMN_ID, 0,
 		-1);
@@ -133,7 +133,7 @@ void searchwindow_init(GladeXML* pGladeXML)
 		locationset_t* pLocationSet = g_ptr_array_index(pLocationSets, i);
 
 		gtk_list_store_append(g_SearchWindow.m_pLocationSetComboBoxModel, &iter);
-		gtk_list_store_set(g_SearchWindow.m_pLocationSetComboBoxModel, &iter, 
+		gtk_list_store_set(g_SearchWindow.m_pLocationSetComboBoxModel, &iter,
 			LOCATIONSETLIST_COLUMN_NAME, pLocationSet->m_pszName,
 			LOCATIONSETLIST_COLUMN_ID, pLocationSet->m_nID,
 			-1);
@@ -162,7 +162,7 @@ gint searchwindow_get_selected_locationset()
 	GtkTreeIter iter;
 	
 	if(gtk_combo_box_get_active_iter(g_SearchWindow.m_pLocationSetComboBox, &iter)) {
-		gtk_tree_model_get(GTK_TREE_MODEL(g_SearchWindow.m_pLocationSetComboBoxModel), &iter, 
+		gtk_tree_model_get(GTK_TREE_MODEL(g_SearchWindow.m_pLocationSetComboBoxModel), &iter,
 			LOCATIONSETLIST_COLUMN_ID, &nID,
 			-1);
 		return nID;
@@ -209,6 +209,8 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 		mainwindow_set_not_busy(&pBusy);
 	}
 
+
+
 	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.m_pFindButton), TRUE);
 }
 
@@ -221,7 +223,7 @@ void searchwindow_add_result(gint nRoadID, const gchar* pszText, mappoint_t* pPo
 
 	gchar* pszBuffer = g_strdup_printf("<span size='small'>%s</span>", pszText);
 	gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
-	gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter, 
+	gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter,
 		RESULTLIST_COLUMN_NAME, pszBuffer,
 		RESULTLIST_LATITUDE, pPoint->m_fLatitude,
 		RESULTLIST_LONGITUDE, pPoint->m_fLongitude,		
@@ -258,7 +260,7 @@ void searchwindow_go_to_selected_result()
 //		gchar* pszText;
 		gfloat fLatitude;
 		gfloat fLongitude;
-		gtk_tree_model_get(GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore), &iter, 
+		gtk_tree_model_get(GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore), &iter,
 //			RESULTLIST_COLUMN_NAME, &pszText,
 			RESULTLIST_LATITUDE, &fLatitude,
 			RESULTLIST_LONGITUDE, &fLongitude,

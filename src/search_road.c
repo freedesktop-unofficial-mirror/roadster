@@ -255,7 +255,7 @@ typedef enum {
 	ROADSIDE_RIGHT,
 } ERoadSide;
 
-#define HIGHLIGHT_DISTANCE_FROM_ROAD (0.00017)		// this seems like a good amount...
+#define HIGHLIGHT_DISTANCE_FROM_ROAD (0.00012)		// this seems like a good amount...
 
 void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPercent, ERoadSide eRoadSide, mappoint_t* pReturnPoint)
 {
@@ -324,6 +324,19 @@ void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPercent, 
 	g_assert_not_reached();
 }
 
+gint min4(gint a, gint b, gint c, gint d)
+{
+	gint x = min(a,b);
+	gint y = min(c,d);
+	return min(x,y);
+}
+
+gint max4(gint a, gint b, gint c, gint d)
+{
+	gint x = max(a,b);
+	gint y = max(c,d);
+	return max(x,y);
+}
 
 #define BUFFER_SIZE 200
 void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint nRoadSuffixID, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, pointstring_t* pPointString)
@@ -332,41 +345,42 @@ void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint 
 	gchar azBuffer[BUFFER_SIZE];
 
 	mappoint_t ptAddress = {0};
-	//~ gchar* pszCity = "City";
-	//~ gchar* pszState = "State";
-	//~ gchar* pszZIP = "ZIP";
+	gchar* pszCity = "City";
+	gchar* pszState = "ST";
+	gchar* pszZIP = "00000";
+
+	gchar* pszCityStateZip = g_strdup_printf("%s, %s, %s", pszCity, pszState, pszZIP);
 
 	if(nRoadNumber == ROADSEARCH_NUMBER_NONE) {
+		// Right in the center
 		pointstring_walk_percentage(pPointString, 0.5, ROADSIDE_CENTER, &ptAddress);
 
-		//~ g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d,%d-%d) %s %s",
-			//~ nAddressLeftStart, nAddressLeftEnd,
-			//~ nAddressRightStart, nAddressRightEnd,
-			//~ pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+//         gint nStart = min4(nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRigtEnd);
+//         gint nEnd = min4(nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRigtEnd);
 
 		if(nAddressRightStart == 0 && nAddressRightEnd == 0) {
 			// show no numbers if they're both 0
-			g_snprintf(azBuffer, BUFFER_SIZE, "%s %s", pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+			g_snprintf(azBuffer, BUFFER_SIZE, "%s %s\n%s", pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 		}
 		else if(nAddressRightStart < nAddressRightEnd) {
-			g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d) %s %s", nAddressRightStart, nAddressRightEnd, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+			g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d) %s %s\n%s", nAddressRightStart, nAddressRightEnd, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 		}
 		else {
 			// reverse start/end for the dear user :)
-			g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d) %s %s", nAddressRightEnd, nAddressRightStart, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+			g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d) %s %s\n%s", nAddressRightEnd, nAddressRightStart, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 		}
 		searchwindow_add_result(nRoadID, azBuffer, &ptAddress);
 
 		// do left side, same as right side (see above)
 		if(nAddressLeftStart == 0 && nAddressLeftEnd == 0) {
-			g_snprintf(azBuffer, BUFFER_SIZE, "%s %s", pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+			g_snprintf(azBuffer, BUFFER_SIZE, "%s %s\n%s", pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 		}
 		else if(nAddressLeftStart < nAddressLeftEnd) {
-			g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d) %s %s", nAddressLeftStart, nAddressLeftEnd, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+			g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d) %s %s\n%s", nAddressLeftStart, nAddressLeftEnd, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 		}
 		else {
 			// swap address to keep smaller number to the left
-			g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d) %s %s", nAddressLeftEnd, nAddressLeftStart, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+			g_snprintf(azBuffer, BUFFER_SIZE, "(%d-%d) %s %s\n%s", nAddressLeftEnd, nAddressLeftStart, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 		}
 		searchwindow_add_result(nRoadID, azBuffer, &ptAddress);		
 	}
@@ -392,7 +406,7 @@ void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint 
 					gfloat fPercent = (gfloat)(nRoadNumber - nAddressLeftStart) / (gfloat)nRange;
 					pointstring_walk_percentage(pPointString, fPercent, ROADSIDE_LEFT, &ptAddress);
 				}
-				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s", nRoadNumber, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s\n%s", nRoadNumber, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 				searchwindow_add_result(nRoadID, azBuffer, &ptAddress);				
 			}
 			else if(nRoadNumber >= nAddressLeftEnd && nRoadNumber <= nAddressLeftStart) {
@@ -408,7 +422,7 @@ void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint 
 					// flip percent (23 becomes 77, etc.)
 					pointstring_walk_percentage(pPointString, (100.0 - fPercent), ROADSIDE_RIGHT, &ptAddress);
 				}
-				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s", nRoadNumber, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s\n%s", nRoadNumber, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 				searchwindow_add_result(nRoadID, azBuffer, &ptAddress);
 			}
 		}
@@ -429,7 +443,7 @@ void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint 
 					gfloat fPercent = (gfloat)(nRoadNumber - nAddressRightStart) / (gfloat)nRange;
 					pointstring_walk_percentage(pPointString, fPercent, ROADSIDE_RIGHT, &ptAddress);
 				}
-				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s", nRoadNumber, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s\n%s", nRoadNumber, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 				searchwindow_add_result(nRoadID, azBuffer, &ptAddress);				
 			}
 			else if(nRoadNumber >= nAddressRightEnd && nRoadNumber <= nAddressRightStart) {
@@ -445,9 +459,10 @@ void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint 
 					// flip percent (23 becomes 77, etc.)
 					pointstring_walk_percentage(pPointString, (100.0 - fPercent), ROADSIDE_LEFT, &ptAddress);
 				}
-				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s", nRoadNumber, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG));
+				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s\n%s", nRoadNumber, pszRoadName, map_road_suffix_itoa(nRoadSuffixID, SUFFIX_TYPE_LONG), pszCityStateZip);
 				searchwindow_add_result(nRoadID, azBuffer, &ptAddress);				
 			}
 		}
 	}
+	g_free(pszCityStateZip);
 }

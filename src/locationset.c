@@ -2,7 +2,7 @@
  *            locationset.c
  *
  *  Copyright  2005  Ian McIntosh
- *  ian_mcintosh@linuxadvocate.org 
+ *  ian_mcintosh@linuxadvocate.org
  ****************************************************************************/
 
 /*
@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <gtk/gtk.h>
 #include "../include/locationset.h"
 #include "../include/db.h"
@@ -235,7 +235,7 @@ gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationS
 // reads points in given rect into memory
 gboolean locationset_load_locations(maprect_t* pRect)
 {
-	TIMER_BEGIN(mytimer, "BEGIN POINT LOAD");
+//	TIMER_BEGIN(mytimer, "BEGIN POINT LOAD");
 
 //~ //	g_return_val_if_fail(pGeometrySet != NULL, FALSE);
 //~ //	gint nZoomLevel = map_get_zoomlevel();
@@ -276,12 +276,12 @@ gboolean locationset_load_locations(maprect_t* pRect)
 		pRect->m_B.m_fLatitude - LC_EXTRALOAD, pRect->m_A.m_fLongitude - LC_EXTRALOAD, 	// bottom left
 		pRect->m_A.m_fLatitude + LC_EXTRALOAD, pRect->m_A.m_fLongitude - LC_EXTRALOAD	// upper left again
 		);
-	TIMER_SHOW(mytimer, "after SQL generation");
+//	TIMER_SHOW(mytimer, "after SQL generation");
 //~ g_print("sql: %s\n", azQuery);
 	db_resultset_t* pResultSet = NULL;
 	
 	if(db_query(azQuery, &pResultSet)) {
-		TIMER_SHOW(mytimer, "after query");
+//		TIMER_SHOW(mytimer, "after query");
 		guint32 uRowCount = 0;
 
 		locationset_clear_all_locations();
@@ -315,11 +315,11 @@ gboolean locationset_load_locations(maprect_t* pRect)
 			}
 		} // end while loop on rows
 //		g_print(" -- got %d location(s)\n", uRowCount);
-		TIMER_SHOW(mytimer, "after rows retrieved");
+//		TIMER_SHOW(mytimer, "after rows retrieved");
 
 		db_free_result(pResultSet);
-		TIMER_SHOW(mytimer, "after free results");
-		TIMER_END(mytimer, "END DB LOAD");
+//		TIMER_SHOW(mytimer, "after free results");
+//		TIMER_END(mytimer, "END DB LOAD");
 		return TRUE;
 	}
 	return FALSE;

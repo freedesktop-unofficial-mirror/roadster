@@ -20,3 +20,49 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+
+#include <gtk/gtk.h>
+#include "../include/geometryset.h"
+
+/*
+Goals:
+ - Keep labels from overlapping
+ - Prevent the same text from showing up too often, and choose among the options wisely
+*/
+
+// typedef struct roadlabel {
+//     geometryset_t* m_pGeometry;
+//     gchar* m_pszLabel;
+// } roadlabel_t;
+
+struct {
+	GPtrArray* m_p;
+	GHashTable* m_pLabelHash;
+} g_SceneManager;
+
+void scenemanager_init()
+{
+	g_SceneManager.m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
+}
+
+void scenemanager_add_label_line(geometryset_t* pGeometry, gchar* pszLabel)
+{
+	
+}
+
+void scenemanager_add_label_polygon(geometryset_t* pGeometry, gchar* pszLabel)
+{
+	
+}
+
+void scenemanager_draw()
+{
+	
+}
+
+void scenemanager_clear()
+{
+	g_hash_table_destroy(g_SceneManager.m_pLabelHash);
+
+	scenemanager_init();
+}

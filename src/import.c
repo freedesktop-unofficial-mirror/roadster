@@ -21,6 +21,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <gtk/gtk.h>
 #include "../include/importwindow.h"
 #include "../include/import_tiger.h"
@@ -60,9 +62,9 @@ gboolean import_from_uri(const gchar* pszURI)
 		gint nTigerSetNumber = atoi(buf);
 		// just assume it's a TIGER file for now since it's all we support
 		
-		db_disable_keys();
+//		db_disable_keys();
 		bResult = import_tiger_from_uri(pszURI, nTigerSetNumber);
-		db_enable_keys();
+//		db_enable_keys();
 
 		if(bResult) {
 			importwindow_log_append("success.\n\n");

@@ -1,3 +1,15 @@
+2005-02-21  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* roadster.glade: Removed sidebar search, put search field in toolbar.
+	* search_road.c: Added room for city, state, zip to search results.
+	* layers.h: Added LAYER_MISC_AREA for schools, hospitals, etc.  Added "bold" setting for layer font style.
+	* scenemanager.c: Added beginning of a scenemanager to handle font layout.
+	* import.c: Don't disable database indexes during import (may be causing flaky behavior)
+	* import_tiger.c: Fixed 'nan' import bug.  Fixed bug in polygon stitching. Added check for county boundaries (currently unused).  Added check for LAYER_MISC_AREA type.  Added support for LAYER_RIVER.
+	* layers.c: Added LAYER_MISC_AREA style.  Added font styles to all layers.
+	* mainwindow.c: Changed cairo include path from <cairo/cairo.h> to <cairo.h>
+	* map.c: Added #define to hack around Cairo line cap bug.  Tweaked zoom level.  Added support for label styles.
+
 2005-02-20  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* roadster.glade.scrap: Moved some unused windows from roadster.glade here to quiet libglade on startup.

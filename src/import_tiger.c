@@ -69,6 +69,9 @@ typedef struct tiger_record_rt1
 	gint m_nAddressRightEnd;
 	char m_achName[TIGER_CHAIN_NAME_LEN + 1];
 	gint m_nRoadNameSuffixID;
+
+	gint m_nCountyIDLeft;	// if left and right are in diff counties, we've found a boundary line!
+	gint m_nCountyIDRight;
 } tiger_record_rt1_t;
 
 #define TIGER_RT2_MAX_POINTS (10)
@@ -109,6 +112,8 @@ typedef struct tiger_import_process {
 	GHashTable* m_pTableRTi;
 	GHashTable* m_pTableRT7;
 	GHashTable* m_pTableRT8;
+
+	GPtrArray* m_pBoundaryRT1s;
 } tiger_import_process_t;
 
 // indexed by POLYID
@@ -288,10 +293,24 @@ gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 			//~ return TRUE;
 		//~ }
 		//~ else
+		/*
+		 D8* open spaces
+		 D81 golf courses
+		 D82 Cemetery
+		 D83 National Park
+		 D84 National forest
+		 D85 State or local park or forest
+		*/
 		if(chCode == '8') {
 			*pValue = LAYER_PARK;
 			return TRUE;
 		}
+		else {
+			*pValue = LAYER_MISC_AREA;
+			return TRUE;
+		}
+
+		// TODO: Add 'misc areas' to get all this stuff?
 		/*
 		D21 Apartment building
 		D24 Marina
@@ -310,13 +329,7 @@ gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 		D52 train station
 		D53 bus terminal
 		D54 marine terminal
-		
-		D8* open spaces
-		D81 golf courses
-		D82 Cemetery
-		D83 National Park
-		D84 National forest
-		D85 State or local park or forest
+
 		*/
 	}
 	else if(chFeatureClass == 'E') {		// topographic
@@ -328,9 +341,19 @@ gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 //		g_print("found topographic (E%c%c)\n", chCode, chSubCode);
 	}
 	else if(chFeatureClass == 'H') { 	// water
+
 		if(chCode == '0') {
-			*pValue = LAYER_LAKE;
-			return TRUE;
+			// generic unknown water ...
+			// this includes charles river (cambridge/boston ma)
+			// but they are badly formed for some reason?
+//			*pValue = LAYER_LAKE;
+//			return TRUE;
+//			return FALSE;
+			if(chSubCode == '1') {
+				// these need to be stitched by lat/lon
+				//*pValue = LAYER_LAKE;	// shoreline of perennial water feature
+				//return TRUE;
+			}
 		}
 		else if(chCode == '1') { 	// streams
 			*pValue = LAYER_RIVER;
@@ -418,7 +441,7 @@ gboolean import_tiger_parse_MET(const gchar* pszMET, tiger_import_process_t* pIm
 
 
 // See TGR2003.PDF page 186 for field description
-gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTable* pTable)
+gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTable* pTable, GPtrArray* pBoundaryRT1s)
 {
 	gint i;
 	for(i=0 ; i<(nLength-TIGER_RT1_LINE_LENGTH) ; i+=TIGER_RT1_LINE_LENGTH) {
@@ -453,6 +476,13 @@ if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 	g_print("type '%s' couldn't be looked up\n", achType);
 }
 
+		import_tiger_read_int(&pLine[135-1], 3, &pRecord->m_nCountyIDLeft);
+		import_tiger_read_int(&pLine[138-1], 3, &pRecord->m_nCountyIDRight);
+
+		if(pRecord->m_nCountyIDLeft != pRecord->m_nCountyIDRight) {
+			g_ptr_array_add(pBoundaryRT1s, pRecord);
+	//		g_print("county boundary\n");
+		}
 		//~ gint nFeatureType;
 		//~ import_tiger_read_int(&pLine[50-1], 4, &nFeatureType);
 		//~ g_print("name: '%s' (%d)\n", pRecord->m_achName, nFeatureType);
@@ -528,9 +558,8 @@ gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTable *pT
 
 		// 22-24 is a CFCC (
 		gint nRecordType;
-		if(!import_tiger_read_layer_type(&pLine[22-1], &nRecordType)) {
-			continue;
-		}
+
+		import_tiger_read_layer_type(&pLine[22-1], &nRecordType);
 		pRecord = g_new0(tiger_record_rt7_t, 1);
 		pRecord->m_nRecordType = nRecordType;
 
@@ -538,6 +567,10 @@ gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTable *pT
 		import_tiger_read_int(&pLine[11-1], TIGER_LANDID_LENGTH, &pRecord->m_nLANDID);
 
 		import_tiger_read_string(&pLine[25-1], TIGER_LANDMARK_NAME_LEN, &pRecord->m_achName[0]);
+
+		if(nRecordType == LAYER_MISC_AREA) {
+			g_print("misc area: %s\n", pRecord->m_achName);
+		}
 // g_print("record 7: TypeID=%d LANDID=%d\n", pRecord->m_nRecordType, pRecord->m_nLANDID);
 //g_print("name: '%s'\n", pRecord->m_achName);
 
@@ -558,10 +591,10 @@ gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pT
 		tiger_record_rt8_t* pRecord;
 		pRecord = g_new0(tiger_record_rt8_t, 1);
 
-		// columns 16 to 25 is the TLID -
+		// columns 16 to 25 is the POLYGON ID -
 		import_tiger_read_int(&pLine[16-1], TIGER_POLYID_LENGTH, &pRecord->m_nPOLYID);
-		
-		// columns 26 to 35 is the TLID -
+
+		// columns 26 to 35 is the LANDMARK ID -
 		import_tiger_read_int(&pLine[26-1], TIGER_LANDID_LENGTH, &pRecord->m_nLANDID);
 
 // g_print("record 8: POLYID=%d LANDID=%d\n", pRecord->m_nPOLYID, pRecord->m_nLANDID);
@@ -575,7 +608,9 @@ gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pT
 
 gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
-	g_print("nLength = %d, TIGER_RTi_LINE_LENGTH = %d\n", nLength, TIGER_RTi_LINE_LENGTH);
+	//
+	// Gather RTi records (chainID,TZID-A,TZID-B) and index them by POLYGON ID in the given hash table
+	//
 	gint i;
 	for(i=0 ; i<(nLength-TIGER_RTi_LINE_LENGTH) ; i+=TIGER_RTi_LINE_LENGTH) {
 		gchar* pLine = &pBuffer[i];
@@ -600,6 +635,12 @@ gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pT
 		gint nZeroCellB;
 		import_tiger_read_int(&pLine[31-1], TIGER_ZEROCELL_LENGTH, &nZeroCellB);
 
+		if(nZeroCellA == nZeroCellB) {
+			// we can't link this with anything..?
+			g_print("nZeroCellA == nZeroCellB\n");
+			continue;
+		}
+
 		if(nLeftPolygonID != 0) {
 			// is there an existing RTi for this POLYID?
 			pRecord = g_hash_table_lookup(pTable, &nLeftPolygonID);	// RTi is indexed by polygon ID
@@ -622,7 +663,6 @@ gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pT
 			pNewRT1Link->m_nPointATZID = nZeroCellA;
 			pNewRT1Link->m_nPointBTZID = nZeroCellB;
 			g_ptr_array_add(pRecord->m_pRT1LinksArray, pNewRT1Link);
-			//g_print("length: %d\n", pRecord->m_pTLIDArray->len);
 		}
 		if(nRightPolygonID != 0) {
 			pRecord = g_hash_table_lookup(pTable, &nRightPolygonID);
@@ -737,26 +777,35 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 {
 	static int nCallCount=0; nCallCount++;
 	if((nCallCount%CALLBACKS_PER_PULSE) == 0) importwindow_progress_pulse();
-	
+
 	tiger_import_process_t* pImportProcess = (tiger_import_process_t*)user_data;
 	g_assert(pImportProcess != NULL);
+
+	//
+	// pRecordRTi has an array of RT1 chains that make up this polygon.
+	// our job here is to stitch them together.
+	//
 	tiger_record_rti_t* pRecordRTi = (tiger_record_rti_t*)value;
 	g_assert(pRecordRTi != NULL);
 
-	// lookup table8 record by TLID
+	// lookup table8 (polygon-landmark link) record by POLYID
 	tiger_record_rt8_t* pRecordRT8 = g_hash_table_lookup(pImportProcess->m_pTableRT8, &pRecordRTi->m_nPOLYID);
 	if(pRecordRT8 == NULL) return;	// allowed to be null(?)
 
-	// lookup table7 record by LANDID
+	// lookup table7 (landmark) record by LANDID
 	tiger_record_rt7_t* pRecordRT7 = g_hash_table_lookup(pImportProcess->m_pTableRT7, &pRecordRT8->m_nLANDID);
 	if(pRecordRT7 == NULL) return;	// allowed to be null(?)
 
-	// create a temp array to hold the points for this polygon (in order)
-	GPtrArray* pTempPointsArray = g_ptr_array_new();
+	// now we have landmark data (name, type)
 
 	g_assert(pRecordRTi->m_pRT1LinksArray != NULL);
 	g_assert(pRecordRTi->m_pRT1LinksArray->len >= 1);
 
+	GPtrArray* pTempPointsArray = NULL;
+	// create a temp array to hold the points for this polygon (in order)
+	g_assert(pTempPointsArray == NULL);
+	pTempPointsArray = g_ptr_array_new();
+	
 	// start with the RT1Link at index 0 (and remove it)
 	tiger_rt1_link_t* pCurrentRT1Link = g_ptr_array_index(pRecordRTi->m_pRT1LinksArray, 0);
 	g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, 0);	// TODO: should maybe choose the last one instead? :)  easier to remove and arbitrary anyway!
@@ -779,12 +828,14 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 		gint iRT1Link;
 		for(iRT1Link=0 ; iRT1Link < pRecordRTi->m_pRT1LinksArray->len ; iRT1Link++) {
 			tiger_rt1_link_t* pNextRT1Link = g_ptr_array_index(pRecordRTi->m_pRT1LinksArray, iRT1Link);
+			
 			if(nLastTZID == pNextRT1Link->m_nPointATZID) {
 				// add pNextRT1Link's points in order (A->B)
-
 				// this (pNextRT1Link) RT1Link becomes the new "current"
 				// remove it from the array!
 				g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, iRT1Link);
+				iRT1Link--;	// undo the next ++ in the for loop
+
 				// we're done forever with the old 'current'
 				// (the RT1 it links to has already had its points copied to the list!)
 				g_free(pCurrentRT1Link);
@@ -801,8 +852,10 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 			else if(nLastTZID == pNextRT1Link->m_nPointBTZID) {
 				// add pNextRT1Link's points in REVERSE order (B->A)
 				// (otherwise same as above)
-				
+
 				g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, iRT1Link);
+				iRT1Link--;	// undo the next ++ in the for loop
+
 				g_free(pCurrentRT1Link);
 				pCurrentRT1Link = pNextRT1Link;
 
@@ -816,15 +869,25 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 			}
 		}
 		if(bFound == FALSE) {
-			break;	// out of while() loop
+			// no next domino-match
+			break;	// inner while() loop
 		}
 		// else loop and attempt to find next RT1 whose points we should append
 	}
-	// leftovers
 	g_assert(pCurrentRT1Link != NULL);
 	g_free(pCurrentRT1Link);
 
+	// save this polygon
 	if(pTempPointsArray->len > 3) {	// takes 3 to make a polygon
+		g_print("inserting polygon of len %d type %s\n", pTempPointsArray->len, g_aLayers[pRecordRT7->m_nRecordType].m_pszName);
+
+		mappoint_t* p1 = g_ptr_array_index(pTempPointsArray, 0);
+		mappoint_t* p2 = g_ptr_array_index(pTempPointsArray, pTempPointsArray->len-1);
+
+		if(p1->m_fLatitude != p2->m_fLatitude || p1->m_fLongitude != p2->m_fLongitude) {
+			g_print("doesn't loop\n");
+		}
+
 		// insert record
 		if(pRecordRT7->m_nRecordType != LAYER_NONE) {
 			gint nRoadID;
@@ -833,14 +896,17 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 				pTempPointsArray, &nRoadID);
 		}
 	}
-
-	// we SHOULD have used all RT1 links up! (no?)
-	while(pRecordRTi->m_pRT1LinksArray->len > 0) {
-		tiger_rt1_link_t* pTemp = g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, 0);
-//		g_print("couldn't link RT1Link (A-TZID:%d B-TZID:%d)\n", pTemp->m_nPointATZID, pTemp->m_nPointBTZID);
-		g_free( pTemp );
-	}
 	g_ptr_array_free(pTempPointsArray, FALSE);
+
+	// we SHOULD have used all RT1 links up!
+	if(pRecordRTi->m_pRT1LinksArray->len > 0) {
+		g_warning("RT1 Links remain:\n");
+		while(pRecordRTi->m_pRT1LinksArray->len > 0) {
+			tiger_rt1_link_t* pTemp = g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, 0);
+			g_print("  (A-TZID:%d B-TZID:%d)\n", pTemp->m_nPointATZID, pTemp->m_nPointBTZID);
+			g_free( pTemp );
+		}
+	}
 }
 
 //
@@ -966,10 +1032,13 @@ static gboolean import_tiger_from_buffers(
 
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
-	
+
+	// a list of RT1 records that make up the boundary of this county
+	importProcess.m_pBoundaryRT1s = g_ptr_array_new();
+
 	g_print("parsing RT1\n");
 	importProcess.m_pTableRT1 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
-	import_tiger_parse_table_1(pBufferRT1, nLengthRT1, importProcess.m_pTableRT1);
+	import_tiger_parse_table_1(pBufferRT1, nLengthRT1, importProcess.m_pTableRT1, importProcess.m_pBoundaryRT1s);
 	g_print("RT1: %d records\n", g_hash_table_size(importProcess.m_pTableRT1));
 
 	importwindow_log_append(".");

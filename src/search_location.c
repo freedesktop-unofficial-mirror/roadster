@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <gtk/gtk.h>
 #include "../include/db.h"
 #include "../include/util.h"
@@ -164,7 +164,7 @@ void search_location_on_locationsearch_struct(locationsearch_t* pLocationSearch)
 void search_location_filter_result(gint nLocationID)
 {
 	g_print("result: %d\n", nLocationID);
-	gchar* p = g_strdup_printf("<span size='larger'><b>1369 Coffee Shop (%d)</b></span>\n1369 Cambridge St.\nCambridge, MA 02141", nLocationID);
+	gchar* p = g_strdup_printf("<span size='larger'><b>Happy Garden</b></span>\n145 Main St.\nCambridge, MA 02141\n617-555-1021");
 	mappoint_t pt = {0,0};
 	searchwindow_add_result(0, p, &pt);
 	g_free(p);

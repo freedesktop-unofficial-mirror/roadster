@@ -43,8 +43,8 @@
 #include "../include/databasewindow.h"
 
 #include <gdk/gdkx.h>
-#include <cairo/cairo.h>
-#include <cairo/cairo-xlib.h>
+#include <cairo.h>
+#include <cairo-xlib.h>
 
 #define PROGRAM_NAME		"Roadster"
 #define PROGRAM_COPYRIGHT	"Copyright (c) 2005 Ian McIntosh"

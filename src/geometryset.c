@@ -26,6 +26,7 @@
 */
 
 #include <gtk/gtk.h>
+#include <string.h>
 #include "../include/geometryset.h"
 #include "../include/map.h"
 #include "../include/util.h"
@@ -162,7 +163,7 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 
 	gint nZoomLevel = map_get_zoomlevel();
 
-	TIMER_BEGIN(mytimer, "BEGIN DB LOAD");
+	TIMER_BEGIN(mytimer, "BEGIN Geometry LOAD");
 
 	// HACKY: make a list of layer IDs "2,3,5,6"
 	gchar azLayerNumberList[200] = {0};
@@ -201,7 +202,6 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
 		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
 		);
-	TIMER_SHOW(mytimer, "after SQL generation");
 //g_print("sql: %s\n", pszSQL);
 
 	db_query(pszSQL, &pResultSet);
@@ -259,7 +259,7 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 
 		db_free_result(pResultSet);
 		TIMER_SHOW(mytimer, "after free results");
-		TIMER_END(mytimer, "END DB LOAD");
+		TIMER_END(mytimer, "END Geometry LOAD");
 
 		return TRUE;
 	}

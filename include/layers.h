@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #ifndef _LAYERS_H
 #define _LAYERS_H
 
@@ -38,17 +38,18 @@ extern "C"
 #define LAYER_MAJORSTREET		(2)
 #define LAYER_MINORHIGHWAY		(3)
 #define LAYER_MINORHIGHWAY_RAMP	(4)
-#define LAYER_MAJORHIGHWAY		(5)
-#define LAYER_MAJORHIGHWAY_RAMP	(6)
+#define LAYER_MAJORHIGHWAY		(5)	// used?
+#define LAYER_MAJORHIGHWAY_RAMP	(6)	// used?
 #define LAYER_RAILROAD			(7)
 #define LAYER_PARK				(8)
 #define LAYER_RIVER				(9)
 #define LAYER_LAKE				(10)
+#define LAYER_MISC_AREA			(11)
 
-#define NUM_LAYERS 				(10)
+#define NUM_LAYERS 				(11)
 	
 #define LAYER_FIRST				(1)
-#define LAYER_LAST				(10)
+#define LAYER_LAST				(11)
 
 typedef struct color {
 	gfloat m_fRed;
@@ -83,6 +84,7 @@ typedef struct sublayerstyle {
 
 typedef struct textlabelstyle {
 	gdouble m_afFontSizeAtZoomLevel[MAX_ZOOM_LEVEL];
+	gint m_abBoldAtZoomLevel[MAX_ZOOM_LEVEL];	// 0s or 1s
 	gint m_abHaloAtZoomLevel[MAX_ZOOM_LEVEL];	// 0s or 1s
 	color_t m_clrColor;
 	// font family...
