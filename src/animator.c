@@ -105,18 +105,9 @@ gdouble animator_get_progress(animator_t* pAnimator)
 		}
 		break;
 	case ANIMATIONTYPE_FAST_THEN_SLIDE:
-		if(fTimePercent < 0.5) {
-			// go 80% of the distance in half the time
-			// uses a simple 45 degree slope (constant-speed movement with no smooth acceration)
-			fReturn = (fTimePercent / 0.5) * 0.8;
-		}
-		else {
-			// (note: same as above)
-			fReturn = 1.0 - (2.0 * (1.0 - fTimePercent) * (1.0 - fTimePercent));
-
-			// compress it into last 20%
-			fReturn = (fReturn * 0.2) + 0.8;
-		}
+		// graph this to understand fully. :)
+		fReturn = (1 - ((1-fTimePercent) * (1-fTimePercent) * (1-fTimePercent) * (1-fTimePercent)));
+		// NOTE: the more (1-x)s we add, the more time it will spend "slowing down"
 		break;
 	default:
 		g_assert_not_reached();

@@ -35,17 +35,17 @@
 #define MAX_QUERY					(4000)
 #define SEARCH_RESULT_COUNT_LIMIT	(100)
 
-typedef struct {
+//typedef struct {
 //	mappoint_t m_ptCenter;
 //	gdouble m_fRadiusInDegrees;
 //	gint m_nLocationSetID;
-	gchar* m_pszCleanedSentence;
-	gchar** m_aWords;
-	gint m_nWordCount;
-} locationsearch_t;
+//	gchar* m_pszCleanedSentence;
+//	gchar** m_aWords;
+//	gint m_nWordCount;
+//} locationsearch_t;
 
 void search_location_on_cleaned_sentence(const gchar* pszCleanedSentence);
-void search_location_on_words(gchar** aWords, gint nWordCount);
+//void search_location_on_words(gchar** aWords, gint nWordCount);
 void search_location_filter_result(gint nLocationID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates);
 
 void search_location_execute(const gchar* pszSentence)
@@ -63,21 +63,20 @@ void search_location_execute(const gchar* pszSentence)
 	TIMER_END(search, "END LocationSearch");
 }
 
+	// Create an array of the words
+/*         gchar** aaWords = g_strsplit(pszCleanedSentence," ", 0);        // " " = delimeters, 0 = no max # */
+/*         gint nWords = g_strv_length(aaWords);                                                             */
+/*         search_location_on_words(aaWords, nWords);                                                        */
+/*         g_strfreev(aaWords);    // free entire array of strings                                           */
+
 void search_location_on_cleaned_sentence(const gchar* pszCleanedSentence)
 {
-	// Create an array of the words
-	gchar** aaWords = g_strsplit(pszCleanedSentence," ", 0);	// " " = delimeters, 0 = no max #
-	gint nWords = g_strv_length(aaWords);
 
-//	search_location_on_locationsearch_struct(pLocationSearch);
-	search_location_on_words(aaWords, nWords);
+	// Get POI #, Name, Address, and Coordinates. Match a POI if any of the words given are in ANY attributes of the POI.
+	// NOTE: We're using this behavior (http://dev.mysql.com/doc/mysql/en/fulltext-boolean.html):
+	// 'apple banana'
+	//   Find rows that contain at least one of the two words.
 
-	// cleanup
-	g_strfreev(aaWords);	// free the array of strings		
-}
-
-void search_location_on_words(gchar** aWords, gint nWordCount)
-{
 	gchar* pszSQL = g_strdup_printf(
 		"SELECT Location.ID, LocationAttributeValue_Name.Value AS Name, LocationAttributeValue_Address.Value AS Address, AsBinary(Location.Coordinates)"
 		" FROM LocationAttributeValue"
@@ -90,7 +89,7 @@ void search_location_on_words(gchar** aWords, gint nWordCount)
 		" GROUP BY Location.ID;",
 			LOCATION_ATTRIBUTE_ID_NAME,
 			LOCATION_ATTRIBUTE_ID_ADDRESS,
-			aWords[0]
+			pszCleanedSentence
 		);
 
 	db_resultset_t* pResultSet;
@@ -125,6 +124,10 @@ void search_location_on_words(gchar** aWords, gint nWordCount)
 		g_print("search failed\n");
 	}
 }
+
+/* void search_location_on_words(gchar** aWords, gint nWordCount) */
+/* {                                                                                         */
+/* }                                                                                         */
 
 #define LOCATION_RESULT_SUGGESTED_ZOOMLEVEL	(7)
 

@@ -48,7 +48,6 @@ int main (int argc, char *argv[])
 		textdomain(PACKAGE);
 	#endif
 
-//	gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, NULL);
 	gtk_init(&argc, &argv);
 
 	g_type_init();
@@ -63,21 +62,20 @@ int main (int argc, char *argv[])
 	gint nNewLocationID;
 
 	mappoint_t pt;
-	pt.m_fLatitude = 41.54930;  // these are in MA somewhere
-	pt.m_fLongitude = -70.61403;
+	pt.m_fLatitude = 41.55130;
+	pt.m_fLongitude = -70.61409;
 	nNewLocationID = 0;
 	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "1369 Cambridge Street\nCambridge, MA, 02141", NULL);
 
-	pt.m_fLatitude = 41.54762;
+	pt.m_fLatitude = 41.55120;
 	pt.m_fLongitude = -70.61409;
 	nNewLocationID = 0;
 	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "One Cup of Coffee", NULL);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "29 Shore Street\nCambridge, MA, 02141", NULL);
 */
-
 	prefs_read();
 
 	g_print("Running %s\n", g_thread_supported() ? "multi-threaded" : "single-threaded");
@@ -106,10 +104,10 @@ gboolean main_init(void)
 	point_init();
 	g_print("initializing pointstrings\n");
 	pointstring_init();
-	
+
 	g_print("initializing roads\n");
 	road_init();
-	
+
 	g_print("initializing tracks\n");
 	track_init();
 	g_print("initializing layers\n");
@@ -136,7 +134,7 @@ gboolean main_init(void)
 
 	g_print("initializing animator\n");
 	animator_init();
-	
+
 	g_print("connecting to db\n");
 	gboolean bConnected = db_connect(NULL, NULL, NULL, "");
 

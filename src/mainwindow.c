@@ -72,7 +72,7 @@
 
 #define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
 #define	SLIDE_TIME_IN_SECONDS		(0.7)	// how long the whole slide should take, in seconds
-#define	SLIDE_TIME_IN_SECONDS_AUTO	(0.5)	// time for sliding to search results, etc.
+#define	SLIDE_TIME_IN_SECONDS_AUTO	(0.8)	// time for sliding to search results, etc.
 
 // Layerlist columns
 #define LAYERLIST_COLUMN_ENABLED	(0)

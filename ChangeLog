@@ -1,3 +1,10 @@
+2005-03-31  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/animator.c: Use a better math function for smooth scrolling.
+	* src/mainwindow.c: Tweak sliding a bit.
+	* src/map.c: Cleanup.
+	* src/search_location.c: Use all query words.
+
 2005-03-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/location.c: Inserting of POI and POI attributes.

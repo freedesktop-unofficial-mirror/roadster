@@ -586,7 +586,7 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 			// Get layer type that this belongs on
 			gint nTypeID = atoi(aRow[1]);
 			if(nTypeID < LAYER_FIRST || nTypeID > LAYER_LAST) {
-				g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
+				//g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
 				continue;
 			}
 
@@ -641,12 +641,7 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
 	g_return_val_if_fail(pMap != NULL, FALSE);
 	g_return_val_if_fail(pRect != NULL, FALSE);
 
-	db_resultset_t* pResultSet = NULL;
-	db_row_t aRow;
-
-	gint nZoomLevel = map_get_zoomlevel(pMap);
-
-	if(nZoomLevel < MIN_ZOOMLEVEL_FOR_LOCATIONS) {
+	if(map_get_zoomlevel(pMap) < MIN_ZOOMLEVEL_FOR_LOCATIONS) {
 		return TRUE;
 	}
 
@@ -669,6 +664,7 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
 		);
 	//g_print("sql: %s\n", pszSQL);
 
+	db_resultset_t* pResultSet = NULL;
 	db_query(pszSQL, &pResultSet);
 	g_free(pszSQL);
 
@@ -676,6 +672,7 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
 
 	guint32 uRowCount = 0;
 	if(pResultSet) {
+		db_row_t aRow;
 		while((aRow = db_fetch_row(pResultSet))) {
 			uRowCount++;
 
@@ -704,13 +701,11 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
 		TIMER_SHOW(mytimer, "after rows retrieved");
 
 		db_free_result(pResultSet);
-		TIMER_SHOW(mytimer, "after free results");
 		TIMER_END(mytimer, "END Locations LOAD");
-
 		return TRUE;
 	}
 	else {
-//		g_print(" no rows\n");
+		TIMER_END(mytimer, "END Locations LOAD (0 results)");
 		return FALSE;
 	}	
 }
@@ -765,6 +760,7 @@ gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2)
 
 	gdouble fX1 = SCALE_X(&metrics, p1->m_fLongitude);
 	gdouble fY1 = SCALE_Y(&metrics, p1->m_fLatitude);
+
 	gdouble fX2 = SCALE_X(&metrics, p2->m_fLongitude);
 	gdouble fY2 = SCALE_Y(&metrics, p2->m_fLatitude);
 
