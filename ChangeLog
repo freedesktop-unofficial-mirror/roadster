@@ -1,5 +1,10 @@
 2005-03-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/map.c: Fixed off-by-one error in selecting line widths for hit testing.
+	* data/layers.xml: Changed style to never use single-color roads (ugly).
+
+2005-03-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/mainwindow.c: Single click on the border now does a big jump, instead of a single 80-pixel scroll.
 
 2005-03-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>

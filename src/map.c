@@ -655,8 +655,8 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, gchar** ppReturnString
 		gint nLayer = layerdraworder[i].nLayer;
 
 		// use width from whichever layer it's wider in
-		gdouble fLineWidth = max(g_aLayers[nLayer]->m_Style.m_aSubLayers[0].m_afLineWidths[pMap->m_uZoomLevel],
-					 g_aLayers[nLayer]->m_Style.m_aSubLayers[1].m_afLineWidths[pMap->m_uZoomLevel]);
+		gdouble fLineWidth = max(g_aLayers[nLayer]->m_Style.m_aSubLayers[0].m_afLineWidths[pMap->m_uZoomLevel-1],
+					 g_aLayers[nLayer]->m_Style.m_aSubLayers[1].m_afLineWidths[pMap->m_uZoomLevel-1]);
 
 		// make thin roads a little easier to hit
 		fLineWidth = max(fLineWidth, MIN_ROAD_HIT_TARGET_WIDTH);

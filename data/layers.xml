@@ -5,7 +5,7 @@
 
 <layer name="minor-roads">
 	<sublayer>
-		<property name="width" level="6" value="2.0" />
+		<property name="width" level="6" value="3.0" />
 		<property name="width" level="7" value="5.0" />
 		<property name="width" level="8" value="12.0" />
 		<property name="width" level="9" value="17.0" />
@@ -15,6 +15,7 @@
 		<property name="cap-style" value="round" />
 	</sublayer>
 	<sublayer>
+		<property name="width" level="6" value="1.0" />
 		<property name="width" level="7" value="3.0" />
 		<property name="width" level="8" value="10.0" />
 		<property name="width" level="9" value="15.0" />
