@@ -1,5 +1,11 @@
 2005-03-09  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/map.c: MySQL optimization regarding GeomFromText() which saves about 10% total application CPU time. (Not as big of a deal as it sounds since we're currently disk-bound.)
+	* src/map_draw_cairo.c: Re-add check for font size == 0 and don't draw labels for that layer if it is (this is how styles say "no labels").
+	* src/scenemanager.c: Minor cleanup.
+
+2005-03-09  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/search_road.c:
 	* src/import_tiger.c:
 	* src/db.c: Removed Road_RoadName joiner table.  Roads can have only one name now (we never used this feature).

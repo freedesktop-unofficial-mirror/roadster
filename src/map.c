@@ -476,21 +476,30 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 //                 return TRUE;
 //         }
 
-	// generate SQL
-	gchar* pszSQL = g_strdup_printf(
-		"SELECT Road.ID, Road.TypeID, AsBinary(Road.Coordinates), RoadName.Name, RoadName.SuffixID"
-		" FROM Road "
-	//      " LEFT JOIN Road_RoadName ON (Road.ID=Road_RoadName.RoadID)"
-		" LEFT JOIN RoadName ON (Road.RoadNameID=RoadName.ID)"
-		" WHERE"
-//		" TypeID IN (%s) AND"
-		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
-//		azLayerNumberList,
+	// MySQL doesn't optimize away GeomFromText(...) and instead executes this ONCE PER ROW.
+	// That's a whole lot of parsing and was causing my_strtod to eat up 9% of Roadster's CPU time.
+	// Assinging it to a temp variable alleviates that problem.
+
+	gchar* pszSQL;
+	pszSQL = g_strdup_printf("SET @wkb=GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))')",
 		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
 		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
 		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
 		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
 		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
+		);
+	db_query(pszSQL, NULL);
+	g_free(pszSQL);
+
+	// generate SQL
+	pszSQL = g_strdup_printf(
+		"SELECT Road.ID, Road.TypeID, AsBinary(Road.Coordinates), RoadName.Name, RoadName.SuffixID"
+		" FROM Road "
+		" LEFT JOIN RoadName ON (Road.RoadNameID=RoadName.ID)"
+		" WHERE"
+//		" TypeID IN (%s) AND"
+		" MBRIntersects(@wkb, Coordinates)"
+//		azLayerNumberList,
 		);
 	//g_print("sql: %s\n", pszSQL);
 

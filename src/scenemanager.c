@@ -26,14 +26,9 @@
 
 /*
 Goals:
- - Keep labels from overlapping
- - Prevent the same text from showing up too often, and choose among the options wisely
+ - Keep text labels and other screen objects from overlapping
+ - Prevent the same text from showing up too often (currently not more than once)
 */
-
-// typedef struct roadlabel {
-//     geometryset_t* m_pGeometry;
-//     gchar* m_pszLabel;
-// } roadlabel_t;
 
 void scenemanager_init(void)
 {
@@ -48,7 +43,7 @@ void scenemanager_new(scenemanager_t** ppReturn)
 	*ppReturn = pNew;
 }
 
-gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* pScreenLocation)
+gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* __unused_pScreenLocation)
 {
 	g_assert(pSceneManager != NULL);
 	g_assert(pszLabel != NULL);

@@ -277,7 +277,7 @@ static void map_draw_cairo_line_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 		}
 		cairo_show_text(pCairo, pszLabel);
 		cairo_restore(pCairo);
-		
+
 		// claim the space this took up and the label (so it won't be drawn twice)
 		scenemanager_claim_label(pMap->m_pSceneManager, pszLabel);
 		scenemanager_claim_polygon(pMap->m_pSceneManager, aBoundingPolygon, 4);
@@ -950,6 +950,9 @@ void map_draw_cairo_layer_line_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 	gdouble fLineWidth = pSubLayerStyle->m_afLineWidths[pRenderMetrics->m_nZoomLevel-1];
 	if(fLineWidth == 0) return;
 
+	gdouble fFontSize = pLabelStyle->m_afFontSizeAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
+	if(fFontSize == 0) return;
+
 	gchar* pszFontFamily = ROAD_FONT;
 
 	// set font for whole layer
@@ -957,7 +960,7 @@ void map_draw_cairo_layer_line_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 	cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL,
 		  pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ?
 		  CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_scale_font(pCairo, pLabelStyle->m_afFontSizeAtZoomLevel[pRenderMetrics->m_nZoomLevel-1]);
+	cairo_scale_font(pCairo, fFontSize);
 
 	for(i=0 ; i<pPointStringsArray->len ; i++) {
 		RENDERING_THREAD_YIELD;
