@@ -74,6 +74,18 @@ gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *
 	return bOK;
 }
 
+gboolean scenemanager_can_draw_rectangle(scenemanager_t* pSceneManager, GdkRectangle* pRect)
+{
+	GdkRegion* pNewRegion = gdk_region_rectangle(pRect);
+
+	// Set pNewRegion to the intersection of it and the 'taken region'
+	gdk_region_intersect(pNewRegion, pSceneManager->m_pTakenRegion);
+	gboolean bOK = gdk_region_empty(pNewRegion);	// it's ok to draw here if the intersection is empty
+        gdk_region_destroy(pNewRegion);
+
+	return bOK;
+}
+
 void scenemanager_claim_label(scenemanager_t* pSceneManager, const gchar* pszLabel)
 {
 	g_assert(pSceneManager != NULL);

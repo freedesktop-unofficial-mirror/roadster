@@ -5,9 +5,9 @@
 
 <layer name="minor-roads">
 	<sublayer>
-		<property name="width" level="5" value="1.0" />
+		<property name="width" level="6" value="1.0" />
 		<property name="width" level="7" value="5.0" />
-		<property name="width" level="8" value="11.0" />
+		<property name="width" level="8" value="12.0" />
 		<property name="width" level="9" value="17.0" />
 		<property name="width" level="10" value="35.0" />
 		<property name="color" value="#b0b0b0ff" />
@@ -16,7 +16,7 @@
 	</sublayer>
 	<sublayer>
 		<property name="width" level="7" value="3.0" />
-		<property name="width" level="8" value="9.0" />
+		<property name="width" level="8" value="10.0" />
 		<property name="width" level="9" value="15.0" />
 		<property name="width" level="10" value="33.0" />
 		<property name="color" value="#fffbffff" />
@@ -25,7 +25,7 @@
 	</sublayer>
 	<label>
 		<property name="color" value="#FF000000" />
-		<property name="font-size" level="8" value="9" />
+		<property name="font-size" level="8" value="11" />
 		<property name="font-size" level="9" value="13" />
 		<property name="font-size" level="10" value="24" />
 	</label>

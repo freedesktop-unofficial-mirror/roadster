@@ -801,8 +801,15 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 		gchar azZIPCodeRight[6];
 		g_snprintf(azZIPCodeRight, 6, "%05d", pRecordRT1->m_nZIPCodeRight);
 
+		gint nRoadNameID = 0;
+		if(pRecordRT1->m_achName[0] != '\0') {
+			//printf("inserting road name %s\n", pRecordRT1->m_achName);
+			db_insert_roadname(pRecordRT1->m_achName, pRecordRT1->m_nRoadNameSuffixID, &nRoadNameID);
+		}
+
 		gint nRoadID;
-		db_insert_road(pRecordRT1->m_nRecordType,
+		db_insert_road(nRoadNameID,
+			pRecordRT1->m_nRecordType,
 			pRecordRT1->m_nAddressLeftStart,
 			pRecordRT1->m_nAddressLeftEnd,
 			pRecordRT1->m_nAddressRightStart,
@@ -810,10 +817,6 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 			nCityLeftID, nCityRightID,
 			azZIPCodeLeft, azZIPCodeRight,
 			pTempPointsArray, &nRoadID);
-		if(pRecordRT1->m_achName[0] != '\0') {
-			//printf("inserting road name %s\n", pRecordRT1->m_achName);
-			db_insert_roadname(nRoadID, pRecordRT1->m_achName, pRecordRT1->m_nRoadNameSuffixID);
-		}
 	}
 	g_ptr_array_free(pTempPointsArray, FALSE);
 }
@@ -994,17 +997,21 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 
 		// insert record
 		if(pRecordRT7->m_nRecordType != LAYER_NONE) {
+			gint nRoadNameID = 0;
+			if(pRecordRT7->m_achName[0] != '\0') {
+				//g_printf("inserting area name %s\n", pRecordRT7->m_achName);
+				db_insert_roadname(pRecordRT7->m_achName, 0, &nRoadNameID);
+			}
+
 			gint nRoadID;
-			db_insert_road(pRecordRT7->m_nRecordType,
+			db_insert_road(
+				nRoadNameID,
+				pRecordRT7->m_nRecordType,
 				0,0,0,0,
 				nCityLeftID, nCityRightID,
 				pszZIPCodeLeft, pszZIPCodeRight,
 				pTempPointsArray, &nRoadID);
 
-			if(pRecordRT7->m_achName[0] != '\0') {
-				//g_printf("inserting area name %s\n", pRecordRT7->m_achName);
-				db_insert_roadname(nRoadID, pRecordRT7->m_achName, 0);
-			}
 		}
 	}
 	g_ptr_array_free(pTempPointsArray, FALSE);

@@ -276,7 +276,9 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 
 	gchar* pszZIPClause;
 	if(pRoadSearch->m_pszZIPCode != NULL) {
-		pszZIPClause = g_strdup_printf(" AND (Road.ZIPCodeLeft='%s' OR Road.ZIPCodeRight='%s')", pRoadSearch->m_pszZIPCode, pRoadSearch->m_pszZIPCode);
+		gchar* pszSafeZIP = db_make_escaped_string(pRoadSearch->m_pszZIPCode);
+		pszZIPClause = g_strdup_printf(" AND (Road.ZIPCodeLeft='%s' OR Road.ZIPCodeRight='%s')", pszSafeZIP, pszSafeZIP);
+		db_free_escaped_string(pszSafeZIP);
 	}
 	else {
 		pszZIPClause = g_strdup("");
@@ -323,8 +325,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 		"SELECT Road.ID, RoadName.Name, RoadName.SuffixID, AsBinary(Road.Coordinates), Road.AddressLeftStart, Road.AddressLeftEnd, Road.AddressRightStart, Road.AddressRightEnd, CityLeft.Name, CityRight.Name"
 		", StateLeft.Code, StateRight.Code, Road.ZIPCodeLeft, Road.ZIPCodeRight"
 		" FROM RoadName"
-		" LEFT JOIN Road_RoadName ON (RoadName.ID=Road_RoadName.RoadNameID)"
- 	    " LEFT JOIN Road ON (Road_RoadName.RoadID=Road.ID%s)"					// address # clause
+		" LEFT JOIN Road ON (RoadName.ID=Road.RoadNameID%s)"					// address # clause
 		// left side
 	    " LEFT JOIN City AS CityLeft ON (Road.CityLeftID=CityLeft.ID)"
 		" LEFT JOIN State AS StateLeft ON (CityLeft.StateID=StateLeft.ID)"

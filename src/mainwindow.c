@@ -26,6 +26,7 @@
 #endif
 
 #include <gtk/gtk.h>
+#include <gtk/gtksignal.h>
 
 #include "search_road.h"
 #include "gui.h"
@@ -55,10 +56,10 @@
 #define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
 #define PROGRAM_DESCRIPTION		"Mapping for everyone!"
 
-#define DRAW_PRETTY_TIMEOUT_MS		(110)	// how long after stopping various movements should we redraw in high-quality mode
+#define DRAW_PRETTY_TIMEOUT_MS		(180)	// how long after stopping various movements should we redraw in high-quality mode
 #define SCROLL_TIMEOUT_MS		(100)	// how often (in MS) to move (SHORTER THAN ABOVE TIME)
 #define SCROLL_DISTANCE_IN_PIXELS	(100)	// how far to move every (above) MS
-#define BORDER_SCROLL_CLICK_TARGET_SIZE	(17)	// the size of the click target (distance from edge of map view) to begin scrolling
+#define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)	// the size of the click target (distance from edge of map view) to begin scrolling
 
 // Layerlist columns
 #define LAYERLIST_COLUMN_ENABLED	(0)
@@ -550,23 +551,33 @@ void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 //
 void mainwindow_set_zoomlevel(gint nZoomLevel)
 {
+	// set zoomlevel scale but prevent it from calling handler (mainwindow_on_zoomscale_value_changed)
+        g_signal_handlers_block_by_func(g_MainWindow.m_pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), nZoomLevel);
+	g_signal_handlers_unblock_by_func(g_MainWindow.m_pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 }
 
 static void zoom_in_one(void)
 {
+	// tell the map
 	map_set_zoomlevel(g_MainWindow.m_pMap, map_get_zoomlevel(g_MainWindow.m_pMap) + 1);
+	// tell the GUI
+	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.m_pMap));
 
-	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), map_get_zoomlevel(g_MainWindow.m_pMap));
+	// NOTE: doesn't trigger an actual redraw
 }
 
 static void zoom_out_one(void)
 {
 	map_set_zoomlevel(g_MainWindow.m_pMap, map_get_zoomlevel(g_MainWindow.m_pMap) - 1 );
+	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.m_pMap));
 
-	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), map_get_zoomlevel(g_MainWindow.m_pMap));
+	// NOTE: doesn't trigger an actual redraw
 }
 
+//
+//
+//
 static void gui_set_tool(EToolType eTool)
 {
 	g_MainWindow.m_eSelectedTool = eTool;
@@ -614,11 +625,13 @@ void mainwindow_on_sidebarmenuitem_activate(GtkMenuItem *menuitem, gpointer user
 void mainwindow_on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	zoom_in_one();
+	mainwindow_draw_map(DRAWFLAG_ALL);
 }
 
 void mainwindow_on_zoomout_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	zoom_out_one();
+	mainwindow_draw_map(DRAWFLAG_ALL);
 }
 
 void mainwindow_on_fullscreenmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -785,8 +798,6 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 
 	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
 	gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
-	
-	EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
 	if(g_MainWindow.m_bMouseDragging) {
 		g_MainWindow.m_bMouseDragMovement = TRUE;
@@ -814,6 +825,8 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 	else if(g_MainWindow.m_bScrolling) {
 		// just set the cursor the window
 
+		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+
 		if(g_MainWindow.m_eScrollDirection != eScrollDirection) {
 			// update cursor
 			GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
@@ -830,6 +843,8 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		}
 	}
 	else {
+		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+
 		// just set cursor based on what we're hovering over
 		GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
 		gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);

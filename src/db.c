@@ -55,12 +55,62 @@
 db_connection_t* g_pDB = NULL;
 
 
+/******************************************************
+** Init and deinit of database module
+******************************************************/
+
+// call once on program start-up
+void db_init()
+{
+//	g_pDBMutex = g_mutex_new();
+
+#ifdef HAVE_MYSQL_EMBED
+	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
+	gchar* pszSetDataDirCommand = g_strdup_printf("--datadir=%s", pszDataDir);
+
+	// Create directory if it doesn't exist
+	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszDataDir, 0700)) {
+		// no big deal, probably already exists (should we check?)
+	}
+
+	gchar* apszServerOptions[] = {
+		"",	// program name -- unused
+		"--skip-innodb",	// don't bother with table types we don't use
+		"--skip-bdb",		//
+
+//                 "--query_cache_type=1",
+//                 "--query_cache_size=40MB",
+
+//		"--flush",			// seems like a good idea since users can quickly kill the app/daemon
+		pszSetDataDirCommand
+	};
+
+	// Initialize the embedded server
+	// NOTE: if not linked with libmysqld, this call will do nothing (but will succeed)
+ 	if(mysql_server_init(NUM_ELEMS(apszServerOptions), apszServerOptions, NULL) != 0) {
+		return;
+	}
+	g_free(pszDataDir);
+	g_free(pszSetDataDirCommand);
+#endif
+}
+
+// call once on program shut-down
+void db_deinit()
+{
+#ifdef HAVE_MYSQL_EMBED
+	// Close embedded server if present
+	mysql_server_end();
+#endif
+}
+
 gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 {
 	g_assert(pszSQL != NULL);
 	if(g_pDB == NULL) return FALSE;
 
-	if(mysql_query(g_pDB->m_pMySQLConnection, pszSQL) != MYSQL_RESULT_SUCCESS) {
+	gint nResult = mysql_query(g_pDB->m_pMySQLConnection, pszSQL);
+	if(nResult != MYSQL_RESULT_SUCCESS) {
 		g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
 		return FALSE;
 	}
@@ -70,26 +120,6 @@ gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 		*ppResultSet = (db_resultset_t*)MYSQL_GET_RESULT(g_pDB->m_pMySQLConnection);
 	}
 	return TRUE;
-}
-
-static gboolean db_insert(const gchar* pszSQL, gint* pnReturnRowsInserted)
-{
-	g_assert(pszSQL != NULL);
-	if(g_pDB == NULL) return FALSE;
-
-	if(mysql_query(g_pDB->m_pMySQLConnection, pszSQL) != MYSQL_RESULT_SUCCESS) {
-		g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
-		return FALSE;
-	}
-
-	my_ulonglong uCount = mysql_affected_rows(g_pDB->m_pMySQLConnection);
-	if(uCount > 0) {
-		if(pnReturnRowsInserted != NULL) {
-			*pnReturnRowsInserted = uCount;
-		}
-		return TRUE;
-	}
-	return FALSE;
 }
 
 db_row_t db_fetch_row(db_resultset_t* pResultSet)
@@ -109,8 +139,37 @@ gint db_get_last_insert_id()
 }
 
 /******************************************************
-** database utility functions
+** Connection creation and destruction
 ******************************************************/
+
+// initiate a new connection to server
+gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* pzPassword, const gchar* pzDatabase)
+{
+	// create a MySQL connection context
+	MYSQL *pMySQLConnection = mysql_init(NULL);
+	g_return_val_if_fail(pMySQLConnection != NULL, FALSE);
+
+	// attempt a MySQL connection
+	if(mysql_real_connect(pMySQLConnection, pzHost, pzUserName, pzPassword, pzDatabase, 0, NULL, 0) == FALSE) {
+		g_warning("mysql_real_connect failed: %s\n", mysql_error(pMySQLConnection));
+		return FALSE;
+	}
+//	db_enable_keys(); // just in case
+
+	// on success, alloc our connection struct and fill it
+	db_connection_t* pNewConnection = g_new0(db_connection_t, 1);
+	pNewConnection->m_pMySQLConnection = pMySQLConnection;
+	pNewConnection->m_pzHost = g_strdup(pzHost);
+	pNewConnection->m_pzUserName = g_strdup(pzUserName);
+	pNewConnection->m_pzPassword = g_strdup(pzPassword);
+	pNewConnection->m_pzDatabase = g_strdup(pzDatabase);
+
+	g_assert(g_pDB == NULL);
+	g_pDB = pNewConnection;
+
+	// just in case (this could mess with multi-user databases)
+	return TRUE;
+}
 
 static gboolean db_is_connected(void)
 {
@@ -127,6 +186,11 @@ const gchar* db_get_connection_info()
 
 	return mysql_get_host_info(g_pDB->m_pMySQLConnection);
 }
+
+
+/******************************************************
+** database utility functions
+******************************************************/
 
 // call db_free_escaped_string() on returned string
 gchar* db_make_escaped_string(const gchar* pszString)
@@ -176,87 +240,30 @@ gboolean db_is_empty()
 }
 
 /******************************************************
-** Init and deinit of database module
-******************************************************/
-
-// call once on program start-up
-void db_init()
-{
-//	g_pDBMutex = g_mutex_new();
-
-#ifdef HAVE_MYSQL_EMBED
-	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
-	gchar* pszSetDataDirCommand = g_strdup_printf("--datadir=%s", pszDataDir);
-
-	// Create directory if it doesn't exist
-	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszDataDir, 0700)) {
-		// no big deal, probably already exists (should we check?)
-	}
-
-	gchar* apszServerOptions[] = {
-		"",	// program name -- unused
-		"--skip-innodb",	// don't bother with table types we don't use
-		"--skip-bdb",		//
-//		"--flush",			// seems like a good idea since users can quickly kill the app/daemon
-		pszSetDataDirCommand
-	};
-
-	// Initialize the embedded server
-	// NOTE: if not linked with libmysqld, this call will do nothing (but will succeed)
- 	if(mysql_server_init(NUM_ELEMS(apszServerOptions), apszServerOptions, NULL) != 0) {
-		return;
-	}
-	g_free(pszDataDir);
-	g_free(pszSetDataDirCommand);
-#endif
-}
-
-// call once on program shut-down
-void db_deinit()
-{
-#ifdef HAVE_MYSQL_EMBED
-	// Close embedded server if present
-	mysql_server_end();
-#endif
-}
-
-/******************************************************
-** Connection creation and destruction
-******************************************************/
-
-// initiate a new connection to server
-gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* pzPassword, const gchar* pzDatabase)
-{
-	// create a MySQL connection context
-	MYSQL *pMySQLConnection = mysql_init(NULL);
-	g_return_val_if_fail(pMySQLConnection != NULL, FALSE);
-
-	// attempt a MySQL connection
-	if(mysql_real_connect(pMySQLConnection, pzHost, pzUserName, pzPassword, pzDatabase, 0, NULL, 0) == FALSE) {
-		g_warning("mysql_real_connect failed: %s\n", mysql_error(pMySQLConnection));
-		return FALSE;
-	}
-//	db_enable_keys(); // just in case
-
-	// on success, alloc our connection struct and fill it
-	db_connection_t* pNewConnection = g_new0(db_connection_t, 1);
-	pNewConnection->m_pMySQLConnection = pMySQLConnection;
-	pNewConnection->m_pzHost = g_strdup(pzHost);
-	pNewConnection->m_pzUserName = g_strdup(pzUserName);
-	pNewConnection->m_pzPassword = g_strdup(pzPassword);
-	pNewConnection->m_pzDatabase = g_strdup(pzDatabase);
-
-	g_assert(g_pDB == NULL);
-	g_pDB = pNewConnection;
-
-	// just in case (this could mess with multi-user databases)
-	return TRUE;
-}
-
-/******************************************************
 ** data inserting
 ******************************************************/
-gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GPtrArray* pPointsArray, gint* pReturnID)
+
+static gboolean db_insert(const gchar* pszSQL, gint* pnReturnRowsInserted)
+{
+	g_assert(pszSQL != NULL);
+	if(g_pDB == NULL) return FALSE;
+
+	if(mysql_query(g_pDB->m_pMySQLConnection, pszSQL) != MYSQL_RESULT_SUCCESS) {
+		//g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
+		return FALSE;
+	}
+
+	my_ulonglong uCount = mysql_affected_rows(g_pDB->m_pMySQLConnection);
+	if(uCount > 0) {
+		if(pnReturnRowsInserted != NULL) {
+			*pnReturnRowsInserted = uCount;
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+gboolean db_insert_road(gint nRoadNameID, gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GPtrArray* pPointsArray, gint* pReturnID)
 {
 	g_assert(pReturnID != NULL);
 	if(!db_is_connected()) return FALSE;
@@ -278,11 +285,11 @@ gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLe
 
 	gchar azQuery[MAX_SQLBUFFER_LEN];
 	g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
-		"INSERT INTO %s SET TypeID=%d, Coordinates=GeometryFromText('LINESTRING(%s)')"
+		"INSERT INTO %s SET RoadNameID=%d, TypeID=%d, Coordinates=GeometryFromText('LINESTRING(%s)')"
 		", AddressLeftStart=%d, AddressLeftEnd=%d, AddressRightStart=%d, AddressRightEnd=%d"
 		", CityLeftID=%d, CityRightID=%d"
 		", ZIPCodeLeft='%s', ZIPCodeRight='%s'",
-		DB_ROADS_TABLENAME, nLayerType, azCoordinateList,
+		DB_ROADS_TABLENAME, nRoadNameID, nLayerType, azCoordinateList,
 	    nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRightEnd,
 		nCityLeftID, nCityRightID,
 		pszZIPCodeLeft, pszZIPCodeRight);
@@ -295,6 +302,10 @@ gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLe
 	*pReturnID = mysql_insert_id(g_pDB->m_pMySQLConnection);
 	return TRUE;
 }
+
+/******************************************************
+**
+******************************************************/
 
 static gboolean db_roadname_get_id(const gchar* pszName, gint nSuffixID, gint* pnReturnID)
 {
@@ -310,6 +321,7 @@ static gboolean db_roadname_get_id(const gchar* pszName, gint nSuffixID, gint* p
 	db_row_t aRow;
 	db_query(pszSQL, &pResultSet);
 	g_free(pszSQL);
+
 	// get result?
 	if(pResultSet) {
 		if((aRow = db_fetch_row(pResultSet)) != NULL) {
@@ -325,9 +337,10 @@ static gboolean db_roadname_get_id(const gchar* pszName, gint nSuffixID, gint* p
 	return FALSE;
 }
 
-gboolean db_insert_roadname(gint nRoadID, const gchar* pszName, gint nSuffixID)
+gboolean db_insert_roadname(const gchar* pszName, gint nSuffixID, gint* pnReturnID)
 {
 	gint nRoadNameID = 0;
+
 	// Step 1. Insert into RoadName
 	if(db_roadname_get_id(pszName, nSuffixID, &nRoadNameID) == FALSE) {
 		gchar* pszSafeName = db_make_escaped_string(pszName);
@@ -339,19 +352,12 @@ gboolean db_insert_roadname(gint nRoadID, const gchar* pszName, gint nSuffixID)
 		}
 		g_free(pszSQL);
 	}
-
-	// Step 2. Insert connector into Road_RoadName
+	
 	if(nRoadNameID != 0) {
-		gchar* pszSQL = g_strdup_printf("INSERT INTO Road_RoadName SET RoadID='%d', RoadNameID='%d'",
-			nRoadID, nRoadNameID);
-		if(db_insert(pszSQL, NULL)) {
-			g_free(pszSQL);
-			return TRUE;
+		if(pnReturnID != NULL) {
+			*pnReturnID = nRoadNameID;
 		}
-		else {
-			g_free(pszSQL);
-			return FALSE;
-		}
+		return TRUE;
 	}
 	return FALSE;
 }
@@ -471,31 +477,6 @@ gboolean db_insert_state(const gchar* pszName, const gchar* pszCode, gint nCount
 	return TRUE;
 }
 
-void db_parse_point(const gchar* pszText, mappoint_t* pPoint)
-{
-	const gchar* p;
-
-	p = pszText;
-
-	if(p[0] == 'P') { //g_str_has_prefix(p, "POINT")) {
-		// format is "POINT(1.2345 -5.4321)"
-
-		p += (6); 	// move past "POINT("
-		pPoint->m_fLatitude = g_ascii_strtod(p, (gchar**)&p);
-
-		// space between coordinates
-		g_return_if_fail(*p == ' ');
-		p++;
-
-		pPoint->m_fLongitude = g_ascii_strtod(p, (gchar**)&p);
-		g_return_if_fail(*p == ')');
-		g_return_if_fail(*(p+1) == '\0');
-	}
-	else {
-		g_assert_not_reached();
-	}	
-}
-
 #define WKB_POINT                  1	// only two we care about
 #define WKB_LINESTRING             2
 
@@ -533,19 +514,26 @@ void db_create_tables()
 	db_query("CREATE TABLE IF NOT EXISTS Road("
 		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
 		" TypeID INT1 UNSIGNED NOT NULL,"
+
+		" RoadNameID INT4 UNSIGNED NOT NULL,"
+
 		" AddressLeftStart INT2 UNSIGNED NOT NULL,"
 		" AddressLeftEnd INT2 UNSIGNED NOT NULL,"
 		" AddressRightStart INT2 UNSIGNED NOT NULL,"
 		" AddressRightEnd INT2 UNSIGNED NOT NULL,"
-	    " CityLeftID INT4 UNSIGNED NOT NULL,"
+		
+		" CityLeftID INT4 UNSIGNED NOT NULL,"
 		" CityRightID INT4 UNSIGNED NOT NULL,"
+		
 		" ZIPCodeLeft CHAR(6) NOT NULL,"
 		" ZIPCodeRight CHAR(6) NOT NULL,"
+
 		" Coordinates point NOT NULL,"
-		
+
 	    // lots of indexes:
 		" PRIMARY KEY (ID),"
-	    " INDEX(TypeID),"
+		" INDEX(TypeID),"
+		" INDEX(RoadNameID),"	// to get roads when we've matched a RoadName
 		" INDEX(AddressLeftStart, AddressLeftEnd),"
 		" INDEX(AddressRightStart, AddressRightEnd),"
 		" SPATIAL KEY (Coordinates));", NULL);
@@ -559,12 +547,12 @@ void db_create_tables()
 		" UNIQUE KEY (Name(15), SuffixID));", NULL);
 
 	// Road_RoadName
-	db_query("CREATE TABLE IF NOT EXISTS Road_RoadName("
-		" RoadID INT4 UNSIGNED NOT NULL,"
-		" RoadNameID INT4 UNSIGNED NOT NULL,"
-		
-	    " PRIMARY KEY (RoadID, RoadNameID),"	// allows search on (RoadID,RoadName) and just (RoadID)
-		" INDEX(RoadNameID));", NULL);			// allows search the other way, going from a Name to a RoadID
+//         db_query("CREATE TABLE IF NOT EXISTS Road_RoadName("
+//                 " RoadID INT4 UNSIGNED NOT NULL,"
+//                 " RoadNameID INT4 UNSIGNED NOT NULL,"
+//
+//                 " PRIMARY KEY (RoadID, RoadNameID),"    // allows search on (RoadID,RoadName) and just (RoadID)
+//                 " INDEX(RoadNameID));", NULL);          // allows search the other way, going from a Name to a RoadID
 
 	// City
 	db_query("CREATE TABLE IF NOT EXISTS City("
@@ -573,7 +561,7 @@ void db_create_tables()
 		" StateID INT4 UNSIGNED NOT NULL,"
 		" Name CHAR(60) NOT NULL,"
 		" PRIMARY KEY (ID),"
-		" INDEX (StateID),"		// for finding all cities by state (needed?)
+		" INDEX (StateID),"	// for finding all cities by state (needed?)
 		" INDEX (Name(15)));"	// only index the first X chars of name (who types more than that?) (are city names ever 60 chars anyway??  TIGER think so)
 	    ,NULL);
 
@@ -581,9 +569,9 @@ void db_create_tables()
 	db_query("CREATE TABLE IF NOT EXISTS State("
 		// a unique ID for the value
 		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
-	    " Name CHAR(40) NOT NULL,"
-	    " Code CHAR(3) NOT NULL,"		//
-		" CountryID INT4 NOT NULL,"		//
+		" Name CHAR(40) NOT NULL,"
+		" Code CHAR(3) NOT NULL,"
+		" CountryID INT4 NOT NULL,"
 		" PRIMARY KEY (ID),"
 		" INDEX (Name(15)));"	// only index the first X chars of name (who types more than that?)
 	    ,NULL);
@@ -614,7 +602,7 @@ void db_create_tables()
 		" AttributeNameID INT4 UNSIGNED NOT NULL,"
 		// the actual value, a text blob
 		" Value TEXT NOT NULL,"
-		" PRIMARY KEY (ID),"	// for fast deletes (needed only if POIs can have multiple values per name)
+		" PRIMARY KEY (ID),"	// for fast updates/deletes (needed only if POIs can have multiple values per name)
 		" INDEX (LocationID),"	// for searching values for a given POI
 		" FULLTEXT(Value));", NULL);
 
@@ -710,99 +698,6 @@ gint32 db_wordhash_lookup(db_connection_t* pConnection, const gchar* pszWord)
 	else return 0;
 }
 
-gboolean db_load_geometry(db_connection_t* pConnection, maprect_t* pRect, layer_t* pLayers, gint nNumLayers) //, geometryset_t* pGeometrySet)
-{
-	TIMER_BEGIN(mytimer, "BEGIN DB LOAD");
-
-//	g_return_val_if_fail(pGeometrySet != NULL, FALSE);
-	gint nZoomLevel = map_get_zoomlevel();
-	
-	if(!db_is_connected(pConnection)) return FALSE;
-
-	gchar* pszTable = DB_ROADS_TABLENAME; 	// use a hardcoded table name for now
-	
-	// HACKY: make a list of layer IDs "2,3,5,6"
-	gchar azLayerNumberList[200] = {0};
-	gint nActiveLayerCount = 0;
-	gint i;
-	for(i=LAYER_FIRST ; i <= LAYER_LAST ;i++) {
-		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
-		   g_aLayers[i].m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
-		{
-			gchar azLayerNumber[10];
-			if(nActiveLayerCount > 0) g_snprintf(azLayerNumber, 10, ",%d", i);
-			else g_snprintf(azLayerNumber, 10, "%d", i);
-			g_strlcat(azLayerNumberList, azLayerNumber, 200);
-			nActiveLayerCount++;
-		}
-	}
-	if(nActiveLayerCount == 0) {
-		g_print("no visible layers!\n");
-		layers_clear();
-		return TRUE;
-	}
-
-	// generate SQL
-	gchar azQuery[MAX_SQLBUFFER_LEN];
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
-		"SELECT ID, TypeID, AsText(Coordinates) FROM %s WHERE"
-		" TypeID IN (%s) AND" //
-		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
-		pszTable,
-		azLayerNumberList,
-		(nZoomLevel >= 9) ? 2 : 0,
-		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
-		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
-		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
-		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
-		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
-		);
-	TIMER_SHOW(mytimer, "after SQL generation");
-g_print("sql: %s\n", azQuery);
-	mysql_query(pConnection->m_pMySQLConnection, azQuery);
-	TIMER_SHOW(mytimer, "after query");
-
-	MYSQL_RES* pResultSet = MYSQL_GET_RESULT(pConnection->m_pMySQLConnection);
-	guint32 uRowCount = 0;
-
-	MYSQL_ROW aRow;
-	if(pResultSet) {
-		// HACK: empty out old data, since we don't know how to merge yet
-		layers_clear();
-		TIMER_SHOW(mytimer, "after clear layers");
-
-		while((aRow = mysql_fetch_row(pResultSet))) {
-			uRowCount++;
-
-			// aRow[0] is ID
-			// aRow[1] is TypeID
-			// aRow[2] is Coordinates in mysql's text format
-			//g_print("data: %s, %s, %s\n", aRow[0], aRow[1], aRow[2]);
-
-			gint nTypeID = atoi(aRow[1]);
-			if(nTypeID < LAYER_FIRST || nTypeID > LAYER_LAST) {
-				g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
-				continue;
-			}
-
-			// add it to layer
-			geometryset_add_from_mysql_geometry(pLayers[nTypeID].m_pGeometrySet, aRow[2]);
-		} // end while loop on rows
-		g_print(" -- got %d rows\n", uRowCount);
-		TIMER_SHOW(mytimer, "after rows retrieved");
-
-		mysql_free_result(pResultSet);
-		TIMER_SHOW(mytimer, "after free results");
-		TIMER_END(mytimer, "END DB LOAD");
-
-		return TRUE;
-	}
-	else {
-		g_print(" no rows\n");
-		return FALSE;
-	}
-}
-
 void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**))
 {
 	// parse string and add points to the string
@@ -848,29 +743,5 @@ void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gbo
 		g_assert_not_reached();
 	}
 }
-
-GMutex* g_pDBMutex = NULL;
-
-void db_lock(void)
-{
-	g_mutex_lock(g_pDBMutex);
-}
-
-void db_unlock(void)
-{
-	g_mutex_unlock(g_pDBMutex);
-}
-
-void db_begin_thread(void)
-{
-	mysql_thread_init();
-}
-
-void db_end_thread(void)
-{
-	mysql_thread_end();
-}
-
 */
 #endif
-

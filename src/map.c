@@ -64,8 +64,8 @@ zoomlevel_t g_sZoomLevels[NUM_ZOOMLEVELS+1] = {
 	{  400000, ""},		// 3
 	{  200000, ""},		// 4
 	{  100000, ""},		// 5
-	{   50000, ""},		// 6
-	{   25000, ""}, 	// 7
+	{   40000, ""},		// 6
+	{   20000, ""}, 	// 7
 
 	{   10000, ""},		// 8
 	{    4000, ""},		// 9
@@ -182,6 +182,10 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 
 	gint nRenderMode = RENDERMODE_FAST;
 
+	// XXX test
+	GdkRectangle rect = {200,200,100,100};
+	scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
+
 	if(nRenderMode == RENDERMODE_FAST) {
 		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 			map_draw_gdk(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_GEOMETRY);
@@ -193,6 +197,11 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	else {	// nRenderMode == RENDERMODE_PRETTY
 		map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, nDrawFlags);
 	}
+	
+	// XXX test
+	gdk_draw_rectangle(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+			FALSE, 200,200, 100, 100);
+
 	gtk_widget_queue_draw(pMap->m_pTargetWidget);
 }
 
@@ -471,8 +480,8 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 	gchar* pszSQL = g_strdup_printf(
 		"SELECT Road.ID, Road.TypeID, AsBinary(Road.Coordinates), RoadName.Name, RoadName.SuffixID"
 		" FROM Road "
-		" LEFT JOIN Road_RoadName ON (Road.ID=Road_RoadName.RoadID)"
-		" LEFT JOIN RoadName ON (Road_RoadName.RoadNameID=RoadName.ID)"
+	//      " LEFT JOIN Road_RoadName ON (Road.ID=Road_RoadName.RoadID)"
+		" LEFT JOIN RoadName ON (Road.RoadNameID=RoadName.ID)"
 		" WHERE"
 //		" TypeID IN (%s) AND"
 		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
@@ -536,7 +545,7 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 			g_ptr_array_add(
 				pMap->m_apLayerData[nTypeID]->m_pPointStringsArray, pNewPointString);
 		} // end while loop on rows
-		// g_print("[%d rows]\n", uRowCount);
+		g_print("[%d rows]\n", uRowCount);
 		TIMER_SHOW(mytimer, "after rows retrieved");
 
 		db_free_result(pResultSet);

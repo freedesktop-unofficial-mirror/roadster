@@ -1,3 +1,14 @@
+2005-03-09  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/search_road.c:
+	* src/import_tiger.c:
+	* src/db.c: Removed Road_RoadName joiner table.  Roads can have only one name now (we never used this feature).
+	* src/db.c: Removed warning for failed inserts (really should only avoid printing warnings for duplicates on unique keys).  Removed db_parse_point() that used MySQL's text format (no replacement yet but it's not used).  Removed some dead code.
+	* src/mainwindow.c: Don't draw twice on zoom in/out.
+	* src/map.c: Pulled font selection up a level, so it's done once per layer.  Added a demo of the scenemanager code (a square drawn on the map that text avoids!).  Tweaked scales for the zoom levels.
+	* src/map_draw_cairo.c: Added a simpler line labeler for single-segment roads (we need to profile it to see if it's worth using).  Curved text is temporarily turned off because it doesn't use the scenemanager yet.  All gfloats to gdoubles.
+        * src/scenemanager.c: Added scenemanager_can_draw_rectangle().
+
 2005-03-09  Nathan Fredrickson  <nathan@silverorange.com>
 
 	* src/map_draw_cairo.c: First round of improvements to map_draw_cairo_line_label(). Instead of centering the label on the line, the label is now positioned so that it is as horizontal as possible with the fewest bends.

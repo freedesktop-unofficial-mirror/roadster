@@ -226,7 +226,10 @@ gboolean locationset_load_locations(maprect_t* pRect)
 				location_t* pNewLocation = NULL;
 				if(location_new(&pNewLocation)) {
 					pNewLocation->m_nID = nLocationID;
-					db_parse_point(aRow[2], &pNewLocation->m_Coordinates);
+					
+					g_assert_not_reached();
+					// XXX: need to write this using MySQL WKB format
+					// db_parse_point(aRow[2], &pNewLocation->m_Coordinates);
 					g_ptr_array_add(pLocationSet->m_pLocationsArray, pNewLocation);
 				}
 			}
