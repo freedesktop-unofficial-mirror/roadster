@@ -24,6 +24,11 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
+#define MIN_LATITUDE	(-90.0)
+#define MAX_LATITUDE	(90.0)
+#define MIN_LONGITUDE	(-180.0)
+#define MAX_LONGITUDE	(180.0)
+
 typedef enum {
 	kSublayerBottom,
 	kSublayerTop,

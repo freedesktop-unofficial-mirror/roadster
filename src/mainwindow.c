@@ -90,7 +90,7 @@
 #define	TOOLTIP_OFFSET_X (20)
 #define	TOOLTIP_OFFSET_Y (0)
 
-#define MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS	(3500.0)
+#define MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS	(3500.0)	// when selecting search results, we slide to them instead of jumping if they are within this distance
 
 // Types
 typedef struct {
@@ -844,16 +844,13 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 		}
 		// Left mouse button up?
 		else if(event->type == GDK_BUTTON_RELEASE) {
-			//tooltip_set_upper_left_corner(g_MainWindow.m_pTooltip, (gint)(event->x_root) + TOOLTIP_OFFSET_X, (gint)(event->y_root) + TOOLTIP_OFFSET_Y);
-			//tooltip_show(g_MainWindow.m_pTooltip);
-
-			// restore cursor
-			GdkCursor* pCursor = gdk_cursor_new(GDK_LEFT_PTR);
-			gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
-			gdk_cursor_unref(pCursor);
-
 			// end mouse dragging, if active
 			if(g_MainWindow.m_bMouseDragging == TRUE) {
+				// restore cursor
+				GdkCursor* pCursor = gdk_cursor_new(GDK_LEFT_PTR);
+				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+				gdk_cursor_unref(pCursor);
+
 				g_MainWindow.m_bMouseDragging = FALSE;
 				if(g_MainWindow.m_bMouseDragMovement) {
 					mainwindow_cancel_draw_pretty_timeout();
@@ -865,6 +862,8 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 
 			// end scrolling, if active
 			if(g_MainWindow.m_bScrolling == TRUE) {
+				// NOTE: don't restore cursor (mouse could *still* be over screen edge)
+
 				g_MainWindow.m_bScrolling = FALSE;
 				mainwindow_cancel_draw_pretty_timeout();
 

@@ -516,8 +516,6 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 	if(pResultSet) {
 		TIMER_SHOW(mytimer, "after clear layers");
 		while((aRow = db_fetch_row(pResultSet))) {
-			RENDERING_THREAD_YIELD;
-
 			uRowCount++;
 
 			// aRow[0] is ID
@@ -558,7 +556,7 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 			g_ptr_array_add(
 				pMap->m_apLayerData[nTypeID]->m_pPointStringsArray, pNewPointString);
 		} // end while loop on rows
-		//g_print("[%d rows]\n", uRowCount);
+		g_print("[%d rows]\n", uRowCount);
 		TIMER_SHOW(mytimer, "after rows retrieved");
 
 		db_free_result(pResultSet);
@@ -581,8 +579,6 @@ static void map_data_clear(map_t* pMap)
 
 		// Free each pointstring
 		for(j = (pLayerData->m_pPointStringsArray->len - 1) ; j>=0 ; j--) {
-			RENDERING_THREAD_YIELD;
-
 			pointstring_t* pPointString = g_ptr_array_remove_index_fast(pLayerData->m_pPointStringsArray, j);
 			pointstring_free(pPointString);
 		}

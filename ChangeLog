@@ -1,3 +1,9 @@
+2005-03-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/mainwindow.c: Tweak when mouse cursor changes during drags, etc.
+	* src/map_draw_gdk.c:
+	* src/map_draw_cairo.c:	Use lat,lon in bounding box tests instead of screen X,Y to help avoid integer overflow issues when zoomed in.
+
 2005-03-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/map.c: Fixed off-by-one error in selecting line widths for hit testing.

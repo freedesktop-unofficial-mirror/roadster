@@ -366,7 +366,7 @@ void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t
 
 void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray)
 {
-	gdouble fRadius = map_degrees_to_pixels(pMap, 0.0007, map_get_zoomlevel(pMap));
+/*	gdouble fRadius = map_degrees_to_pixels(pMap, 0.0007, map_get_zoomlevel(pMap));
 	gboolean bAddition = FALSE;
 
 	cairo_save(pCairo);
@@ -375,8 +375,6 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 
 		gint iLocation;
 		for(iLocation=0 ; iLocation<pLocationsArray->len ; iLocation++) {
-			RENDERING_THREAD_YIELD;
-			
 			location_t* pLocation = g_ptr_array_index(pLocationsArray, iLocation);
 
 			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pLocation->m_Coordinates.m_fLongitude), SCALE_Y(pRenderMetrics, pLocation->m_Coordinates.m_fLatitude));
@@ -395,8 +393,6 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 		cairo_set_alpha(pCairo, 1.0);
 		fRadius = 2;
 		for(iLocation=0 ; iLocation<pLocationsArray->len ; iLocation++) {
-			RENDERING_THREAD_YIELD;
-			
 			location_t* pLocation = g_ptr_array_index(pLocationsArray, iLocation);
 
 			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pLocation->m_Coordinates.m_fLongitude), SCALE_Y(pRenderMetrics, pLocation->m_Coordinates.m_fLatitude));
@@ -408,10 +404,12 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 //		cairo_fill(pCairo);
 
 	cairo_restore(pCairo);
+*/
 }
 
 void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics)
 {
+/*
 	location_t loc;
 	location_t* pLoc = &loc;
 
@@ -441,6 +439,7 @@ void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRe
 	cairo_rectangle(pCairo, fX - BAP, fY - BAP, BAP*2, BAP*2);
 	cairo_fill(pCairo);
 	cairo_restore(pCairo);
+*/
 }
 
 
@@ -466,39 +465,43 @@ static void map_draw_cairo_line_label_one_segment(map_t* pMap, cairo_t *pCairo, 
         if(FALSE == scenemanager_can_draw_label_at(pMap->m_pSceneManager, pszLabel, NULL)) {
         return;
         }
-        
+
         mappoint_t* pMapPoint1 = g_ptr_array_index(pPointString->m_pPointsArray, 0);
         mappoint_t* pMapPoint2 = g_ptr_array_index(pPointString->m_pPointsArray, 1);
-        
+
         // swap first and second points such that the line goes left-to-right
         if(pMapPoint2->m_fLongitude < pMapPoint1->m_fLongitude) {
             mappoint_t* pTmp = pMapPoint1; pMapPoint1 = pMapPoint2; pMapPoint2 = pTmp;
         }
-        
+
+	// find extents
+	gdouble fMaxLat = max(pMapPoint1->m_fLatitude, pMapPoint2->m_fLatitude);
+	gdouble fMinLat = min(pMapPoint1->m_fLatitude, pMapPoint2->m_fLatitude);
+	gdouble fMaxLon = max(pMapPoint1->m_fLongitude, pMapPoint2->m_fLongitude);
+	gdouble fMinLon = min(pMapPoint1->m_fLongitude, pMapPoint2->m_fLongitude);
+
         gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->m_fLongitude);
         gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->m_fLatitude);
         gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->m_fLongitude);
         gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->m_fLatitude);
-        
-        // Find minimum bounding rectangle
-        gdouble fMaxX = max(fX1, fX2);
-        gdouble fMaxY = max(fY1, fY2);
-        gdouble fMinX = min(fX1, fX2);
-        gdouble fMinY = min(fY1, fY2);
-        
-        // Overlap test
-        if(fMaxX < 0.0 || fMaxY < 0 || fMinX > (gdouble)(pRenderMetrics->m_nWindowWidth) || fMinY > (gdouble)(pRenderMetrics->m_nWindowHeight)) {
+
+	// rectangle overlap test
+	if(fMaxLat < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLatitude
+	   || fMaxLon < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLongitude
+	   || fMinLat > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLatitude
+	   || fMinLon > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLongitude)
+	{
             return;
         }
-        
+
         gdouble fRise = fY2 - fY1;
         gdouble fRun = fX2 - fX1;
         gdouble fLineLengthSquared = (fRun*fRun) + (fRise*fRise);
-        
+
         gchar* pszFontFamily = ROAD_FONT;
-        
+
         cairo_save(pCairo);
-        
+
         // get total width of string
         cairo_text_extents_t extents;
         cairo_text_extents(pCairo, pszLabel, &extents);
@@ -1128,10 +1131,10 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 	gdouble fTotalX = 0.0;
 	gdouble fTotalY = 0.0;
 
-	gdouble fMaxX = -G_MAXDOUBLE;	// init to the worst possible value so first point will override
-	gdouble fMaxY = -G_MAXDOUBLE;
-	gdouble fMinX = G_MAXDOUBLE;
-	gdouble fMinY = G_MAXDOUBLE;
+	gdouble fMaxLat = MIN_LATITUDE;	// init to the worst possible value so first point will override
+	gdouble fMinLat = MAX_LATITUDE;
+	gdouble fMaxLon = MIN_LONGITUDE;
+	gdouble fMinLon = MAX_LONGITUDE;
 
 	mappoint_t* pMapPoint;
 	gdouble fX;
@@ -1140,32 +1143,31 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 	for(i=0 ; i<pPointString->m_pPointsArray->len ; i++) {
 		pMapPoint = g_ptr_array_index(pPointString->m_pPointsArray, i);
 		
+		// find extents
+		fMaxLat = max(pMapPoint->m_fLatitude,fMaxLat);
+		fMinLat = min(pMapPoint->m_fLatitude,fMinLat);
+		fMaxLon = max(pMapPoint->m_fLongitude,fMaxLon);
+		fMinLon = min(pMapPoint->m_fLongitude,fMinLon);
+
 		fX = SCALE_X(pRenderMetrics, pMapPoint->m_fLongitude);
 		fY = SCALE_Y(pRenderMetrics, pMapPoint->m_fLatitude);
-
-		// find extents
-		fMaxX = max(fX,fMaxX);
-		fMinX = min(fX,fMinX);
-		fMaxY = max(fY,fMaxY);
-		fMinY = min(fY,fMinY);
 
 		// sum up Xs and Ys (we'll take an average later)
 		fTotalX += fX;
 		fTotalY += fY;
 	}
-	RENDERING_THREAD_YIELD;
 
 	// rectangle overlap test
-	if(fMaxX < 0.0 || fMaxY < 0 || fMinX > (gdouble)(pRenderMetrics->m_nWindowWidth) || fMinY > (gdouble)(pRenderMetrics->m_nWindowHeight)) {
+	if(fMaxLat < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLatitude
+	   || fMaxLon < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLongitude
+	   || fMinLat > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLatitude
+	   || fMinLon > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLongitude)
+	{
 	    return;	// not visible
 	}
 
-	//
-	gdouble fPolygonHeight = fMaxY - fMinY;
-	gdouble fPolygonWidth = fMaxX - fMinX;
-
-	gdouble fDrawX = fMinX + fPolygonWidth/2;	//fTotalX / pPointString->m_pPointsArray->len;
-	gdouble fDrawY = fMinY + fPolygonHeight/2; 	//fTotalY / pPointString->m_pPointsArray->len;
+	gdouble fDrawX = SCALE_X(pRenderMetrics, (fMinLon + fMaxLon) / 2); 	//fMinX + fPolygonWidth/2;	//fTotalX / pPointString->m_pPointsArray->len;
+	gdouble fDrawY = SCALE_Y(pRenderMetrics, (fMinLat + fMaxLat) / 2);	//fMinY + fPolygonHeight/2; 	//fTotalY / pPointString->m_pPointsArray->len;
 
 	cairo_save(pCairo);
 
