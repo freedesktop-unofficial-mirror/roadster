@@ -23,6 +23,7 @@
 
 #include <glade/glade.h>
 #include <gtk/gtk.h>
+#include "main.h"
 #include "db.h"
 #include "import.h"
 #include "mainwindow.h"

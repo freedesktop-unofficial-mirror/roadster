@@ -20,13 +20,13 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-#define USE_GNOME_VFS
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
 #include <gtk/gtk.h>
+#include "main.h"
 #include "gui.h"
 #include "db.h"
 #include "map.h"
@@ -34,6 +34,7 @@
 #include "scenemanager.h"
 #include "prefs.h"
 #include "animator.h"
+#include "road.h"
 
 static gboolean main_init(void);
 static void main_deinit(void);
@@ -80,6 +81,10 @@ gboolean main_init(void)
 	point_init();
 	g_print("initializing pointstrings\n");
 	pointstring_init();
+	
+	g_print("initializing roads\n");
+	road_init();
+	
 	g_print("initializing tracks\n");
 	track_init();
 	g_print("initializing layers\n");

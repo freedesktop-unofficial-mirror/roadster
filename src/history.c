@@ -22,6 +22,7 @@
  */
 
 #include <gtk/gtk.h>
+#include "main.h"
 #include "history.h"
 #include "map.h"
 

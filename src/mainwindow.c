@@ -28,6 +28,7 @@
 #include <gtk/gtk.h>
 #include <gtk/gtksignal.h>
 
+#include "main.h"
 #include "search_road.h"
 #include "gui.h"
 #include "util.h"
@@ -66,7 +67,7 @@
 #define DRAW_PRETTY_RESIZE_TIMEOUT_MS	(180)
 
 #define SCROLL_TIMEOUT_MS		(80)		// how often (in MS) to move
-#define SCROLL_DISTANCE_IN_PIXELS	(120)		// how far to move every (above) MS
+#define SCROLL_DISTANCE_IN_PIXELS	(100)		// how far to move every (above) MS
 #define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)		// the size of the click target (distance from edge of map view) to begin scrolling
 
 #define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
@@ -81,7 +82,7 @@
 #define MAX_SEARCH_TEXT_LENGTH		(100)
 #define SPEED_LABEL_FORMAT		("<span font_desc='32'>%.0f</span>")
 
-#define TOOLTIP_FORMAT			(" %s ")
+#define TOOLTIP_FORMAT			("%s")
 
 // Settings
 #define TIMER_GPS_REDRAW_INTERVAL_MS	(2500)		// lower this (to 1000?) when it's faster to redraw track

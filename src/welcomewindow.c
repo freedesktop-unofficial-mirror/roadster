@@ -28,6 +28,8 @@
 #endif
 
 #include <gtk/gtk.h>
+
+#include "main.h"
 #include "mainwindow.h"
 #include "welcomewindow.h"
 

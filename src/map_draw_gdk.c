@@ -28,6 +28,7 @@
 #include <gtk/gtk.h>
 #include <math.h>
 
+#include "main.h"
 #include "gui.h"
 #include "map.h"
 #include "mainwindow.h"
@@ -36,12 +37,13 @@
 #include "road.h"
 #include "point.h"
 #include "layers.h"
+#include "track.h"
 #include "locationset.h"
 #include "scenemanager.h"
 
 static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap);
-static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_gdk_layer_roads(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
 static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 
 void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
@@ -67,16 +69,16 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 			gint nSubLayer = layerdraworder[i].nSubLayer;
 
 			if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_LINES) {
-				map_draw_gdk_layer_lines(pMap, pPixmap,
+				map_draw_gdk_layer_roads(pMap, pPixmap,
 						pRenderMetrics,
-				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pPointStringsArray,
+				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pRoadsArray,
 				/* style */ 	&(g_aLayers[nLayer]->m_Style.m_aSubLayers[nSubLayer]),
 						&(g_aLayers[nLayer]->m_TextLabelStyle));
 			}
 			else if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_POLYGONS) {
 				map_draw_gdk_layer_polygons(pMap, pPixmap,
 						pRenderMetrics,
-				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pPointStringsArray,
+				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pRoadsArray,
 				/* style */ 	&(g_aLayers[nLayer]->m_Style.m_aSubLayers[nSubLayer]),
 						&(g_aLayers[nLayer]->m_TextLabelStyle));
 			}
@@ -105,10 +107,10 @@ static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap)
 			TRUE, 0,0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
 }
 
-static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
+static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
 	mappoint_t* pPoint;
-	pointstring_t* pPointString;
+	road_t* pRoad;
 	gint iString;
 	gint iPoint;
 
@@ -131,24 +133,24 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	clr.blue = pSubLayerStyle->m_clrColor.m_fBlue * 65535;
 	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
 
-	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
-		pPointString = g_ptr_array_index(pPointStringsArray, iString);
+	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
+		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
 		gdouble fMaxLat = MIN_LATITUDE;	// init to the worst possible value so first point will override
 		gdouble fMinLat = MAX_LATITUDE;
 		gdouble fMaxLon = MIN_LONGITUDE;
 		gdouble fMinLon = MAX_LONGITUDE;
 
-		if(pPointString->m_pPointsArray->len >= 2) {
+		if(pRoad->m_pPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
-			if(pPointString->m_pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-				g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
+			if(pRoad->m_pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+				//g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
 				continue;
 			}
 
-			for(iPoint=0 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);
+			for(iPoint=0 ; iPoint<pRoad->m_pPointsArray->len ; iPoint++) {
+				pPoint = g_ptr_array_index(pRoad->m_pPointsArray, iPoint);
 
 				// find extents
 				fMaxLat = max(pPoint->m_fLatitude,fMaxLat);
@@ -169,15 +171,15 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 			    continue;	// not visible
 			}
 			gdk_draw_polygon(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-				TRUE, aPoints, pPointString->m_pPointsArray->len);
+				TRUE, aPoints, pRoad->m_pPointsArray->len);
    		}
 	}
 }
 
-static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
+static void map_draw_gdk_layer_roads(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
+	road_t* pRoad;
 	mappoint_t* pPoint;
-	pointstring_t* pPointString;
 	gint iString;
 	gint iPoint;
 
@@ -215,24 +217,24 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	clr.blue = pSubLayerStyle->m_clrColor.m_fBlue * 65535;
 	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
 
-	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
-		pPointString = g_ptr_array_index(pPointStringsArray, iString);
+	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
+		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
 		gdouble fMaxLat = MIN_LATITUDE;	// init to the worst possible value so first point will override
 		gdouble fMinLat = MAX_LATITUDE;
 		gdouble fMaxLon = MIN_LONGITUDE;
 		gdouble fMinLon = MAX_LONGITUDE;
 
-		if(pPointString->m_pPointsArray->len >= 2) {
+		if(pRoad->m_pPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
-			if(pPointString->m_pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-				g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
+			if(pRoad->m_pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+				//g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
 				continue;
 			}
 
-			for(iPoint=0 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);
+			for(iPoint=0 ; iPoint<pRoad->m_pPointsArray->len ; iPoint++) {
+				pPoint = g_ptr_array_index(pRoad->m_pPointsArray, iPoint);
 
 				// find extents
 				fMaxLat = max(pPoint->m_fLatitude,fMaxLat);
@@ -253,7 +255,7 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 			    continue;	// not visible
 			}
 
-			gdk_draw_lines(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], aPoints, pPointString->m_pPointsArray->len);
+			gdk_draw_lines(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], aPoints, pRoad->m_pPointsArray->len);
    		}
 	}
 }
@@ -276,7 +278,7 @@ static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t
 		if(pPointString->m_pPointsArray->len >= 2) {
 
 			if(pPointString->m_pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-				g_warning("not drawing track with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
+				//g_warning("not drawing track with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
 				continue;
 			}
 

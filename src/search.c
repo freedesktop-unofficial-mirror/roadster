@@ -22,6 +22,8 @@
  */
 
 #include <gtk/gtk.h>
+
+#include "main.h"
 #include "search.h"
 
 // functions common to all searches

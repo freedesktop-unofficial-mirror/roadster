@@ -26,15 +26,7 @@
 #include <gtk/gtk.h>
 #include <math.h>
 
-//#define THREADED_RENDERING
-//#define SCENEMANAGER_DEBUG_TEST
-
-#ifdef THREADED_RENDERING
-#define RENDERING_THREAD_YIELD          g_thread_yield()
-#else
-#define RENDERING_THREAD_YIELD
-#endif
-
+#include "main.h"
 #include "gui.h"
 #include "map.h"
 #include "mainwindow.h"
@@ -45,6 +37,12 @@
 #include "layers.h"
 #include "locationset.h"
 #include "scenemanager.h"
+
+#ifdef THREADED_RENDERING
+#define RENDERING_THREAD_YIELD          g_thread_yield()
+#else
+#define RENDERING_THREAD_YIELD
+#endif
 
 #define	RENDERMODE_FAST 	1	// Use 'fast' until Cairo catches up. :)
 #define	RENDERMODE_PRETTY 	2
@@ -70,8 +68,10 @@ static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect);	// ensure ti
 static gboolean map_data_load(map_t* pMap, maprect_t* pRect);
 
 // hit testing
-static gboolean map_hit_test_layer_lines(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, gchar** ppReturnString);
-static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fDistance);
+static gboolean map_hit_test_layer_roads(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, gchar** ppReturnString);
+static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fDistance, mappoint_t* pReturnClosestPoint);
+
+static ESide map_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pClosestPointOnLine, mappoint_t* pHitPoint);
 
 static void map_data_clear(map_t* pMap);
 void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics);
@@ -165,7 +165,7 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 	gint i;
 	for(i=0 ; i<NUM_ELEMS(pMap->m_apLayerData) ; i++) {
 		maplayer_data_t* pLayer = g_new0(maplayer_data_t, 1);
-		pLayer->m_pPointStringsArray = g_ptr_array_new();
+		pLayer->m_pRoadsArray = g_ptr_array_new();
 		pMap->m_apLayerData[i] = pLayer;
 	}
 
@@ -492,7 +492,7 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 	// generate SQL
 	gchar* pszSQL;
 	pszSQL = g_strdup_printf(
-		"SELECT Road.ID, Road.TypeID, AsBinary(Road.Coordinates), RoadName.Name, RoadName.SuffixID"
+		"SELECT Road.ID, Road.TypeID, AsBinary(Road.Coordinates), RoadName.Name, RoadName.SuffixID, AddressLeftStart, AddressLeftEnd, AddressRightStart, AddressRightEnd"
 		" FROM Road "
 		" LEFT JOIN RoadName ON (Road.RoadNameID=RoadName.ID)"
 		" WHERE"
@@ -523,6 +523,10 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 			// aRow[2] is Coordinates in mysql's text format
 			// aRow[3] is road name
 			// aRow[4] is road name suffix id
+			// aRow[5] is road address left start
+			// aRow[6] is road address left end
+			// aRow[7] is road address right start 
+			// aRow[8] is road address right end
 //			g_print("data: %s, %s, %s, %s, %s\n", aRow[0], aRow[1], aRow[2], aRow[3], aRow[4]);
 
 			// Get layer type that this belongs on
@@ -533,12 +537,15 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 			}
 
 			// Extract points
-			pointstring_t* pNewPointString = NULL;
-			if(!pointstring_alloc(&pNewPointString)) {
-				g_warning("out of memory loading pointstrings\n");
-				continue;
-			}
-			db_parse_wkb_pointstring(aRow[2], pNewPointString, point_alloc);
+			road_t* pNewRoad = NULL;
+			road_alloc(&pNewRoad);
+
+			//pointstring_t* pNewPointString = NULL;
+			//if(!pointstring_alloc(&pNewPointString)) {
+			//	g_warning("out of memory loading pointstrings\n");
+			//	continue;
+			//}
+			db_parse_wkb_linestring(aRow[2], pNewRoad->m_pPointsArray, point_alloc);
 
 			// Build name by adding suffix, if one is present
 			gchar azFullName[100] = "";
@@ -550,11 +557,15 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 				g_snprintf(azFullName, 100, "%s%s%s",
 					aRow[3], (pszSuffix[0] != '\0') ? " " : "", pszSuffix);
 			}
-			pNewPointString->m_pszName = g_strdup(azFullName);
+			pNewRoad->m_nAddressLeftStart = atoi(aRow[5]);
+			pNewRoad->m_nAddressLeftEnd = atoi(aRow[6]);
+			pNewRoad->m_nAddressRightStart = atoi(aRow[7]);
+			pNewRoad->m_nAddressRightEnd = atoi(aRow[8]);
+
+			pNewRoad->m_pszName = g_strdup(azFullName);
 
 			// Add this item to layer's list of pointstrings
-			g_ptr_array_add(
-				pMap->m_apLayerData[nTypeID]->m_pPointStringsArray, pNewPointString);
+			g_ptr_array_add(pMap->m_apLayerData[nTypeID]->m_pRoadsArray, pNewRoad);
 		} // end while loop on rows
 		//g_print("[%d rows]\n", uRowCount);
 		TIMER_SHOW(mytimer, "after rows retrieved");
@@ -577,12 +588,12 @@ static void map_data_clear(map_t* pMap)
 	for(i=0 ; i<NUM_ELEMS(pMap->m_apLayerData) ; i++) {
 		maplayer_data_t* pLayerData = pMap->m_apLayerData[i];
 
-		// Free each pointstring
-		for(j = (pLayerData->m_pPointStringsArray->len - 1) ; j>=0 ; j--) {
-			pointstring_t* pPointString = g_ptr_array_remove_index_fast(pLayerData->m_pPointStringsArray, j);
-			pointstring_free(pPointString);
+		// Free each
+		for(j = (pLayerData->m_pRoadsArray->len - 1) ; j>=0 ; j--) {
+			road_t* pRoad = g_ptr_array_remove_index_fast(pLayerData->m_pRoadsArray, j);
+			road_free(pRoad);
 		}
-		g_assert(pLayerData->m_pPointStringsArray->len == 0);
+		g_assert(pLayerData->m_pRoadsArray->len == 0);
 	}
 }
 
@@ -654,20 +665,22 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, gchar** ppReturnString
 		gdouble fLineWidth = max(g_aLayers[nLayer]->m_Style.m_aSubLayers[0].m_afLineWidths[pMap->m_uZoomLevel-1],
 					 g_aLayers[nLayer]->m_Style.m_aSubLayers[1].m_afLineWidths[pMap->m_uZoomLevel-1]);
 
+#define EXTRA_CLICKABLE_ROAD_IN_PIXELS	(8)
+
 		// make thin roads a little easier to hit
 		fLineWidth = max(fLineWidth, MIN_ROAD_HIT_TARGET_WIDTH);
 
 		// XXX: hack, map_pixels should really take a floating point instead.
-		gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->m_uZoomLevel) * (fLineWidth/2);	// half width on each side
+		gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->m_uZoomLevel) * ((fLineWidth/2) + EXTRA_CLICKABLE_ROAD_IN_PIXELS);  // half width on each side
 
-		if(map_hit_test_layer_lines(pMap->m_apLayerData[nLayer]->m_pPointStringsArray, fMaxDistance, pMapPoint, ppReturnString)) {
+		if(map_hit_test_layer_roads(pMap->m_apLayerData[nLayer]->m_pRoadsArray, fMaxDistance, pMapPoint, ppReturnString)) {
 			return TRUE;
 		}
 	}
 	return FALSE;
 }
 
-static gboolean map_hit_test_layer_lines(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, gchar** ppReturnString)
+static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, gchar** ppReturnString)
 {
 	g_assert(ppReturnString != NULL);
 	g_assert(*ppReturnString == NULL);	// pointer to null pointer
@@ -681,24 +694,47 @@ static gboolean map_hit_test_layer_lines(GPtrArray* pPointStringsArray, gdouble 
 
 	// Loop through line strings, order doesn't matter here since they're all on the same level.
 	gint iString;
-	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
-		pointstring_t* pPointString = g_ptr_array_index(pPointStringsArray, iString);
-		if(pPointString->m_pPointsArray->len < 2) continue;
+	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
+		road_t* pRoad = g_ptr_array_index(pRoadsArray, iString);
+		if(pRoad->m_pPointsArray->len < 2) continue;
 
 		// start on 1 so we can do -1 trick below
 		gint iPoint;
-		for(iPoint=1 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
-			mappoint_t* pPoint1 = g_ptr_array_index(pPointString->m_pPointsArray, iPoint-1);
-			mappoint_t* pPoint2 = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);
+		for(iPoint=1 ; iPoint<pRoad->m_pPointsArray->len ; iPoint++) {
+			mappoint_t* pPoint1 = g_ptr_array_index(pRoad->m_pPointsArray, iPoint-1);
+			mappoint_t* pPoint2 = g_ptr_array_index(pRoad->m_pPointsArray, iPoint);
+
+			mappoint_t pointClosest;
 
 			// hit test this line
-			if(map_hit_test_line(pPoint1, pPoint2, pHitPoint, fMaxDistance)) {
+			if(map_hit_test_line(pPoint1, pPoint2, pHitPoint, fMaxDistance, &pointClosest)) {
 				// got a hit
-				if(pPointString->m_pszName[0] == '\0') {
+				if(pRoad->m_pszName[0] == '\0') {
 					*ppReturnString = g_strdup("<i>unnamed road</i>");
 				}
 				else {
-					*ppReturnString = g_strdup(pPointString->m_pszName);
+					ESide eSide = map_side_test_line(pPoint1, pPoint2, &pointClosest, pHitPoint);
+
+					gint nAddressStart;
+					gint nAddressEnd;
+					if(eSide == SIDE_LEFT) {
+						nAddressStart = pRoad->m_nAddressLeftStart;
+						nAddressEnd = pRoad->m_nAddressLeftEnd;
+					}
+					else {
+						nAddressStart = pRoad->m_nAddressRightStart;
+						nAddressEnd = pRoad->m_nAddressRightEnd;
+					}
+
+					if(nAddressStart == 0 || nAddressEnd == 0) {
+						*ppReturnString = g_strdup_printf("%s", pRoad->m_pszName);
+					}
+					else {
+						gint nMinAddres = min(nAddressStart, nAddressEnd);
+						gint nMaxAddres = max(nAddressStart, nAddressEnd);
+
+						*ppReturnString = g_strdup_printf("%s <b>#%d-%d</b>", pRoad->m_pszName, nMinAddres, nMaxAddres);
+					}
 				}
 				return TRUE;
 			}
@@ -708,7 +744,7 @@ static gboolean map_hit_test_layer_lines(GPtrArray* pPointStringsArray, gdouble 
 }
 
 // Does the given point come close enough to the line segment to be considered a hit?
-static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance)
+static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint)
 {
 	// Some bad ASCII art demonstrating the situation:
 	//
@@ -728,7 +764,7 @@ static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mapp
 	v.m_fLatitude = pPoint2->m_fLatitude - pPoint1->m_fLatitude;	// 10->90 becomes 0->80 (just store 80)
 	v.m_fLongitude = pPoint2->m_fLongitude - pPoint1->m_fLongitude;
 
-	gdouble fLengthV = sqrt((v.m_fLatitude*v.m_fLatitude) + (v.m_fLongitude*v.m_fLongitude)); 
+	gdouble fLengthV = sqrt((v.m_fLatitude*v.m_fLatitude) + (v.m_fLongitude*v.m_fLongitude));
 	if(fLengthV == 0.0) return FALSE;	// bad data: a line segment with no length?
 
 	//
@@ -776,10 +812,50 @@ static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mapp
 			/* g_print("fDotProduct = %f\n", fDotProduct);                                      */
 			/* g_print("a (%f,%f)\n", a.m_fLatitude, a.m_fLongitude);                           */
 			/* g_print("fDistance = %f\n", sqrt(fDistanceSquared));                             */
+			if(pReturnClosestPoint) {
+				pReturnClosestPoint->m_fLatitude = a.m_fLatitude + pPoint1->m_fLatitude;
+				pReturnClosestPoint->m_fLongitude = a.m_fLongitude + pPoint1->m_fLongitude;
+			}
+
 			return TRUE;
 		}
 	}
 	return FALSE;
+}
+
+static ESide map_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pClosestPointOnLine, mappoint_t* pHitPoint)
+{
+	// make a translated-to-origin *perpendicular* vector of the line (points to the "left" of the line when walking from point 1 to 2)
+	mappoint_t v;
+	v.m_fLatitude = (pPoint2->m_fLongitude - pPoint1->m_fLongitude);	// NOTE: swapping lat and lon to make perpendicular
+	v.m_fLongitude = -(pPoint2->m_fLatitude - pPoint1->m_fLatitude);
+
+	// make a translated-to-origin vector of the line from closest point to hitpoint
+	mappoint_t u;
+	u.m_fLatitude = pHitPoint->m_fLatitude - pClosestPointOnLine->m_fLatitude;
+	u.m_fLongitude = pHitPoint->m_fLongitude - pClosestPointOnLine->m_fLongitude;
+
+	// figure out the signs of the elements of the vectors
+	gboolean bULatPositive = (u.m_fLatitude >= 0);
+	gboolean bULonPositive = (u.m_fLongitude >= 0);
+	gboolean bVLatPositive = (v.m_fLatitude >= 0);
+	gboolean bVLonPositive = (v.m_fLongitude >= 0);
+
+	//g_print("%s,%s %s,%s\n", bVLonPositive?"Y":"N", bVLatPositive?"Y":"N", bULonPositive?"Y":"N", bULatPositive?"Y":"N");
+
+	// if the signs agree, it's to the left, otherwise to the right
+	if(bULatPositive == bVLatPositive && bULonPositive == bVLonPositive) {
+		return SIDE_LEFT;
+	}
+	else {
+		// let's check our algorithm: if the signs aren't both the same, they should be both opposite
+		// ...unless the vector from hitpoint to line center is 0, which doesn't have sign
+
+		//g_print("%f,%f %f,%f\n", u.m_fLatitude, u.m_fLongitude, v.m_fLatitude, v.m_fLongitude);
+		g_assert(bULatPositive != bVLatPositive || u.m_fLatitude == 0.0);
+		g_assert(bULonPositive != bVLonPositive || u.m_fLongitude == 0.0);
+		return SIDE_RIGHT;
+	}
 }
 
 gboolean map_can_zoom_in(map_t* pMap)

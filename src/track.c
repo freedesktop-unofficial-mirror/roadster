@@ -22,6 +22,7 @@
  */
 
 #include <gtk/gtk.h>
+#include "main.h"
 #include "map.h"
 #include "pointstring.h"
 #include "point.h"

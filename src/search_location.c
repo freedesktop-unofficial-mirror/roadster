@@ -23,6 +23,8 @@
 
 #include <stdlib.h>
 #include <gtk/gtk.h>
+
+#include "main.h"
 #include "db.h"
 #include "util.h"
 #include "search.h"

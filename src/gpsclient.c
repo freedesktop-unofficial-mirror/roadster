@@ -23,6 +23,7 @@
 
 #include <gtk/gtk.h>
 #include <gps.h>	// gpslib
+#include "main.h"
 #include "gpsclient.h"
 
 struct {

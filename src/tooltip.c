@@ -22,6 +22,8 @@
  */
 
 #include <gtk/gtk.h>
+
+#include "main.h"
 #include "tooltip.h"
 
 void tooltip_init()

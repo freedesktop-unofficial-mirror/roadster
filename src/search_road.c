@@ -25,6 +25,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "main.h"
 #include "db.h"
 #include "util.h"
 #include "pointstring.h"
@@ -392,8 +393,8 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 			if(nCount <= SEARCH_RESULT_COUNT_LIMIT) {
 				pointstring_t* pPointString = NULL;
 				pointstring_alloc(&pPointString);
-				
-				db_parse_wkb_pointstring(aRow[3], pPointString, point_alloc);
+
+				db_parse_wkb_linestring(aRow[3], pPointString->m_pPointsArray, point_alloc);
 
 //	g_print("raw: %s\n", aRow[3]);
 				search_road_filter_result(aRow[1], pRoadSearch->m_nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pPointString);

@@ -27,6 +27,7 @@
 
 #include <gtk/gtk.h>
 
+#include "main.h"
 #include "animator.h"
 #include "util.h"
 

@@ -22,8 +22,50 @@
  */
 
 #include <gtk/gtk.h>
+#include "main.h"
 #include "road.h"
 #include "util.h"
+#include "map.h"
+#include "gfreelist.h"
+
+GFreeList* g_pRoadFreeList = NULL;
+
+void road_init(void)
+{
+	g_pRoadFreeList = g_free_list_new(sizeof(road_t), 1000);
+}
+
+gboolean road_alloc(road_t** ppReturnRoad)
+{
+	g_return_val_if_fail(ppReturnRoad != NULL, FALSE);
+	g_return_val_if_fail(*ppReturnRoad == NULL, FALSE);	// must be a pointer to a NULL pointer
+
+	road_t* pNew = g_free_list_alloc(g_pRoadFreeList);
+	memset(pNew, 0, sizeof(road_t));
+
+	pNew->m_pPointsArray = g_ptr_array_new();
+
+	// return it
+	*ppReturnRoad = pNew;
+	return TRUE;
+}
+
+void road_free(road_t* pRoad)
+{
+	g_return_if_fail(pRoad != NULL);
+
+	int i;
+	for(i = (pRoad->m_pPointsArray->len - 1) ; i>=0 ; i--) {
+		mappoint_t* pPoint = g_ptr_array_remove_index_fast(pRoad->m_pPointsArray, i);
+		point_free(pPoint);
+	}
+	g_assert(pRoad->m_pPointsArray->len == 0);
+
+	g_ptr_array_free(pRoad->m_pPointsArray, TRUE);
+
+	// give back to allocator
+	g_free_list_free(g_pRoadFreeList, pRoad);
+}
 
 struct {
 	gchar* m_pszLong;

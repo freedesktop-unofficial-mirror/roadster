@@ -27,6 +27,7 @@
 #include <cairo.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include "main.h"
 #include "layers.h"
 
 layer_t * g_aLayers[NUM_LAYERS+1];

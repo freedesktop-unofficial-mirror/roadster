@@ -21,13 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#define USE_GNOME_VFS
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <gtk/gtk.h>
 
+#include "main.h"
 #include "import.h"
 #include "importwindow.h"
 #include "import_tiger.h"

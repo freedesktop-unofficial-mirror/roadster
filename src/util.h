@@ -34,7 +34,6 @@
 
 void util_random_color(void* pColor);
 
-//#define ENABLE_TIMING
 
 #ifdef ENABLE_TIMING
 #define TIMER_BEGIN(name, str)	GTimer* name = g_timer_new(); g_print("\n%s (%f)\n", str, g_timer_elapsed(name, NULL))

@@ -28,9 +28,9 @@
 #include <glade/glade.h>
 #include <gtk/gtk.h>
 
+#include "main.h"
 #include "gui.h"
 #include "db.h"
-
 #include "mainwindow.h"
 #include "gotowindow.h"
 #include "importwindow.h"

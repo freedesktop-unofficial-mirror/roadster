@@ -121,6 +121,11 @@ typedef enum {
 	UNIT_LAST=3,
 } EDistanceUnits;
 
+typedef enum {
+	SIDE_LEFT=1,
+	SIDE_RIGHT=2,
+} ESide;
+
 #define DEFAULT_UNIT	(UNIT_MILES)
 
 extern gchar* g_aDistanceUnitNames[];
@@ -137,7 +142,7 @@ typedef struct {
 #define SCALE_Y(p, y)  ((p)->m_nWindowHeight - ((((y) - (p)->m_rWorldBoundingBox.m_A.m_fLatitude) / (p)->m_fScreenLatitude) * (p)->m_nWindowHeight))
 
 typedef struct {
-	GPtrArray* m_pPointStringsArray;	// this should probably change to an array of 'roads'
+	GPtrArray* m_pRoadsArray;
 } maplayer_data_t;
 
 typedef struct {

@@ -24,6 +24,20 @@
 #ifndef _ROAD_H_
 #define _ROAD_H_
 
+typedef struct {
+	GPtrArray* m_pPointsArray;
+	gchar* m_pszName;
+	gint m_nAddressLeftStart;
+	gint m_nAddressLeftEnd;
+	gint m_nAddressRightStart;
+	gint m_nAddressRightEnd;
+} road_t;
+
+void road_init(void);
+gboolean road_alloc(road_t** ppReturnRoad);
+void road_free(road_t* pRoad);
+
+
 // ESuffixLength
 typedef enum {
 	ROAD_SUFFIX_LENGTH_SHORT,

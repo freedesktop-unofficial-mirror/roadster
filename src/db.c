@@ -21,8 +21,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#define USE_GNOME_VFS
-
 #include <mysql.h>
 
 #define HAVE_MYSQL_EMBED
@@ -36,15 +34,16 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef USE_GNOME_VFS
-#include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
-#endif
-
+#include "main.h"
 #include "db.h"
 #include "mainwindow.h"
 #include "util.h"
 #include "layers.h"
 #include "locationset.h"
+
+#ifdef USE_GNOME_VFS
+#include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
+#endif
 
 #define MYSQL_RESULT_SUCCESS  	(0)		// for clearer code
 
@@ -488,7 +487,7 @@ gboolean db_insert_state(const gchar* pszName, const gchar* pszCode, gint nCount
 #define WKB_POINT                  1	// only two we care about
 #define WKB_LINESTRING             2
 
-void db_parse_wkb_pointstring(const gint8* data, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**))
+void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolean (*callback_alloc_point)(mappoint_t**))
 {
 	g_assert(sizeof(double) == 8);	// mysql gives us 8 bytes per point
 
@@ -502,12 +501,12 @@ void db_parse_wkb_pointstring(const gint8* data, pointstring_t* pPointString, gb
 
 	while(nNumPoints > 0) {
 		mappoint_t* pPoint = NULL;
-		if(!callback_get_point(&pPoint)) return;
+		if(!callback_alloc_point(&pPoint)) return;
 
 		pPoint->m_fLatitude = *((double*)data)++;
 		pPoint->m_fLongitude = *((double*)data)++;
 
-		g_ptr_array_add(pPointString->m_pPointsArray, pPoint);
+		g_ptr_array_add(pPointsArray, pPoint);
 
 		nNumPoints--;
 	}

@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <gtk/gtk.h>
+#include "main.h"
 #include "location.h"
 #include "locationset.h"
 #include "db.h"

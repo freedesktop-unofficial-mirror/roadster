@@ -28,6 +28,7 @@
 #  include <config.h>
 #endif
 
+#include "main.h"
 #include "search_road.h"
 #include "search_location.h"
 #include "mainwindow.h"
@@ -110,7 +111,7 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 
 	if(g_SearchWindow.m_nNumResults == 0) {
 		// insert a "no results" message
-		gchar* pszBuffer = g_strdup_printf("<span size='small'><i>Your search did not match any\nstreets or Points of Interest.</i></span>", pszSearch);
+		gchar* pszBuffer = g_strdup_printf("<span size='small'><i>No results.</i></span>", pszSearch);
 		GtkTreeIter iter;
 		gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
 		gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter, 
@@ -174,7 +175,7 @@ static void searchwindow_go_to_selected_result(void)
 		if(!bClickable) return;	// XXX: is this the right way to make a treeview item not clickable?
 
 		mainwindow_map_slide_to_mappoint(&pt);
-		mainwindow_set_zoomlevel(nZoomLevel);
+		//mainwindow_set_zoomlevel(nZoomLevel);
 		mainwindow_draw_map(DRAWFLAG_ALL);
 	}
 }

@@ -22,10 +22,9 @@
  */
 
 #include <gtk/gtk.h>
+#include "main.h"
 #include "map.h"
 #include "point.h"
-
-#define USE_GFREELIST
 
 #ifdef USE_GFREELIST
 #include "gfreelist.h"

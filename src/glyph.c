@@ -22,7 +22,6 @@
  */
 
 #include <gtk/gtk.h>
-
 #include <cairo.h>
 
 #ifdef HAVE_LIBSVG

@@ -26,6 +26,7 @@
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 
+#include "main.h"
 #include "db.h"
 #include "gui.h"
 #include "databasewindow.h"

@@ -29,6 +29,7 @@
 
 #include <gtk/gtk.h>
 
+#include "main.h"
 #include "util.h"
 #include "datasetwindow.h"
 #include "mainwindow.h"
