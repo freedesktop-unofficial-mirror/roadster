@@ -1,0 +1,31 @@
+# List of source files containing translatable strings.
+
+## Created by Anjuta - will be overwritten
+## If you don't want it to overwrite it,
+## 	Please disable it in the Anjuta project configuration
+
+# Source files
+src/main.c
+src/db.c
+src/gui.c
+src/mainwindow.c
+src/gotowindow.c
+src/map.c
+src/geometryset.c
+src/layers.c
+src/import.c
+src/import_tiger.c
+src/importwindow.c
+src/util.c
+src/datasetwindow.c
+src/welcomewindow.c
+src/gpsclient.c
+src/locationset.c
+src/searchwindow.c
+src/search_road.c
+src/search_location.c
+src/search.c
+src/scenemanager.c
+src/databasewindow.c
+
+

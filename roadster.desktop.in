@@ -1,0 +1,10 @@
+
+[Desktop Entry]
+Name=Roadster
+Comment=roadster
+Exec=roadster
+Icon=@PACKAGE_PIXMAPS_DIR@/roadster-icon.png
+Terminal=false
+MultipleArgs=false
+Type=Application
+
