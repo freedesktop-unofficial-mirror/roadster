@@ -30,7 +30,9 @@
 
 void util_random_color(void* pColor);
 
-#if 1
+// #define ENABLE_TIMING
+
+#ifdef ENABLE_TIMING
 #define TIMER_BEGIN(name, str)	GTimer* name = g_timer_new(); g_print("\n%s (%f)\n", str, g_timer_elapsed(name, NULL))
 #define TIMER_SHOW(name, str)	g_print(" %s (%f)\n", str, g_timer_elapsed(name, NULL))
 #define TIMER_END(name, str)	g_print("%s (%f)\n", str, g_timer_elapsed(name, NULL)); g_timer_destroy(name); name = NULL

@@ -43,6 +43,8 @@ roadster_SOURCES = \
 	pointstring.c\
 	track.c\
 	glyph.c\
+	map_draw_cairo.c\
+	map_draw_gdk.c\
 	road.c
 
 roadster_LDADD = \

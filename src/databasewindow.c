@@ -23,8 +23,6 @@
 
 #ifdef ROADSTER_DEAD_CODE
 
-
-
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 

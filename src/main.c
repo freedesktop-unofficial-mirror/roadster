@@ -49,6 +49,10 @@ int main (int argc, char *argv[])
 		bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
 		textdomain(PACKAGE);
 	#endif
+
+//         g_thread_init(NULL);
+//         gdk_threads_init();
+
 	gnome_init(PACKAGE, VERSION, argc, argv);
 
 	if(!main_init()) {
@@ -106,7 +110,7 @@ gboolean main_init(void)
 	g_print("connecting to db\n");
 	gboolean bConnected = db_connect(NULL, NULL, NULL, "");
 
-	g_print("creating needed tables\n");
+	g_print("creating database tables\n");
 	db_create_tables();
 
 	g_print("initialization complete\n");

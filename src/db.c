@@ -53,17 +53,7 @@
 #define MYSQL_GET_RESULT(x)		mysql_store_result((x))
 
 db_connection_t* g_pDB = NULL;
-GMutex* g_pDBMutex = NULL;
 
-void db_lock(void)
-{
-	g_mutex_lock(g_pDBMutex);
-}
-
-void db_unlock(void)
-{
-	g_mutex_unlock(g_pDBMutex);
-}
 
 gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 {
@@ -192,7 +182,7 @@ gboolean db_is_empty()
 // call once on program start-up
 void db_init()
 {
-	g_pDBMutex = g_mutex_new();
+//	g_pDBMutex = g_mutex_new();
 
 #ifdef HAVE_MYSQL_EMBED
 	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
@@ -519,11 +509,9 @@ void db_parse_wkb_pointstring(const gint8* data, pointstring_t* pPointString, gb
 	gint nGeometryType = *((gint32*)data)++;
 	g_assert(nGeometryType == WKB_LINESTRING);
 
-	// next 4 bytes is the point count
 	gint nNumPoints = *((gint32*)data)++;	// NOTE for later: this field doesn't exist for type POINT
 
 	while(nNumPoints > 0) {
-		// g_print("reading a point...\n");
 		mappoint_t* pPoint = NULL;
 		if(!callback_get_point(&pPoint)) return;
 
@@ -860,6 +848,29 @@ void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gbo
 		g_assert_not_reached();
 	}
 }
+
+GMutex* g_pDBMutex = NULL;
+
+void db_lock(void)
+{
+	g_mutex_lock(g_pDBMutex);
+}
+
+void db_unlock(void)
+{
+	g_mutex_unlock(g_pDBMutex);
+}
+
+void db_begin_thread(void)
+{
+	mysql_thread_init();
+}
+
+void db_end_thread(void)
+{
+	mysql_thread_end();
+}
+
 */
 #endif
 

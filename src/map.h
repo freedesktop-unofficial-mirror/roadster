@@ -24,8 +24,6 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
-#include <cairo.h>
-
 typedef enum {
 	kSublayerBottom,
 	kSublayerTop,
@@ -130,6 +128,8 @@ typedef struct {
 	gint m_nWindowWidth;
 	gint m_nWindowHeight;
 } rendermetrics_t;
+#define SCALE_X(p, x)  ((((x) - (p)->m_rWorldBoundingBox.m_A.m_fLongitude) / (p)->m_fScreenLongitude) * (p)->m_nWindowWidth)
+#define SCALE_Y(p, y)  ((p)->m_nWindowHeight - ((((y) - (p)->m_rWorldBoundingBox.m_A.m_fLatitude) / (p)->m_fScreenLatitude) * (p)->m_nWindowHeight))
 
 typedef struct {
 	GPtrArray* m_pPointStringsArray;	// this should probably change to an array of 'roads'
@@ -137,7 +137,7 @@ typedef struct {
 
 typedef struct {
 	// Mutex and the data it controls (always lock before reading/writing)
-	GMutex* m_pDataMutex;
+	//GMutex* m_pDataMutex;
 	 mappoint_t 			m_MapCenter;
 	 dimensions_t 			m_MapDimensions;
 	 guint16 			m_uZoomLevel;
@@ -146,10 +146,33 @@ typedef struct {
 	 scenemanager_t*		m_pSceneManager;
 
 	// Mutex and the data it controls (always lock before reading/writing)
-	GMutex* m_pPixmapMutex;
+	//GMutex* m_pPixmapMutex;
 	 GdkPixmap* m_pPixmap;
 } map_t;
 
+typedef enum {
+	SUBLAYER_RENDERTYPE_LINES,
+	SUBLAYER_RENDERTYPE_POLYGONS,
+	SUBLAYER_RENDERTYPE_LINE_LABELS,
+	SUBLAYER_RENDERTYPE_POLYGON_LABELS
+} ESubLayerRenderType;
+
+typedef struct {
+	gint nLayer;
+	gint nSubLayer;
+	ESubLayerRenderType eSubLayerRenderType;
+
+//	void (*pFunc)(map_t*, cairo_t*, rendermetrics_t*, GPtrArray*, sublayerstyle_t*, textlabelstyle_t*);
+} draworder_t;
+
+// Draw flags
+#define DRAWFLAG_LABELS 	(1)
+#define DRAWFLAG_BACKGROUND	(2)
+#define DRAWFLAG_GEOMETRY	(4) // next is 8
+
+
+#define NUM_SUBLAYER_TO_DRAW (22)
+extern draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW];	//
 
 void map_init(void);
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget);
@@ -178,11 +201,11 @@ gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nD
 // remove this!
 void map_center_on_windowpoint(map_t* pMap, guint16 uX, guint16 uY);
 
-
 GdkPixmap* map_get_pixmap(map_t* pMap);
 void map_release_pixmap(map_t* pMap);
-void map_draw_thread_begin(map_t* pMap, GtkWidget* pTargetWidget);
+//void map_draw_thread_begin(map_t* pMap, GtkWidget* pTargetWidget);
 
-void map_draw(map_t* pMap, cairo_t *cr);
+void map_draw(map_t* pMap);
+double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
 
 #endif

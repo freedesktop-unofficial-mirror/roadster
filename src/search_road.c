@@ -29,7 +29,6 @@
 #include "util.h"
 #include "pointstring.h"
 #include "point.h"
-#include "searchwindow.h"
 #include "search.h"
 #include "search_road.h"
 #include "road.h"
@@ -573,7 +572,7 @@ void search_road_filter_result(
 			// reverse start/end for the dear user :)
 			g_snprintf(azBuffer, BUFFER_SIZE, "%d-%d %s %s\n%s", nAddressRightEnd, nAddressRightStart, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
 		}
-		searchwindow_add_result(nRoadID, azBuffer, &ptAddress);
+		searchwindow_add_result(azBuffer, &ptAddress);
 
 		// do left side, same as right side (see above)
 		if(nAddressLeftStart == 0 && nAddressLeftEnd == 0) {
@@ -586,7 +585,7 @@ void search_road_filter_result(
 			// swap address to keep smaller number to the left
 			g_snprintf(azBuffer, BUFFER_SIZE, "%d-%d %s %s\n%s", nAddressLeftEnd, nAddressLeftStart, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
 		}
-		searchwindow_add_result(nRoadID, azBuffer, &ptAddress);		
+		searchwindow_add_result(azBuffer, &ptAddress);		
 	}
 	else {	// else the search had a road number
 		// NOTE: we have to filter out results like "97-157" when searching for "124" because it's
@@ -611,7 +610,7 @@ void search_road_filter_result(
 					pointstring_walk_percentage(pPointString, fPercent, ROADSIDE_LEFT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s\n%s", nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
-				searchwindow_add_result(nRoadID, azBuffer, &ptAddress);				
+				searchwindow_add_result(azBuffer, &ptAddress);				
 			}
 			else if(nRoadNumber >= nAddressLeftEnd && nRoadNumber <= nAddressLeftStart) {
 				// MATCH: left side backwards
@@ -627,7 +626,7 @@ void search_road_filter_result(
 					pointstring_walk_percentage(pPointString, (100.0 - fPercent), ROADSIDE_RIGHT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s\n%s", nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
-				searchwindow_add_result(nRoadID, azBuffer, &ptAddress);
+				searchwindow_add_result(azBuffer, &ptAddress);
 			}
 		}
 
@@ -648,7 +647,7 @@ void search_road_filter_result(
 					pointstring_walk_percentage(pPointString, fPercent, ROADSIDE_RIGHT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s\n%s", nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
-				searchwindow_add_result(nRoadID, azBuffer, &ptAddress);				
+				searchwindow_add_result(azBuffer, &ptAddress);				
 			}
 			else if(nRoadNumber >= nAddressRightEnd && nRoadNumber <= nAddressRightStart) {
 				// MATCH: right side backwards
@@ -664,7 +663,8 @@ void search_road_filter_result(
 					pointstring_walk_percentage(pPointString, (100.0 - fPercent), ROADSIDE_LEFT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, "%d %s %s\n%s", nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
-				searchwindow_add_result(nRoadID, azBuffer, &ptAddress);				
+				searchwindow_add_result
+					(azBuffer, &ptAddress);				
 			}
 		}
 	}

@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #ifndef _SEARCHWINDOW_H
 #define _SEARCHWINDOW_H
 
@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 	
 void searchwindow_init(GladeXML* pGladeXML);
 
-void searchwindow_add_result(gint nRoadID, const gchar* pszText, mappoint_t* pPoint);
+void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint);
 
 void searchwindow_go_to_selected_result(void);
 

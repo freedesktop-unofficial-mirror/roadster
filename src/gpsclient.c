@@ -32,12 +32,19 @@ struct {
 
 gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condition, gpointer data);
 
-static void gpsclient_callback_raw_data(char* p)
+void gpsclient_init()
 {
-	// g_print("raw: %s\n", p);
+	g_GPSClient.m_pPublicGPSData = g_new0(gpsdata_t, 1);
+
+	gpsclient_connect();
 }
 
-void gpsclient_debug_print(void);
+// static void gpsclient_callback_raw_data(char* p)
+// {
+//         // g_print("raw: %s\n", p);
+// }
+
+// void gpsclient_debug_print(void);
 
 static void gpsclient_connect(void)
 {
@@ -67,12 +74,6 @@ static void gpsclient_connect(void)
 	}
 }
 
-void gpsclient_init()
-{
-	g_GPSClient.m_pPublicGPSData = g_new0(gpsdata_t, 1);
-
-	gpsclient_connect();
-}
 
 const gpsdata_t* gpsclient_getdata()
 {
@@ -148,7 +149,7 @@ gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condit
 }
 
 #ifdef ROADSTER_DEAD_CODE
-
+/*
 static void gpsclient_debug_print(void)
 {
 	struct gps_data_t* d = g_GPSClient.m_pGPSConnection;	// gpsd data
@@ -170,5 +171,5 @@ static void gpsclient_debug_print(void)
 
 	g_print("gps_fd = %d\n\n", d->gps_fd);
 }
-
+*/
 #endif

@@ -220,8 +220,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	
 	// create drawing area
 	g_MainWindow.m_pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());
-
-	g_print("creating map\n");
+	// create map
 	map_new(&g_MainWindow.m_pMap, GTK_WIDGET(g_MainWindow.m_pDrawingArea));
 
 	// add signal handlers to drawing area
@@ -239,7 +238,6 @@ void mainwindow_init(GladeXML* pGladeXML)
 
 	cursor_init();
 
-	g_print("loading at %s\n", PACKAGE_DATA_DIR);
 	g_MainWindow.m_nGPSLocationGlyph = glyph_load(PACKAGE_DATA_DIR"/car.svg");
 
 	/*
@@ -470,30 +468,6 @@ void mainwindow_toggle_fullscreen(void)
 	}
 }
 
-/*
-** callbacks
-*/
-//~ void on_searchbutton_clicked (GtkToolButton *toolbutton, gpointer user_data)
-//~ {
-	//~ gchar* pchSearchString = gtk_editable_get_chars(GTK_EDITABLE(g_MainWindow.m_pSearchBox), 0, MAX_SEARCH_TEXT_LENGTH);
-	//~ search_execute(pchSearchString);
-	//~ g_free(pchSearchString);
-//~ }
-
-#if ROADSTER_DEAD_CODE
-static gboolean on_searchbox_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
-{
-	// Enter key?
-	if(event->keyval == 65293) {
-		// Grab the first MAX_SEARCH_TEXT_LENGTH characters from search box
-		gchar* pchSearchString = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, MAX_SEARCH_TEXT_LENGTH);
-		search_road_execute(pchSearchString);
-		g_free(pchSearchString);
-	}
-	return FALSE;
-}
-#endif /* ROADSTER_DEAD_CODE */
-
 // User clicked Quit window
 void on_quitmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
@@ -506,13 +480,6 @@ gboolean on_application_delete_event(GtkWidget *widget, GdkEvent *event, gpointe
 	gui_exit();
 	return FALSE; // satisfy strick compiler
 }
-
-#if ROADSTER_DEAD_CODE
-static void on_searchbox_editing_done(GtkCellEditable *celleditable, gpointer user_data)
-{
-//	g_message("on_searchbox_editing_done()\n");
-}
-#endif /* ROADSTER_DEAD_CODE */
 
 // the range slider changed value
 void on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
@@ -638,7 +605,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 	gdk_window_get_pointer(w->window, &nX, &nY, NULL);
 
 	// Left double-click
-	if(event->button == 1 && event->type == GDK_2BUTTON_PRESS) {
+	if(event->button == 1 && event->type == GDK_BUTTON_PRESS) {
 		if(g_MainWindow.m_eSelectedTool == kToolZoom) {
 			map_center_on_windowpoint(g_MainWindow.m_pMap, nX, nY);
 			zoom_in_one();
@@ -725,7 +692,8 @@ void on_toolbutton_clicked(GtkToolButton *toolbutton, gpointer user_data)
 
 void mainwindow_draw_map(void)
 {
-	map_draw_thread_begin(g_MainWindow.m_pMap, GTK_WIDGET(g_MainWindow.m_pDrawingArea));
+	map_draw(g_MainWindow.m_pMap);
+	//map_draw_thread_begin(g_MainWindow.m_pMap, GTK_WIDGET(g_MainWindow.m_pDrawingArea));
 }
 	
 static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfigure *event)
@@ -855,7 +823,6 @@ static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 			}
 		}
 	}
-//	g_print("set GPS status = %d\n", pData->m_eStatus);
 	return TRUE;
 }
 
@@ -866,6 +833,7 @@ void mainwindow_set_centerpoint(mappoint_t* pPoint)
 
 
 #ifdef ROADSTER_DEAD_CODE
+/*
 void on_importmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	g_print("on_importmenuitem_activate\n");
@@ -882,18 +850,18 @@ static void on_layervisible_checkbox_clicked(GtkCellRendererToggle *cell, gchar 
 
 	column = g_object_get_data (G_OBJECT (cell), "column");
 
-	/* get toggled iter */
+	// get toggled iter
 	gtk_tree_model_get_iter (model, &iter, path);
 	gtk_tree_model_get (model, &iter, column, &toggle_item, -1);
 
-	/* do something with the value */
+	// do something with the value
 	toggle_item ^= 1;
 
-	/* set new value */
+	// set new value
 	gtk_tree_store_set (GTK_TREE_STORE (model), &iter, column,
 			  toggle_item, -1);
 
-	/* clean up */
+	// clean up
 	gtk_tree_path_free (path);
 }
 
@@ -902,4 +870,16 @@ void mainwindow_on_datasetmenuitem_activate(GtkWidget *pWidget, gpointer* p)
 	datasetwindow_show();
 }
 
+static gboolean on_searchbox_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	// Enter key?
+	if(event->keyval == 65293) {
+		// Grab the first MAX_SEARCH_TEXT_LENGTH characters from search box
+		gchar* pchSearchString = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, MAX_SEARCH_TEXT_LENGTH);
+		search_road_execute(pchSearchString);
+		g_free(pchSearchString);
+	}
+	return FALSE;
+}
+*/
 #endif /* ROADSTER_DEAD_CODE */

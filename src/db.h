@@ -73,6 +73,9 @@ db_row_t db_fetch_row(db_resultset_t* pResultSet);
 void db_free_result(db_resultset_t* pResultSet);
 gint db_get_last_insert_id(void);
 
+void db_begin_thread(void);
+void db_end_thread(void);
+
 gchar* db_make_escaped_string(const gchar* pszString);
 void db_free_escaped_string(gchar* pszString);
 

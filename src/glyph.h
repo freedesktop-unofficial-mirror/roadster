@@ -24,6 +24,8 @@
 #ifndef _GLYPH_H_
 #define _GLYPH_H_
 
+#include <cairo.h>
+
 void glyph_init(void);
 gint glyph_load(const gchar* pszPath);
 void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY);

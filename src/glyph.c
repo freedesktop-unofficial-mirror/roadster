@@ -22,14 +22,21 @@
  */
 
 #include <gnome.h>
+
+#include <cairo.h>
+
+#ifdef HAVE_LIBSVG
 #include <svg-cairo.h>
+#endif
 
 typedef enum { GLYPHTYPE_NONE=0, GLYPHTYPE_BITMAP, GLYPHTYPE_VECTOR } EGlyphType;
 
 typedef struct glyph {
 	EGlyphType m_eType;
 	
+#ifdef HAVE_LIBSVG
 	svg_cairo_t *m_pCairoSVG;
+#endif
 
 	gint m_nWidth;
 	gint m_nHeight;
@@ -47,6 +54,7 @@ void glyph_init(void)
 
 gint glyph_load(const gchar* pszPath)
 {
+#ifdef HAVE_LIBSVG
 	svg_cairo_t* pCairoSVG = NULL;
 
 	if(SVG_CAIRO_STATUS_SUCCESS != svg_cairo_create(&pCairoSVG)) {
@@ -68,6 +76,9 @@ gint glyph_load(const gchar* pszPath)
 	g_ptr_array_add(g_Glyph.m_pGlyphArray, pNewGlyph);
 
 	return nGlyphHandle;
+#else
+	return 0;
+#endif
 }
 
 static gboolean glyph_lookup(gint nGlyphHandle, glyph_t** ppReturnGlyph)
@@ -85,6 +96,7 @@ static gboolean glyph_lookup(gint nGlyphHandle, glyph_t** ppReturnGlyph)
 
 void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY)
 {
+#ifdef HAVE_LIBSVG
 	if(nGlyphHandle == 0) return;
 
 	glyph_t* pGlyph = NULL;
@@ -97,9 +109,14 @@ void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble
 		cairo_translate(pCairo, (fX - (pGlyph->m_nWidth/2)), (fY - (pGlyph->m_nHeight/2)));
 		svg_cairo_render(pGlyph->m_pCairoSVG, pCairo);
 	cairo_restore(pCairo);
+#else
+	return;
+#endif
 }
 
 void glyph_deinit(void)
 {
+#ifdef HAVE_LIBSVG
 	// svg_cairo_destroy(svgc) all glyphs
+#endif
 }

@@ -9,15 +9,15 @@
 		<property name="width" level="7" value="5.0" />
 		<property name="width" level="8" value="12.0" />
 		<property name="width" level="9" value="18.0" />
-		<property name="width" level="10" value="36.0" />
-		<property name="color" value="#a99f9dff" />
+		<property name="width" level="10" value="35.0" />
+		<property name="color" value="#898f8dff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
 	</sublayer>
 	<sublayer>
-		<property name="width" level="7" value="3.5" />
-		<property name="width" level="8" value="10.0" />
-		<property name="width" level="9" value="16.0" />
+		<property name="width" level="7" value="4.0" />
+		<property name="width" level="8" value="9.0" />
+		<property name="width" level="9" value="15.0" />
 		<property name="width" level="10" value="32.0" />
 		<property name="color" value="#fffbffff" />
 		<property name="join-style" value="miter" />
@@ -33,10 +33,10 @@
 
 <layer name="major-roads">
 	<sublayer>
-		<property name="width" level="7" value="12.0" />
-		<property name="width" level="8" value="17.0" />
+		<property name="width" level="7" value="13.0" />
+		<property name="width" level="8" value="18.0" />
 		<property name="width" level="9" value="24.0" />
-		<property name="width" level="10" value="36.0" />
+		<property name="width" level="10" value="35.0" />
 		<property name="color" value="#ada28cff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
@@ -47,10 +47,10 @@
 		<property name="width" level="5" value="3.3" />
 		<property name="width" level="6" value="6.0" />
 		<property name="width" level="7" value="10.0" />
-		<property name="width" level="8" value="14.5" />
-		<property name="width" level="9" value="22.0" />
-		<property name="width" level="10" value="32.5" />
-		<property name="color" value="#fffb73ff" />
+		<property name="width" level="8" value="15.0" />
+		<property name="width" level="9" value="21.0" />
+		<property name="width" level="10" value="32.0" />
+		<property name="color" value="#FFfb73ff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
 	</sublayer>
