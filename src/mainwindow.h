@@ -25,6 +25,7 @@
 #define _MAINWINDOW_H
 
 #include <glade/glade.h>
+#include "map.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -92,6 +93,8 @@ void on_toolbutton_clicked(GtkToolButton *toolbutton, gpointer user_data);
 void mainwindow_on_gotomenuitem_activate(GtkMenuItem     *menuitem, gpointer user_data);
 void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* __unused);
 void mainwindow_on_datasetmenuitem_activate(GtkWidget *pWidget, gpointer* p);
+
+void mainwindow_set_centerpoint(mappoint_t* pPoint);
 
 #ifdef __cplusplus
 }

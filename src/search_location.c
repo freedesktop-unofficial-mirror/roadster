@@ -47,6 +47,8 @@ void search_location_filter_result(gint nLocationID);
 
 void search_location_execute(const gchar* pszSentence, gint nLocationSetID, gfloat fDistance, gint nDistanceUnit)
 {
+	return;
+/*
 	g_print("pszSentence = %s, nLocationSetID = %d, fDistance = %f, nDistanceUnit=%d\n", pszSentence, nLocationSetID, fDistance, nDistanceUnit);
 
 	TIMER_BEGIN(search, "\n\n****************************\nSEARCH BEGIN");
@@ -62,8 +64,10 @@ void search_location_execute(const gchar* pszSentence, gint nLocationSetID, gflo
 	g_free(locationsearch.m_pszCleanedSentence);
 
 	TIMER_END(search, "SEARCH END");
+*/
 }
 
+/*
 void search_location_on_cleaned_sentence(locationsearch_t* pLocationSearch)
 {
 	// Create an array of the words
@@ -172,3 +176,4 @@ void search_location_filter_result(gint nLocationID)
 	searchwindow_add_result(0, p, &pt);
 	g_free(p);
 }
+*/

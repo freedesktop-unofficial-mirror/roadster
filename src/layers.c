@@ -43,8 +43,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,0,0,0,0,0}, /* font size */
  			 {0,0,0,0,0,0,0,0,0,0},	/* bold */
 			 {0,0,0,0,0,0,0,0,0,0}, /* halo */
-			 {0,0,0,0}},
-			NULL},
+			 {0,0,0,0}}
+			},
 
 /* 1 */	{LAYER_MINORSTREET, "Minor Roads",
 			{{
@@ -53,11 +53,11 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.5, 10.0, 16.0,32.0}, {255/255.0, 251/255.0, 255/255.0, 1.00}, 0, CAIRO_LINE_JOIN_MITER, CAIRO_LINE_CAP_ROUND}
 			}},
 
-			{{0,0,0,0,0,0,0,10,18,32}, /* font size */
+			{{0,0,0,0,0,0,0,10,14,32}, /* font size */
 	 		 {0,0,0,0,0,0,0,0,0,0}, /* bold */
 			 {0,0,0,0,0,0,0,0,0,0}, /* halo */
-			 {0,0,0,0}},
-			NULL},
+			 {0,0,0,0}}
+			},
 
 /* 2 */	{LAYER_MAJORSTREET, "Major Roads",
 			{{
@@ -68,8 +68,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,8,10,12,20,34}, /* font size */
 			 {0,0,0,0,0,0,0,0,1,1}, /* bold */
 			 {0,0,0,0,0,0,0,0,0,0}, /* halo */
-			 {0,0,0,0}},
-			NULL},
+			 {0,0,0,0}}
+			},
 
 /* 3 */	{LAYER_MINORHIGHWAY, "Minor Highways",
 			{{
@@ -80,8 +80,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,6,12,16,18,26}, /* font size */
 			 {0,0,0,0,0,0,1,1,1,1}, /* bold */
 			 {0,0,0,0,0,0,0,0,0,0}, /* halo */
-			 {0,0,0,0}},
-			NULL},
+			 {0,0,0,0}}
+			},
 
 /* 4 */	{LAYER_MINORHIGHWAY_RAMP, "Minor Highway Ramps",
 			{{
@@ -92,8 +92,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,0,0,0,0,0}, /* font size */
 			 {0,0,0,0,0,0,0,0,0,0}, /* bold */
 			 {0,0,0,0,0,0,0,0,0,0}, /* halo */
-			 {0,0,0,0}},
-			NULL},
+			 {0,0,0,0}}
+			},
 
 /* 5 */	{LAYER_MAJORHIGHWAY, "Major Highways",
 			{{
@@ -104,8 +104,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,6,8,10,16,26}, /* font size */
 			 {0,0,0,0,0,0,1,1,1,1}, /* bold */
 			 {0,0,0,0,0,0,0,0,0,0}, /* halo */
-			 {0,0,0,0}},
-			NULL},
+			 {0,0,0,0}}
+			},
 
 /* 6 */	{LAYER_MAJORHIGHWAY_RAMP, "Major Highway Ramps",
 			{{
@@ -116,8 +116,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,0,0,0,0,0}, /* font size */
 			 {0,0,0,0,0,0,0,0,0,0}, /* bold */
 			 {0,0,0,0,0,0,0,0,0,0}, /* halo */
-			 {0,0,0,0}},
-			NULL},
+			 {0,0,0,0}}
+			},
 			
 /* 7 */	{LAYER_RAILROAD, "Railroads",
 			{{
@@ -128,8 +128,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,0,10,10,10,10}, /* font size */
 			 {0,0,0,0,0,0,0,0,0,0}, /* bold */
 			 {0,0,0,0,0,0,4,4,4,4}, /* halo */
-			 {0,0,0,0}},
-			NULL},
+			 {0,0,0,0}}
+			},
 
 /* 8 */	{LAYER_PARK, "Parks",
 			{{
@@ -140,8 +140,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,0,10,12,12,14}, /* font size */
 			 {0,0,0,0,0,0,1,1,1,1}, /* bold */
 			 {0,0,0,0,0,0,3,3,3,3}, /* halo */
-			 {0.1,0.1,0.1, 1.0}},
-			NULL},
+			 {0.1,0.1,0.1, 1.0}}
+			},
 
 /* 9 */{LAYER_RIVER, "Rivers",
 			{{
@@ -152,8 +152,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,0,10,12,12,14}, /* font size */
 			 {0,0,0,0,0,0,1,1,1,1}, /* bold */
 			 {0,0,0,0,0,0,3,3,3,3}, /* halo */
-			 {128/255.0, 158/255.0, 180/255.0, 1.0}},
-			NULL},
+			 {128/255.0, 158/255.0, 180/255.0, 1.0}}
+			},
 
 /* 10 */{LAYER_LAKE, "Lakes",
 			{{
@@ -164,8 +164,8 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,0,10,12,12,14}, /* font size */
 			 {0,0,0,0,0,0,1,1,1,1}, /* bold */
 			 {0,0,0,0,0,0,3,3,3,3}, /* halo */
-			 {0.1,0.1,0.1, 1.0}},
-			NULL},
+			 {0.1,0.1,0.1, 1.0}}
+			},
 
 /* 11 */{LAYER_MISC_AREA, "Misc Areas",
 			{{
@@ -176,22 +176,6 @@ layer_t g_aLayers[NUM_LAYERS + 1] = {
 			{{0,0,0,0,0,0,10,12,12,14}, /* font size */
 			 {0,0,0,0,0,0,1,1,1,1}, /* bold */
 			 {0,0,0,0,0,0,3,3,3,3}, /* halo */
-			 {0.25,0.25,0.25,1.0}},
-			NULL},
+			 {0.25,0.25,0.25,1.0}}
+			},
 };
-
-void layers_init()
-{
-	gint i;
-	for(i=LAYER_FIRST ; i<=LAYER_LAST ; i++) {
-		geometryset_new(&(g_aLayers[i].m_pGeometrySet));
-	}
-}
-
-void layers_clear()
-{
-	gint i;
-	for(i=LAYER_FIRST ; i<=LAYER_LAST ; i++) {
-		geometryset_clear(g_aLayers[i].m_pGeometrySet);
-	}
-}

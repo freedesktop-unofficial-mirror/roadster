@@ -264,9 +264,7 @@ void searchwindow_go_to_selected_result(void)
 			RESULTLIST_LONGITUDE, &pt.m_fLongitude,
 			-1);
 
-		g_print("%f,%f\n", pt.m_fLatitude, pt.m_fLongitude);
-
-		map_set_centerpoint(&pt);
+		mainwindow_set_centerpoint(&pt);
 		mainwindow_draw_map();
 		mainwindow_statusbar_update_position();
 //		g_print("yay: %s\n", pszText);

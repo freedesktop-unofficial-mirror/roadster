@@ -153,7 +153,7 @@ static gboolean gotowindow_go(void)
 
 	// TODO: error checking for 0 (meaning either bad text "3a21" or "000" etc.
 
-	map_set_centerpoint(&pt);
+	mainwindow_set_centerpoint(&pt);
 	mainwindow_draw_map();
 	mainwindow_statusbar_update_position();
 	return TRUE;

@@ -22,7 +22,6 @@
  */
 
 #include <gtk/gtk.h>
-#include "geometryset.h"
 #include "scenemanager.h"
 
 /*
@@ -36,57 +35,50 @@ Goals:
 //     gchar* m_pszLabel;
 // } roadlabel_t;
 
-struct {
-	GPtrArray* m_p;
-	GHashTable* m_pLabelHash;
-} g_SceneManager;
-
 void scenemanager_init(void)
 {
-	g_SceneManager.m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
 }
 
-gboolean scenemanager_can_draw_label(const gchar* pszLabel)
+void scenemanager_new(scenemanager_t** ppReturn)
 {
+	scenemanager_t* pNew = g_new0(scenemanager_t, 1);
+	pNew->m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
+	*ppReturn = pNew;
+}
+
+gboolean scenemanager_can_draw_label(scenemanager_t* pSceneManager, const gchar* pszLabel)
+{
+	g_assert(pSceneManager != NULL);
+
 	gpointer pKey;
 	gpointer pValue;
 
 	// can draw if it doesn't exist in table
-    gboolean bOK = (g_hash_table_lookup_extended(g_SceneManager.m_pLabelHash,
-                                        pszLabel,
-										&pKey, &pValue) == FALSE);
+	gboolean bOK = (g_hash_table_lookup_extended(pSceneManager->m_pLabelHash,
+                                        pszLabel, &pKey, &pValue) == FALSE);
 
 //	g_print("permission for %s: %s\n", pszLabel, bOK ? "YES" : "NO");
 	return bOK;
 }
 
-void scenemanager_label_drawn(const gchar* pszLabel)
+void scenemanager_label_drawn(scenemanager_t* pSceneManager, const gchar* pszLabel)
 {
+	g_assert(pSceneManager != NULL);
 //	g_print("drawn! %s\n", pszLabel);
-	g_hash_table_insert(g_SceneManager.m_pLabelHash, pszLabel, NULL);
+	g_hash_table_insert(pSceneManager->m_pLabelHash, pszLabel, NULL);
 }
 
-void scenemanager_clear(void)
+void scenemanager_clear(scenemanager_t* pSceneManager)
 {
-	g_hash_table_destroy(g_SceneManager.m_pLabelHash);
+	g_assert(pSceneManager != NULL);
 
-	scenemanager_init();
+	g_hash_table_destroy(pSceneManager->m_pLabelHash);
+	pSceneManager->m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
 }
 
 
 #if ROADSTER_DEAD_CODE
-static void scenemanager_add_label_line(geometryset_t* pGeometry, gchar* pszLabel)
-{
-	
-}
-
-static void scenemanager_add_label_polygon(geometryset_t* pGeometry, gchar* pszLabel)
-{
-	
-}
-
-static void scenemanager_draw(void)
-{
-	
-}
+static void scenemanager_add_label_line(geometryset_t* pGeometry, gchar* pszLabel) {}
+static void scenemanager_add_label_polygon(geometryset_t* pGeometry, gchar* pszLabel) {}
+static void scenemanager_draw(void) {}
 #endif /* ROADSTER_DEAD_CODE */

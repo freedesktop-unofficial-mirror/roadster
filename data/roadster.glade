@@ -335,44 +335,6 @@
 	      </child>
 
 	      <child>
-		<widget class="GtkToolItem" id="toolitem17">
-		  <property name="visible">True</property>
-		  <property name="visible_horizontal">True</property>
-		  <property name="visible_vertical">True</property>
-		  <property name="is_important">False</property>
-
-		  <child>
-		    <widget class="GtkToolButton" id="gotobutton">
-		      <property name="label" translatable="yes"></property>
-		      <property name="use_underline">True</property>
-		      <property name="stock_id">gtk-jump-to</property>
-		      <property name="visible_horizontal">True</property>
-		      <property name="visible_vertical">True</property>
-		      <property name="is_important">False</property>
-		      <signal name="clicked" handler="on_gotobutton_clicked" last_modification_time="Thu, 09 Sep 2004 20:11:08 GMT"/>
-		    </widget>
-		  </child>
-		</widget>
-		<packing>
-		  <property name="expand">False</property>
-		  <property name="homogeneous">False</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<widget class="GtkSeparatorToolItem" id="separatortoolitem2">
-		  <property name="sensitive">False</property>
-		  <property name="draw">True</property>
-		  <property name="visible_horizontal">True</property>
-		  <property name="visible_vertical">True</property>
-		</widget>
-		<packing>
-		  <property name="expand">False</property>
-		  <property name="homogeneous">False</property>
-		</packing>
-	      </child>
-
-	      <child>
 		<widget class="GtkToolItem" id="toolitem20">
 		  <property name="visible">True</property>
 		  <property name="visible_horizontal">True</property>
@@ -489,7 +451,7 @@
 		      <property name="has_frame">True</property>
 		      <property name="invisible_char" translatable="yes">*</property>
 		      <property name="activates_default">True</property>
-		      <property name="width_chars">28</property>
+		      <property name="width_chars">23</property>
 		    </widget>
 		  </child>
 		</widget>

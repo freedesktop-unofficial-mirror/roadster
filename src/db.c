@@ -37,7 +37,6 @@
 
 #include "db.h"
 #include "mainwindow.h"
-#include "geometryset.h"
 #include "util.h"
 #include "layers.h"
 #include "locationset.h"
@@ -54,12 +53,23 @@
 #define MYSQL_GET_RESULT(x)		mysql_store_result((x))
 
 db_connection_t* g_pDB = NULL;
+GMutex* g_pDBMutex = NULL;
+
+void db_lock(void)
+{
+	g_mutex_lock(g_pDBMutex);
+}
+
+void db_unlock(void)
+{
+	g_mutex_unlock(g_pDBMutex);
+}
 
 gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 {
 	g_assert(pszSQL != NULL);
 	if(g_pDB == NULL) return FALSE;
-	
+
 	if(mysql_query(g_pDB->m_pMySQLConnection, pszSQL) != MYSQL_RESULT_SUCCESS) {
 		g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
 		return FALSE;
@@ -67,7 +77,7 @@ gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 
 	// get result?
 	if(ppResultSet != NULL) {
-		*ppResultSet = (db_resultset_t*)MYSQL_GET_RESULT(g_pDB->m_pMySQLConnection);	
+		*ppResultSet = (db_resultset_t*)MYSQL_GET_RESULT(g_pDB->m_pMySQLConnection);
 	}
 	return TRUE;
 }
@@ -76,7 +86,7 @@ static gboolean db_insert(const gchar* pszSQL, gint* pnReturnRowsInserted)
 {
 	g_assert(pszSQL != NULL);
 	if(g_pDB == NULL) return FALSE;
-	
+
 	if(mysql_query(g_pDB->m_pMySQLConnection, pszSQL) != MYSQL_RESULT_SUCCESS) {
 		g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
 		return FALSE;
@@ -182,6 +192,8 @@ gboolean db_is_empty()
 // call once on program start-up
 void db_init()
 {
+	g_pDBMutex = g_mutex_new();
+
 #ifdef HAVE_MYSQL_EMBED
 	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
 	gchar* pszSetDataDirCommand = g_strdup_printf("--datadir=%s", pszDataDir);
@@ -572,7 +584,7 @@ void db_create_tables()
 		" Name VARCHAR(30) NOT NULL,"
 		" SuffixID INT1 UNSIGNED NOT NULL,"
 		" PRIMARY KEY (ID),"
-		" UNIQUE KEY (Name(30), SuffixID));", NULL);
+		" UNIQUE KEY (Name(15), SuffixID));", NULL);
 
 	// Road_RoadName
 	db_query("CREATE TABLE IF NOT EXISTS Road_RoadName("

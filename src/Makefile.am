@@ -23,7 +23,6 @@ roadster_SOURCES = \
 	mainwindow.c\
 	gotowindow.c\
 	map.c\
-	geometryset.c\
 	layers.c\
 	import.c\
 	import_tiger.c\
@@ -42,7 +41,8 @@ roadster_SOURCES = \
 	point.c\
 	pointstring.c\
 	track.c\
-	glyph.c
+	glyph.c\
+	road.c
 
 roadster_LDADD = \
 	$(GNOME_LIBS) \

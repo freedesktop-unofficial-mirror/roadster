@@ -31,6 +31,7 @@
 #include "util.h"
 #include "import_tiger.h"
 #include "importwindow.h"
+#include "road.h"
 
 #define TIGER_RT1_LINE_LENGTH 				(230)
 #define TIGER_RT2_LINE_LENGTH				(210)
@@ -494,7 +495,7 @@ static gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTa
 		gchar achType[5];
 		import_tiger_read_string(&pLine[50-1], 4, &achType[0]);
 //		g_print("%30s is type %s\n", pRecord->m_achName, achType);	
-		map_road_suffix_atoi(achType, &pRecord->m_nRoadNameSuffixID);
+		road_suffix_atoi(achType, &pRecord->m_nRoadNameSuffixID);
 
 if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 	g_print("type '%s' couldn't be looked up\n", achType);

@@ -21,8 +21,22 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-void scenemanager_init(void);
-gboolean scenemanager_can_draw_label(const gchar* pszLabel);
-void scenemanager_label_drawn(const gchar* pszLabel);
-void scenemanager_clear(void);
+#ifndef _SCENEMANAGER_H_
+#define _SCENEMANAGER_H_
 
+//#include <gnome.h>
+
+typedef struct scenemanager {
+	GPtrArray* m_p;
+	GHashTable* m_pLabelHash;
+} scenemanager_t;
+
+void scenemanager_init(void);
+void scenemanager_new(scenemanager_t** ppReturn);
+
+gboolean scenemanager_can_draw_label(scenemanager_t* pSceneManager, const gchar* pszLabel);
+void scenemanager_label_drawn(scenemanager_t* pSceneManager, const gchar* pszLabel);
+void scenemanager_clear(scenemanager_t* pSceneManager);
+
+
+#endif

@@ -21,11 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _LAYERS_H
-#define _LAYERS_H
+#ifndef _LAYERS_H_
+#define _LAYERS_H_
 
 #include <gtk/gtk.h>
-#include "geometryset.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -34,22 +33,24 @@ extern "C"
 
 #define LAYER_NONE				(0)
 
-#define LAYER_MINORSTREET		(1)
-#define LAYER_MAJORSTREET		(2)
-#define LAYER_MINORHIGHWAY		(3)
-#define LAYER_MINORHIGHWAY_RAMP	(4)
-#define LAYER_MAJORHIGHWAY		(5)	// used?
-#define LAYER_MAJORHIGHWAY_RAMP	(6)	// used?
-#define LAYER_RAILROAD			(7)
+#define LAYER_MINORSTREET			(1)
+#define LAYER_MAJORSTREET			(2)
+#define LAYER_MINORHIGHWAY			(3)
+#define LAYER_MINORHIGHWAY_RAMP			(4)
+#define LAYER_MAJORHIGHWAY			(5)	// used?
+#define LAYER_MAJORHIGHWAY_RAMP			(6)	// used?
+#define LAYER_RAILROAD				(7)
 #define LAYER_PARK				(8)
 #define LAYER_RIVER				(9)
 #define LAYER_LAKE				(10)
-#define LAYER_MISC_AREA			(11)
+#define LAYER_MISC_AREA				(11)
 
 #define NUM_LAYERS 				(11)
-	
+
 #define LAYER_FIRST				(1)
 #define LAYER_LAST				(11)
+
+#include "map.h"
 
 typedef struct color {
 	gfloat m_fRed;
@@ -74,21 +75,12 @@ typedef struct sublayerstyle {
 	gint m_nCapStyle;
 } sublayerstyle_t;
 
-	//~ gint m_nMinZoomLevel;
-	//~ gdouble m_fTopLineWidthPercent;
-	//~ gdouble m_afLineWidths[10];
-	//~ color_t m_clrLowDetail;
-	//~ color_t m_clrFill;
-	//~ color_t m_clrOutline;
-	//~ gint m_nDashStyle;	// index into dashes table
-
 typedef struct textlabelstyle {
 	gdouble m_afFontSizeAtZoomLevel[MAX_ZOOM_LEVEL];
 	gint m_abBoldAtZoomLevel[MAX_ZOOM_LEVEL];	// 0s or 1s
 	gint m_afHaloAtZoomLevel[MAX_ZOOM_LEVEL];	// stroke width
 	color_t m_clrColor;
 	// font family...
-	// font style...
 } textlabelstyle_t;
 
 // defines the look of a layer
@@ -100,17 +92,13 @@ typedef struct layer {
 	gint nLayerIndex;
 	gchar* m_pszName;
 	layerstyle_t m_Style;
-	textlabelstyle_t m_TextLabelStyle;	
-	geometryset_t* m_pGeometrySet;
+	textlabelstyle_t m_TextLabelStyle;
 } layer_t;
 
 extern layer_t g_aLayers[NUM_LAYERS+1];
-
-void layers_init(void);
-void layers_clear(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _LAYERS_H */
+#endif /* _LAYERS_H_ */

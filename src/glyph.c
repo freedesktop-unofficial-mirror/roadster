@@ -42,7 +42,7 @@ struct {
 void glyph_init(void)
 {
 	g_Glyph.m_pGlyphArray = g_ptr_array_new();
-	g_ptr_array_add(g_Glyph.m_pGlyphArray, NULL); // index 0 is taken!
+	g_ptr_array_add(g_Glyph.m_pGlyphArray, NULL); // index 0 is taken! (it's the "no glyph" value)
 }
 
 gint glyph_load(const gchar* pszPath)
@@ -85,17 +85,17 @@ static gboolean glyph_lookup(gint nGlyphHandle, glyph_t** ppReturnGlyph)
 
 void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY)
 {
+	if(nGlyphHandle == 0) return;
+
 	glyph_t* pGlyph = NULL;
 	if(!glyph_lookup(nGlyphHandle, &pGlyph)) {
-		// use a default glyph?
-		return;
+		g_assert_not_reached();
 	}
 
 	cairo_save(pCairo);
-//	cairo_scale(pCairo, 2, 2);
-	cairo_set_alpha(pCairo, 0.5);
-	cairo_translate(pCairo, (fX - (pGlyph->m_nWidth/2)), (fY - (pGlyph->m_nHeight/2)));
-	svg_cairo_render(pGlyph->m_pCairoSVG, pCairo);
+		cairo_set_alpha(pCairo, 0.5);
+		cairo_translate(pCairo, (fX - (pGlyph->m_nWidth/2)), (fY - (pGlyph->m_nHeight/2)));
+		svg_cairo_render(pGlyph->m_pCairoSVG, pCairo);
 	cairo_restore(pCairo);
 }
 

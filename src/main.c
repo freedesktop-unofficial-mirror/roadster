@@ -28,7 +28,6 @@
 #include <gnome.h>
 #include "gui.h"
 #include "db.h"
-#include "geometryset.h"
 #include "mainwindow.h"
 #include "map.h"
 #include "import.h"
@@ -39,7 +38,7 @@
 #include "pointstring.h"
 #include "track.h"
 
-static int main_init(void);
+static gboolean main_init(void);
 static void main_deinit(void);
 
 int main (int argc, char *argv[])
@@ -52,21 +51,23 @@ int main (int argc, char *argv[])
 	#endif
 	gnome_init(PACKAGE, VERSION, argc, argv);
 
-	ret = main_init();
-
-	if (ret)
-		return ret;
+	if(!main_init()) {
+		return 1;
+	}
 
 	gui_run();
 	main_deinit();	// usually doesn't get here
 	return 0;
 }
 
-int main_init(void)
+gboolean main_init(void)
 {
+	// Initialize GLib thread system
+	// g_thread_init(NULL);
+
 	if(!gnome_vfs_init()) {	
 		g_warning("gnome_vfs_init failed\n");
-		return 1;
+		return FALSE;
 	}
 	gchar* pszApplicationDir = g_strdup_printf("%s/.roadster", g_get_home_dir());
 	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszApplicationDir, 0700)) {
@@ -84,18 +85,19 @@ int main_init(void)
 	track_init();
 	g_print("initializing glyphs\n");
 	glyph_init();
+	g_print("initializing map\n");
+	map_init();
 
 	g_print("initializing scenemanager\n");
 	scenemanager_init();
 	//geometryset_init();
+
 	g_print("initializing locationsets\n");
 	locationset_init();
 	g_print("initializing gpsclient\n");
 	gpsclient_init();
 	g_print("initializing gui\n");
 	gui_init();
-	g_print("initializing layers\n");
-	layers_init();
 	g_print("initializing db\n");
 	db_init();
 
@@ -107,7 +109,7 @@ int main_init(void)
 
 	g_print("initialization complete\n");
 
-	return 0;
+	return TRUE;
 }
 
 static void main_deinit(void)

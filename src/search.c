@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <gtk/gtk.h>
 #include "search.h"
 
@@ -34,20 +34,20 @@ void search_clean_string(gchar* p)
 	gchar* pWriter = p;
 
 	// skip white
-	while(*pReader == ' ') {
+	while(g_ascii_isspace(*pReader)) {
 		pReader++;
 	}
 
 	// remove double spaces
 	while(*pReader != '\0') {
-		if(*pReader == ' ') {
-			if(*(pReader+1) == ' ' || *(pReader+1) == '\0') {
+		if(g_ascii_isspace(*pReader)) {
+			if(g_ascii_isspace(*(pReader+1)) || *(pReader+1) == '\0') {
 				// don't copy this character (space) if the next one is a space also
 				// or if it's the last character
 			}
 			else {
 				// yes, copy this space
-				*pWriter = *pReader;
+				*pWriter = ' ';	// this also turns newlines etc. into spaces
 				pWriter++;
 			}
 		}

@@ -33,271 +33,54 @@
 
 #include "gui.h"
 #include "map.h"
-#include "geometryset.h"
 #include "mainwindow.h"
 #include "util.h"
 #include "db.h"
+#include "road.h"
+#include "point.h"
 #include "layers.h"
 #include "locationset.h"
 #include "scenemanager.h"
-
-struct {
-	mappoint_t 			m_MapCenter;				// XXX
-	dimensions_t 			m_MapDimensions;			// XXX
-	guint16 			m_uZoomLevel;				// XXX
-	gboolean 			m_bRedrawNeeded;
-} g_Map =
-{
-	{0.0,0.0},	// starting position
-	{0,0},		// map dimensions
-	7,			// starting zoomlevel
-	TRUE
-};
 
 // ADD:
 // 'Mal' - ?
 // 'Trce - Trace
 
-struct {
-	gchar* m_pszLong;
-	gchar* m_pszShort;
-} g_RoadNameSuffix[] = {
-	{"",""},
-	{"Road", "Rd"},
-	{"Street", "St"},
-	{"Drive", "Dr"},
-	{"Boulevard", "Bvd"},
-	{"Avenue", "Ave"},
-	{"Circle", "Crl"},
-	{"Square", "Sq"},
-	{"Path", "Pth"},
-	{"Way", "Wy"},
-	{"Plaza", "Plz"},
-	{"Trail", "Trl"},
-	{"Lane", "Ln"},
-	{"Crossing", "Xing"},
-	{"Place", "Pl"},
-	{"Court", "Ct"},
-	{"Turnpike", "Tpke"},
-	{"Terrace", "Ter"},
-	{"Row", "Row"},
-	{"Parkway", "Pky"},
-	
-	{"Bridge", "Brg"},
-	{"Highway", "Hwy"},
-	{"Run", "Run"},
-	{"Pass", "Pass"},
-	
-	{"Freeway", "Fwy"},
-	{"Alley", "Aly"},
-	{"Crescent", "Cres"},
-	{"Tunnel", "Tunl"},
-	{"Walk", "Walk"},
-	{"Terrace", "Trce"},
-	{"Branch", "Br"},
-	{"Cove", "Cv"},
-	{"Bypass", "Byp"},
-	{"Loop", "Loop"},
-	{"Spur", "Spur"},
-	{"Ramp", "Ramp"},
-	{"Pike", "Pike"},
-	{"Grade", "Grd"},
-	{"Route", "Rte"},
-	{"Arc", "Arc"},
-};
-
-struct {
-	gchar* m_pszName;
-	gint m_nID;
-} g_RoadNameSuffixLookup[] = {
-	{"Rd", ROAD_SUFFIX_ROAD},
-	{"Road", ROAD_SUFFIX_ROAD},
-
-	{"St", ROAD_SUFFIX_STREET},
-	{"Street", ROAD_SUFFIX_STREET},
-
-	{"Dr", ROAD_SUFFIX_DRIVE},
-	{"Drive", ROAD_SUFFIX_DRIVE},
-
-	{"Blv", ROAD_SUFFIX_BOULEVARD},
-	{"Blvd", ROAD_SUFFIX_BOULEVARD},
-	{"Boulevard", ROAD_SUFFIX_BOULEVARD},
-
-	{"Av", ROAD_SUFFIX_AVENUE},
-	{"Ave", ROAD_SUFFIX_AVENUE},
-	{"Avenue", ROAD_SUFFIX_AVENUE},
-	
-	{"Cir", ROAD_SUFFIX_CIRCLE},
-	{"Crl", ROAD_SUFFIX_CIRCLE},
-	{"Circle", ROAD_SUFFIX_CIRCLE},
-
-	{"Sq", ROAD_SUFFIX_SQUARE},
-	{"Square", ROAD_SUFFIX_SQUARE},	
-
-	{"Pl", ROAD_SUFFIX_PLACE},
-	{"Place", ROAD_SUFFIX_PLACE},
-	
-	{"Xing", ROAD_SUFFIX_CROSSING},
-	{"Crossing", ROAD_SUFFIX_CROSSING},
-
-	{"Ct", ROAD_SUFFIX_COURT},
-	{"Court", ROAD_SUFFIX_COURT},
-
-	{"Tpke", ROAD_SUFFIX_TURNPIKE},
-	{"Turnpike", ROAD_SUFFIX_TURNPIKE},
-
-	{"Ter", ROAD_SUFFIX_TERRACE},
-	{"Terrace", ROAD_SUFFIX_TERRACE},
-	
-	{"Row", ROAD_SUFFIX_ROW},
-
-	{"Pth", ROAD_SUFFIX_PATH},
-	{"Path", ROAD_SUFFIX_PATH},	
-
-	{"Wy", ROAD_SUFFIX_WAY},
-	{"Way", ROAD_SUFFIX_WAY},	
-
-	{"Plz", ROAD_SUFFIX_PLAZA},
-	{"Plaza", ROAD_SUFFIX_PLAZA},	
-
-	{"Trl", ROAD_SUFFIX_TRAIL},
-	{"Trail", ROAD_SUFFIX_TRAIL},	
-	
-	{"Ln", ROAD_SUFFIX_LANE},
-	{"Lane", ROAD_SUFFIX_LANE},	
-	
-	{"Pky", ROAD_SUFFIX_PARKWAY},
-	{"Parkway", ROAD_SUFFIX_PARKWAY},
-
-	{"Brg", ROAD_SUFFIX_BRIDGE},
-	{"Bridge", ROAD_SUFFIX_BRIDGE},
-
-	{"Hwy", ROAD_SUFFIX_HIGHWAY},
-	{"Highway", ROAD_SUFFIX_HIGHWAY},
-
-	{"Run", ROAD_SUFFIX_RUN},
-
-	{"Pass", ROAD_SUFFIX_PASS},
-
-	{"Freeway", ROAD_SUFFIX_FREEWAY},
-	{"Fwy", ROAD_SUFFIX_FREEWAY},
-	
-	{"Alley", ROAD_SUFFIX_ALLEY},
-	{"Aly", ROAD_SUFFIX_ALLEY},
-	
-	{"Crescent", ROAD_SUFFIX_CRESCENT},
-	{"Cres", ROAD_SUFFIX_CRESCENT},
-	
-	{"Tunnel", ROAD_SUFFIX_TUNNEL},
-	{"Tunl", ROAD_SUFFIX_TUNNEL},
-	
-	{"Walk", ROAD_SUFFIX_WALK},
-	{"Walk", ROAD_SUFFIX_WALK},
-	
-	{"Branch", ROAD_SUFFIX_BRANCE},
-	{"Br", ROAD_SUFFIX_BRANCE},
-	
-	{"Cove", ROAD_SUFFIX_COVE},
-	{"Cv", ROAD_SUFFIX_COVE},
-	
-	{"Bypass", ROAD_SUFFIX_BYPASS},
-	{"Byp", ROAD_SUFFIX_BYPASS},
-	
-	{"Loop", ROAD_SUFFIX_LOOP},
-	
-	{"Spur", ROAD_SUFFIX_SPUR},
-	
-	{"Ramp", ROAD_SUFFIX_RAMP},
-	
-	{"Pike", ROAD_SUFFIX_PIKE},
-	
-	{"Grade", ROAD_SUFFIX_GRADE},
-	{"Grd", ROAD_SUFFIX_GRADE},
-	
-	{"Route", ROAD_SUFFIX_ROUTE},
-	{"Rte", ROAD_SUFFIX_ROUTE},
-	
-	{"Arc", ROAD_SUFFIX_ARC},
-
-};
-
 #define SCALE_X(p, x)  ((((x) - (p)->m_rWorldBoundingBox.m_A.m_fLongitude) / (p)->m_fScreenLongitude) * (p)->m_nWindowWidth)
 #define SCALE_Y(p, y)  ((p)->m_nWindowHeight - ((((y) - (p)->m_rWorldBoundingBox.m_A.m_fLatitude) / (p)->m_fScreenLatitude) * (p)->m_nWindowHeight))
 
-typedef enum {
-	kSublayerBottom,
-	kSublayerTop,
-} ESubLayer;
-
-#define MIN_LINE_LENGTH_FOR_LABEL  	(40)
-#define LABEL_PIXELS_ABOVE_LINE 	(2)
-#define LABEL_PIXEL_RELIEF_INSIDE_LINE	(2)	// when drawing a label inside a line, only do so if we would have at least this much blank space above+below the text
-
-//void map_draw_layer_railroad(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, sublayerstyle_t* pSubLayerStyle);
-
-// For road names: Bitstream Vera Sans Mono ?
-
-#define INCHES_PER_METER (39.37007)
-
-#define MIN_ZOOMLEVEL (1)
-#define MAX_ZOOMLEVEL (10)
-#define NUM_ZOOMLEVELS (10)
-
-#define WORLD_CIRCUMFERENCE_IN_METERS (40076000)
-#define WORLD_METERS_PER_DEGREE (WORLD_CIRCUMFERENCE_IN_METERS / 360.0)
-#define WORLD_METERS_TO_DEGREES(x)	((x) / WORLD_METERS_PER_DEGREE)
-#define WORLD_DEGREES_TO_METERS(x)	((x) * WORLD_METERS_PER_DEGREE)
-#define KILOMETERS_PER_METER 	(1000)
-#define WORLD_KILOMETERS_TO_DEGREES(x)	((x * KILOMETERS_PER_METER) / WORLD_METERS_PER_DEGREE)
-
-#define WORLD_CIRCUMFERENCE_IN_FEET (131482939.8324)
-#define WORLD_FEET_PER_DEGREE 		(WORLD_CIRCUMFERENCE_IN_FEET / 360.0)
-#define WORLD_FEET_TO_DEGREES(X)	((X) / WORLD_FEET_PER_DEGREE)
-#define FEET_PER_MILE				(5280)
-#define WORLD_MILES_TO_DEGREES(x)	((x * FEET_PER_MILE) / WORLD_FEET_PER_DEGREE)
-
-// Earth is slightly egg shaped so there are infinite radius measurements:
-
-// at poles: ?
-// average: 6,371,010
-// at equator: 6,378,136 meters
-
-#define RADIUS_OF_WORLD_IN_METERS 	(6371010)
-
-#define DEG2RAD(x)	((x) * (M_PI / 180.0))
-#define RAD2DEG(x)	((x) * (180.0 / M_PI))
-
-
 /* Prototypes */
 
-static void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-static void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-static void map_draw_layer_line_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-static void map_draw_layer_polygon_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-static void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, const gchar* pszLabel);
-static void map_draw_layer_points(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray);
-static void map_draw_crosshair(cairo_t* pCairo, rendermetrics_t* pRenderMetrics);
+static void map_draw_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_layer_lines(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_layer_line_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, const gchar* pszLabel);
+static void map_draw_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray);
+static void map_draw_crosshair(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics);
+static gboolean map_data_load(map_t* pMap, maprect_t* pRect);
+static void map_data_clear(map_t* pMap);
 
 // Each zoomlevel has a scale and an optional name (name isn't used for anything)
 zoomlevel_t g_sZoomLevels[NUM_ZOOMLEVELS+1] = {
-	{1,"undefined"}, 	// no zoom level 0
+	{1,"undefined"},	// no zoom level 0
 
-	{ 1600000, ""},			// 1
-	{  800000, ""},					// 2
-	{  400000, ""},			// 3
-	{  200000, ""},					// 4
-	{  100000, ""},			// 5
-	{   50000, ""},					// 6
-	{   25000, ""}, 			// 7
-	{   10000, ""},					// 8
-	{    4000, ""},					// 9
-	{    1800, ""},			//10
+	{ 1600000, ""},		// 1
+	{  800000, ""},		// 2
+	{  400000, ""},		// 3
+	{  200000, ""},		// 4
+	{  100000, ""},		// 5
+	{   50000, ""},		// 6
+	{   25000, ""}, 	// 7
+	{   10000, ""},		// 8
+	{    4000, ""},		// 9
+	{    1800, ""},		// 10
 };
 
 struct {
 	gint nLayer;
 	gint nSubLayer;
-	void (*pFunc)(cairo_t*, rendermetrics_t*, geometryset_t*, sublayerstyle_t*, textlabelstyle_t*);
+	void (*pFunc)(map_t*, cairo_t*, rendermetrics_t*, GPtrArray*, sublayerstyle_t*, textlabelstyle_t*);
 } layerdraworder[] = {
 	{LAYER_MISC_AREA, 0, map_draw_layer_polygons},
 
@@ -337,28 +120,151 @@ struct {
 };
 
 // ========================================================
+//  Init
+// ========================================================
+
+// init the module
+void map_init(void)
+{
+}
+
+
+gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
+{
+	g_assert(ppMap != NULL);
+	g_assert(*ppMap == NULL);	// must be a pointer to null pointer
+
+	// create a new map struct
+	map_t* pMap = g_new0(map_t, 1);
+
+	pMap->m_pDataMutex = g_mutex_new();
+	pMap->m_pPixmapMutex = g_mutex_new();
+
+	pMap->m_pTargetWidget = pTargetWidget;
+
+	scenemanager_new(&(pMap->m_pSceneManager));
+	g_assert(pMap->m_pSceneManager);
+
+	pMap->m_uZoomLevel = 7;
+
+	// init containers for geometry data
+	gint i;
+	for(i=0 ; i<NUM_ELEMS(pMap->m_apLayerData) ; i++) {
+		maplayer_data_t* pLayer = g_new0(maplayer_data_t, 1);
+		pLayer->m_pPointStringsArray = g_ptr_array_new();
+		pMap->m_apLayerData[i] = pLayer;
+	}
+
+	// save it
+	*ppMap = pMap;
+	return TRUE;
+}
+
+//         pointstring_t* pTrackPointString = track_get_pointstring(g_MainWindow.m_nCurrentGPSPath);
+//         if(pTrackPointString) {
+//                 map_draw_gps_trail(pCairoInstance, pTrackPointString);
+//         }
+
+gpointer map_draw_thread(gpointer);
+
+void map_draw_thread_begin(map_t* pMap, GtkWidget* pTargetWidget)
+{
+//	g_thread_create(map_draw_thread, pMap, FALSE, NULL);
+	map_draw_thread(pMap);
+}
+
+gpointer map_draw_thread(gpointer pData)
+{
+//g_print("THREAD: begin\n");
+	map_t* pMap = (map_t*)pData;
+	g_assert(pMap != NULL);
+
+	db_lock();
+	g_mutex_lock(pMap->m_pDataMutex);
+
+	// create pixel buffer of appropriate size
+	GdkPixmap* pPixmapTemp = gdk_pixmap_new(pMap->m_pTargetWidget->window, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight, -1);
+	g_assert(pPixmapTemp);
+
+	Display* dpy;
+	Drawable drawable;
+	dpy = gdk_x11_drawable_get_xdisplay(pPixmapTemp);
+	drawable = gdk_x11_drawable_get_xid(pPixmapTemp);
+
+	cairo_t* pCairo = cairo_create ();
+//g_print("THREAD: cairo created\n");
+
+	// draw on the off-screen buffer
+	cairo_set_target_drawable(pCairo, dpy, drawable);
+//g_print("THREAD: drawing...\n");
+	map_draw(pMap, pCairo);
+//g_print("THREAD: destroying cairo...\n");
+	cairo_destroy(pCairo);
+
+	// Copy final image to (pMap->m_pPixmap)
+//g_print("THREAD: copying pixmap\n");
+	g_mutex_lock(pMap->m_pPixmapMutex);
+
+	gdk_draw_pixmap(pMap->m_pPixmap,
+	  pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+	  pPixmapTemp,
+	  0, 0,
+	  0, 0,
+	  pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uWidth);
+
+	gdk_pixmap_unref(pPixmapTemp);
+
+	g_mutex_unlock(pMap->m_pDataMutex);
+	g_mutex_unlock(pMap->m_pPixmapMutex);
+	db_unlock();
+
+//g_print("THREAD: done drawing\n");
+
+	gtk_widget_queue_draw(pMap->m_pTargetWidget);
+}
+
+// ========================================================
+//  Get and release the map image
+// ========================================================
+
+GdkPixmap* map_get_pixmap(map_t* pMap)
+{
+	g_mutex_lock(pMap->m_pPixmapMutex);
+	return pMap->m_pPixmap;
+}
+
+void map_release_pixmap(map_t* pMap)
+{
+	g_mutex_unlock(pMap->m_pPixmapMutex);
+}
+
+
+// ========================================================
 //  Get/Set Functions
 // ========================================================
 
-void map_set_zoomlevel(guint16 uZoomLevel)
+void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel)
 {
+	g_mutex_lock(pMap->m_pDataMutex);
+
 	if(uZoomLevel > MAX_ZOOMLEVEL) uZoomLevel = MAX_ZOOMLEVEL;
 	else if(uZoomLevel < MIN_ZOOMLEVEL) uZoomLevel = MIN_ZOOMLEVEL;
 
-	if(uZoomLevel != g_Map.m_uZoomLevel) {
-		g_Map.m_uZoomLevel = uZoomLevel;
-		map_set_redraw_needed(TRUE);
+	if(uZoomLevel != pMap->m_uZoomLevel) {
+		pMap->m_uZoomLevel = uZoomLevel;
+//		map_set_redraw_needed(TRUE);
 	}
+	g_mutex_unlock(pMap->m_pDataMutex);
 }
 
-guint16 map_get_zoomlevel()
+guint16 map_get_zoomlevel(map_t* pMap)
 {
-	return g_Map.m_uZoomLevel;	// between MIN_ZOOMLEVEL and MAX_ZOOMLEVEL
+	return pMap->m_uZoomLevel;	// between MIN_ZOOMLEVEL and MAX_ZOOMLEVEL
 }
 
-guint32 map_get_zoomlevel_scale()
+guint32 map_get_zoomlevel_scale(map_t* pMap)
 {
-	return g_sZoomLevels[g_Map.m_uZoomLevel].m_uScale;	// returns "5000" for 1:5000 scale
+	return g_sZoomLevels[pMap->m_uZoomLevel].m_uScale;	// returns "5000" for 1:5000 scale
 }
 
 // ========================================================
@@ -372,7 +278,7 @@ gchar* g_aDistanceUnitNames[] = {
 	"Kilometers",
 };
 
-gdouble map_distance_in_units_to_degrees(gdouble fDistance, gint nDistanceUnit)
+gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nDistanceUnit)
 {
 	switch(nDistanceUnit) {
 		case UNIT_FEET:
@@ -390,7 +296,7 @@ gdouble map_distance_in_units_to_degrees(gdouble fDistance, gint nDistanceUnit)
 }
 
 // convert pixels to a span of degrees
-static double map_pixels_to_degrees(gint16 nPixels, guint16 uZoomLevel)
+static double map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel)
 {
 	double fMonitorPixelsPerInch = 85 + 1/3;
 	double fPixelsPerMeter = fMonitorPixelsPerInch * INCHES_PER_METER;
@@ -403,7 +309,7 @@ static double map_pixels_to_degrees(gint16 nPixels, guint16 uZoomLevel)
 	return WORLD_METERS_TO_DEGREES(fMetersOfWorld);
 }
 
-static double map_degrees_to_pixels(gdouble fDegrees, guint16 uZoomLevel)
+static double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel)
 {
 	double fMonitorPixelsPerInch = 85 + 1/3;
 
@@ -413,144 +319,113 @@ static double map_degrees_to_pixels(gdouble fDegrees, guint16 uZoomLevel)
 	return fResultInPixels;
 }
 
-void map_windowpoint_to_mappoint(screenpoint_t* pScreenPoint, mappoint_t* pMapPoint)
+void map_windowpoint_to_mappoint(map_t* pMap, screenpoint_t* pScreenPoint, mappoint_t* pMapPoint)
 {
 	// Calculate the # of pixels away from the center point the click was
-	gint16 nPixelDeltaX = (gint)(pScreenPoint->m_nX) - (g_Map.m_MapDimensions.m_uWidth / 2);
-	gint16 nPixelDeltaY = (gint)(pScreenPoint->m_nY) - (g_Map.m_MapDimensions.m_uHeight / 2);
+	gint16 nPixelDeltaX = (gint)(pScreenPoint->m_nX) - (pMap->m_MapDimensions.m_uWidth / 2);
+	gint16 nPixelDeltaY = (gint)(pScreenPoint->m_nY) - (pMap->m_MapDimensions.m_uHeight / 2);
 
 	// Convert pixels to world coordinates
-	pMapPoint->m_fLongitude = g_Map.m_MapCenter.m_fLongitude + map_pixels_to_degrees(nPixelDeltaX, g_Map.m_uZoomLevel);
+	pMapPoint->m_fLongitude = pMap->m_MapCenter.m_fLongitude + map_pixels_to_degrees(pMap, nPixelDeltaX, pMap->m_uZoomLevel);
 	// reverse the X, clicking above
-	pMapPoint->m_fLatitude = g_Map.m_MapCenter.m_fLatitude - map_pixels_to_degrees(nPixelDeltaY, g_Map.m_uZoomLevel);
+	pMapPoint->m_fLatitude = pMap->m_MapCenter.m_fLatitude - map_pixels_to_degrees(pMap, nPixelDeltaY, pMap->m_uZoomLevel);
 }
 
 // Call this to pan around the map
-void map_center_on_windowpoint(guint16 uX, guint16 uY)
+void map_center_on_windowpoint(map_t* pMap, guint16 uX, guint16 uY)
 {
 	// Calculate the # of pixels away from the center point the click was
-	gint16 nPixelDeltaX = uX - (g_Map.m_MapDimensions.m_uWidth / 2);
-	gint16 nPixelDeltaY = uY - (g_Map.m_MapDimensions.m_uHeight / 2);
+	gint16 nPixelDeltaX = uX - (pMap->m_MapDimensions.m_uWidth / 2);
+	gint16 nPixelDeltaY = uY - (pMap->m_MapDimensions.m_uHeight / 2);
 
 	// Convert pixels to world coordinates
-	double fWorldDeltaX = map_pixels_to_degrees(nPixelDeltaX, g_Map.m_uZoomLevel);
+	double fWorldDeltaX = map_pixels_to_degrees(pMap, nPixelDeltaX, pMap->m_uZoomLevel);
 	// reverse the X, clicking above
-	double fWorldDeltaY = -map_pixels_to_degrees(nPixelDeltaY, g_Map.m_uZoomLevel);
+	double fWorldDeltaY = -map_pixels_to_degrees(pMap, nPixelDeltaY, pMap->m_uZoomLevel);
 
 //	g_message("panning %d,%d pixels (%.10f,%.10f world coords)\n", nPixelDeltaX, nPixelDeltaY, fWorldDeltaX, fWorldDeltaY);
 
 	mappoint_t pt;
-	pt.m_fLatitude = g_Map.m_MapCenter.m_fLatitude + fWorldDeltaY;
-	pt.m_fLongitude = g_Map.m_MapCenter.m_fLongitude + fWorldDeltaX;
-	map_set_centerpoint(&pt);
+	pt.m_fLatitude = pMap->m_MapCenter.m_fLatitude + fWorldDeltaY;
+	pt.m_fLongitude = pMap->m_MapCenter.m_fLongitude + fWorldDeltaX;
+	map_set_centerpoint(pMap, &pt);
 }
 
-void map_set_centerpoint(const mappoint_t* pPoint)
+void map_set_centerpoint(map_t* pMap, const mappoint_t* pPoint)
 {
 	g_assert(pPoint != NULL);
 
-	g_Map.m_MapCenter.m_fLatitude = pPoint->m_fLatitude;
-	g_Map.m_MapCenter.m_fLongitude = pPoint->m_fLongitude;
+	pMap->m_MapCenter.m_fLatitude = pPoint->m_fLatitude;
+	pMap->m_MapCenter.m_fLongitude = pPoint->m_fLongitude;
 
-	map_set_redraw_needed(TRUE);
+//	map_set_redraw_needed(TRUE);
 }
 
-void map_get_centerpoint(mappoint_t* pReturnPoint)
+void map_get_centerpoint(map_t* pMap, mappoint_t* pReturnPoint)
 {
 	g_assert(pReturnPoint != NULL);
 
-	pReturnPoint->m_fLatitude = g_Map.m_MapCenter.m_fLatitude;
-	pReturnPoint->m_fLongitude = g_Map.m_MapCenter.m_fLongitude;
+	pReturnPoint->m_fLatitude = pMap->m_MapCenter.m_fLatitude;
+	pReturnPoint->m_fLongitude = pMap->m_MapCenter.m_fLongitude;
 }
 
 //
-void map_set_dimensions(const dimensions_t* pDimensions)
+void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions)
 {
 	g_assert(pDimensions != NULL);
 
-	g_Map.m_MapDimensions.m_uWidth = pDimensions->m_uWidth;
-	g_Map.m_MapDimensions.m_uHeight = pDimensions->m_uHeight;
-}
+	g_mutex_lock(pMap->m_pDataMutex);
+	g_mutex_lock(pMap->m_pPixmapMutex);
 
-#if ROADSTER_DEAD_CODE
-static double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
-{
-	g_assert_not_reached();	// unused/tested
+	pMap->m_MapDimensions.m_uWidth = pDimensions->m_uWidth;
+	pMap->m_MapDimensions.m_uHeight = pDimensions->m_uHeight;
 
-	// This functions calculates the length of the arc of the "greatcircle" that goes through
-	// the two points A and B and whos center is the center of the sphere, O.
-
-	// When we multiply this angle (in radians) by the radius, we get the length of the arc.
-
-	// NOTE: This algorithm wrongly assumes that Earth is a perfect sphere.
-	//       It is actually slightly egg shaped.  But it's good enough.
-
-	// All trig functions expect arguments in radians.
-	double fLonA_Rad = DEG2RAD(pA->m_fLongitude);
-	double fLonB_Rad = DEG2RAD(pB->m_fLongitude);
-	double fLatA_Rad = DEG2RAD(pA->m_fLatitude);
-	double fLatB_Rad = DEG2RAD(pB->m_fLatitude);
-
-	// Step 1. Calculate AOB (in radians).
-	// An explanation of this equation is at http://mathforum.org/library/drmath/view/51722.html
-	double fAOB_Rad = acos((cos(fLatA_Rad) * cos(fLatB_Rad) * cos(fLonB_Rad - fLonA_Rad)) + (sin(fLatA_Rad) * sin(fLatB_Rad)));
-
-	// Step 2. Multiply the angle by the radius of the sphere to get arc length.
-	return fAOB_Rad * RADIUS_OF_WORLD_IN_METERS;
-}
-#endif /* ROADSTER_DEAD_CODE */
-
-// ========================================================
-//  Redraw
-// ========================================================
-
-void map_set_redraw_needed(gboolean bNeeded)
-{
-	g_Map.m_bRedrawNeeded = bNeeded;
-}
-
-gboolean map_get_redraw_needed()
-{
-	return g_Map.m_bRedrawNeeded;
+	pMap->m_pPixmap = gdk_pixmap_new(
+			pMap->m_pTargetWidget->window,
+			pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight,
+			-1);
+	
+	g_mutex_unlock(pMap->m_pPixmapMutex);
+	g_mutex_unlock(pMap->m_pDataMutex);
 }
 
 // ========================================================
 //  Draw Functions
 // ========================================================
 
-void map_get_render_metrics(rendermetrics_t* pMetrics)
+void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics)
 {
 	g_assert(pMetrics != NULL);
 
 	//
 	// Set up renderMetrics array
 	//
-	pMetrics->m_nZoomLevel = map_get_zoomlevel();
-	pMetrics->m_nWindowWidth = g_Map.m_MapDimensions.m_uWidth;
-	pMetrics->m_nWindowHeight = g_Map.m_MapDimensions.m_uHeight;
+	pMetrics->m_nZoomLevel = map_get_zoomlevel(pMap);
+	pMetrics->m_nWindowWidth = pMap->m_MapDimensions.m_uWidth;
+	pMetrics->m_nWindowHeight = pMap->m_MapDimensions.m_uHeight;
 
 	// Calculate how many world degrees we'll be drawing
-	pMetrics->m_fScreenLatitude = map_pixels_to_degrees(g_Map.m_MapDimensions.m_uHeight, pMetrics->m_nZoomLevel);
-	pMetrics->m_fScreenLongitude = map_pixels_to_degrees(g_Map.m_MapDimensions.m_uWidth, pMetrics->m_nZoomLevel);
+	pMetrics->m_fScreenLatitude = map_pixels_to_degrees(pMap, pMap->m_MapDimensions.m_uHeight, pMetrics->m_nZoomLevel);
+	pMetrics->m_fScreenLongitude = map_pixels_to_degrees(pMap, pMap->m_MapDimensions.m_uWidth, pMetrics->m_nZoomLevel);
 
 	// The world bounding box (expressed in lat/lon) of the data we will be drawing
-	pMetrics->m_rWorldBoundingBox.m_A.m_fLongitude = g_Map.m_MapCenter.m_fLongitude - pMetrics->m_fScreenLongitude/2;
-	pMetrics->m_rWorldBoundingBox.m_A.m_fLatitude = g_Map.m_MapCenter.m_fLatitude - pMetrics->m_fScreenLatitude/2;
-	pMetrics->m_rWorldBoundingBox.m_B.m_fLongitude = g_Map.m_MapCenter.m_fLongitude + pMetrics->m_fScreenLongitude/2;
-	pMetrics->m_rWorldBoundingBox.m_B.m_fLatitude = g_Map.m_MapCenter.m_fLatitude + pMetrics->m_fScreenLatitude/2;	
+	pMetrics->m_rWorldBoundingBox.m_A.m_fLongitude = pMap->m_MapCenter.m_fLongitude - pMetrics->m_fScreenLongitude/2;
+	pMetrics->m_rWorldBoundingBox.m_A.m_fLatitude = pMap->m_MapCenter.m_fLatitude - pMetrics->m_fScreenLatitude/2;
+	pMetrics->m_rWorldBoundingBox.m_B.m_fLongitude = pMap->m_MapCenter.m_fLongitude + pMetrics->m_fScreenLongitude/2;
+	pMetrics->m_rWorldBoundingBox.m_B.m_fLatitude = pMap->m_MapCenter.m_fLatitude + pMetrics->m_fScreenLatitude/2;	
 }
 
-static void map_draw_background(cairo_t *pCairo)
+static void map_draw_background(map_t* pMap, cairo_t *pCairo)
 {
 	cairo_save(pCairo);
 		cairo_set_rgb_color(pCairo, 247/255.0, 235/255.0, 230/255.0);
-		cairo_rectangle(pCairo, 0, 0, g_Map.m_MapDimensions.m_uWidth, g_Map.m_MapDimensions.m_uHeight);
+		cairo_rectangle(pCairo, 0, 0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
 }
 
 // EXPERIMENTAL TEXT RENDERING
-static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, gdouble fLineWidth, const gchar* pszLabel)
+static void map_draw_line_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, gdouble fLineWidth, const gchar* pszLabel)
 {
 	if(pPointString->m_pPointsArray->len < 2) return;
 
@@ -560,7 +435,7 @@ static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, 
 	gfloat fFontSize = pLabelStyle->m_afFontSizeAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 	if(fFontSize == 0) return;
 
-	if(!scenemanager_can_draw_label(pszLabel)) {
+	if(!scenemanager_can_draw_label(pMap->m_pSceneManager, pszLabel)) {
 		//g_print("dup label: %s\n", pszLabel);
 		return;
 	}
@@ -795,10 +670,10 @@ static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, 
 	}
 	cairo_restore(pCairo);
 	
-	scenemanager_label_drawn(pszLabel);
+	scenemanager_label_drawn(pMap->m_pSceneManager, pszLabel);
 }
 
-void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, const gchar* pszLabel)
+void map_draw_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, const gchar* pszLabel)
 {
 	if(pPointString->m_pPointsArray->len < 3) return;
 
@@ -808,14 +683,13 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 	gdouble fAlpha = pLabelStyle->m_clrColor.m_fAlpha;
 	if(fAlpha == 0.0) return;
 
-	if(!scenemanager_can_draw_label(pszLabel)) {
+	if(!scenemanager_can_draw_label(pMap->m_pSceneManager, pszLabel)) {
 		//g_print("dup label: %s\n", pszLabel);
 		return;
 	}
 
 	gdouble fTotalX = 0.0;
 	gdouble fTotalY = 0.0;
-
 
 	gdouble fMaxX = -G_MAXDOUBLE;	// init to the worst possible value so first point will override
 	gdouble fMaxY = -G_MAXDOUBLE;
@@ -858,7 +732,7 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 							CAIRO_FONT_SLANT_NORMAL,
 							pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
 		cairo_scale_font(pCairo, fFontSize);	
-	
+
 		// Get total width of string
 		cairo_text_extents_t extents;
 		cairo_text_extents(pCairo, pszLabel, &extents);
@@ -891,23 +765,23 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 		}
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
-	
-	scenemanager_label_drawn(pszLabel);
+
+        scenemanager_label_drawn(pMap->m_pSceneManager, pszLabel);
 }
 
-void map_draw(cairo_t *pCairo)
+void map_draw(map_t* pMap, cairo_t *pCairo)
 {
 	rendermetrics_t renderMetrics = {0};
-	map_get_render_metrics(&renderMetrics);
+	map_get_render_metrics(pMap, &renderMetrics);
 	rendermetrics_t* pRenderMetrics = &renderMetrics;
 
-	scenemanager_clear();
+	scenemanager_clear(pMap->m_pSceneManager);
 
 	//
 	// Load geometry
 	//
 	TIMER_BEGIN(loadtimer, "--- BEGIN ALL DB LOAD");
-	geometryset_load_geometry(&(pRenderMetrics->m_rWorldBoundingBox));
+	map_data_load(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
 	locationset_load_locations(&(pRenderMetrics->m_rWorldBoundingBox));
 	TIMER_END(loadtimer, "--- END ALL DB LOAD");
 
@@ -918,22 +792,24 @@ void map_draw(cairo_t *pCairo)
 	//
 	TIMER_BEGIN(maptimer, "BEGIN RENDER MAP");
 	cairo_save(pCairo);
-		map_draw_background(pCairo);
+		map_draw_background(pMap, pCairo);
 
 		cairo_set_fill_rule(pCairo, CAIRO_FILL_RULE_WINDING);
 		cairo_scale_font(pCairo, 18.00);
 
 		// Render Layers
-		gint iLayerDraw;
-		for(iLayerDraw=0 ; iLayerDraw<NUM_ELEMS(layerdraworder) ; iLayerDraw++) {
+		gint i;
+		for(i=0 ; i<NUM_ELEMS(layerdraworder) ; i++) {
 			//g_print("drawing %d\n", layerdraworder[iLayerDraw].nLayer);
-			layerdraworder[iLayerDraw].pFunc(
-								pCairo,
-								pRenderMetrics,
-				/* geometry */ 	g_aLayers[layerdraworder[iLayerDraw].nLayer].m_pGeometrySet,
-				/* style */ 	&g_aLayers[layerdraworder[iLayerDraw].nLayer].m_Style.m_aSubLayers[layerdraworder[iLayerDraw].nSubLayer],
-								&g_aLayers[layerdraworder[iLayerDraw].nLayer].m_TextLabelStyle
-								);
+			gint nLayer = layerdraworder[i].nLayer;
+			gint nSubLayer = layerdraworder[i].nSubLayer;
+
+			layerdraworder[i].pFunc(pMap, pCairo,
+						pRenderMetrics,
+				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pPointStringsArray,
+				/* style */ 	&g_aLayers[nLayer].m_Style.m_aSubLayers[nSubLayer],
+						&g_aLayers[nLayer].m_TextLabelStyle
+						);
 		}
 	TIMER_END(maptimer, "END RENDER MAP");
 
@@ -942,23 +818,23 @@ void map_draw(cairo_t *pCairo)
 		gint iLocationSet;
 		for(iLocationSet=0 ; iLocationSet<pLocationSets->len ; iLocationSet++) {
 			locationset_t* pLocationSet = g_ptr_array_index(pLocationSets, iLocationSet);
-			map_draw_layer_points(pCairo, pRenderMetrics, pLocationSet->m_pLocationsArray);
+			map_draw_layer_points(pMap, pCairo, pRenderMetrics, pLocationSet->m_pLocationsArray);
 		}			
 	TIMER_END(loctimer, "END RENDER LOCATIONS");
 
-	map_draw_crosshair(pCairo, pRenderMetrics);
+	map_draw_crosshair(pMap, pCairo, pRenderMetrics);
 	
 	cairo_restore(pCairo);
 
 	// We don't need another redraw until something changes
-	map_set_redraw_needed(FALSE);
+//	map_set_redraw_needed(FALSE);
 }
 
 #define CROSSHAIR_LINE_RELIEF   (6)
 #define CROSSHAIR_LINE_LENGTH   (12)
 #define CROSSHAIR_CIRCLE_RADIUS (12)
 
-static void map_draw_crosshair(cairo_t* pCairo, rendermetrics_t* pRenderMetrics)
+static void map_draw_crosshair(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics)
 {
 	cairo_save(pCairo);
 		cairo_set_line_width(pCairo, 1.0);
@@ -984,9 +860,9 @@ static void map_draw_crosshair(cairo_t* pCairo, rendermetrics_t* pRenderMetrics)
 	cairo_restore(pCairo);
 }
 
-void map_draw_layer_points(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray)
+void map_draw_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray)
 {
-	gfloat fRadius = map_degrees_to_pixels(0.0007, map_get_zoomlevel());
+	gfloat fRadius = map_degrees_to_pixels(pMap, 0.0007, map_get_zoomlevel(pMap));
 	gboolean bAddition = FALSE;
 
 	cairo_save(pCairo);
@@ -1026,7 +902,7 @@ void map_draw_layer_points(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPt
 	cairo_restore(pCairo);
 }
 
-void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
+void map_draw_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
 	mappoint_t* pPoint;
 	pointstring_t* pPointString;
@@ -1046,8 +922,8 @@ void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, g
 //	cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_pfList, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount, 0.0);
 
 	gint iString;
-	for(iString=0 ; iString<pGeometry->m_pPointStringsArray->len ; iString++) {
-		pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, iString);
+	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
+		pPointString = g_ptr_array_index(pPointStringsArray, iString);
 
 		if(pPointString->m_pPointsArray->len >= 3) {
 			pPoint = g_ptr_array_index(pPointString->m_pPointsArray, 0);
@@ -1097,7 +973,7 @@ void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, g
 	cairo_fill(pCairo);
 }
 
-void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
+void map_draw_layer_lines(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
 	mappoint_t* pPoint;
 	pointstring_t* pPointString;
@@ -1115,7 +991,7 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 
 	gdouble fTolerance;
 	if(fLineWidth >= 6.0) {
-		fTolerance = 0.5;
+		fTolerance = 0.6;
 	}
 	else {
 		if(nCapStyle == CAIRO_LINE_CAP_ROUND) {
@@ -1142,8 +1018,8 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 	cairo_set_alpha(pCairo, pSubLayerStyle->m_clrColor.m_fAlpha);
 	cairo_set_line_width(pCairo, fLineWidth);
 
-	for(iString=0 ; iString<pGeometry->m_pPointStringsArray->len ; iString++) {
-		pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, iString);
+	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
+		pPointString = g_ptr_array_index(pPointStringsArray, iString);
 
 		if(pPointString->m_pPointsArray->len >= 2) {
 			pPoint = g_ptr_array_index(pPointString->m_pPointsArray, 0);
@@ -1171,35 +1047,35 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 	cairo_restore(pCairo);
 }
 
-void map_draw_layer_line_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
+void map_draw_layer_line_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
 	gint i;
 	gdouble fLineWidth = pSubLayerStyle->m_afLineWidths[pRenderMetrics->m_nZoomLevel-1];
 
-	for(i=0 ; i<pGeometry->m_pPointStringsArray->len ; i++) {
-		pointstring_t* pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, i);
+	for(i=0 ; i<pPointStringsArray->len ; i++) {
+		pointstring_t* pPointString = g_ptr_array_index(pPointStringsArray, i);
 		if(pPointString->m_pszName[0] != '\0') {
-			map_draw_line_label(pCairo, pLabelStyle, pRenderMetrics, pPointString, fLineWidth, pPointString->m_pszName);
+			map_draw_line_label(pMap, pCairo, pLabelStyle, pRenderMetrics, pPointString, fLineWidth, pPointString->m_pszName);
 		}
 	}
 }
 
-void map_draw_layer_polygon_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
+void map_draw_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pPointStringsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
 	gint i;
-	for(i=0 ; i<pGeometry->m_pPointStringsArray->len ; i++) {
-		pointstring_t* pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, i);
+	for(i=0 ; i<pPointStringsArray->len ; i++) {
+		pointstring_t* pPointString = g_ptr_array_index(pPointStringsArray, i);
 		
 		if(pPointString->m_pszName[0] != '\0') {
-			map_draw_polygon_label(pCairo, pLabelStyle, pRenderMetrics, pPointString, pPointString->m_pszName);
+			map_draw_polygon_label(pMap, pCairo, pLabelStyle, pRenderMetrics, pPointString, pPointString->m_pszName);
 		}
 	}
 }
 
-void map_draw_gps_trail(cairo_t* pCairo, pointstring_t* pPointString)
+void map_draw_gps_trail(map_t* pMap, cairo_t* pCairo, pointstring_t* pPointString)
 {
 	rendermetrics_t renderMetrics = {0};
-	map_get_render_metrics(&renderMetrics);
+	map_get_render_metrics(pMap, &renderMetrics);
 	rendermetrics_t* pRenderMetrics = &renderMetrics;
 
 	if(pPointString->m_pPointsArray->len > 2) {
@@ -1225,32 +1101,177 @@ void map_draw_gps_trail(cairo_t* pCairo, pointstring_t* pPointString)
 	}
 }
 
-// ========================================================
-//	Road Direction / Suffix conversions
-// ========================================================
-
-const gchar* map_road_suffix_itoa(gint nSuffixID, ESuffixLength eSuffixLength)
+static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 {
-	if(nSuffixID >= ROAD_SUFFIX_FIRST && nSuffixID <= ROAD_SUFFIX_LAST) {
-		if(eSuffixLength == SUFFIX_LENGTH_SHORT) {
-			return g_RoadNameSuffix[nSuffixID].m_pszShort;
-		}
-		else {
-			return g_RoadNameSuffix[nSuffixID].m_pszLong;			
-		}
-	}
-	if(nSuffixID != ROAD_SUFFIX_NONE) return "???";
-	return "";
-}
+	g_return_val_if_fail(pRect != NULL, FALSE);
 
-gboolean map_road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID)
-{
+	db_resultset_t* pResultSet = NULL;
+	db_row_t aRow;
+
+	gint nZoomLevel = map_get_zoomlevel(pMap);
+
+	map_data_clear(pMap);
+
+	TIMER_BEGIN(mytimer, "BEGIN Geometry LOAD");
+
+	// HACKY: make a list of layer IDs "2,3,5,6"
+	gchar azLayerNumberList[200] = {0};
+	gint nActiveLayerCount = 0;
 	gint i;
-	for(i=0 ; i<NUM_ELEMS(g_RoadNameSuffixLookup) ; i++) {
-		if(g_ascii_strcasecmp(pszSuffix, g_RoadNameSuffixLookup[i].m_pszName) == 0) {
-			*pReturnSuffixID = g_RoadNameSuffixLookup[i].m_nID;
-			return TRUE;
+	for(i=LAYER_FIRST ; i <= LAYER_LAST ;i++) {
+		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
+		   g_aLayers[i].m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
+		{
+			gchar azLayerNumber[10];
+
+			if(nActiveLayerCount > 0) g_snprintf(azLayerNumber, 10, ",%d", i);
+			else g_snprintf(azLayerNumber, 10, "%d", i);
+
+			g_strlcat(azLayerNumberList, azLayerNumber, 200);
+			nActiveLayerCount++;
 		}
 	}
-	return FALSE;
+	if(nActiveLayerCount == 0) {
+		g_print("no visible layers!\n");
+		return TRUE;
+	}
+
+	// generate SQL
+	gchar* pszSQL = g_strdup_printf(
+		"SELECT Road.ID, Road.TypeID, AsText(Road.Coordinates), RoadName.Name, RoadName.SuffixID"
+		" FROM Road "
+		" LEFT JOIN Road_RoadName ON (Road.ID=Road_RoadName.RoadID)"
+		" LEFT JOIN RoadName ON (Road_RoadName.RoadNameID=RoadName.ID)"
+		" WHERE"
+		" TypeID IN (%s) AND"
+		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
+		azLayerNumberList,
+		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
+		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
+		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
+		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
+		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
+		);
+	//g_print("sql: %s\n", pszSQL);
+
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+
+	TIMER_SHOW(mytimer, "after query");
+
+	guint32 uRowCount = 0;
+	if(pResultSet) {
+		TIMER_SHOW(mytimer, "after clear layers");
+		while((aRow = db_fetch_row(pResultSet))) {
+			uRowCount++;
+
+			// aRow[0] is ID
+			// aRow[1] is TypeID
+			// aRow[2] is Coordinates in mysql's text format
+			// aRow[3] is road name
+			// aRow[4] is road name suffix id
+//			g_print("data: %s, %s, %s, %s, %s\n", aRow[0], aRow[1], aRow[2], aRow[3], aRow[4]);
+
+			// Get layer type that this belongs on
+			gint nTypeID = atoi(aRow[1]);
+			if(nTypeID < LAYER_FIRST || nTypeID > LAYER_LAST) {
+				g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
+				continue;
+			}
+
+			// Extract points
+			pointstring_t* pNewPointString = NULL;
+			if(!pointstring_alloc(&pNewPointString)) {
+				g_warning("out of memory loading pointstrings\n");
+				continue;
+			}
+			db_parse_pointstring(aRow[2], pNewPointString, point_alloc);
+
+			// Build name by adding suffix, if one is present
+			gchar azFullName[100] = "";
+
+			// does it have a name?			
+			if(aRow[3] != NULL && aRow[4] != NULL) {
+				gint nSuffixID = atoi(aRow[4]);
+				const gchar* pszSuffix = road_suffix_itoa(nSuffixID, ROAD_SUFFIX_LENGTH_SHORT);
+				g_snprintf(azFullName, 100, "%s%s%s",
+					aRow[3], (pszSuffix[0] != '\0') ? " " : "", pszSuffix);
+			}
+			pNewPointString->m_pszName = g_strdup(azFullName);
+
+			// Add this item to layer's list of pointstrings
+			g_ptr_array_add(
+				pMap->m_apLayerData[nTypeID]->m_pPointStringsArray, pNewPointString);
+		} // end while loop on rows
+		g_print("[%d rows]\n", uRowCount);
+		TIMER_SHOW(mytimer, "after rows retrieved");
+
+		db_free_result(pResultSet);
+		TIMER_SHOW(mytimer, "after free results");
+		TIMER_END(mytimer, "END Geometry LOAD");
+
+		return TRUE;
+	}
+	else {
+		g_print(" no rows\n");
+		return FALSE;
+	}	
 }
+
+static void map_data_clear(map_t* pMap)
+{
+	gint i,j;
+	for(i=0 ; i<NUM_ELEMS(pMap->m_apLayerData) ; i++) {
+		maplayer_data_t* pLayerData = pMap->m_apLayerData[i];
+
+		// Free each pointstring
+		for(j = (pLayerData->m_pPointStringsArray->len - 1) ; j>=0 ; j--) {
+			pointstring_t* pPointString = g_ptr_array_remove_index_fast(pLayerData->m_pPointStringsArray, j);
+			pointstring_free(pPointString);
+		}
+	}
+}
+
+
+#if ROADSTER_DEAD_CODE
+static double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
+{
+	g_assert_not_reached();	// unused/tested
+
+	// This functions calculates the length of the arc of the "greatcircle" that goes through
+	// the two points A and B and whos center is the center of the sphere, O.
+
+	// When we multiply this angle (in radians) by the radius, we get the length of the arc.
+
+	// NOTE: This algorithm wrongly assumes that Earth is a perfect sphere.
+	//       It is actually slightly egg shaped.  But it's good enough.
+
+	// All trig functions expect arguments in radians.
+	double fLonA_Rad = DEG2RAD(pA->m_fLongitude);
+	double fLonB_Rad = DEG2RAD(pB->m_fLongitude);
+	double fLatA_Rad = DEG2RAD(pA->m_fLatitude);
+	double fLatB_Rad = DEG2RAD(pB->m_fLatitude);
+
+	// Step 1. Calculate AOB (in radians).
+	// An explanation of this equation is at http://mathforum.org/library/drmath/view/51722.html
+	double fAOB_Rad = acos((cos(fLatA_Rad) * cos(fLatB_Rad) * cos(fLonB_Rad - fLonA_Rad)) + (sin(fLatA_Rad) * sin(fLatB_Rad)));
+
+	// Step 2. Multiply the angle by the radius of the sphere to get arc length.
+	return fAOB_Rad * RADIUS_OF_WORLD_IN_METERS;
+}
+
+// ========================================================
+//  Redraw
+// ========================================================
+
+void map_set_redraw_needed(gboolean bNeeded)
+{
+	pMap->m_bRedrawNeeded = bNeeded;
+}
+
+gboolean map_get_redraw_needed()
+{
+	return pMap->m_bRedrawNeeded;
+}
+#endif /* ROADSTER_DEAD_CODE */
+

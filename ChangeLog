@@ -1,16 +1,37 @@
+2005-03-01  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* road.c:
+	* road.h: Added with code removed from map module.
+	* geometryset.c:
+	* geometryset.h: Removed.
+	* map.c: Moved static data to road.c. Removed global map object and moved to allocated map object (all map_* functions take a map pointer now). Trying to switch to threaded rendering (currently disabled).
+	* db.c: Added support for locking.
+	* mainwindow.c: Now owns an allocated map object. Switched from single-click to double-click to move around.
+	* gotowindow.c:	Talk to mainwindow only, not map.
+	* layers.c: Don't store loaded map data in the layers settings structure.  (Stored in map object now.)
+	* main.c: Changed main_init() to return boolean.
+	* scenemanager.c: Removed global data, switched to allocated (a scenemanager is owned by a map).
+	* search.c: Can now deal with search strings containing newlines and other whitespace junk.
+	* search_road.c: Perform exact-match for street names of 3 or fewer chars for speed and results quality.
+
 2005-02-28  Nathan Fredrickson  <nathan@silverorange.com>
 	* README: Update dependency list.
 	* configure.ac: Re-add -lmygcc. Clean up.
 
 2005-02-28  Nathan Fredrickson  <nathan@silverorange.com>
 	* main.c: Make main_init() return a value.
-	* mainwindow.c: Add missing prototype. 
+	* mainwindow.c: Add missing prototype.
 	* configure.ac: Add pkgconfig check for libsvg and libsvg-cairo.
 	* src/Makefile.am: Remove the hacky inclusion of libsvg-cairo.
 
 2005-02-27  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
-	* configure.ac: Added libsvg-cairo as dependency. (Not quite correct. Nate will fix it.:)
+	* glyph.c:
+	* glyph.h: Added.
+	
+2005-02-27  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* configure.ac: Added libsvg-cairo as dependency. (Not quite correct? Nate will fix it.:)
 	* Makefile.am: Added glyph.c.
 	* datasetwindow.c: Removed Import button.
 	* db.c: Removed debugging comments.  City with the same name are no longer shared between states.
