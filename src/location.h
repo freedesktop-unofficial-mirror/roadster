@@ -28,12 +28,21 @@
 
 G_BEGIN_DECLS
 
+#define LOCATION_ATTRIBUTE_ID_NAME	(1)		// "name" must be #1 in the DB
+#define LOCATION_ATTRIBUTE_ID_ADDRESS	(2)		// "address" must be #2 in the DB
+#define LOCATION_ATTRIBUTE_ID________	(3)		// "" must be #3 in the DB
+
 // a single location (eg. "Someday Cafe")
 typedef struct location {
 	gint m_nID;
 	gchar* m_pszName;
 	mappoint_t m_Coordinates;
 } location_t;
+
+void location_init();
+gboolean location_alloc(location_t** ppLocation);
+void location_free(location_t* pLocation);
+gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturnID);
 
 G_END_DECLS
 

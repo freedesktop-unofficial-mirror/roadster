@@ -37,5 +37,6 @@ void tooltip_set_markup(tooltip_t* pTooltip, const gchar* pszMarkup);
 void tooltip_set_upper_left_corner(tooltip_t* pTooltip, gint nX, gint nY);
 void tooltip_show(tooltip_t* pTooltip);
 void tooltip_hide(tooltip_t* pTooltip);
+void tooltip_set_bg_color(tooltip_t* pTooltip, GdkColor* pColor);
 
 #endif

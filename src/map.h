@@ -146,21 +146,49 @@ typedef struct {
 } maplayer_data_t;
 
 typedef struct {
-	// Mutex and the data it controls (always lock before reading/writing)
-	//GMutex* m_pDataMutex;
-	 mappoint_t 			m_MapCenter;
-	 dimensions_t 			m_MapDimensions;
-	 guint16 			m_uZoomLevel;
-	 maplayer_data_t* m_apLayerData[ NUM_LAYERS + 1 ];
-	 GtkWidget*			m_pTargetWidget;
-	 scenemanager_t*		m_pSceneManager;
+	GPtrArray* m_pLocationsArray;
+} maplayer_locations_t;
 
-	 GArray*			m_pTracksArray;
+typedef struct
+{
+	mappoint_t 		m_MapCenter;
+	dimensions_t 		m_MapDimensions;
+	guint16 		m_uZoomLevel;
+	GtkWidget		*m_pTargetWidget;
+	scenemanager_t		*m_pSceneManager;
+
+	// data
+	GArray			*m_pTracksArray;
+	maplayer_data_t		*m_apLayerData[ NUM_LAYERS + 1 ];
+
+	// Locationsets
+	GHashTable		*m_pLocationArrayHashTable;
 
 	// Mutex and the data it controls (always lock before reading/writing)
 	//GMutex* m_pPixmapMutex;
-	 GdkPixmap* m_pPixmap;
+	GdkPixmap* m_pPixmap;
 } map_t;
+
+typedef enum {
+	MAP_HITTYPE_LOCATION=1,
+	MAP_HITTYPE_ROAD=2,
+} EMapHitType;
+
+typedef struct {
+	EMapHitType m_eHitType;
+	gchar* m_pszText;
+	union {
+		struct {
+			gint m_nLocationID;
+			mappoint_t m_Coordinates;
+		} m_LocationHit;
+
+		struct {
+			gint m_nRoadID;
+			mappoint_t m_ClosestPoint;
+		} m_RoadHit;
+	};
+} maphit_t;
 
 typedef enum {
 	SUBLAYER_RENDERTYPE_LINES,
@@ -228,7 +256,8 @@ gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2);
 
 void map_add_track(map_t* pMap, gint hTrack);
 
-gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, gchar** ppReturnString);
+gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStruct);
+void map_free_hitstruct(map_t* pMap, maphit_t* pHitStruct);
 
 gboolean map_can_zoom_in(map_t* pMap);
 gboolean map_can_zoom_out(map_t* pMap);

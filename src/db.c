@@ -487,6 +487,20 @@ gboolean db_insert_state(const gchar* pszName, const gchar* pszCode, gint nCount
 #define WKB_POINT                  1	// only two we care about
 #define WKB_LINESTRING             2
 
+void db_parse_wkb_point(const gint8* data, mappoint_t* pPoint)
+{
+	g_assert(sizeof(double) == 8);	// mysql gives us 8 bytes per point
+
+	gint nByteOrder = *data++;	// first byte tells us the byte order
+	g_assert(nByteOrder == 1);
+
+	gint nGeometryType = *((gint32*)data)++;
+	g_assert(nGeometryType == WKB_POINT);
+
+	pPoint->m_fLatitude = *((double*)data)++;
+	pPoint->m_fLongitude = *((double*)data)++;
+}
+
 void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolean (*callback_alloc_point)(mappoint_t**))
 {
 	g_assert(sizeof(double) == 8);	// mysql gives us 8 bytes per point
@@ -604,7 +618,7 @@ void db_create_tables()
 		// the actual value, a text blob
 		" Value TEXT NOT NULL,"
 		" PRIMARY KEY (ID),"			// for fast updates/deletes (needed only if POIs can have multiple values per name, otherwise LocationID_AttributeID is unique)
-		" INDEX (LocationID),"			// for searching values for a given POI
+		" INDEX (LocationID, AttributeNameID)," // for searching values for a given POI
 		" FULLTEXT(Value));", NULL);		// for sexy fulltext searching of values!
 
 	// Location Set

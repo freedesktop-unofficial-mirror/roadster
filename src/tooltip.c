@@ -39,7 +39,7 @@ tooltip_t* tooltip_new()
 	
 	// create tooltip window
 	pNew->m_pWindow = GTK_WINDOW(gtk_window_new(GTK_WINDOW_POPUP));
-	gtk_widget_set_name(GTK_WIDGET(pNew->m_pWindow), "gtk-tooltips");
+	//gtk_widget_set_name(GTK_WIDGET(pNew->m_pWindow), "gtk-tooltips");
 	gtk_widget_add_events(GTK_WIDGET(pNew->m_pWindow), GDK_POINTER_MOTION_MASK | GDK_EXPOSURE_MASK);
 	g_signal_connect(G_OBJECT(pNew->m_pWindow), "motion_notify_event", G_CALLBACK(tooltip_on_mouse_motion), NULL);
 	gtk_window_set_resizable(pNew->m_pWindow, FALSE);	// FALSE means window will resize to hug the label.
@@ -48,6 +48,7 @@ tooltip_t* tooltip_new()
 	GtkFrame* pFrame = GTK_FRAME(gtk_frame_new(NULL));
 	gtk_frame_set_shadow_type(pFrame, GTK_SHADOW_IN);
 	gtk_container_add(GTK_CONTAINER(pNew->m_pWindow), GTK_WIDGET(pFrame));
+
 
 	// create label and add to frame
 	pNew->m_pLabel = GTK_LABEL(gtk_label_new("testing"));
@@ -61,6 +62,11 @@ tooltip_t* tooltip_new()
 void tooltip_set_markup(tooltip_t* pTooltip, const gchar* pszMarkup)
 {
 	gtk_label_set_markup(pTooltip->m_pLabel, pszMarkup);
+}
+
+void tooltip_set_bg_color(tooltip_t* pTooltip, GdkColor* pColor)
+{
+	gtk_widget_modify_bg(GTK_WIDGET(pTooltip->m_pWindow), GTK_STATE_NORMAL, pColor);
 }
 
 void tooltip_set_upper_left_corner(tooltip_t* pTooltip, gint nX, gint nY)

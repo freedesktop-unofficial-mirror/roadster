@@ -363,7 +363,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 	g_free(pszStateClause);
 
 //	g_strlcpy(azQuery, , MAX_QUERY);
-	g_print("SQL: %s\n", azQuery);
+	//g_print("SQL: %s\n", azQuery);
 
 	db_resultset_t* pResultSet;
 	if(db_query(azQuery, &pResultSet)) {

@@ -35,6 +35,8 @@
 #include "prefs.h"
 #include "animator.h"
 #include "road.h"
+#include "locationset.h"
+#include "location.h"
 
 static gboolean main_init(void);
 static void main_deinit(void);
@@ -53,9 +55,22 @@ int main (int argc, char *argv[])
 	if(!main_init())
 		return 1;
 
+/*         gint nNewLocationSetID = 0;                                                                                                                             */
+/*         locationset_insert("Coffee Shops", &nNewLocationSetID);                                                                                                 */
+/*         mappoint_t pt;                                                                                                                                          */
+/*         pt.m_fLatitude = 41.54944;                                                                                                                              */
+/*         pt.m_fLongitude = -70.61409;                                                                                                                            */
+/*                                                                                                                                                                 */
+/*         gint nNewLocationID = 0;                                                                                                                                */
+/*         location_insert(nNewLocationSetID, &pt, &nNewLocationID);                                                                                               */
+/*                                                                                                                                                                 */
+/*         gchar* pszSQL = g_strdup_printf("INSERT INTO LocationAttributeValue SET LocationID=%d, AttributeNameID=1, Value='1369 Coffee House';", nNewLocationID); */
+/*         db_query(pszSQL, NULL);                                                                                                                                 */
+/*         g_free(pszSQL);                                                                                                                                         */
+
 	prefs_read();
 
-	g_print("Running in %s mode\n", g_thread_supported() ? "multi-threaded" : "single-threaded");
+	g_print("Running %s\n", g_thread_supported() ? "multi-threaded" : "single-threaded");
 	gui_run();
 	main_deinit();
 
@@ -97,26 +112,32 @@ gboolean main_init(void)
 	g_print("initializing scenemanager\n");
 	scenemanager_init();
 
-	g_print("initializing locationsets\n");
-	locationset_init();
-
 	g_print("initializing gpsclient\n");
 	gpsclient_init();
 
-	g_print("initializing gui\n");
-	gui_init();
+	g_print("initializing db\n");
+	db_init();
+
+	g_print("initializing locationsets\n");
+	locationset_init();
+
+	g_print("initializing locations\n");
+	location_init();
 
 	g_print("initializing animator\n");
 	animator_init();
 	
-	g_print("initializing db\n");
-	db_init();
-
 	g_print("connecting to db\n");
 	gboolean bConnected = db_connect(NULL, NULL, NULL, "");
 
 	g_print("creating database tables\n");
 	db_create_tables();
+
+	// Load sets from DB
+	locationset_load_locationsets();
+
+	g_print("initializing gui\n");
+	gui_init();
 
 	g_print("initialization complete\n");
 

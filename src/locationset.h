@@ -27,27 +27,27 @@
 G_BEGIN_DECLS
 
 #include "map.h"
-	
+
 typedef struct locationsetstyle {
 	// icon?
-	int a;
+	// color?
+	int __unused;
 } locationsetstyle_t;
 
 // a set of locations (eg. "Coffee Shops")
 typedef struct locationset {
 	gint m_nID;
 	gchar* m_pszName;
-
 	locationsetstyle_t m_Style;
-
-	GPtrArray* m_pLocationsArray;
 } locationset_t;
 
 void locationset_init(void);
+
 void locationset_load_locationsets(void);
-gboolean locationset_load_locations(maprect_t* pRect);
-gboolean locationset_add_location(gint nLocationSetID, mappoint_t* pPoint, gint* pReturnID);
-const GPtrArray* locationset_get_set_array(void);
+const GPtrArray* locationset_get_array(void);
+gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationSet);
+
+gboolean locationset_insert(const gchar* pszName, gint* pnReturnID);
 
 G_END_DECLS
 

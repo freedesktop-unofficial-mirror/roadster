@@ -39,12 +39,15 @@
 #include "layers.h"
 #include "track.h"
 #include "locationset.h"
+#include "location.h"
 #include "scenemanager.h"
 
 static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap);
 static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
 static void map_draw_gdk_layer_roads(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
 static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
+static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
+static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
 
 void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
 {
@@ -85,6 +88,7 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 		}
 
 		map_draw_gdk_tracks(pMap, pPixmap, pRenderMetrics);
+		map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
 	}
 
 	// 3. Labels
@@ -316,3 +320,71 @@ static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t
    		}
 	}
 }
+
+static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics)
+{
+	const GPtrArray* pLocationSetsArray = locationset_get_array();
+	gint i;
+	for(i=0 ; i<pLocationSetsArray->len ; i++) {
+		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetsArray, i);
+
+
+		// 2. Get array of Locations from the hash table using LocationSetID
+		GPtrArray* pLocationsArray;
+		pLocationsArray = g_hash_table_lookup(pMap->m_pLocationArrayHashTable, &(pLocationSet->m_nID));
+		if(pLocationsArray != NULL) {
+			// found existing array
+			map_draw_gdk_locationset(pMap, pPixmap, pRenderMetrics, pLocationSet, pLocationsArray);
+		}
+		else {
+			// none to draw
+		}
+	}
+}
+
+static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray)
+{
+	gint i;
+	for(i=0 ; i<pLocationsArray->len ; i++) {
+		location_t* pLocation = g_ptr_array_index(pLocationsArray, i);
+
+		// bounding box test
+		if(pLocation->m_Coordinates.m_fLatitude < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLatitude
+		   || pLocation->m_Coordinates.m_fLongitude < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLongitude
+		   || pLocation->m_Coordinates.m_fLatitude > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLatitude
+		   || pLocation->m_Coordinates.m_fLongitude > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLongitude)
+		{
+		    continue;   // not visible
+		}
+
+		gint nX = (gint)SCALE_X(pRenderMetrics, pLocation->m_Coordinates.m_fLongitude);
+		gint nY = (gint)SCALE_Y(pRenderMetrics, pLocation->m_Coordinates.m_fLatitude);
+
+//		g_print("drawing at %d,%d\n", nX,nY);
+		
+		GdkGC* pGC = pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)];
+
+		GdkColor clr1;
+		clr1.red = 20/255.0 * 65535;
+		clr1.green = 135/255.0 * 65535;
+		clr1.blue = 20/255.0 * 65535;
+		GdkColor clr2;
+		clr2.red = 255/255.0 * 65535;
+		clr2.green = 255/255.0 * 65535;
+		clr2.blue = 255/255.0 * 65535;
+
+		gdk_gc_set_rgb_fg_color(pGC, &clr1);
+		gdk_draw_rectangle(pPixmap, pGC, TRUE, 
+					nX-3,nY-3,
+					7, 7);
+		gdk_gc_set_rgb_fg_color(pGC, &clr2);
+		gdk_draw_rectangle(pPixmap, pGC, TRUE, 
+					nX-2,nY-2,
+					5, 5);
+		gdk_gc_set_rgb_fg_color(pGC, &clr1);
+		gdk_draw_rectangle(pPixmap, pGC, TRUE, 
+					nX-1,nY-1,
+					3, 3);
+	}
+}
+

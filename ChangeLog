@@ -1,13 +1,23 @@
+2005-03-29  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/db.c: Add parsing for WKB points.  Change an index on the LocationAttributeValue table.
+	* src/location.c: Add support for inserting POIs.
+	* src/locationset.c: Add support for loading a list of POI sets.  Cleanup.
+	* src/main.c: Re-ordered init to allow loading of POI set list on GUI init.
+	* src/mainwindow.c: Added POI set list in sidebar.  Added support for POI tooltips.  Cleanup.
+	* src/map.c: Added support for POI loading/freeing and hit-testing.
+	* src/map_draw_gdk.c: Added support for POI rendering.
+	* src/tooltip.c: Added support for changing tooltip background color.
+
 2005-03-28  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/main.h: Added this file for global flags.
 	* src/*: Added #include for main.h.  Change from using pointstring_t to road_t for map geometry objects.
 	* src/map.c: Add map_side_test_line() to test which side of a line a point is.
 	* src/mainwindow.c: Tooltip now reports the address range of that part of the street.
-	
 	* data/roadster.glade: Removed GPS tab temporarily.
 	* data/layers.xml: Minor style changes.
-	
+
 2005-03-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/mainwindow.c: Made zoom and history buttons (and menuitems) go insentitive when clicking them would do nothing.  Changed single-click on border to always scroll half of window width/height/diagonal.

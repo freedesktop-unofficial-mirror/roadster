@@ -36,6 +36,7 @@
 #include "point.h"
 #include "layers.h"
 #include "locationset.h"
+#include "location.h"
 #include "scenemanager.h"
 
 #ifdef THREADED_RENDERING
@@ -64,14 +65,17 @@
 /* Prototypes */
 
 // data loading
-static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect);	// ensure tiles
-static gboolean map_data_load(map_t* pMap, maprect_t* pRect);
+static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect);
+static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect);
+static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect);
 
 // hit testing
-static gboolean map_hit_test_layer_roads(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, gchar** ppReturnString);
+static gboolean map_hit_test_layer_roads(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fDistance, mappoint_t* pReturnClosestPoint);
-
 static ESide map_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pClosestPointOnLine, mappoint_t* pHitPoint);
+
+static gboolean map_hit_test_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
+static gboolean map_hit_test_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 
 static void map_data_clear(map_t* pMap);
 void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics);
@@ -141,6 +145,27 @@ void map_init(void)
 {
 }
 
+void map_callback_free_locations_array(gpointer* p)
+{
+	GPtrArray* pLocationsArray = (GPtrArray*)p;
+	gint i;
+	for(i=(pLocationsArray->len-1) ; i>=0 ;i--) {
+		location_t* pLocation = g_ptr_array_remove_index_fast(pLocationsArray, i);
+		location_free(pLocation);
+	}
+}
+
+static void map_init_location_hash(map_t* pMap)
+{
+	// destroy it if it exists... it will call map_callback_free_locations_array() on all children and g_free on all keys (see below)
+	if(pMap->m_pLocationArrayHashTable != NULL) {
+		g_hash_table_destroy(pMap->m_pLocationArrayHashTable);
+	}
+	pMap->m_pLocationArrayHashTable = g_hash_table_new_full(g_int_hash, g_int_equal, 
+								g_free, 				/* key destroy function */
+								map_callback_free_locations_array);	/* value destroy function */
+}
+
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 {
 	g_assert(ppMap != NULL);
@@ -153,6 +178,8 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 	pMap->m_pTracksArray = g_array_new(FALSE, /* not zero-terminated */
 					  TRUE,  /* clear to 0 (?) */
 					  sizeof(gint));
+
+	map_init_location_hash(pMap);
 
 	pMap->m_pTargetWidget = pTargetWidget;
 
@@ -174,6 +201,27 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 	return TRUE;
 }
 
+static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID)
+{
+	GPtrArray* pLocationsArray;
+	pLocationsArray = g_hash_table_lookup(pMap->m_pLocationArrayHashTable, &nLocationSetID);
+	if(pLocationsArray != NULL) {
+		// found existing array
+	}
+	else {
+		// need a new array
+		pLocationsArray = g_ptr_array_new();
+		g_assert(pLocationsArray != NULL);
+
+		gint* pKey = g_malloc(sizeof(gint));
+		*pKey = nLocationSetID;
+		g_hash_table_insert(pMap->m_pLocationArrayHashTable, pKey, pLocationsArray);
+	}
+
+	// add location to the array of locations!
+	g_ptr_array_add(pLocationsArray, pLocation);
+}
+
 void map_draw(map_t* pMap, gint nDrawFlags)
 {
 	g_assert(pMap != NULL);
@@ -193,7 +241,6 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	TIMER_BEGIN(loadtimer, "--- BEGIN ALL DB LOAD");
 	map_data_clear(pMap);
 	map_data_load_tiles(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
-//	locationset_load_locations(&(pRenderMetrics->m_rWorldBoundingBox));
 	TIMER_END(loadtimer, "--- END ALL DB LOAD");
 
 	gint nRenderMode = RENDERMODE_FAST;
@@ -472,12 +519,13 @@ static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect)
 			rect.m_B.m_fLatitude = fLatStart + ((gdouble)(nLat+1) * MAP_TILE_WIDTH);
 			rect.m_B.m_fLongitude = fLonStart + ((gdouble)(nLon+1) * MAP_TILE_WIDTH);
 
-			map_data_load(pMap, &rect);
+			map_data_load_geometry(pMap, &rect);
+			map_data_load_locations(pMap, &rect);
 		}
 	}
 }
 
-static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
+static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 {
 	g_return_val_if_fail(pMap != NULL, FALSE);
 	g_return_val_if_fail(pRect != NULL, FALSE);
@@ -582,8 +630,90 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 	}	
 }
 
+#define MIN_ZOOMLEVEL_FOR_LOCATIONS	(6)
+
+static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
+{
+	g_return_val_if_fail(pMap != NULL, FALSE);
+	g_return_val_if_fail(pRect != NULL, FALSE);
+
+	db_resultset_t* pResultSet = NULL;
+	db_row_t aRow;
+
+	gint nZoomLevel = map_get_zoomlevel(pMap);
+
+	if(nZoomLevel <= MIN_ZOOMLEVEL_FOR_LOCATIONS) {
+		return TRUE;
+	}
+
+	TIMER_BEGIN(mytimer, "BEGIN Locations LOAD");
+
+	// generate SQL
+	gchar* pszSQL;
+	pszSQL = g_strdup_printf(
+		"SELECT Location.ID, Location.LocationSetID, AsBinary(Location.Coordinates), LocationAttributeValue_Name.Value"	// LocationAttributeValue_Name.Value is the "Name" field of this Location
+		" FROM Location"
+		" LEFT JOIN LocationAttributeValue AS LocationAttributeValue_Name ON (LocationAttributeValue_Name.LocationID=Location.ID AND LocationAttributeValue_Name.AttributeNameID=%d)"
+		" WHERE"
+		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
+		LOCATION_ATTRIBUTE_ID_NAME,	// attribute ID for 'name'
+		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
+		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
+		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
+		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
+		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
+		);
+	//g_print("sql: %s\n", pszSQL);
+
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+
+	TIMER_SHOW(mytimer, "after query");
+
+	guint32 uRowCount = 0;
+	if(pResultSet) {
+		while((aRow = db_fetch_row(pResultSet))) {
+			uRowCount++;
+
+			// aRow[0] is ID
+			// aRow[1] is LocationSetID
+			// aRow[2] is Coordinates in mysql's binary format
+			// aRow[3] is Name
+
+			// Get layer type that this belongs on
+			gint nLocationSetID = atoi(aRow[1]);
+
+			// Extract
+			location_t* pNewLocation = NULL;
+			location_alloc(&pNewLocation);
+			
+			pNewLocation->m_nID = atoi(aRow[0]);
+
+			// Parse coordinates
+			db_parse_wkb_point(aRow[2], &(pNewLocation->m_Coordinates));
+
+			// make a copy of the name field, or "" (never leave it == NULL)
+			pNewLocation->m_pszName = g_strdup(aRow[3] != NULL ? aRow[3] : "");
+			map_store_location(pMap, pNewLocation, nLocationSetID);
+		} // end while loop on rows
+		//g_print("[%d rows]\n", uRowCount);
+		TIMER_SHOW(mytimer, "after rows retrieved");
+
+		db_free_result(pResultSet);
+		TIMER_SHOW(mytimer, "after free results");
+		TIMER_END(mytimer, "END Locations LOAD");
+
+		return TRUE;
+	}
+	else {
+//		g_print(" no rows\n");
+		return FALSE;
+	}	
+}
+
 static void map_data_clear(map_t* pMap)
 {
+	// Clear layers
 	gint i,j;
 	for(i=0 ; i<NUM_ELEMS(pMap->m_apLayerData) ; i++) {
 		maplayer_data_t* pLayerData = pMap->m_apLayerData[i];
@@ -595,6 +725,9 @@ static void map_data_clear(map_t* pMap)
 		}
 		g_assert(pLayerData->m_pRoadsArray->len == 0);
 	}
+
+	// Clear locations
+	map_init_location_hash(pMap);
 }
 
 double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
@@ -627,9 +760,9 @@ gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2)
 	map_get_render_metrics(pMap, &metrics);
 
 	gdouble fX1 = SCALE_X(&metrics, p1->m_fLongitude);
-	gdouble fY1 = SCALE_Y(&metrics, p1->m_fLongitude);
+	gdouble fY1 = SCALE_Y(&metrics, p1->m_fLatitude);
 	gdouble fX2 = SCALE_X(&metrics, p2->m_fLongitude);
-	gdouble fY2 = SCALE_Y(&metrics, p2->m_fLongitude);
+	gdouble fY2 = SCALE_Y(&metrics, p2->m_fLatitude);
 
 	gdouble fDeltaX = fX2 - fX1;
 	gdouble fDeltaY = fY2 - fY1;
@@ -653,9 +786,24 @@ void map_add_track(map_t* pMap, gint hTrack)
 //  Hit Testing
 // ========================================================
 
-// XXX: perhaps make map_hit_test return a more complex structure indicating what type of hit it is?
-gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, gchar** ppReturnString)
+void map_free_hitstruct(map_t* pMap, maphit_t* pHitStruct)
 {
+	if(pHitStruct == NULL) return;
+
+	g_free(pHitStruct->m_pszText);
+	g_free(pHitStruct);
+}
+
+// XXX: perhaps make map_hit_test return a more complex structure indicating what type of hit it is?
+gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStruct)
+{
+	rendermetrics_t rendermetrics;
+	map_get_render_metrics(pMap, &rendermetrics);
+
+	if(map_hit_test_locationsets(pMap, &rendermetrics, pMapPoint, ppReturnStruct)) {
+		return TRUE;
+	}
+
 	// Test things in the REVERSE order they are drawn (otherwise we'll match things that have been painted-over)
 	gint i;
 	for(i=NUM_ELEMS(layerdraworder)-1 ; i>=0 ; i--) {
@@ -665,25 +813,25 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, gchar** ppReturnString
 		gdouble fLineWidth = max(g_aLayers[nLayer]->m_Style.m_aSubLayers[0].m_afLineWidths[pMap->m_uZoomLevel-1],
 					 g_aLayers[nLayer]->m_Style.m_aSubLayers[1].m_afLineWidths[pMap->m_uZoomLevel-1]);
 
-#define EXTRA_CLICKABLE_ROAD_IN_PIXELS	(8)
+#define EXTRA_CLICKABLE_ROAD_IN_PIXELS	(3)
 
 		// make thin roads a little easier to hit
-		fLineWidth = max(fLineWidth, MIN_ROAD_HIT_TARGET_WIDTH);
+	       // fLineWidth = max(fLineWidth, MIN_ROAD_HIT_TARGET_WIDTH);
 
 		// XXX: hack, map_pixels should really take a floating point instead.
 		gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->m_uZoomLevel) * ((fLineWidth/2) + EXTRA_CLICKABLE_ROAD_IN_PIXELS);  // half width on each side
 
-		if(map_hit_test_layer_roads(pMap->m_apLayerData[nLayer]->m_pRoadsArray, fMaxDistance, pMapPoint, ppReturnString)) {
+		if(map_hit_test_layer_roads(pMap->m_apLayerData[nLayer]->m_pRoadsArray, fMaxDistance, pMapPoint, ppReturnStruct)) {
 			return TRUE;
 		}
 	}
 	return FALSE;
 }
 
-static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, gchar** ppReturnString)
+static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
 {
-	g_assert(ppReturnString != NULL);
-	g_assert(*ppReturnString == NULL);	// pointer to null pointer
+	g_assert(ppReturnStruct != NULL);
+	g_assert(*ppReturnStruct == NULL);	// pointer to null pointer
 
 	/* this is helpful for testing with the g_print()s in map_hit_test_line() */
 /*         mappoint_t p1 = {2,2};                */
@@ -708,9 +856,12 @@ static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDis
 
 			// hit test this line
 			if(map_hit_test_line(pPoint1, pPoint2, pHitPoint, fMaxDistance, &pointClosest)) {
-				// got a hit
+				// fill out a new maphit_t struct with details
+				maphit_t* pHitStruct = g_new0(maphit_t, 1);
+				pHitStruct->m_eHitType = MAP_HITTYPE_ROAD;
+
 				if(pRoad->m_pszName[0] == '\0') {
-					*ppReturnString = g_strdup("<i>unnamed road</i>");
+					pHitStruct->m_pszText = g_strdup("<i>unnamed road</i>");
 				}
 				else {
 					ESide eSide = map_side_test_line(pPoint1, pPoint2, &pointClosest, pHitPoint);
@@ -727,15 +878,16 @@ static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDis
 					}
 
 					if(nAddressStart == 0 || nAddressEnd == 0) {
-						*ppReturnString = g_strdup_printf("%s", pRoad->m_pszName);
+						pHitStruct->m_pszText = g_strdup_printf("%s", pRoad->m_pszName);
 					}
 					else {
 						gint nMinAddres = min(nAddressStart, nAddressEnd);
 						gint nMaxAddres = max(nAddressStart, nAddressEnd);
 
-						*ppReturnString = g_strdup_printf("%s <b>#%d-%d</b>", pRoad->m_pszName, nMinAddres, nMaxAddres);
+						pHitStruct->m_pszText = g_strdup_printf("%s <b>#%d-%d</b>", pRoad->m_pszName, nMinAddres, nMaxAddres);
 					}
 				}
+				*ppReturnStruct = pHitStruct;
 				return TRUE;
 			}
 		}
@@ -856,6 +1008,82 @@ static ESide map_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoi
 		g_assert(bULonPositive != bVLonPositive || u.m_fLongitude == 0.0);
 		return SIDE_RIGHT;
 	}
+}
+
+// hit test all locations
+static gboolean map_hit_test_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
+{
+	gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->m_uZoomLevel) * 3;	// XXX: don't hardcode distance :)
+
+	const GPtrArray* pLocationSetsArray = locationset_get_array();
+	gint i;
+	for(i=0 ; i<pLocationSetsArray->len ; i++) {
+		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetsArray, i);
+
+		// XXX: check that it's visible
+
+		// 2. Get array of Locations from the hash table using LocationSetID
+		GPtrArray* pLocationsArray;
+		pLocationsArray = g_hash_table_lookup(pMap->m_pLocationArrayHashTable, &(pLocationSet->m_nID));
+		if(pLocationsArray != NULL) {
+			if(map_hit_test_locations(pMap, pRenderMetrics, pLocationsArray, pHitPoint, ppReturnStruct)) {
+				return TRUE;
+			}
+		}
+		else {
+			// none loaded
+		}
+	}
+	return FALSE;
+}
+
+// hit-test an array of locations
+static gboolean map_hit_test_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
+{
+	gint i;
+	for(i=0 ; i<pLocationsArray->len ; i++) {
+		location_t* pLocation = g_ptr_array_index(pLocationsArray, i);
+
+		// bounding box test
+		if(pLocation->m_Coordinates.m_fLatitude < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLatitude
+		   || pLocation->m_Coordinates.m_fLongitude < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLongitude
+		   || pLocation->m_Coordinates.m_fLatitude > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLatitude
+		   || pLocation->m_Coordinates.m_fLongitude > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLongitude)
+		{
+		    continue;   // not visible
+		}
+
+		gdouble fX1 = SCALE_X(pRenderMetrics, pLocation->m_Coordinates.m_fLongitude);
+		gdouble fY1 = SCALE_Y(pRenderMetrics, pLocation->m_Coordinates.m_fLatitude);
+		gdouble fX2 = SCALE_X(pRenderMetrics, pHitPoint->m_fLongitude);
+		gdouble fY2 = SCALE_Y(pRenderMetrics, pHitPoint->m_fLatitude);
+
+		gdouble fDeltaX = fX2 - fX1;
+		gdouble fDeltaY = fY2 - fY1;
+
+		fDeltaX = abs(fDeltaX);
+		fDeltaY = abs(fDeltaY);
+
+		if(fDeltaX <= 3 && fDeltaY <= 3) {
+			// fill out a new maphit_t struct with details
+			maphit_t* pHitStruct = g_new0(maphit_t, 1);
+			pHitStruct->m_eHitType = MAP_HITTYPE_LOCATION;
+			pHitStruct->m_LocationHit.m_nLocationID = pLocation->m_nID;
+
+			pHitStruct->m_LocationHit.m_Coordinates.m_fLatitude = pLocation->m_Coordinates.m_fLatitude;
+			pHitStruct->m_LocationHit.m_Coordinates.m_fLongitude = pLocation->m_Coordinates.m_fLongitude;
+
+			if(pLocation->m_pszName[0] == '\0') {
+				pHitStruct->m_pszText = g_strdup_printf("<i>unnamed POI %d</i>", pLocation->m_nID);
+			}
+			else {
+				pHitStruct->m_pszText = g_strdup(pLocation->m_pszName);
+			}
+			*ppReturnStruct = pHitStruct;
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 gboolean map_can_zoom_in(map_t* pMap)

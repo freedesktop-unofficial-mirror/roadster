@@ -38,7 +38,7 @@ void location_init()
 }
 
 // get a new point struct from the allocator
-gboolean location_new(location_t** ppLocation)
+gboolean location_alloc(location_t** ppLocation)
 {
 	g_return_val_if_fail(ppLocation != NULL, FALSE);
 	g_return_val_if_fail(*ppLocation == NULL, FALSE);	// must be a pointer to a NULL pointer
@@ -58,6 +58,28 @@ void location_free(location_t* pLocation)
 	g_return_if_fail(pLocation != NULL);
 	g_return_if_fail(g_Location.m_pLocationChunkAllocator != NULL);
 
+	g_free(pLocation->m_pszName);
+
 	// give back to allocator
 	g_mem_chunk_free(g_Location.m_pLocationChunkAllocator, pLocation);
+}
+
+gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturnID)
+{
+	g_assert(pPoint != NULL);
+	g_assert(nLocationSetID > 0);
+
+	g_assert(pnReturnID != NULL);
+	g_assert(*pnReturnID == 0);	// must be pointer to an int==0
+
+	// create query SQL
+	gchar* pszSQL = g_strdup_printf(
+		"INSERT INTO Location SET ID=NULL, LocationSetID=%d, Coordinates=GeometryFromText('POINT(%f %f)');",
+		nLocationSetID, pPoint->m_fLatitude, pPoint->m_fLongitude);
+
+	db_query(pszSQL, NULL);
+	g_free(pszSQL);
+
+	*pnReturnID = db_get_last_insert_id();
+	return TRUE;
 }
