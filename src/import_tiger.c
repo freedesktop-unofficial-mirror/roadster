@@ -570,9 +570,9 @@ static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTa
 
 		import_tiger_read_string(&pLine[25-1], TIGER_LANDMARK_NAME_LEN, &pRecord->m_achName[0]);
 
-		if(nRecordType == LAYER_MISC_AREA) {
-			g_print("misc area: %s\n", pRecord->m_achName);
-		}
+		//if(nRecordType == LAYER_MISC_AREA) {
+			// g_print("misc area: %s\n", pRecord->m_achName);
+		//}
 // g_print("record 7: TypeID=%d LANDID=%d\n", pRecord->m_nRecordType, pRecord->m_nLANDID);
 //g_print("name: '%s'\n", pRecord->m_achName);
 
@@ -639,7 +639,7 @@ static gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTa
 
 		if(nZeroCellA == nZeroCellB) {
 			// we can't link this with anything..?
-			g_print("nZeroCellA == nZeroCellB\n");
+			//g_print("nZeroCellA == nZeroCellB\n");
 			continue;
 		}
 
@@ -881,13 +881,13 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 
 	// save this polygon
 	if(pTempPointsArray->len > 3) {	// takes 3 to make a polygon
-		g_print("inserting polygon of len %d type %s\n", pTempPointsArray->len, g_aLayers[pRecordRT7->m_nRecordType].m_pszName);
+		// g_print("inserting polygon of len %d type %s\n", pTempPointsArray->len, g_aLayers[pRecordRT7->m_nRecordType].m_pszName);
 
 		mappoint_t* p1 = g_ptr_array_index(pTempPointsArray, 0);
 		mappoint_t* p2 = g_ptr_array_index(pTempPointsArray, pTempPointsArray->len-1);
 
 		if(p1->m_fLatitude != p2->m_fLatitude || p1->m_fLongitude != p2->m_fLongitude) {
-			g_print("doesn't loop\n");
+			g_print("Found a polygon that doesn't loop %s\n", pRecordRT7->m_achName);
 		}
 
 		// insert record
@@ -898,7 +898,7 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 				pTempPointsArray, &nRoadID);
 
 			if(pRecordRT7->m_achName[0] != '\0') {
-				printf("inserting area name %s\n", pRecordRT7->m_achName);
+				//g_printf("inserting area name %s\n", pRecordRT7->m_achName);
 				db_insert_roadname(nRoadID, pRecordRT7->m_achName, 0);
 			}
 		}
@@ -907,10 +907,10 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 
 	// we SHOULD have used all RT1 links up!
 	if(pRecordRTi->m_pRT1LinksArray->len > 0) {
-		g_warning("RT1 Links remain:\n");
+		//g_warning("RT1 Links remain:\n");
 		while(pRecordRTi->m_pRT1LinksArray->len > 0) {
 			tiger_rt1_link_t* pTemp = g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, 0);
-			g_print("  (A-TZID:%d B-TZID:%d)\n", pTemp->m_nPointATZID, pTemp->m_nPointBTZID);
+			//g_print("  (A-TZID:%d B-TZID:%d)\n", pTemp->m_nPointATZID, pTemp->m_nPointBTZID);
 			g_free( pTemp );
 		}
 	}
@@ -924,7 +924,7 @@ static gboolean import_tiger_from_buffers(gint8* pBufferMET, gint nLengthMET, gi
 
 gboolean import_tiger_from_uri(const gchar* pszURI, gint nTigerSetNumber)
 {
-	g_print("pszURI = %s\n", pszURI);
+	//g_print("pszURI = %s\n", pszURI);
 
 	importwindow_progress_pulse();
 
