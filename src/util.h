@@ -26,6 +26,8 @@
 
 #include <gtk/gtk.h>
 
+#define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
+
 #define NUM_ELEMS(a) (sizeof(a) / sizeof(a[0]))
 
 #define SWAP(x, y)                   { (x) ^= (y) ^= (x) ^= (y); }

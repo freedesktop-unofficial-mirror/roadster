@@ -907,8 +907,8 @@ void map_draw_cairo_layer_lines(map_t* pMap, cairo_t* pCairo, rendermetrics_t* p
 	cairo_set_tolerance(pCairo, fTolerance);
 	cairo_set_line_join(pCairo, pSubLayerStyle->m_nJoinStyle);
 	cairo_set_line_cap(pCairo, nCapStyle);	/* CAIRO_LINE_CAP_BUTT, CAIRO_LINE_CAP_ROUND, CAIRO_LINE_CAP_CAP */
-	if(g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount > 1) {
-		cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_pfList, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount, 0.0);
+	if(g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nDashCount > 1) {
+		cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_pafDashList, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nDashCount, 0.0);
 	}
 
 	// Set layer attributes	

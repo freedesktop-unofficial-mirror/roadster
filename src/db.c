@@ -50,7 +50,7 @@
 //						better for embedded or local servers
 // mysql_store_result - more client memory, gets all results right away and frees up server
 //						better for remote servers
-#define MYSQL_GET_RESULT(x)		mysql_store_result((x))
+#define MYSQL_GET_RESULT(x)		mysql_use_result((x))
 
 db_connection_t* g_pDB = NULL;
 
@@ -67,6 +67,8 @@ void db_init()
 #ifdef HAVE_MYSQL_EMBED
 	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
 	gchar* pszSetDataDirCommand = g_strdup_printf("--datadir=%s", pszDataDir);
+	gchar* pszSetQueryCacheSize = g_strdup_printf("--query-cache-size=%dMB", 40);
+	gchar* pszKeyBufferSize	= g_strdup_printf("--key-buffer-size=%dMB", 32);
 
 	// Create directory if it doesn't exist
 	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszDataDir, 0700)) {
@@ -76,12 +78,12 @@ void db_init()
 	gchar* apszServerOptions[] = {
 		"",	// program name -- unused
 		"--skip-innodb",	// don't bother with table types we don't use
-		"--skip-bdb",		//
+		"--skip-bdb",
+                "--query-cache-type=1",		// enable query cache (for map tiles)
+                pszSetQueryCacheSize,	//
 
-                "--query-cache-type=1",
-                "--query-cache-size=40MB",
-
-//		"--flush",			// seems like a good idea since users can quickly kill the app/daemon
+		pszKeyBufferSize,
+		"--ft-min-word-len=2",		// 2 chars should count as a word for fulltext indexes
 		pszSetDataDirCommand
 	};
 
@@ -92,6 +94,8 @@ void db_init()
 	}
 	g_free(pszDataDir);
 	g_free(pszSetDataDirCommand);
+	g_free(pszSetQueryCacheSize);
+	g_free(pszKeyBufferSize);
 #endif
 }
 

@@ -197,7 +197,7 @@ void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions);
 void map_windowpoint_to_mappoint(map_t* pMap, screenpoint_t* pScreenPoint, mappoint_t* pMapPoint);
 gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nDistanceUnit);
 double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB);
-
+double map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel);
 
 // remove this!
 void map_center_on_windowpoint(map_t* pMap, guint16 uX, guint16 uY);

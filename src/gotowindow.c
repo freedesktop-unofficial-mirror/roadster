@@ -83,7 +83,7 @@ static gboolean gotowindow_go(void)
 	if(!util_string_to_double(pszLatitude, &(pt.m_fLatitude))) return FALSE;
 	if(!util_string_to_double(pszLongitude, &(pt.m_fLongitude))) return FALSE;
 
-	mainwindow_set_centerpoint(&pt);
+	mainwindow_map_center_on_mappoint(&pt);
 	mainwindow_draw_map(DRAWFLAG_ALL);
 	mainwindow_statusbar_update_position();
 	return TRUE;

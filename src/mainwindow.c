@@ -58,7 +58,7 @@
 
 #define DRAW_PRETTY_TIMEOUT_MS		(180)	// how long after stopping various movements should we redraw in high-quality mode
 #define SCROLL_TIMEOUT_MS		(100)	// how often (in MS) to move (SHORTER THAN ABOVE TIME)
-#define SCROLL_DISTANCE_IN_PIXELS	(80)	// how far to move every (above) MS
+#define SCROLL_DISTANCE_IN_PIXELS	(60)	// how far to move every (above) MS
 #define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)	// the size of the click target (distance from edge of map view) to begin scrolling
 
 // Layerlist columns
@@ -96,6 +96,9 @@ static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpo
 static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfigure *event);
 static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
 static void mainwindow_setup_selected_tool(void);
+
+
+void mainwindow_map_center_on_windowpoint(gint nX, gint nY);
 
 struct {
 	gint m_nX;
@@ -398,10 +401,7 @@ void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels)
 		gint nDeltaX = nPixels * g_aDirectionMultipliers[eScrollDirection].m_nX;
 		gint nDeltaY = nPixels * g_aDirectionMultipliers[eScrollDirection].m_nY;
 
-		map_center_on_windowpoint(g_MainWindow.m_pMap,
-			(nWidth / 2) + nDeltaX,
-			(nHeight / 2) + nDeltaY);
-
+		mainwindow_map_center_on_windowpoint((nWidth / 2) + nDeltaX, (nHeight / 2) + nDeltaY);
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 		mainwindow_set_draw_pretty_timeout();
 	}
@@ -471,6 +471,7 @@ void mainwindow_statusbar_update_zoomscale(void)
 
 	snprintf(buf, 199, "1:%d", uZoomLevelScale);
 	mainwindow_set_statusbar_zoomscale(buf);
+	GTK_PROCESS_MAINLOOP;
 }
 
 void mainwindow_statusbar_update_position(void)
@@ -480,6 +481,7 @@ void mainwindow_statusbar_update_position(void)
 	map_get_centerpoint(g_MainWindow.m_pMap, &pt);
 	g_snprintf(buf, 200, "Lat: %.5f, Lon: %.5f", pt.m_fLatitude, pt.m_fLongitude);
 	mainwindow_set_statusbar_position(buf);
+	GTK_PROCESS_MAINLOOP;
 }
 
 /*
@@ -771,7 +773,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			}
 		}
 		else if(event->type == GDK_2BUTTON_PRESS) {
-			map_center_on_windowpoint(g_MainWindow.m_pMap, nX, nY);
+			mainwindow_map_center_on_windowpoint(nX, nY);
 			mainwindow_draw_map(DRAWFLAG_ALL);
 		}
 	}
@@ -812,9 +814,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 
 		if(nDeltaX == 0 && nDeltaY == 0) return TRUE;
 
-		map_center_on_windowpoint(g_MainWindow.m_pMap,
-			(nWidth / 2) + nDeltaX,
-			(nHeight / 2) + nDeltaY);
+		mainwindow_map_center_on_windowpoint((nWidth / 2) + nDeltaX, (nHeight / 2) + nDeltaY);
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 		mainwindow_set_draw_pretty_timeout();
 
@@ -858,9 +858,13 @@ static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 	// respond to scroll wheel events by zooming in and out
 	if(event->direction == GDK_SCROLL_UP) {
 		zoom_in_one();
+		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+		mainwindow_set_draw_pretty_timeout();
 	}
 	else if(event->direction == GDK_SCROLL_DOWN) {
 		zoom_out_one();
+		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+		mainwindow_set_draw_pretty_timeout();
 	}
 }
 
@@ -925,7 +929,6 @@ void mainwindow_draw_map(gint nDrawFlags)
 
 	// push it to screen
 	GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.m_pMap);
-	// Copy relevant portion of off-screen bitmap to window
 	gdk_draw_drawable(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window,
 		      GTK_WIDGET(g_MainWindow.m_pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.m_pDrawingArea)],
 		      pMapPixmap,
@@ -1036,14 +1039,41 @@ static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 	return TRUE;
 }
 
-void mainwindow_set_centerpoint(mappoint_t* pPoint)
+void mainwindow_map_center_on_windowpoint(gint nX, gint nY)
 {
+	// Calculate the # of pixels away from the center point the click was
+	gint16 nPixelDeltaX = nX - (GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width / 2);
+	gint16 nPixelDeltaY = nY - (GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height / 2);
+
+	// Convert pixels to world coordinates
+	gint nZoomLevel = map_get_zoomlevel(g_MainWindow.m_pMap);
+	double fWorldDeltaX = map_pixels_to_degrees(g_MainWindow.m_pMap, nPixelDeltaX, nZoomLevel);
+	// reverse the X, clicking above
+	double fWorldDeltaY = -map_pixels_to_degrees(g_MainWindow.m_pMap, nPixelDeltaY, nZoomLevel);
+
+	mappoint_t pt;
+	map_get_centerpoint(g_MainWindow.m_pMap, &pt);
+
+	pt.m_fLatitude += fWorldDeltaY;
+	pt.m_fLongitude += fWorldDeltaX;
+	map_set_centerpoint(g_MainWindow.m_pMap, &pt);
+
+	mainwindow_statusbar_update_position();
+}
+
+void mainwindow_map_center_on_mappoint(mappoint_t* pPoint)
+{
+	g_assert(pPoint != NULL);
+
 	map_set_centerpoint(g_MainWindow.m_pMap, pPoint);
+
 	mainwindow_statusbar_update_position();
 }
 
 void mainwindow_get_centerpoint(mappoint_t* pPoint)
 {
+	g_assert(pPoint != NULL);
+
 	map_get_centerpoint(g_MainWindow.m_pMap, pPoint);
 }
 

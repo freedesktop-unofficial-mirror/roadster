@@ -60,8 +60,9 @@ typedef struct color {
 #define NUM_DASH_STYLES (2)
 
 typedef struct dashstyle {
-	gdouble* m_pfList;
-	gint m_nCount;
+	gdouble* m_pafDashList;	// the dashes, as floating point (for Cairo)
+	gint8* m_panDashList;	// the dashes, as integers (for GDK)
+	gint m_nDashCount;
 } dashstyle_t;
 dashstyle_t g_aDashStyles[NUM_DASH_STYLES];
 

@@ -31,12 +31,13 @@
 
 layer_t * g_aLayers[NUM_LAYERS+1];
 
-gdouble pDash_Solid[] = {10};
-gdouble pDash_1_14[] = {1, 14};
+gdouble pafDash_Solid[] = {10};
+gdouble pafDash_1_14[] = {1, 14};
+gint8 panDash_1_14[] = {1, 14};
 
 dashstyle_t g_aDashStyles[NUM_DASH_STYLES] = {
-	{NULL, 0},
-	{pDash_1_14, 2},
+	{NULL, NULL, 0},
+	{pafDash_1_14, panDash_1_14, 2},
 };
 
 static void layers_load_from_file();

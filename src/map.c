@@ -294,7 +294,7 @@ gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nD
 }
 
 // convert pixels to a span of degrees
-static double map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel)
+double map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel)
 {
 	double fMonitorPixelsPerInch = 85 + 1/3;
 	double fPixelsPerMeter = fMonitorPixelsPerInch * INCHES_PER_METER;

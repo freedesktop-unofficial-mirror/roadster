@@ -151,10 +151,13 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 
 	// Use GDK dash style if ANY dash pattern is set
 	gint nDashStyle = GDK_LINE_SOLID;
-	if(pSubLayerStyle->m_nDashStyle != 0) {
+	if(g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nDashCount > 1) {
 		nDashStyle = GDK_LINE_ON_OFF_DASH;
 
-		// gdk_gc_set_dashes
+		gdk_gc_set_dashes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+				0, /* offset */
+				g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_panDashList,
+				g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nDashCount);
 	}
 
 	// XXX: Don't use round at low zoom levels

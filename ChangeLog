@@ -1,7 +1,17 @@
 2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/db.c: Switch to mysql_use_result().  Add more memory related paramaters to embedded MySQL.
+	* src/mainwindow.c: Rename a few map related functions.  Fix mousewheel zoomin/zoomout.  Keep statusbar lat/lon updated when dragging/scrolling.  Slow down scrolling slightly.
+	* src/searchwindow.c:
+	* src/gotowindow.c: Use new mainwindow function names.
+	* src/importwindow.c: Move GTK_PROCESS_MAINLOOP macro to src/util.h.
+	* src/layers.c: Add dash settings using integer in addition to floating point (for GDK).
+	* src/map_draw_*: Use new dash settings.
+
+2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/map.c: Remove debugging message.
-	
+
 2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/layers.c: Add warning for bad color strings in layers.xml file.

@@ -27,10 +27,7 @@
 #include "import.h"
 #include "mainwindow.h"
 #include "importwindow.h"
-
-//#define G_PROCESS_MAINLOOP  while(g_main_context_iteration(g_main_context_default(), FALSE)) { /* do nothing */ }
-// #define G_PROCESS_MAINLOOP  while(g_main_iteration(FALSE)) { /* do nothing */ }
-#define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
+#include "util.h"
 
 struct {
 	GtkWindow* m_pWindow;
