@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <glade/glade.h>
 #include <gnome.h>
 #include "util.h"
@@ -59,7 +59,7 @@ void gotowindow_init(GladeXML* pGladeXML)
 	// don't delete window on X, just hide it
     g_signal_connect(G_OBJECT(g_GotoWindow.m_pWindow), "delete_event", G_CALLBACK(gtk_widget_hide), NULL);
 
-	g_GotoWindow.m_pLocationListModel = gtk_list_store_new(LOCATIONLIST_NUM_COLUMNS, 
+	g_GotoWindow.m_pLocationListModel = gtk_list_store_new(LOCATIONLIST_NUM_COLUMNS,
 		G_TYPE_STRING,
 		G_TYPE_STRING,
 		G_TYPE_DOUBLE,
@@ -96,7 +96,7 @@ void gotowindow_init(GladeXML* pGladeXML)
 	for(i=0 ; i<NUM_ELEMS(list) ;i++) {
 		gtk_list_store_append(g_GotoWindow.m_pLocationListModel, &iter);
 
-		gtk_list_store_set(g_GotoWindow.m_pLocationListModel, &iter, 
+		gtk_list_store_set(g_GotoWindow.m_pLocationListModel, &iter,
 		LOCATIONLIST_COLUMN_NAME, list[i].name,
 		LOCATIONLIST_COLUMN_LOCATION, g_strdup_printf("(%8.5f, %8.5f)", list[i].lat, list[i].lon),
 		LOCATIONLIST_COLUMN_LATITUDE, list[i].lat,
@@ -146,14 +146,14 @@ static gboolean gotowindow_go(void)
 {
 	const gchar* pszLatitude = gtk_entry_get_text(g_GotoWindow.m_pLatitudeEntry);
 	const gchar* pszLongitude = gtk_entry_get_text(g_GotoWindow.m_pLongitudeEntry);
-	double fLatitude;
-	if(!util_string_to_double(pszLatitude, &fLatitude)) return FALSE;
-	double fLongitude;
-	if(!util_string_to_double(pszLongitude, &fLongitude)) return FALSE;
+
+	mappoint_t pt;
+	if(!util_string_to_double(pszLatitude, &(pt.m_fLatitude))) return FALSE;
+	if(!util_string_to_double(pszLongitude, &(pt.m_fLongitude))) return FALSE;
 
 	// TODO: error checking for 0 (meaning either bad text "3a21" or "000" etc.
 
-	map_center_on_worldpoint(fLatitude, fLongitude);
+	map_set_centerpoint(&pt);
 	mainwindow_draw_map();
 	mainwindow_statusbar_update_position();
 	return TRUE;

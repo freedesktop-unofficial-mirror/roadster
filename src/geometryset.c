@@ -33,6 +33,8 @@
 #include "util.h"
 #include "point.h"
 #include "pointstring.h"
+#include "db.h"
+#include "layers.h"
 
 
 /*******************************************************
@@ -133,7 +135,7 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
 		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
 		);
-//g_print("sql: %s\n", pszSQL);
+	//g_print("sql: %s\n", pszSQL);
 
 	db_query(pszSQL, &pResultSet);
 	g_free(pszSQL);
@@ -176,7 +178,7 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 			// does it have a name?			
 			if(aRow[3] != NULL && aRow[4] != NULL) {
 				gint nSuffixID = atoi(aRow[4]);
-				const gchar* pszSuffix = map_road_suffix_itoa(nSuffixID, SUFFIX_TYPE_SHORT);
+				const gchar* pszSuffix = map_road_suffix_itoa(nSuffixID, SUFFIX_LENGTH_SHORT);
 				g_snprintf(azFullName, 100, "%s%s%s",
 					aRow[3], (pszSuffix[0] != '\0') ? " " : "", pszSuffix);
 			}
@@ -200,31 +202,31 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 	}	
 }
 
-/*******************************************************
-** Manipulate a geometryset_t
-*******************************************************/
-
+#ifdef ROADSTER_DEAD_CODE
 /*******************************************************
 ** Debug functions
 *******************************************************/
-// void geometryset_debug_print(geometryset_t* pGeometrySet)
-// {
-//     if(pGeometrySet->m_pPointStringsArray == NULL) {
-//         g_print("m_pPointStringsArray is NULL\n");
-//     }
-//     else {
-//         g_print("pointstring list (%d items):\n", pGeometrySet->m_pPointStringsArray->len);
-//         int i;
-//         for(i=0 ; i<pGeometrySet->m_pPointStringsArray->len ; i++) {
-//             pointstring_t* pPointString = g_ptr_array_index(pGeometrySet->m_pPointStringsArray, i);
-//
-//             g_print("- string (%d items): ", pPointString->m_pPointsArray->len);
-//             int j;
-//             for(j=0 ; j<pPointString->m_pPointsArray->len ; j++) {
-//                 mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, j);
-//                 g_print("(%.5f,%.5f), ", pPoint->m_fLatitude, pPoint->m_fLongitude);
-//             }
-//             g_print("\n");
-//         }
-//     }
-// }
+/*
+void geometryset_debug_print(geometryset_t* pGeometrySet)
+{
+	if(pGeometrySet->m_pPointStringsArray == NULL) {
+		g_print("m_pPointStringsArray is NULL\n");
+	}
+	else {
+		g_print("pointstring list (%d items):\n", pGeometrySet->m_pPointStringsArray->len);
+		int i;
+		for(i=0 ; i<pGeometrySet->m_pPointStringsArray->len ; i++) {
+			pointstring_t* pPointString = g_ptr_array_index(pGeometrySet->m_pPointStringsArray, i);
+
+			g_print("- string (%d items): ", pPointString->m_pPointsArray->len);
+			int j;
+			for(j=0 ; j<pPointString->m_pPointsArray->len ; j++) {
+				mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, j);
+				g_print("(%.5f,%.5f), ", pPoint->m_fLatitude, pPoint->m_fLongitude);
+			}
+			g_print("\n");
+		}
+	}
+}
+*/
+#endif

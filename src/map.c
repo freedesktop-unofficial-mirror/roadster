@@ -31,7 +31,6 @@
 #define ROAD_FONT	"Bitstream Vera Sans"
 #define AREA_FONT	"Bitstream Vera Sans" // "Bitstream Charter"
 
-
 #include "gui.h"
 #include "map.h"
 #include "geometryset.h"
@@ -42,19 +41,16 @@
 #include "locationset.h"
 #include "scenemanager.h"
 
-// 4,382,755 inches per degree
-// 363 inches of world represented in 3.63 inches
-
 struct {
-	mappoint_t 			m_MapCenter;	// XXX
-	windowdimensions_t 	m_WindowDimensions;					// XXX
-	guint16 			m_uZoomLevel;							// XXX
+	mappoint_t 			m_MapCenter;				// XXX
+	dimensions_t 			m_MapDimensions;			// XXX
+	guint16 			m_uZoomLevel;				// XXX
 	gboolean 			m_bRedrawNeeded;
 } g_Map =
 {
-	{42.29886, -73.24393},
-	{0,0},
-	7,
+	{0.0,0.0},	// starting position
+	{0,0},		// map dimensions
+	7,			// starting zoomlevel
 	TRUE
 };
 
@@ -274,14 +270,13 @@ typedef enum {
 
 /* Prototypes */
 
-void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-void map_draw_layer_line_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-void map_draw_layer_polygon_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-
-void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, const gchar* pszLabel);
-void map_draw_layer_points(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray);
-
+static void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_layer_line_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_layer_polygon_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, const gchar* pszLabel);
+static void map_draw_layer_points(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray);
+static void map_draw_crosshair(cairo_t* pCairo, rendermetrics_t* pRenderMetrics);
 
 // Each zoomlevel has a scale and an optional name (name isn't used for anything)
 zoomlevel_t g_sZoomLevels[NUM_ZOOMLEVELS+1] = {
@@ -421,8 +416,8 @@ static double map_degrees_to_pixels(gdouble fDegrees, guint16 uZoomLevel)
 void map_windowpoint_to_mappoint(screenpoint_t* pScreenPoint, mappoint_t* pMapPoint)
 {
 	// Calculate the # of pixels away from the center point the click was
-	gint16 nPixelDeltaX = (gint)(pScreenPoint->m_nX) - (g_Map.m_WindowDimensions.m_uWidth / 2);
-	gint16 nPixelDeltaY = (gint)(pScreenPoint->m_nY) - (g_Map.m_WindowDimensions.m_uHeight / 2);
+	gint16 nPixelDeltaX = (gint)(pScreenPoint->m_nX) - (g_Map.m_MapDimensions.m_uWidth / 2);
+	gint16 nPixelDeltaY = (gint)(pScreenPoint->m_nY) - (g_Map.m_MapDimensions.m_uHeight / 2);
 
 	// Convert pixels to world coordinates
 	pMapPoint->m_fLongitude = g_Map.m_MapCenter.m_fLongitude + map_pixels_to_degrees(nPixelDeltaX, g_Map.m_uZoomLevel);
@@ -434,8 +429,8 @@ void map_windowpoint_to_mappoint(screenpoint_t* pScreenPoint, mappoint_t* pMapPo
 void map_center_on_windowpoint(guint16 uX, guint16 uY)
 {
 	// Calculate the # of pixels away from the center point the click was
-	gint16 nPixelDeltaX = uX - (g_Map.m_WindowDimensions.m_uWidth / 2);
-	gint16 nPixelDeltaY = uY - (g_Map.m_WindowDimensions.m_uHeight / 2);
+	gint16 nPixelDeltaX = uX - (g_Map.m_MapDimensions.m_uWidth / 2);
+	gint16 nPixelDeltaY = uY - (g_Map.m_MapDimensions.m_uHeight / 2);
 
 	// Convert pixels to world coordinates
 	double fWorldDeltaX = map_pixels_to_degrees(nPixelDeltaX, g_Map.m_uZoomLevel);
@@ -444,37 +439,37 @@ void map_center_on_windowpoint(guint16 uX, guint16 uY)
 
 //	g_message("panning %d,%d pixels (%.10f,%.10f world coords)\n", nPixelDeltaX, nPixelDeltaY, fWorldDeltaX, fWorldDeltaY);
 
-	map_center_on_worldpoint(g_Map.m_MapCenter.m_fLatitude + fWorldDeltaY, g_Map.m_MapCenter.m_fLongitude + fWorldDeltaX);
+	mappoint_t pt;
+	pt.m_fLatitude = g_Map.m_MapCenter.m_fLatitude + fWorldDeltaY;
+	pt.m_fLongitude = g_Map.m_MapCenter.m_fLongitude + fWorldDeltaX;
+	map_set_centerpoint(&pt);
 }
 
-void map_center_on_worldpoint(double fLatitude, double fLongitude)
+void map_set_centerpoint(const mappoint_t* pPoint)
 {
-	g_Map.m_MapCenter.m_fLatitude = fLatitude;
-	g_Map.m_MapCenter.m_fLongitude = fLongitude;
+	g_assert(pPoint != NULL);
+
+	g_Map.m_MapCenter.m_fLatitude = pPoint->m_fLatitude;
+	g_Map.m_MapCenter.m_fLongitude = pPoint->m_fLongitude;
 
 	map_set_redraw_needed(TRUE);
 }
 
-void map_get_world_coordinate_point(mappoint_t* pPoint)
+void map_get_centerpoint(mappoint_t* pReturnPoint)
 {
-	pPoint->m_fLatitude = g_Map.m_MapCenter.m_fLatitude;
-	pPoint->m_fLongitude = g_Map.m_MapCenter.m_fLongitude;
+	g_assert(pReturnPoint != NULL);
+
+	pReturnPoint->m_fLatitude = g_Map.m_MapCenter.m_fLatitude;
+	pReturnPoint->m_fLongitude = g_Map.m_MapCenter.m_fLongitude;
 }
 
-void map_get_world_coordinates(float* pLatitude, float* pLongitude)
+//
+void map_set_dimensions(const dimensions_t* pDimensions)
 {
-	g_return_if_fail(pLatitude != NULL);
-	g_return_if_fail(pLongitude != NULL);
+	g_assert(pDimensions != NULL);
 
-	*pLatitude = g_Map.m_MapCenter.m_fLatitude;
-	*pLongitude = g_Map.m_MapCenter.m_fLongitude;
-}
-
-// Call this on init and every time the window changes size
-void map_set_view_dimensions(guint16 uWidth, guint16 uHeight)
-{
-	g_Map.m_WindowDimensions.m_uWidth = uWidth;
-	g_Map.m_WindowDimensions.m_uHeight = uHeight;
+	g_Map.m_MapDimensions.m_uWidth = pDimensions->m_uWidth;
+	g_Map.m_MapDimensions.m_uHeight = pDimensions->m_uHeight;
 }
 
 #if ROADSTER_DEAD_CODE
@@ -488,7 +483,7 @@ static double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 	// When we multiply this angle (in radians) by the radius, we get the length of the arc.
 
 	// NOTE: This algorithm wrongly assumes that Earth is a perfect sphere.
-	//       It is actually slightly egg shaped.
+	//       It is actually slightly egg shaped.  But it's good enough.
 
 	// All trig functions expect arguments in radians.
 	double fLonA_Rad = DEG2RAD(pA->m_fLongitude);
@@ -506,10 +501,6 @@ static double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 #endif /* ROADSTER_DEAD_CODE */
 
 // ========================================================
-//  Draw Functions
-// ========================================================
-
-// ========================================================
 //  Redraw
 // ========================================================
 
@@ -518,21 +509,42 @@ void map_set_redraw_needed(gboolean bNeeded)
 	g_Map.m_bRedrawNeeded = bNeeded;
 }
 
-gboolean map_is_redraw_needed()
+gboolean map_get_redraw_needed()
 {
 	return g_Map.m_bRedrawNeeded;
 }
 
-gboolean map_redraw_if_needed()
+// ========================================================
+//  Draw Functions
+// ========================================================
+
+void map_get_render_metrics(rendermetrics_t* pMetrics)
 {
-	return TRUE;
+	g_assert(pMetrics != NULL);
+
+	//
+	// Set up renderMetrics array
+	//
+	pMetrics->m_nZoomLevel = map_get_zoomlevel();
+	pMetrics->m_nWindowWidth = g_Map.m_MapDimensions.m_uWidth;
+	pMetrics->m_nWindowHeight = g_Map.m_MapDimensions.m_uHeight;
+
+	// Calculate how many world degrees we'll be drawing
+	pMetrics->m_fScreenLatitude = map_pixels_to_degrees(g_Map.m_MapDimensions.m_uHeight, pMetrics->m_nZoomLevel);
+	pMetrics->m_fScreenLongitude = map_pixels_to_degrees(g_Map.m_MapDimensions.m_uWidth, pMetrics->m_nZoomLevel);
+
+	// The world bounding box (expressed in lat/lon) of the data we will be drawing
+	pMetrics->m_rWorldBoundingBox.m_A.m_fLongitude = g_Map.m_MapCenter.m_fLongitude - pMetrics->m_fScreenLongitude/2;
+	pMetrics->m_rWorldBoundingBox.m_A.m_fLatitude = g_Map.m_MapCenter.m_fLatitude - pMetrics->m_fScreenLatitude/2;
+	pMetrics->m_rWorldBoundingBox.m_B.m_fLongitude = g_Map.m_MapCenter.m_fLongitude + pMetrics->m_fScreenLongitude/2;
+	pMetrics->m_rWorldBoundingBox.m_B.m_fLatitude = g_Map.m_MapCenter.m_fLatitude + pMetrics->m_fScreenLatitude/2;	
 }
 
 static void map_draw_background(cairo_t *pCairo)
 {
 	cairo_save(pCairo);
 		cairo_set_rgb_color(pCairo, 247/255.0, 235/255.0, 230/255.0);
-		cairo_rectangle(pCairo, 0, 0, g_Map.m_WindowDimensions.m_uWidth, g_Map.m_WindowDimensions.m_uHeight);
+		cairo_rectangle(pCairo, 0, 0, g_Map.m_MapDimensions.m_uWidth, g_Map.m_MapDimensions.m_uHeight);
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
 }
@@ -882,137 +894,6 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 	
 	scenemanager_label_drawn(pszLabel);
 }
-// g_print("map (%f,%f)->(%f,%f) screen (%f,%f)->(%f,%f) center (%f,%f)\n",pMapPoint1->m_fLatitude,pMapPoint1->m_fLongitude,  pMapPoint2->m_fLatitude,pMapPoint2->m_fLongitude,  fX1,fY1,  fX2,fY2,  fX,fY);
-		// Calculate line length (in screen pixels)
-
-/*
-void map_draw_line_label(cairo_t *pCairo, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, gdouble fLineWidth, const gchar* pszLabel)
-{
-	
-	// HACK
-	if(random()%1000 > 100) return;
-	
-	if(pPointString->m_pPointsArray->len < 2) return;
-
-//	if(pPointString->m_pPointsArray->len > 2) {
-//		g_print("(has %d)\n", pPointString->m_pPointsArray->len);
-//	}
-		
-	// for now just take the first line segment
-	mappoint_t* pMapPoint1 = g_ptr_array_index(pPointString->m_pPointsArray, 0);
-	mappoint_t* pMapPoint2 = g_ptr_array_index(pPointString->m_pPointsArray, 1);
-	mappoint_t* pTemp;
-	
-	if(pMapPoint1->m_fLongitude > pMapPoint2->m_fLongitude) {
-		// swap them so point 1 is to the left
-		pTemp = pMapPoint1;
-		pMapPoint1 = pMapPoint2;
-		pMapPoint2 = pTemp;
-	}
-
-	gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->m_fLongitude);
-	gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->m_fLatitude);
-	gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->m_fLongitude);
-	gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->m_fLatitude);
-
-	// determine slope of the line
-	gdouble fRise = fY2 - fY1;
-	gdouble fRun = fX2 - fX1;
-
-	gdouble fAngleInRadians = atan(fRise / fRun); // * (M_PI/180.0);
-
-// g_print("map (%f,%f)->(%f,%f) screen (%f,%f)->(%f,%f) center (%f,%f)\n",pMapPoint1->m_fLatitude,pMapPoint1->m_fLongitude,  pMapPoint2->m_fLatitude,pMapPoint2->m_fLongitude,  fX1,fY1,  fX2,fY2,  fX,fY);
-		// Calculate line length (in screen pixels)
-	gdouble fLineLength = sqrt((fRun*fRun) + (fRise*fRise));
-	gfloat fFontSize;
-	cairo_text_extents_t extents;
-
-	// try several font sizes until one fits
-	gboolean bFound = FALSE;
-	for(fFontSize = 12.0 ; fFontSize >= 10.0 ; fFontSize -= 0.5) {
-		cairo_save(pCairo);
-		cairo_select_font(pCairo, "Monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-		cairo_scale_font(pCairo, fFontSize);
-		cairo_text_extents(pCairo, pszLabel, &extents);
-
-		if(extents.width > fLineLength) {
-			cairo_restore(pCairo);
-			continue;
-		}
-		else {
-			bFound = TRUE;
-			break;	
-		}
-	}
-	if(!bFound) {
-		//cairo_restore(pCairo);
-		return;
-	}
-
-		// Normalize (make length = 1.0) by dividing by line length
-		// This makes a line with length 1 from the origin (0,0)
-		gdouble fNormalizedX = fRun / fLineLength;
-		gdouble fNormalizedY = fRise / fLineLength;
-
-		// (buffer space) |-text-| (buffer space)
-		// ======================================
-		gdouble fHalfBufferSpace = ((fLineLength - extents.width)/2);
-		gdouble fDrawX = fX1 + (fNormalizedX * fHalfBufferSpace);
-		gdouble fDrawY = fY1 + (fNormalizedY * fHalfBufferSpace);
-
-		// *Swap the X and Y* and normalize (make length = 1.0) by dividing by line length
-		// This makes a perpendicular line with length 1 from the origin (0,0)
-		gdouble fPerpendicularNormalizedX = fRise / fLineLength;
-		gdouble fPerpendicularNormalizedY = fRun / fLineLength;
-		// we want the normal pointing towards the top of the screen.  that's the negative Y direction.
-		if(fPerpendicularNormalizedY > 0) fPerpendicularNormalizedY = -fPerpendicularNormalizedY;	
-		
-		// text too big to fit?  then move the text "up"
-		if(extents.height > (fLineWidth - LABEL_PIXEL_RELIEF_INSIDE_LINE)) {
-			// Raise the text "up" (away from center of line) half the width of the line
-			// This leaves it resting on the line.  Then add a few pixels of relief.
-
-			// NOTE: the point started in the dead-center of the line
-			fDrawX += (fPerpendicularNormalizedX * ((fLineWidth / 2) + LABEL_PIXELS_ABOVE_LINE));
-			fDrawY += (fPerpendicularNormalizedY * ((fLineWidth / 2) + LABEL_PIXELS_ABOVE_LINE));
-		}
-		else {
-			// just nudge it down slightly-- the text shows up "ABOVE" and to the "RIGHT" of the point
-			fDrawX -= (fPerpendicularNormalizedX * extents.height/2);
-			fDrawY -= (fPerpendicularNormalizedY * extents.height/2);
-		}
-
-		// draw!
-		cairo_move_to(pCairo, fDrawX, fDrawY);
-		cairo_rotate(pCairo, fAngleInRadians);
-		cairo_text_path(pCairo, pszLabel);
-		cairo_set_rgb_color(pCairo, 0.1,0.1,0.1);
-		cairo_set_alpha(pCairo, 1.0);
-		cairo_fill(pCairo);
-	cairo_restore(pCairo);
-}
-*/
-void map_get_render_metrics(rendermetrics_t* pMetrics)
-{
-	g_assert(pMetrics != NULL);
-
-	//
-	// Set up renderMetrics array
-	//
-	pMetrics->m_nZoomLevel = map_get_zoomlevel();
-	pMetrics->m_nWindowWidth = g_Map.m_WindowDimensions.m_uWidth;
-	pMetrics->m_nWindowHeight = g_Map.m_WindowDimensions.m_uHeight;
-
-	// Calculate how many world degrees we'll be drawing
-	pMetrics->m_fScreenLatitude = map_pixels_to_degrees(g_Map.m_WindowDimensions.m_uHeight, pMetrics->m_nZoomLevel);
-	pMetrics->m_fScreenLongitude = map_pixels_to_degrees(g_Map.m_WindowDimensions.m_uWidth, pMetrics->m_nZoomLevel);
-
-	// The world bounding box (expressed in lat/lon) of the data we will be drawing
-	pMetrics->m_rWorldBoundingBox.m_A.m_fLongitude = g_Map.m_MapCenter.m_fLongitude - pMetrics->m_fScreenLongitude/2;
-	pMetrics->m_rWorldBoundingBox.m_A.m_fLatitude = g_Map.m_MapCenter.m_fLatitude - pMetrics->m_fScreenLatitude/2;
-	pMetrics->m_rWorldBoundingBox.m_B.m_fLongitude = g_Map.m_MapCenter.m_fLongitude + pMetrics->m_fScreenLongitude/2;
-	pMetrics->m_rWorldBoundingBox.m_B.m_fLatitude = g_Map.m_MapCenter.m_fLatitude + pMetrics->m_fScreenLatitude/2;	
-}
 
 void map_draw(cairo_t *pCairo)
 {
@@ -1065,17 +946,25 @@ void map_draw(cairo_t *pCairo)
 		}			
 	TIMER_END(loctimer, "END RENDER LOCATIONS");
 
-	//
-	// crosshair
-	//
-#define CROSSHAIR_LINE_RELIEF	(6)
-#define CROSSHAIR_LINE_LENGTH	(12)
+	map_draw_crosshair(pCairo, pRenderMetrics);
+	
+	cairo_restore(pCairo);
+
+	// We don't need another redraw until something changes
+	map_set_redraw_needed(FALSE);
+}
+
+#define CROSSHAIR_LINE_RELIEF   (6)
+#define CROSSHAIR_LINE_LENGTH   (12)
 #define CROSSHAIR_CIRCLE_RADIUS (12)
 
+static void map_draw_crosshair(cairo_t* pCairo, rendermetrics_t* pRenderMetrics)
+{
+	cairo_save(pCairo);
 		cairo_set_line_width(pCairo, 1.0);
 		cairo_set_rgb_color(pCairo, 0.1, 0.1, 0.1);
 		cairo_set_alpha(pCairo, 1.0);
-
+		
 		// left line
 		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2) - (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH), (pRenderMetrics->m_nWindowHeight/2));
 		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2) - (CROSSHAIR_LINE_RELIEF), (pRenderMetrics->m_nWindowHeight/2));
@@ -1084,19 +973,15 @@ void map_draw(cairo_t *pCairo)
 		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2) + (CROSSHAIR_LINE_RELIEF), (pRenderMetrics->m_nWindowHeight/2));
 		// top line
 		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) - (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH));
-		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) - (CROSSHAIR_LINE_RELIEF));		
+		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) - (CROSSHAIR_LINE_RELIEF));
 		// bottom line
 		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) + (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH));
 		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) + (CROSSHAIR_LINE_RELIEF));
 		cairo_stroke(pCairo);
-
-		cairo_arc(pCairo, pRenderMetrics->m_nWindowWidth/2, pRenderMetrics->m_nWindowHeight/2, CROSSHAIR_CIRCLE_RADIUS, 0, 2*M_PI);		
+		
+		cairo_arc(pCairo, pRenderMetrics->m_nWindowWidth/2, pRenderMetrics->m_nWindowHeight/2, CROSSHAIR_CIRCLE_RADIUS, 0, 2*M_PI);
 		cairo_stroke(pCairo);
-	
 	cairo_restore(pCairo);
-
-	// We don't need another redraw until something changes
-	map_set_redraw_needed(FALSE);
 }
 
 void map_draw_layer_points(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray)
@@ -1145,8 +1030,6 @@ void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, g
 {
 	mappoint_t* pPoint;
 	pointstring_t* pPointString;
-	gint iString;
-	gint iPoint;
 
 	gdouble fLineWidth = pSubLayerStyle->m_afLineWidths[pRenderMetrics->m_nZoomLevel-1];
 	if(fLineWidth == 0.0) return;	// Don't both drawing with line width 0
@@ -1162,6 +1045,7 @@ void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, g
 	cairo_set_line_cap(pCairo, pSubLayerStyle->m_nCapStyle);	/* CAIRO_LINE_CAP_BUTT, CAIRO_LINE_CAP_ROUND, CAIRO_LINE_CAP_CAP */
 //	cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_pfList, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount, 0.0);
 
+	gint iString;
 	for(iString=0 ; iString<pGeometry->m_pPointStringsArray->len ; iString++) {
 		pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, iString);
 
@@ -1172,6 +1056,7 @@ void map_draw_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, g
 			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
 
 			// start at index 1 (0 was used above)
+			gint iPoint;
 			for(iPoint=1 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
 				pPoint = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);				
 				cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
@@ -1238,12 +1123,12 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 			nCapStyle = CAIRO_LINE_CAP_SQUARE;
 		}
 
-//         if(fLineWidth >= 3.0) {
-//             fTolerance = 1.2;
-//         }
-//         else {  // smaller...
-//             fTolerance = 10;
-//         }
+		if(fLineWidth >= 3.0) {
+			fTolerance = 1.2;
+		}
+		else {  // smaller...
+			fTolerance = 10;
+		}
 	}
 	cairo_set_tolerance(pCairo, fTolerance);
 	cairo_set_line_join(pCairo, pSubLayerStyle->m_nJoinStyle);
@@ -1260,11 +1145,6 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 	for(iString=0 ; iString<pGeometry->m_pPointStringsArray->len ; iString++) {
 		pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, iString);
 
-//~ cairo_set_rgb_color(pCairo, pSubLayerStyle->m_clrColor.m_fRed, pSubLayerStyle->m_clrColor.m_fGreen, pSubLayerStyle->m_clrColor.m_fBlue);
-//~ if(pPointString->m_pPointsArray->len >= 3) {
-	//~ cairo_set_rgb_color(pCairo, 1, 0, 0);
-//~ }
-	
 		if(pPointString->m_pPointsArray->len >= 2) {
 			pPoint = g_ptr_array_index(pPointString->m_pPointsArray, 0);
 
@@ -1293,11 +1173,11 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 
 void map_draw_layer_line_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
-	gint iString;
+	gint i;
 	gdouble fLineWidth = pSubLayerStyle->m_afLineWidths[pRenderMetrics->m_nZoomLevel-1];
 
-	for(iString=0 ; iString<pGeometry->m_pPointStringsArray->len ; iString++) {
-		pointstring_t* pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, iString);
+	for(i=0 ; i<pGeometry->m_pPointStringsArray->len ; i++) {
+		pointstring_t* pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, i);
 		if(pPointString->m_pszName[0] != '\0') {
 			map_draw_line_label(pCairo, pLabelStyle, pRenderMetrics, pPointString, fLineWidth, pPointString->m_pszName);
 		}
@@ -1307,7 +1187,6 @@ void map_draw_layer_line_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics
 void map_draw_layer_polygon_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geometryset_t* pGeometry, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
 	gint i;
-
 	for(i=0 ; i<pGeometry->m_pPointStringsArray->len ; i++) {
 		pointstring_t* pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, i);
 		
@@ -1315,32 +1194,6 @@ void map_draw_layer_polygon_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetr
 			map_draw_polygon_label(pCairo, pLabelStyle, pRenderMetrics, pPointString, pPointString->m_pszName);
 		}
 	}
-}
-
-const gchar* map_road_suffix_itoa(gint nSuffixID, gint nSuffixType)
-{
-	if(nSuffixID >= ROAD_SUFFIX_FIRST && nSuffixID <= ROAD_SUFFIX_LAST) {
-		if(nSuffixType == SUFFIX_TYPE_SHORT) {
-			return g_RoadNameSuffix[nSuffixID].m_pszShort;
-		}
-		else {
-			return g_RoadNameSuffix[nSuffixID].m_pszLong;			
-		}
-	}
-	if(nSuffixID != ROAD_SUFFIX_NONE) return "???";
-	return "";
-}
-
-gboolean map_road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID)
-{
-	gint i;
-	for(i=0 ; i<NUM_ELEMS(g_RoadNameSuffixLookup) ; i++) {
-		if(g_ascii_strcasecmp(pszSuffix, g_RoadNameSuffixLookup[i].m_pszName) == 0) {
-			*pReturnSuffixID = g_RoadNameSuffixLookup[i].m_nID;
-			return TRUE;
-		}
-	}
-	return FALSE;
 }
 
 void map_draw_gps_trail(cairo_t* pCairo, pointstring_t* pPointString)
@@ -1364,7 +1217,40 @@ void map_draw_gps_trail(cairo_t* pCairo, pointstring_t* pPointString)
 
 		cairo_set_rgb_color(pCairo, 0.0, 0.0, 0.7);
 		cairo_set_alpha(pCairo, 0.6);
-		cairo_set_line_width(pCairo, 10);
+		cairo_set_line_width(pCairo, 6);
+		cairo_set_line_cap(pCairo, CAIRO_LINE_CAP_ROUND);
+		cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_ROUND);
+		cairo_set_miter_limit(pCairo, 5);
 		cairo_stroke(pCairo);
 	}
+}
+
+// ========================================================
+//	Road Direction / Suffix conversions
+// ========================================================
+
+const gchar* map_road_suffix_itoa(gint nSuffixID, ESuffixLength eSuffixLength)
+{
+	if(nSuffixID >= ROAD_SUFFIX_FIRST && nSuffixID <= ROAD_SUFFIX_LAST) {
+		if(eSuffixLength == SUFFIX_LENGTH_SHORT) {
+			return g_RoadNameSuffix[nSuffixID].m_pszShort;
+		}
+		else {
+			return g_RoadNameSuffix[nSuffixID].m_pszLong;			
+		}
+	}
+	if(nSuffixID != ROAD_SUFFIX_NONE) return "???";
+	return "";
+}
+
+gboolean map_road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID)
+{
+	gint i;
+	for(i=0 ; i<NUM_ELEMS(g_RoadNameSuffixLookup) ; i++) {
+		if(g_ascii_strcasecmp(pszSuffix, g_RoadNameSuffixLookup[i].m_pszName) == 0) {
+			*pReturnSuffixID = g_RoadNameSuffixLookup[i].m_nID;
+			return TRUE;
+		}
+	}
+	return FALSE;
 }

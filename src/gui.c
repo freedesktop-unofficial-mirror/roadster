@@ -53,7 +53,7 @@ void gui_init()
 		pGladeXML = glade_xml_new (PACKAGE_SOURCE_DIR"/data/roadster.glade", NULL, NULL);
 
 		if(pGladeXML == NULL) {
-			g_message("can't find glade xml file");
+			g_message("cannot find file roadster.glade\n");
 			gtk_exit(0);
 		}
 	}
@@ -88,3 +88,4 @@ void gui_exit()
 
 	gtk_exit(0);
 }
+

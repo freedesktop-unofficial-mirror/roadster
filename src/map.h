@@ -53,11 +53,10 @@ typedef struct screenrect {
 	screenpoint_t m_B;
 } screenrect_t;
 
-// Window space (0,0 being upper left of the draw area)
 typedef struct windowdimensions {
 	guint16 m_uWidth;
 	guint16 m_uHeight;
-} windowdimensions_t;
+} dimensions_t;
 
 typedef struct zoomlevel {
 	guint32 m_uScale;		// ex. 10000 for 1:10000 scale
@@ -128,16 +127,7 @@ enum ERoadNameSuffix {			// these can't change once stored in DB
 	ROAD_SUFFIX_LAST = ROAD_SUFFIX_ARC
 };
 
-//~ type 'Ctr' couldn't be looked up
-//~ type 'Walk' couldn't be looked up
-//~ type 'Ramp' couldn't be looked up
-//~ type 'Cv' couldn't be looked up
-//~ type 'Byp' couldn't be looked up
-//~ type 'Ramp' couldn't be looked up
-//~ type 'Br' couldn't be looked up
-//~ type 'Trce' couldn't be looked up
-
-typedef struct rendermetrics {
+typedef struct {
 	gint m_nZoomLevel;
 	gdouble m_fScreenLatitude;
 	gdouble m_fScreenLongitude;
@@ -146,43 +136,38 @@ typedef struct rendermetrics {
 	gint m_nWindowHeight;
 } rendermetrics_t;
 
-// SuffixTypes
-#define SUFFIX_TYPE_SHORT	(0)
-#define SUFFIX_TYPE_LONG		(1)
-
-const gchar* map_road_suffix_itoa(gint nSuffixID, gint nSuffixType);
-gboolean map_road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID);
-
-#include "db.h"
-
-GtkWidget* map_create_canvas(void);
-
-void map_set_zoomlevel(guint16 uZoomLevel);
-guint16 map_get_zoomlevel(void);
-guint32 map_get_zoomlevel_scale(void);
-
-void map_set_redraw_needed(gboolean bNeeded);
-gboolean map_is_redraw_needed(void);
-guint32 map_get_scale(void);
-//void map_draw(void* pDBConnection, cairo_t * cr);
-
-void map_get_world_coordinates(float* pLongitude, float* pLatitude);
-void map_get_world_coordinate_point(mappoint_t* pPoint);
-
-void map_center_on_worldpoint(double fX, double fY);
-void map_center_on_windowpoint(guint16 uX, guint16 uY);
-void map_set_window_dimensions(guint16 uWidth, guint16 uHeight);
-
-gboolean map_redraw_if_needed(void);
-
-void map_set_view_dimensions(guint16 uWidth, guint16 uHeight);
-void map_windowpoint_to_mappoint(screenpoint_t* pScreenPoint, mappoint_t* pMapPoint);
-
+// ESuffixLength
+typedef enum {
+	SUFFIX_LENGTH_SHORT,
+    SUFFIX_LENGTH_LONG
+} ESuffixLength;
 
 void map_draw(cairo_t *cr);
 
-void map_get_render_metrics(rendermetrics_t* pMetrics);
+const gchar* map_road_suffix_itoa(gint nSuffixID, ESuffixLength eSuffixLength);
+gboolean map_road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID);
 
+// Gets and Sets
+guint16 map_get_zoomlevel(void);
+guint32 map_get_zoomlevel_scale(void);
+void map_set_zoomlevel(guint16 uZoomLevel);
+//void map_get_render_metrics(rendermetrics_t* pMetrics);
+
+void map_set_redraw_needed(gboolean bNeeded);
+gboolean map_get_redraw_needed(void);
+
+guint32 map_get_scale(void);
+
+void map_set_centerpoint(const mappoint_t* pPoint);
+void map_get_centerpoint(mappoint_t* pReturnPoint);
+void map_set_dimensions(const dimensions_t* pDimensions);
+
+// Conversions
+void map_windowpoint_to_mappoint(screenpoint_t* pScreenPoint, mappoint_t* pMapPoint);
 gdouble map_distance_in_units_to_degrees(gdouble fDistance, gint nDistanceUnit);
+
+
+// remove this!
+void map_center_on_windowpoint(guint16 uX, guint16 uY);
 
 #endif

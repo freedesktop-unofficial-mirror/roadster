@@ -82,7 +82,7 @@ void search_location_on_locationsearch_struct(locationsearch_t* pLocationSearch)
 	gchar* pszCoordinatesMatch = NULL;
 	if(TRUE) {
 		mappoint_t ptCenter;
-		map_get_world_coordinate_point(&ptCenter);
+		map_get_centerpoint(&ptCenter);
 
 		gdouble fDegrees = pLocationSearch->m_fRadiusInDegrees;
 		pszCoordinatesMatch = g_strdup_printf(

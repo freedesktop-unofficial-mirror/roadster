@@ -41,12 +41,14 @@ roadster_SOURCES = \
 	databasewindow.c\
 	point.c\
 	pointstring.c\
-	track.c
+	track.c\
+	glyph.c
 
 roadster_LDADD = \
 	$(GNOME_LIBS) \
 	$(CAIRO_LIBS) \
 	$(MYSQL_LIBS) \
 	$(GPSD_LIBS) \
+	-lsvg-cairo \
 	$(NULL)
 

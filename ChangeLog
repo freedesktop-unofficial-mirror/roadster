@@ -1,3 +1,20 @@
+2005-02-27  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* configure.ac: Added libsvg-cairo as dependency. (Not quite correct. Nate will fix it.:)
+	* Makefile.am: Added glyph.c.
+	* datasetwindow.c: Removed Import button.
+	* db.c: Removed debugging comments.  City with the same name are no longer shared between states.
+	* geometryset.c: Expired a bunch of old code.
+	* gotowindow.c: Use mappoint_t instead of loose lat/lon variables.
+	* gui.c: Changed an error message.
+	* main.c: Move init/deinit code from main() to main_init() and main_deinit()
+	* mainwindow.c: Some cleanup and early support for SVG icon loading.
+	* map.c: Renamed some variables and functions.  Moved start location from arbitrary spot in MA, USA to (0,0)
+	* pointstring.c: Clean up.
+	* search_location.c: Use new map_* function names.
+	* search_road.c: Use city, state, and zip if present.
+	* searchwindow.c: Correctly use G_TYPE_DOUBLE to store coordinates.  Use mappoint_t instead of loose variables.
+
 2005-02-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* db.c: Added City and State tables and functions to search / add them.

@@ -141,7 +141,7 @@ void searchwindow_init(GladeXML* pGladeXML)
 	}
 
 	// create results tree view
-	g_SearchWindow.m_pResultsListStore = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_FLOAT, G_TYPE_FLOAT);
+	g_SearchWindow.m_pResultsListStore = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
 	gtk_tree_view_set_model(g_SearchWindow.m_pResultsTreeView, GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore));
 
 	GtkCellRenderer* pCellRenderer;
@@ -161,7 +161,7 @@ static gint searchwindow_get_selected_locationset(void)
 {
 	gint nID;
 	GtkTreeIter iter;
-	
+
 	if(gtk_combo_box_get_active_iter(g_SearchWindow.m_pLocationSetComboBox, &iter)) {
 		gtk_tree_model_get(GTK_TREE_MODEL(g_SearchWindow.m_pLocationSetComboBoxModel), &iter,
 			LOCATIONSETLIST_COLUMN_ID, &nID,
@@ -257,14 +257,16 @@ void searchwindow_go_to_selected_result(void)
 	GtkTreeModel* pModel = GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore);
 	if(gtk_tree_selection_get_selected(pSelection, &pModel, &iter)) {
 //		gchar* pszText;
-		gfloat fLatitude;
-		gfloat fLongitude;
+		mappoint_t pt;
 		gtk_tree_model_get(GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore), &iter,
 //			RESULTLIST_COLUMN_NAME, &pszText,
-			RESULTLIST_LATITUDE, &fLatitude,
-			RESULTLIST_LONGITUDE, &fLongitude,
+			RESULTLIST_LATITUDE, &pt.m_fLatitude,
+			RESULTLIST_LONGITUDE, &pt.m_fLongitude,
 			-1);
-		map_center_on_worldpoint(fLatitude, fLongitude);
+
+		g_print("%f,%f\n", pt.m_fLatitude, pt.m_fLongitude);
+
+		map_set_centerpoint(&pt);
 		mainwindow_draw_map();
 		mainwindow_statusbar_update_position();
 //		g_print("yay: %s\n", pszText);

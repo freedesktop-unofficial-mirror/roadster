@@ -70,7 +70,7 @@ void pointstring_free(pointstring_t* pPointString)
 }
 
 // copies pPoint and adds it
-void pointstring_append_point(pointstring_t* pPointString, mappoint_t* pPoint)
+void pointstring_append_point(pointstring_t* pPointString, const mappoint_t* pPoint)
 {
 	mappoint_t* pNewPoint = NULL;
 	point_alloc(&pNewPoint);

@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <glade/glade.h>
 
 #ifdef HAVE_CONFIG_H
@@ -43,7 +43,7 @@ struct {
 	GtkTreeView* m_pDataSetListTreeView;
 	GtkListStore* m_pDataSetListModel;
 	GtkButton* m_pDeleteButton;
-	GtkButton* m_pImportButton;
+	// GtkButton* m_pImportButton;
 } g_DataSetWindow;
 
 void datasetwindow_on_dataset_list_selection_changed(GtkTreeSelection *treeselection, gpointer user_data);
@@ -53,14 +53,14 @@ void datasetwindow_init(GladeXML* pGladeXML)
 	/* Find all widgets */
 	g_DataSetWindow.m_pWindow						= GTK_WINDOW(glade_xml_get_widget(pGladeXML, "datasetwindow")); g_return_if_fail(g_DataSetWindow.m_pWindow != NULL);
 	g_DataSetWindow.m_pDeleteButton					= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "datasetdeletebutton")); g_return_if_fail(g_DataSetWindow.m_pDeleteButton != NULL);
-	g_DataSetWindow.m_pImportButton					= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "datasetimportbutton")); g_return_if_fail(g_DataSetWindow.m_pImportButton != NULL);
+	// g_DataSetWindow.m_pImportButton					= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "datasetimportbutton")); g_return_if_fail(g_DataSetWindow.m_pImportButton != NULL);
 	g_DataSetWindow.m_pDataSetListTreeView			= GTK_TREE_VIEW(glade_xml_get_widget(pGladeXML, "datasettreeview")); g_return_if_fail(g_DataSetWindow.m_pDataSetListTreeView != NULL);;
 
 	/* when user hits X, just hide the window */
     g_signal_connect(G_OBJECT(g_DataSetWindow.m_pWindow), "delete_event", G_CALLBACK(gtk_widget_hide), NULL);
 	
 	/* create a model for the data set list (treeview) */
-	g_DataSetWindow.m_pDataSetListModel = gtk_list_store_new(DATASETLIST_NUM_COLUMNS, 
+	g_DataSetWindow.m_pDataSetListModel = gtk_list_store_new(DATASETLIST_NUM_COLUMNS,
 		G_TYPE_INT,
 		G_TYPE_STRING,
 		G_TYPE_STRING);
@@ -97,7 +97,7 @@ void datasetwindow_init(GladeXML* pGladeXML)
 	for(i=0 ; i<NUM_ELEMS(list) ;i++) {
 		gtk_list_store_append(g_DataSetWindow.m_pDataSetListModel, &iter);
 
-		gtk_list_store_set(g_DataSetWindow.m_pDataSetListModel, &iter, 
+		gtk_list_store_set(g_DataSetWindow.m_pDataSetListModel, &iter,
 		DATASETLIST_COLUMN_ID, list[i].ID,
 		DATASETLIST_COLUMN_NAME, list[i].name,
 		DATASETLIST_COLUMN_IMPORT_DATE, list[i].date,
@@ -156,9 +156,4 @@ void datasetwindow_on_datasetdeletebutton_clicked(GtkWidget *widget, gpointer us
 	else {
 		g_print("none selected\n");
 	}
-}
-
-void datasetwindow_on_datasetimportbutton_clicked(GtkWidget *widget, gpointer user_data)
-{
-	mainwindow_begin_import_geography_data();
 }

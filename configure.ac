@@ -42,7 +42,7 @@ AC_SUBST(GNOME_LIBS)
 AC_SUBST(GNOME_CFLAGS)
 
 dnl ========= check for cairo ==================================================
-dnl PKG_CHECK_MODULES(CAIRO, cairo,,exit)
+dnl PKG_CHECK_MODULES(CAIRO, cairo libsvg-cairo,,exit)
 
 PKG_CHECK_MODULES(CAIRO, cairo > 0.2.0,
     [AC_DEFINE([HAVE_NEWER_CAIRO], [1], [Newer Cairo])],

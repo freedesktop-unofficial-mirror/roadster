@@ -42,27 +42,10 @@
 #include "layers.h"
 #include "locationset.h"
 
-/*
-Notes on the database:
-	- MySQL uses an R-TREE to find the data we want, this is fast
-
-	For a query that matches 690 of 85840 rows:
-	- The query takes about 0.03 seconds
-	- Clearing out previous query's data takes about 0.001 seconds
-	- Retrieving and storing rows takes about 0.07 seconds
-	- Rendering takes 0.5 seconds
-	 Total: 0.6 seconds
-
-	getting just ID but not storing it for 85840 rows: 1.089513
-	getting geography data but not storing it for 85840 rows: 4.006307
-	getting and storing: 4.200560
-*/
 #define MYSQL_RESULT_SUCCESS  	(0)		// for clearer code
 
 #define MAX_SQLBUFFER_LEN		(132000)	// must be big for lists of coordinates
 #define COORD_LIST_MAX 			(128000)
-
-// #define EMBEDDED_DATABASE_NAME	("embedded")
 
 // mysql_use_result - 	less client memory, ties up the server (other clients can't do updates)
 //						better for embedded or local servers
@@ -77,13 +60,10 @@ gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 	g_assert(pszSQL != NULL);
 	if(g_pDB == NULL) return FALSE;
 	
-//g_print("doing? A - %s\n", pszSQL);
 	if(mysql_query(g_pDB->m_pMySQLConnection, pszSQL) != MYSQL_RESULT_SUCCESS) {
-//g_print("doing? Aaa\n");
 		g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
 		return FALSE;
 	}
-//g_print("doing? B\n");
 
 	// get result?
 	if(ppResultSet != NULL) {
@@ -148,20 +128,17 @@ const gchar* db_get_connection_info()
 	return mysql_get_host_info(g_pDB->m_pMySQLConnection);
 }
 
-/* String Escaping */
+// call db_free_escaped_string() on returned string
 gchar* db_make_escaped_string(const gchar* pszString)
 {
-	if(!db_is_connected()) return NULL;
+	// make given string safe for inclusion in a SQL string
+	if(!db_is_connected()) return g_strdup("");
 
-//	g_assert_not_reached();	// doesn't do escaping..?
 	gint nLength = (strlen(pszString)*2) + 1;
-//	g_print("length: %s (%d)\n", pszString, nLength);
-	
 	gchar* pszNew = g_malloc(nLength);
 	mysql_real_escape_string(g_pDB->m_pMySQLConnection, pszNew, pszString, strlen(pszString));
 
-//	g_print("huh: %s\n", pszNew);
-	return pszNew;
+	return pszNew; 		
 }
 
 void db_free_escaped_string(gchar* pszString)
@@ -177,7 +154,7 @@ static guint db_count_table_rows(const gchar* pszTable)
 	MYSQL_ROW aRow;
 	gchar azQuery[MAX_SQLBUFFER_LEN];
 	guint uRows = 0;
-	
+
 	// count rows
 	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "SELECT COUNT(*) FROM %s;", pszTable);
 	if(mysql_query(g_pDB->m_pMySQLConnection, azQuery) != MYSQL_RESULT_SUCCESS) {
@@ -195,7 +172,7 @@ static guint db_count_table_rows(const gchar* pszTable)
 
 gboolean db_is_empty()
 {
-	return 	(db_count_table_rows(DB_ROADS_TABLENAME) == 0);
+	return (db_count_table_rows(DB_ROADS_TABLENAME) == 0);
 }
 
 /******************************************************
@@ -206,15 +183,12 @@ gboolean db_is_empty()
 void db_init()
 {
 #ifdef HAVE_MYSQL_EMBED
-	g_print("Initializing embedded MySQL server: ");
-
 	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
 	gchar* pszSetDataDirCommand = g_strdup_printf("--datadir=%s", pszDataDir);
 
 	// Create directory if it doesn't exist
-	g_print("creating directory: %s\n", pszDataDir);
 	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszDataDir, 0700)) {
-		g_print("failed to create directory: %s\n", pszDataDir);
+		// no big deal, probably already exists (should we check?)
 	}
 
 	gchar* apszServerOptions[] = {
@@ -228,13 +202,10 @@ void db_init()
 	// Initialize the embedded server
 	// NOTE: if not linked with libmysqld, this call will do nothing (but will succeed)
  	if(mysql_server_init(NUM_ELEMS(apszServerOptions), apszServerOptions, NULL) != 0) {
-		g_print("failed\n");
 		return;
 	}
 	g_free(pszDataDir);
 	g_free(pszSetDataDirCommand);
-
-	g_print("success\n");
 #endif
 }
 
@@ -279,24 +250,6 @@ gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* p
 	// just in case (this could mess with multi-user databases)
 	return TRUE;
 }
-
-#if 0
-static void db_disconnect(void)
-{
-	g_return_if_fail(g_pDB != NULL);
-
-	// close database and free all strings
-	mysql_close(g_pDB->m_pMySQLConnection);
-	g_free(g_pDB->m_pzHost);
-	g_free(g_pDB->m_pzUserName);
-	g_free(g_pDB->m_pzPassword);
-	g_free(g_pDB->m_pzDatabase);
-
-	// free structure itself
-	g_free(g_pDB);
-	g_pDB = NULL;
-}
-#endif
 
 /******************************************************
 ** data inserting
@@ -406,13 +359,14 @@ gboolean db_insert_roadname(gint nRoadID, const gchar* pszName, gint nSuffixID)
 //
 
 // lookup numerical ID of a city by name
-static gboolean db_city_get_id(const gchar* pszName, gint* pnReturnID)
+gboolean db_city_get_id(const gchar* pszName, gint nStateID, gint* pnReturnID)
 {
-	gint nReturnID = 0;
+	g_assert(pnReturnID != NULL);
 
+	gint nReturnID = 0;
 	// create SQL for selecting City.ID
 	gchar* pszSafeName = db_make_escaped_string(pszName);
-	gchar* pszSQL = g_strdup_printf("SELECT City.ID FROM City WHERE City.Name='%s';", pszSafeName);
+	gchar* pszSQL = g_strdup_printf("SELECT City.ID FROM City WHERE City.Name='%s' AND City.StateID=%d;", pszSafeName, nStateID);
 	db_free_escaped_string(pszSafeName);
 
 	// try query
@@ -440,7 +394,7 @@ gboolean db_insert_city(const gchar* pszName, gint nStateID, gint* pnReturnCityI
 	gint nCityID = 0;
 
 	// Step 1. Insert into RoadName
-	if(db_city_get_id(pszName, &nCityID) == FALSE) {
+	if(db_city_get_id(pszName, nStateID, &nCityID) == FALSE) {
 		gchar* pszSafeName = db_make_escaped_string(pszName);
 		gchar* pszSQL = g_strdup_printf("INSERT INTO City SET Name='%s', StateID=%d", pszSafeName, nStateID);
 		db_free_escaped_string(pszSafeName);
@@ -462,13 +416,13 @@ gboolean db_insert_city(const gchar* pszName, gint nStateID, gint* pnReturnCityI
 // insert / select state
 //
 // lookup numerical ID of a city by name
-static gboolean db_state_get_id(const gchar* pszName, gint* pnReturnID)
+gboolean db_state_get_id(const gchar* pszName, gint* pnReturnID)
 {
 	gint nReturnID = 0;
 
 	// create SQL for selecting City.ID
 	gchar* pszSafeName = db_make_escaped_string(pszName);
-	gchar* pszSQL = g_strdup_printf("SELECT State.ID FROM State WHERE State.Name='%s';", pszSafeName);
+	gchar* pszSQL = g_strdup_printf("SELECT State.ID FROM State WHERE State.Name='%s' OR State.Code='%s';", pszSafeName, pszSafeName);
 	db_free_escaped_string(pszSafeName);
 
 	// try query
@@ -514,106 +468,6 @@ gboolean db_insert_state(const gchar* pszName, const gchar* pszCode, gint nCount
 	}
 	return TRUE;
 }
-
-
-/******************************************************
-** data loading
-******************************************************/
-
-/*
-gboolean db_load_geometry(db_connection_t* pConnection, maprect_t* pRect, layer_t* pLayers, gint nNumLayers) //, geometryset_t* pGeometrySet)
-{
-	TIMER_BEGIN(mytimer, "BEGIN DB LOAD");
-
-//	g_return_val_if_fail(pGeometrySet != NULL, FALSE);
-	gint nZoomLevel = map_get_zoomlevel();
-	
-	if(!db_is_connected(pConnection)) return FALSE;
-
-	gchar* pszTable = DB_ROADS_TABLENAME; 	// use a hardcoded table name for now
-	
-	// HACKY: make a list of layer IDs "2,3,5,6"
-	gchar azLayerNumberList[200] = {0};
-	gint nActiveLayerCount = 0;
-	gint i;
-	for(i=LAYER_FIRST ; i <= LAYER_LAST ;i++) {
-		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
-		   g_aLayers[i].m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
-		{
-			gchar azLayerNumber[10];
-			if(nActiveLayerCount > 0) g_snprintf(azLayerNumber, 10, ",%d", i);
-			else g_snprintf(azLayerNumber, 10, "%d", i);
-			g_strlcat(azLayerNumberList, azLayerNumber, 200);
-			nActiveLayerCount++;
-		}
-	}
-	if(nActiveLayerCount == 0) {
-		g_print("no visible layers!\n");
-		layers_clear();
-		return TRUE;
-	}
-
-	// generate SQL
-	gchar azQuery[MAX_SQLBUFFER_LEN];
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
-		"SELECT ID, TypeID, AsText(Coordinates) FROM %s WHERE"
-		" TypeID IN (%s) AND" //
-		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
-		pszTable,
-		azLayerNumberList,
-		//~ (nZoomLevel >= 9) ? 2 : 0,
-		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
-		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
-		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
-		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
-		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
-		);
-	TIMER_SHOW(mytimer, "after SQL generation");
-g_print("sql: %s\n", azQuery);
-	mysql_query(pConnection->m_pMySQLConnection, azQuery);
-	TIMER_SHOW(mytimer, "after query");
-
-	MYSQL_RES* pResultSet = MYSQL_GET_RESULT(pConnection->m_pMySQLConnection);
-	guint32 uRowCount = 0;
-
-	MYSQL_ROW aRow;
-	if(pResultSet) {
-		// HACK: empty out old data, since we don't know how to merge yet
-		layers_clear();
-		TIMER_SHOW(mytimer, "after clear layers");
-
-		while((aRow = mysql_fetch_row(pResultSet))) {
-			uRowCount++;
-
-			// aRow[0] is ID
-			// aRow[1] is TypeID
-			// aRow[2] is Coordinates in mysql's text format
-			//g_print("data: %s, %s, %s\n", aRow[0], aRow[1], aRow[2]);
-
-			gint nTypeID = atoi(aRow[1]);
-			if(nTypeID < LAYER_FIRST || nTypeID > LAYER_LAST) {
-				g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
-				continue;
-			}
-
-			//~ // add it to layer
-			geometryset_add_from_mysql_geometry(pLayers[nTypeID].m_pGeometrySet, aRow[2]);
-		} // end while loop on rows
-		g_print(" -- got %d rows\n", uRowCount);
-		TIMER_SHOW(mytimer, "after rows retrieved");
-
-		mysql_free_result(pResultSet);
-		TIMER_SHOW(mytimer, "after free results");
-		TIMER_END(mytimer, "END DB LOAD");
-
-		return TRUE;
-	}
-	else {
-		g_print(" no rows\n");
-		return FALSE;
-	}
-}
-*/
 
 void db_parse_point(const gchar* pszText, mappoint_t* pPoint)
 {
@@ -686,116 +540,9 @@ void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gbo
 	}
 }
 
-//
-// WordHash functionality
-//
-//~ #define DB_WORDHASH_TABLENAME 	"WordHash"
-
-//~ gint32 db_wordhash_insert(db_connection_t* pConnection, const gchar* pszWord)
-//~ {
-	//~ gchar azQuery[MAX_SQLBUFFER_LEN];
-	//~ int nResult;
-
-	//~ g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
-		//~ "INSERT INTO %s SET ID=NULL, Value='%s';",
-		//~ DB_WORDHASH_TABLENAME, pszWord);
-
-	//~ if((nResult = mysql_query(pConnection->m_pMySQLConnection, azQuery)) != MYSQL_RESULT_SUCCESS) {
-		//~ g_message("db_word_to_int failed to insert: %s\n", mysql_error(pConnection->m_pMySQLConnection));
-		//~ return 0;
-	//~ }
-	//~ return mysql_insert_id(pConnection->m_pMySQLConnection);
-//~ }
-
-//~ gint32 db_wordhash_lookup(db_connection_t* pConnection, const gchar* pszWord)
-//~ {
-	//~ MYSQL_RES* pResultSet;
-	//~ MYSQL_ROW aRow;
-	//~ gint nWordNumber = 0;
-	//~ int nResult;
-	//~ gchar azQuery[MAX_SQLBUFFER_LEN];
-
-	//~ if(!db_is_connected(pConnection)) return FALSE;
-
-	//~ // generate SQL
-	//~ g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "SELECT ID FROM %s WHERE Value='%s';", DB_WORDHASH_TABLENAME, pszWord);
-
-	//~ // get row
-	//~ if((nResult = mysql_query(pConnection->m_pMySQLConnection, azQuery)) != MYSQL_RESULT_SUCCESS) {
-		//~ g_message("db_word_to_int failed to select: %s\n", mysql_error(pConnection->m_pMySQLConnection));
-		//~ return 0;
-	//~ }
-	//~ if((pResultSet = MYSQL_GET_RESULT(pConnection->m_pMySQLConnection)) != NULL) {
-		//~ if((aRow = mysql_fetch_row(pResultSet)) != NULL) {
-			//~ nWordNumber = atoi(aRow[0]);
-		//~ }
-		//~ mysql_free_result(pResultSet);
-	//~ }
-
-	//~ // Successful?  Return it.
-	//~ if(nWordNumber != 0) return nWordNumber;
-	//~ else return 0;
-//~ }
-
-//=======================================================
-// table creation functions
-//=======================================================
-
-//~ TABLES:
-//~ Geometry (lines [roads, rail, rivers], polygons [parks, cemetaries, ponds])
-//~ Points (points)
-//~ Paths (lines)
-
-//~ CREATE TABLE Points (
-	//~ ID INT8 UNSIGNED NOT NULL AUTO_INCREMENT,
-	//~ SetID INT4 UNSIGNED NOT NULL,
-
-	//~ Coordinates POINT NOT NULL,
-	//~ PRIMARY KEY(ID),
-	//~ SPATIAL INDEX(Coordinates)
-//~ );
-
-// TODO: make sure dataset name is clean
-//~ gboolean db_create_points_table(db_connection_t* pConnection, const gchar* szDatasetName)
-//~ {
-	//~ if(!db_is_connected(pConnection)) return FALSE;
-
-	//~ // generate SQL
-	//~ gchar azQuery[MAX_SQLBUFFER_LEN];
-	//~ g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "CREATE TABLE points_%s (ID INT8 UNSIGNED NOT NULL AUTO_INCREMENT, Coordinates POINT NOT NULL, PRIMARY KEY(ID, SPATIAL INDEX(Coordinates));",
-		//~ szDatasetName);
-
-	//~ // execute and return status
-	//~ return (mysql_query(pConnection->m_pMySQLConnection, azQuery) == MYSQL_RESULT_SUCCESS);
-//~ }
-
-//~ GList db_get_table_list(db_connection_t* pConnection)
-//~ {
-	//~ if(!db_is_connected(pConnection)) return FALSE;
-
-	//~ // generate SQL
-	//~ gchar azQuery[MAX_SQLBUFFER_LEN];
-	//~ g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "SHOW TABLES;");
-
-	//~ MYSQL_RES* pResultSet = mysql_list_tables(pConnection->m_pMySQLConnection, "points_%");
-
-	//~ MYSQL_ROW aRow;
-	//~ if(pResultSet) {
-		//~ while((aRow = mysql_fetch_row(pResultSet))) {
-			//~ g_print("table: %s\n", aRow[0]);
-		//~ }		
-		//~ mysql_free_result(pResultSet);
-		//~ return TRUE;
-	//~ }
-	//~ else {
-		//~ return FALSE;
-	//~ }
-//~ }
-
 void db_create_tables()
 {
 	db_query("CREATE DATABASE IF NOT EXISTS roadster;", NULL);
-
 	db_query("USE roadster;", NULL);
 
 	// Road
@@ -825,7 +572,7 @@ void db_create_tables()
 		" Name VARCHAR(30) NOT NULL,"
 		" SuffixID INT1 UNSIGNED NOT NULL,"
 		" PRIMARY KEY (ID),"
-		" UNIQUE KEY (Name, SuffixID));", NULL);
+		" UNIQUE KEY (Name(30), SuffixID));", NULL);
 
 	// Road_RoadName
 	db_query("CREATE TABLE IF NOT EXISTS Road_RoadName("
@@ -897,7 +644,6 @@ void db_create_tables()
 void db_enable_keys(void)
 {
 //	g_print("Enabling keys\n");
-
 //	db_query("ALTER TABLE Road ENABLE KEYS", NULL);
 //	db_query("ALTER TABLE RoadName ENABLE KEYS", NULL);
 //	db_query("ALTER TABLE Road_RoadName ENABLE KEYS", NULL);
@@ -906,14 +652,172 @@ void db_enable_keys(void)
 void db_disable_keys(void)
 {
 //	g_print("Disabling keys\n");
-	
 //	db_query("ALTER TABLE Road DISABLE KEYS", NULL);
 //	db_query("ALTER TABLE RoadName DISABLE KEYS", NULL);
 //	db_query("ALTER TABLE Road_RoadName DISABLE KEYS", NULL);
 }
 
+#ifdef ROADSTER_DEAD_CODE
 /*
-TABLES
-======
+static void db_disconnect(void)
+{
+	g_return_if_fail(g_pDB != NULL);
 
+	// close database and free all strings
+	mysql_close(g_pDB->m_pMySQLConnection);
+	g_free(g_pDB->m_pzHost);
+	g_free(g_pDB->m_pzUserName);
+	g_free(g_pDB->m_pzPassword);
+	g_free(g_pDB->m_pzDatabase);
+
+	// free structure itself
+	g_free(g_pDB);
+	g_pDB = NULL;
+}
+
+//
+// WordHash functionality
+//
+#define DB_WORDHASH_TABLENAME 	"WordHash"
+
+gint32 db_wordhash_insert(db_connection_t* pConnection, const gchar* pszWord)
+{
+	gchar azQuery[MAX_SQLBUFFER_LEN];
+	int nResult;
+
+	g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
+		"INSERT INTO %s SET ID=NULL, Value='%s';",
+		DB_WORDHASH_TABLENAME, pszWord);
+
+	if((nResult = mysql_query(pConnection->m_pMySQLConnection, azQuery)) != MYSQL_RESULT_SUCCESS) {
+		g_message("db_word_to_int failed to insert: %s\n", mysql_error(pConnection->m_pMySQLConnection));
+		return 0;
+	}
+	return mysql_insert_id(pConnection->m_pMySQLConnection);
+}
+
+gint32 db_wordhash_lookup(db_connection_t* pConnection, const gchar* pszWord)
+{
+	MYSQL_RES* pResultSet;
+	MYSQL_ROW aRow;
+	gint nWordNumber = 0;
+	int nResult;
+	gchar azQuery[MAX_SQLBUFFER_LEN];
+
+	if(!db_is_connected(pConnection)) return FALSE;
+
+	// generate SQL
+	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "SELECT ID FROM %s WHERE Value='%s';", DB_WORDHASH_TABLENAME, pszWord);
+
+	// get row
+	if((nResult = mysql_query(pConnection->m_pMySQLConnection, azQuery)) != MYSQL_RESULT_SUCCESS) {
+		g_message("db_word_to_int failed to select: %s\n", mysql_error(pConnection->m_pMySQLConnection));
+		return 0;
+	}
+	if((pResultSet = MYSQL_GET_RESULT(pConnection->m_pMySQLConnection)) != NULL) {
+		if((aRow = mysql_fetch_row(pResultSet)) != NULL) {
+			nWordNumber = atoi(aRow[0]);
+		}
+		mysql_free_result(pResultSet);
+	}
+
+	// Successful?  Return it.
+	if(nWordNumber != 0) return nWordNumber;
+	else return 0;
+}
+
+gboolean db_load_geometry(db_connection_t* pConnection, maprect_t* pRect, layer_t* pLayers, gint nNumLayers) //, geometryset_t* pGeometrySet)
+{
+	TIMER_BEGIN(mytimer, "BEGIN DB LOAD");
+
+//	g_return_val_if_fail(pGeometrySet != NULL, FALSE);
+	gint nZoomLevel = map_get_zoomlevel();
+	
+	if(!db_is_connected(pConnection)) return FALSE;
+
+	gchar* pszTable = DB_ROADS_TABLENAME; 	// use a hardcoded table name for now
+	
+	// HACKY: make a list of layer IDs "2,3,5,6"
+	gchar azLayerNumberList[200] = {0};
+	gint nActiveLayerCount = 0;
+	gint i;
+	for(i=LAYER_FIRST ; i <= LAYER_LAST ;i++) {
+		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
+		   g_aLayers[i].m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
+		{
+			gchar azLayerNumber[10];
+			if(nActiveLayerCount > 0) g_snprintf(azLayerNumber, 10, ",%d", i);
+			else g_snprintf(azLayerNumber, 10, "%d", i);
+			g_strlcat(azLayerNumberList, azLayerNumber, 200);
+			nActiveLayerCount++;
+		}
+	}
+	if(nActiveLayerCount == 0) {
+		g_print("no visible layers!\n");
+		layers_clear();
+		return TRUE;
+	}
+
+	// generate SQL
+	gchar azQuery[MAX_SQLBUFFER_LEN];
+	g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
+		"SELECT ID, TypeID, AsText(Coordinates) FROM %s WHERE"
+		" TypeID IN (%s) AND" //
+		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
+		pszTable,
+		azLayerNumberList,
+		(nZoomLevel >= 9) ? 2 : 0,
+		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
+		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
+		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
+		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
+		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
+		);
+	TIMER_SHOW(mytimer, "after SQL generation");
+g_print("sql: %s\n", azQuery);
+	mysql_query(pConnection->m_pMySQLConnection, azQuery);
+	TIMER_SHOW(mytimer, "after query");
+
+	MYSQL_RES* pResultSet = MYSQL_GET_RESULT(pConnection->m_pMySQLConnection);
+	guint32 uRowCount = 0;
+
+	MYSQL_ROW aRow;
+	if(pResultSet) {
+		// HACK: empty out old data, since we don't know how to merge yet
+		layers_clear();
+		TIMER_SHOW(mytimer, "after clear layers");
+
+		while((aRow = mysql_fetch_row(pResultSet))) {
+			uRowCount++;
+
+			// aRow[0] is ID
+			// aRow[1] is TypeID
+			// aRow[2] is Coordinates in mysql's text format
+			//g_print("data: %s, %s, %s\n", aRow[0], aRow[1], aRow[2]);
+
+			gint nTypeID = atoi(aRow[1]);
+			if(nTypeID < LAYER_FIRST || nTypeID > LAYER_LAST) {
+				g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
+				continue;
+			}
+
+			// add it to layer
+			geometryset_add_from_mysql_geometry(pLayers[nTypeID].m_pGeometrySet, aRow[2]);
+		} // end while loop on rows
+		g_print(" -- got %d rows\n", uRowCount);
+		TIMER_SHOW(mytimer, "after rows retrieved");
+
+		mysql_free_result(pResultSet);
+		TIMER_SHOW(mytimer, "after free results");
+		TIMER_END(mytimer, "END DB LOAD");
+
+		return TRUE;
+	}
+	else {
+		g_print(" no rows\n");
+		return FALSE;
+	}
+}
 */
+#endif
+

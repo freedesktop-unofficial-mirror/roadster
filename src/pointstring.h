@@ -33,6 +33,6 @@ typedef struct {
 void pointstring_init(void);
 gboolean pointstring_alloc(pointstring_t** ppPointString);
 void pointstring_free(pointstring_t* pPointString);
-void pointstring_append_point(pointstring_t* pPointString, mappoint_t* pPoint);
+void pointstring_append_point(pointstring_t* pPointString, const mappoint_t* pPoint);
 
 #endif

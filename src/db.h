@@ -90,4 +90,7 @@ gboolean db_insert_road(gint nLayerType,
 							const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight,
 							GPtrArray* pPointsArray, gint* pReturnID);
 
+gboolean db_city_get_id(const gchar* pszName, gint nStateID, gint* pnReturnID);
+gboolean db_state_get_id(const gchar* pszName, gint* pnReturnID);
+
 #endif
