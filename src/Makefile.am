@@ -47,7 +47,8 @@ roadster_SOURCES = \
 	map_draw_cairo.c\
 	map_draw_gdk.c\
 	road.c\
-	prefs.c
+	prefs.c\
+	animator.c
 
 roadster_LDADD = \
 	$(GNOME_LIBS) \

@@ -52,7 +52,7 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 	gdk_gc_get_values(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &gcValues);
 
 	// 2. Drawing
-	
+
 	// 2.1. Draw Background
 	if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 		map_draw_gdk_background(pMap, pPixmap);
@@ -64,7 +64,7 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 		for(i=0 ; i<NUM_ELEMS(layerdraworder) ; i++) {
 			gint nLayer = layerdraworder[i].nLayer;
 			gint nSubLayer = layerdraworder[i].nSubLayer;
-	
+
 			if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_LINES) {
 				map_draw_gdk_layer_lines(pMap, pPixmap,
 						pRenderMetrics,
@@ -72,7 +72,8 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 				/* style */ 	&(g_aLayers[nLayer]->m_Style.m_aSubLayers[nSubLayer]),
 						&(g_aLayers[nLayer]->m_TextLabelStyle));
 			}
-			else if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_POLYGONS) {
+			else 
+                if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_POLYGONS) {
 				map_draw_gdk_layer_polygons(pMap, pPixmap,
 						pRenderMetrics,
 				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pPointStringsArray,
@@ -104,9 +105,11 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	// Raise the tolerance way up for thin lines
 	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
 
+	gint nLineWidth = (gint)fLineWidth;
+
 	// Set line style
 	gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			   ((gint)fLineWidth), GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_MITER);
+			   nLineWidth, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_MITER);
 
 	GdkColor clr;
 	clr.red = pSubLayerStyle->m_clrColor.m_fRed * 65535;
@@ -117,6 +120,11 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
 		pPointString = g_ptr_array_index(pPointStringsArray, iString);
 
+		gint nMaxX=G_MININT;
+		gint nMaxY=G_MININT;
+		gint nMinX=G_MAXINT;
+		gint nMinY=G_MAXINT;
+
 		if(pPointString->m_pPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
@@ -125,12 +133,25 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 				continue;
 			}
 
-			// start at index 1 (0 was used above)
 			for(iPoint=0 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
 				pPoint = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);
-				
-				aPoints[iPoint].x = SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
-				aPoints[iPoint].y = SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
+
+				gint nX,nY;
+				nX = (gint)SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
+				nY = (gint)SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
+
+				// find extents
+				nMaxX = max(nX,nMaxX);
+				nMinX = min(nX,nMinX);
+				nMaxY = max(nY,nMaxY);
+				nMinY = min(nY,nMinY);
+
+				aPoints[iPoint].x = nX;
+				aPoints[iPoint].y = nY;
+			}
+			// overlap test
+			if(nMaxX < 0 || nMaxY < 0 || nMinX > pRenderMetrics->m_nWindowWidth || nMinY > pRenderMetrics->m_nWindowHeight) {
+				continue;
 			}
 			gdk_draw_polygon(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
 				TRUE, aPoints, pPointString->m_pPointsArray->len);
@@ -167,9 +188,11 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		nCapStyle = GDK_CAP_PROJECTING;
 	}
 
+	gint nLineWidth = (gint)fLineWidth;
+
 	// Set line style
 	gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			   ((gint)fLineWidth), nDashStyle, nCapStyle, GDK_JOIN_MITER);
+			   nLineWidth, nDashStyle, nCapStyle, GDK_JOIN_MITER);
 
 	GdkColor clr;
 	clr.red = pSubLayerStyle->m_clrColor.m_fRed * 65535;
@@ -180,6 +203,11 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
 		pPointString = g_ptr_array_index(pPointStringsArray, iString);
 
+		gint nMaxX=G_MININT;
+		gint nMaxY=G_MININT;
+		gint nMinX=G_MAXINT;
+		gint nMinY=G_MAXINT;
+	
 		if(pPointString->m_pPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
@@ -188,15 +216,29 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 				continue;
 			}
 
-			// start at index 1 (0 was used above)
 			for(iPoint=0 ; iPoint<pPointString->m_pPointsArray->len ; iPoint++) {
 				pPoint = g_ptr_array_index(pPointString->m_pPointsArray, iPoint);
-				
-				aPoints[iPoint].x = SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
-				aPoints[iPoint].y = SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
+
+				gint nX,nY;
+				nX = (gint)SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
+				nY = (gint)SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
+
+				// find extents
+				nMaxX = max(nX,nMaxX);
+				nMinX = min(nX,nMinX);
+				nMaxY = max(nY,nMaxY);
+				nMinY = min(nY,nMinY);
+
+				aPoints[iPoint].x = nX;
+				aPoints[iPoint].y = nY;
 			}
-			gdk_draw_lines(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-				aPoints, pPointString->m_pPointsArray->len);
+
+			// overlap test
+			if(nMaxX < 0 || nMaxY < 0 || nMinX > pRenderMetrics->m_nWindowWidth || nMinY > pRenderMetrics->m_nWindowHeight) {
+				continue;
+			}
+
+			gdk_draw_lines(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], aPoints, pPointString->m_pPointsArray->len);
    		}
 	}
 }

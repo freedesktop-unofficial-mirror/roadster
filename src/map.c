@@ -84,7 +84,7 @@ zoomlevel_t g_sZoomLevels[NUM_ZOOMLEVELS+1] = {
 	{   20000, ""}, 	// 7
 	{   10000, ""},		// 8
 	{    4000, ""},		// 9
-	{    1800, ""},		// 10
+	{    1700, ""},		// 10
 };
 
 draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW] = {
@@ -186,6 +186,8 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	rendermetrics_t renderMetrics = {0};
 	map_get_render_metrics(pMap, &renderMetrics);
 	rendermetrics_t* pRenderMetrics = &renderMetrics;
+
+//g_print("drawing at %f,%f\n", pMap->m_MapCenter.m_fLatitude, pMap->m_MapCenter.m_fLongitude);
 
 	//
 	// Load geometry
@@ -508,6 +510,7 @@ static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect)
 	gdouble fLatStart = (gdouble)nLatStart / TILE_SHIFT;
 	gdouble fLonStart = (gdouble)nLonStart / TILE_SHIFT;
 
+//	g_print("%f < %f\n", fLatStart, pRect->m_A.m_fLatitude);
 	g_assert(fLatStart <= pRect->m_A.m_fLatitude);
         g_assert(fLonStart <= pRect->m_A.m_fLongitude);
 

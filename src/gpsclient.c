@@ -49,6 +49,7 @@ void gpsclient_init()
 
 static void gpsclient_connect(void)
 {
+return;
 	// don't do anything if already connected
 	if(g_GPSClient.m_pPublicGPSData->m_eStatus != GPS_STATUS_NO_GPSD) return;	// already connected
 

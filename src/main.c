@@ -32,6 +32,7 @@
 #include "gpsclient.h"
 #include "scenemanager.h"
 #include "prefs.h"
+#include "animator.h"
 
 static gboolean main_init(void);
 static void main_deinit(void);
@@ -99,6 +100,9 @@ gboolean main_init(void)
 	g_print("initializing gui\n");
 	gui_init();
 
+	g_print("initializing animator\n");
+	animator_init();
+	
 	g_print("initializing db\n");
 	db_init();
 

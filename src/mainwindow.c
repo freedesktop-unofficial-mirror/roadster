@@ -43,6 +43,7 @@
 #include "databasewindow.h"
 #include "mainwindow.h"
 #include "glyph.h"
+#include "animator.h"
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
@@ -56,10 +57,18 @@
 #define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
 #define PROGRAM_DESCRIPTION		"Mapping for everyone!"
 
-#define DRAW_PRETTY_TIMEOUT_MS		(180)	// how long after stopping various movements should we redraw in high-quality mode
-#define SCROLL_TIMEOUT_MS		(100)	// how often (in MS) to move (SHORTER THAN ABOVE TIME)
-#define SCROLL_DISTANCE_IN_PIXELS	(60)	// how far to move every (above) MS
+// how long after stopping various movements should we redraw in high-quality mode
+#define DRAW_PRETTY_SCROLL_TIMEOUT_MS	(110)	// NOTE: should be longer than the SCROLL_TIMEOUT_MS below!!
+#define DRAW_PRETTY_ZOOM_TIMEOUT_MS	(180)
+#define DRAW_PRETTY_DRAG_TIMEOUT_MS	(250)
+#define DRAW_PRETTY_RESIZE_TIMEOUT_MS	(180)
+
+#define SCROLL_TIMEOUT_MS		(80)	// how often (in MS) to move
+#define SCROLL_DISTANCE_IN_PIXELS	(80)	// how far to move every (above) MS
 #define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)	// the size of the click target (distance from edge of map view) to begin scrolling
+
+#define SLIDE_TIMEOUT_MS		(90)	// time between frames (in MS) for smooth-sliding (on double click?)
+#define	SLIDE_TIME_IN_SECONDS		(1.2)	// how long the whole slide should take, in seconds
 
 // Layerlist columns
 #define LAYERLIST_COLUMN_ENABLED	(0)
@@ -95,9 +104,10 @@ static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event);
 static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data);
 static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfigure *event);
 static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
+static gboolean mainwindow_callback_on_slide_timeout(gpointer pData);
 static void mainwindow_setup_selected_tool(void);
 
-
+void mainwindow_map_center_on_mappoint(mappoint_t* pPoint);
 void mainwindow_map_center_on_windowpoint(gint nX, gint nY);
 
 struct {
@@ -155,12 +165,18 @@ struct {
 	
 	gboolean m_bMouseDragging;
 	gboolean m_bMouseDragMovement;
-	screenpoint_t m_ptClickLocation;
+	screenpoint_t m_ptClickLocation;	
 
 	gint m_nCurrentGPSPath;
 	gint m_nGPSLocationGlyph;
 	gint m_nDrawPrettyTimeoutID;
 	gint m_nScrollTimeoutID;
+
+	// Sliding
+	gboolean m_bSliding;
+	mappoint_t m_ptSlideStartLocation;
+	mappoint_t m_ptSlideEndLocation;
+	animator_t* m_pAnimator;
 } g_MainWindow = {0};
 
 
@@ -244,7 +260,9 @@ void mainwindow_init(GladeXML* pGladeXML)
 	g_MainWindow.m_pTooltips			= gtk_tooltips_new();
 	g_MainWindow.m_pSpeedLabel			= GTK_LABEL(glade_xml_get_widget(pGladeXML, "speedlabel"));		g_return_if_fail(g_MainWindow.m_pSpeedLabel != NULL);
 	g_MainWindow.m_pGPSSignalStrengthProgressBar = GTK_PROGRESS_BAR(glade_xml_get_widget(pGladeXML, "gpssignalprogressbar"));		g_return_if_fail(g_MainWindow.m_pGPSSignalStrengthProgressBar != NULL);
-	
+
+	g_signal_connect(G_OBJECT(g_MainWindow.m_pWindow), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
+
 	// create drawing area
 	g_MainWindow.m_pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());
 	// create map
@@ -263,12 +281,12 @@ void mainwindow_init(GladeXML* pGladeXML)
 	gtk_box_pack_end(GTK_BOX(g_MainWindow.m_pContentBox), GTK_WIDGET(g_MainWindow.m_pDrawingArea),
 					TRUE, // expand
 					TRUE, // fill
-					0);
+                                        0);
 	gtk_widget_show(GTK_WIDGET(g_MainWindow.m_pDrawingArea));
 
 	cursor_init();
 
-	g_MainWindow.m_nGPSLocationGlyph = glyph_load(PACKAGE_DATA_DIR"/car.svg");
+        g_MainWindow.m_nGPSLocationGlyph = glyph_load(PACKAGE_DATA_DIR"/car.svg");
 
 	/*
 	**
@@ -337,9 +355,12 @@ void mainwindow_init(GladeXML* pGladeXML)
 //                         -1);
 //         }
 
-	g_timeout_add(TIMER_GPS_REDRAW_INTERVAL_MS,
-			  (GSourceFunc)mainwindow_callback_on_gps_redraw_timeout,
-			  (gpointer)NULL);
+	// GPS check timeout
+	g_timeout_add(TIMER_GPS_REDRAW_INTERVAL_MS, (GSourceFunc)mainwindow_callback_on_gps_redraw_timeout, (gpointer)NULL);
+
+	// Slide timeout
+//	g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_SLIDE, 10.0);
+	g_timeout_add(SLIDE_TIMEOUT_MS, (GSourceFunc)mainwindow_callback_on_slide_timeout, (gpointer)NULL);
 
 	// give it a call to init everything
 	mainwindow_callback_on_gps_redraw_timeout(NULL);
@@ -379,12 +400,12 @@ void mainwindow_cancel_draw_pretty_timeout()
 	}
 }
 
-void mainwindow_set_draw_pretty_timeout()
+void mainwindow_set_draw_pretty_timeout(gint nTimeoutInMilliseconds)
 {
 	// cancel existing one, if one exists
 	mainwindow_cancel_draw_pretty_timeout();
 
-	g_MainWindow.m_nDrawPrettyTimeoutID = g_timeout_add(DRAW_PRETTY_TIMEOUT_MS, mainwindow_on_draw_pretty_timeout, NULL);
+	g_MainWindow.m_nDrawPrettyTimeoutID = g_timeout_add(nTimeoutInMilliseconds, mainwindow_on_draw_pretty_timeout, NULL);
 	g_assert(g_MainWindow.m_nDrawPrettyTimeoutID != 0);
 }
 
@@ -403,7 +424,7 @@ void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels)
 
 		mainwindow_map_center_on_windowpoint((nWidth / 2) + nDeltaX, (nHeight / 2) + nDeltaY);
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
-		mainwindow_set_draw_pretty_timeout();
+		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_SCROLL_TIMEOUT_MS);
 	}
 }
 
@@ -471,7 +492,7 @@ void mainwindow_statusbar_update_zoomscale(void)
 
 	snprintf(buf, 199, "1:%d", uZoomLevelScale);
 	mainwindow_set_statusbar_zoomscale(buf);
-	GTK_PROCESS_MAINLOOP;
+//	GTK_PROCESS_MAINLOOP;
 }
 
 void mainwindow_statusbar_update_position(void)
@@ -481,7 +502,7 @@ void mainwindow_statusbar_update_position(void)
 	map_get_centerpoint(g_MainWindow.m_pMap, &pt);
 	g_snprintf(buf, 200, "Lat: %.5f, Lon: %.5f", pt.m_fLatitude, pt.m_fLongitude);
 	mainwindow_set_statusbar_position(buf);
-	GTK_PROCESS_MAINLOOP;
+//	GTK_PROCESS_MAINLOOP;    ugh this makes text flash when stopping scrolling
 }
 
 /*
@@ -545,7 +566,7 @@ void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 	mainwindow_statusbar_update_zoomscale();
 
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
-	mainwindow_set_draw_pretty_timeout();
+	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 }
 
 //
@@ -557,6 +578,8 @@ void mainwindow_set_zoomlevel(gint nZoomLevel)
         g_signal_handlers_block_by_func(g_MainWindow.m_pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), nZoomLevel);
 	g_signal_handlers_unblock_by_func(g_MainWindow.m_pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
+
+	mainwindow_statusbar_update_zoomscale();
 }
 
 static void zoom_in_one(void)
@@ -588,22 +611,22 @@ static void gui_set_tool(EToolType eTool)
 
 void mainwindow_on_aboutmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-	const gchar *ppAuthors[] = {
-		"Ian McIntosh <ian_mcintosh@linuxadvocate.org>",
-		"Nathan Fredrickson <nathan@silverorange.com>",
-		NULL
-	};
-
-  	GtkWidget *pAboutWindow = gnome_about_new(
-	  				PROGRAM_NAME,
-	  				VERSION,
-					PROGRAM_COPYRIGHT,
-					PROGRAM_DESCRIPTION,
-	  				(const gchar **) ppAuthors,
-					NULL,
-	 				NULL,
-					NULL);
-	gtk_widget_show(pAboutWindow);
+//         const gchar *ppAuthors[] = {
+//                 "Ian McIntosh <ian_mcintosh@linuxadvocate.org>",
+//                 "Nathan Fredrickson <nathan@silverorange.com>",
+//                 NULL
+//         };
+//
+//         GtkWidget *pAboutWindow = gnome_about_new(
+//                                         PROGRAM_NAME,
+//                                         VERSION,
+//                                         PROGRAM_COPYRIGHT,
+//                                         PROGRAM_DESCRIPTION,
+//                                         (const gchar **) ppAuthors,
+//                                         NULL,
+//                                         NULL,
+//                                         NULL);
+//         gtk_widget_show(pAboutWindow);
 }
 
 // Toggle toolbar visibility
@@ -627,13 +650,15 @@ void mainwindow_on_sidebarmenuitem_activate(GtkMenuItem *menuitem, gpointer user
 void mainwindow_on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	zoom_in_one();
-	mainwindow_draw_map(DRAWFLAG_ALL);
+	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 }
 
 void mainwindow_on_zoomout_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	zoom_out_one();
-	mainwindow_draw_map(DRAWFLAG_ALL);
+	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 }
 
 void mainwindow_on_fullscreenmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -724,11 +749,11 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				g_MainWindow.m_bScrolling = TRUE;
 				g_MainWindow.m_eScrollDirection = eScrollDirection;
 
-				mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
+				// XXX: s.garrity asked for a single click to scroll once, BUT when we added double-click to slide
+				// it resulted in weird behavior
+		//		mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
+				
 				mainwindow_set_scroll_timeout();
-				//}
-				//gdk_cursor_unref(pCursor);
-
 			}
 			else {
 				// else begin a drag
@@ -773,8 +798,21 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			}
 		}
 		else if(event->type == GDK_2BUTTON_PRESS) {
-			mainwindow_map_center_on_windowpoint(nX, nY);
-			mainwindow_draw_map(DRAWFLAG_ALL);
+			
+			animator_destroy(g_MainWindow.m_pAnimator);
+
+			g_MainWindow.m_bSliding = TRUE;
+			g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS);
+
+			// set startpoint
+			map_get_centerpoint(g_MainWindow.m_pMap, &g_MainWindow.m_ptSlideStartLocation);
+
+			// set endpoint
+			screenpoint_t ptScreenPoint = {nX, nY};
+			map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &ptScreenPoint, &(g_MainWindow.m_ptSlideEndLocation));
+
+//			map_center_on_windowpoint(g_MainWindow.m_pMap, nX, nY);
+//			mainwindow_draw_map(DRAWFLAG_ALL);
 		}
 	}
 	// Right-click?
@@ -796,17 +834,16 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 {
         gint nX,nY;
-	gint nState;
+
 	if (event->is_hint) {
-		gdk_window_get_pointer(event->window, &nX, &nY, &nState);
+		gdk_window_get_pointer(w->window, &nX, &nY, NULL);
 	}
 	else
 	{
 		nX = event->x;
 		nY = event->y;
-		nState = event->state;
+		//nState = event->state;
 	}
-
 
 	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
 	gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
@@ -826,7 +863,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 
 		mainwindow_map_center_on_windowpoint((nWidth / 2) + nDeltaX, (nHeight / 2) + nDeltaY);
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
-		mainwindow_set_draw_pretty_timeout();
+		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_DRAG_TIMEOUT_MS);
 
 		g_MainWindow.m_ptClickLocation.m_nX = nX;
 		g_MainWindow.m_ptClickLocation.m_nY = nY;
@@ -869,28 +906,31 @@ static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 	if(event->direction == GDK_SCROLL_UP) {
 		zoom_in_one();
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
-		mainwindow_set_draw_pretty_timeout();
+		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 	}
 	else if(event->direction == GDK_SCROLL_DOWN) {
 		zoom_out_one();
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
-		mainwindow_set_draw_pretty_timeout();
+		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 	}
 }
 
 static void mainwindow_begin_import_geography_data(void)
 {
+g_print("starting..\n");
+
 	GtkWidget* pDialog = gtk_file_chooser_dialog_new(
 				"Select Map Data for Import",
-                g_MainWindow.m_pWindow,
-                GTK_FILE_CHOOSER_ACTION_OPEN,
-    			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                		g_MainWindow.m_pWindow,
+		                GTK_FILE_CHOOSER_ACTION_OPEN,
+    				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 				"Import", GTK_RESPONSE_ACCEPT,
 				NULL);
-
+g_print("setting..\n");
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(pDialog), TRUE);
 	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pWindow), FALSE);
-	
+
+g_print("running..\n");
 	gint nResponse = gtk_dialog_run(GTK_DIALOG(pDialog));
 	gtk_widget_hide(pDialog);
 
@@ -957,7 +997,7 @@ static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfi
 	map_set_dimensions(g_MainWindow.m_pMap, &dim);
 
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
-	mainwindow_set_draw_pretty_timeout();
+	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_RESIZE_TIMEOUT_MS);
 	return TRUE;
 }
 
@@ -1044,6 +1084,46 @@ static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 			else {
 				g_assert_not_reached();
 			}
+		}
+	}
+	return TRUE;
+}
+
+static gboolean mainwindow_callback_on_slide_timeout(gpointer pData)
+{
+	if(g_MainWindow.m_bSliding) {
+		g_assert(g_MainWindow.m_pAnimator != NULL);
+
+		// Figure out the progress along the path and interpolate 
+		// between startpoint and endpoint
+
+		gdouble fPercent = animator_get_progress(g_MainWindow.m_pAnimator);
+		gboolean bDone = animator_is_done(g_MainWindow.m_pAnimator);
+		if(bDone) {
+			animator_destroy(g_MainWindow.m_pAnimator);
+			g_MainWindow.m_pAnimator = NULL;
+			g_MainWindow.m_bSliding = FALSE;
+
+			fPercent = 1.0;
+
+			// should we delete the timer?
+		}
+
+		gdouble fDeltaLat = g_MainWindow.m_ptSlideEndLocation.m_fLatitude - g_MainWindow.m_ptSlideStartLocation.m_fLatitude;
+		gdouble fDeltaLon = g_MainWindow.m_ptSlideEndLocation.m_fLongitude - g_MainWindow.m_ptSlideStartLocation.m_fLongitude;
+
+		mappoint_t ptNew;
+		ptNew.m_fLatitude = g_MainWindow.m_ptSlideStartLocation.m_fLatitude + (fPercent * fDeltaLat);
+		ptNew.m_fLongitude = g_MainWindow.m_ptSlideStartLocation.m_fLongitude + (fPercent * fDeltaLon);
+
+		mainwindow_map_center_on_mappoint(&ptNew);
+		if(bDone) {
+			// when done, draw a full frame
+			mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+			mainwindow_draw_map(DRAWFLAG_ALL);
+		}
+		else {
+			mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 		}
 	}
 	return TRUE;

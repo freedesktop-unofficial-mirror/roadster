@@ -1,3 +1,15 @@
+2005-03-18  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/animator.h:
+	* src/animator.c: New files.  Animates from 0.0 to 1.0 in various ways.
+	* src/main.c: Add init for animator.c.
+	* src/mainwindow.c: Add smoothly animated recentering.  Add different "draw pretty" timeout values for different operations.
+	* src/gpsclient.c: Disabled temporarily, since we're not using it.
+	* src/map_draw_cairo.c: Set font once per layer.  Do crude bounding box test for all objects (prevents nasty Cairo/X swap-death).
+	* src/map_draw_gdk.c: Do crude bounding box test for all objects (faster).
+	* src/welcomewindow.c: Point to new 2004 TIGER data.
+	* data/layers.xml: Style tweaks.
+
 2005-03-16  Carl Worth  <cworth@cworth.org>
 
 	* README: Clean up URL.
