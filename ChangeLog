@@ -1,4 +1,9 @@
 2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* configure.ac: Added.
+	* Header files actually moved.
+
+2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 	
 	* Major build file cleanup by Nathan Fredrickson <nathan@silverorange.com>
 	* All header files moved into src/

@@ -84,6 +84,22 @@ struct {
 	{"Run", "Run"},
 	{"Pass", "Pass"},
 	
+	{"Freeway", "Fwy"},
+	{"Alley", "Aly"},
+	{"Crescent", "Cres"},
+	{"Tunnel", "Tunl"},
+	{"Walk", "Walk"},
+	{"Terrace", "Trce"},
+	{"Branch", "Br"},
+	{"Cove", "Cv"},
+	{"Bypass", "Byp"},
+	{"Loop", "Loop"},
+	{"Spur", "Spur"},
+	{"Ramp", "Ramp"},
+	{"Pike", "Pike"},
+	{"Grade", "Grd"},
+	{"Route", "Rte"},
+	{"Arc", "Arc"},
 };
 
 struct {
@@ -158,6 +174,47 @@ struct {
 	{"Run", ROAD_SUFFIX_RUN},
 
 	{"Pass", ROAD_SUFFIX_PASS},
+
+	{"Freeway", ROAD_SUFFIX_FREEWAY},
+	{"Fwy", ROAD_SUFFIX_FREEWAY},
+	
+	{"Alley", ROAD_SUFFIX_ALLEY},
+	{"Aly", ROAD_SUFFIX_ALLEY},
+	
+	{"Crescent", ROAD_SUFFIX_CRESCENT},
+	{"Cres", ROAD_SUFFIX_CRESCENT},
+	
+	{"Tunnel", ROAD_SUFFIX_TUNNEL},
+	{"Tunl", ROAD_SUFFIX_TUNNEL},
+	
+	{"Walk", ROAD_SUFFIX_WALK},
+	{"Walk", ROAD_SUFFIX_WALK},
+	
+	{"Branch", ROAD_SUFFIX_BRANCE},
+	{"Br", ROAD_SUFFIX_BRANCE},
+	
+	{"Cove", ROAD_SUFFIX_COVE},
+	{"Cv", ROAD_SUFFIX_COVE},
+	
+	{"Bypass", ROAD_SUFFIX_BYPASS},
+	{"Byp", ROAD_SUFFIX_BYPASS},
+	
+	{"Loop", ROAD_SUFFIX_LOOP},
+	
+	{"Spur", ROAD_SUFFIX_SPUR},
+	
+	{"Ramp", ROAD_SUFFIX_RAMP},
+	
+	{"Pike", ROAD_SUFFIX_PIKE},
+	
+	{"Grade", ROAD_SUFFIX_GRADE},
+	{"Grd", ROAD_SUFFIX_GRADE},
+	
+	{"Route", ROAD_SUFFIX_ROUTE},
+	{"Rte", ROAD_SUFFIX_ROUTE},
+	
+	{"Arc", ROAD_SUFFIX_ARC},
+
 };
 
 #define SCALE_X(p, x)  ((((x) - (p)->m_rWorldBoundingBox.m_A.m_fLongitude) / (p)->m_fScreenLongitude) * (p)->m_nWindowWidth)
