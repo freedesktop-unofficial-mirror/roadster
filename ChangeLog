@@ -1,3 +1,9 @@
+2005-02-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* db.c: Added City and State tables and functions to search / add them.
+	* import_tiger.c: Extract City, State, and ZIP and save them to DB.  Fix bug in ALL tables where the last row wasn't being imported.
+	* search_road.c: Display City, State, and ZIP in results list.
+
 2005-02-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 	
 	* track.c:

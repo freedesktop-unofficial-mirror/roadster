@@ -36,6 +36,7 @@
 #define TIGER_RT2_LINE_LENGTH				(210)
 #define TIGER_RT7_LINE_LENGTH				(76)
 #define TIGER_RT8_LINE_LENGTH				(38)
+#define TIGER_RTc_LINE_LENGTH				(124)
 #define TIGER_RTi_LINE_LENGTH				(129)
 
 #define LINE_LENGTH_MAX						(2000)	// mostly (only?) for the .MET file
@@ -49,6 +50,15 @@
 
 #define ROWS_PER_PULSE						(18000)		// call import_progress_pulse() after this many rows parsed
 #define CALLBACKS_PER_PULSE					(30)		// call " after this many iterations over hash tables (writing to DB)
+
+typedef struct {
+	gchar* m_pszCode;
+	gchar* m_pszName;
+} state_t;
+
+extern state_t g_aStates[79];
+
+gint g_nStateID = 0;		// this is set during import process
 
 typedef enum {
 	IMPORT_RECORD_OK,
@@ -67,8 +77,15 @@ typedef struct tiger_record_rt1
 	gint m_nAddressLeftEnd;
 	gint m_nAddressRightStart;
 	gint m_nAddressRightEnd;
+
+	gint m_nZIPCodeLeft;
+	gint m_nZIPCodeRight;
+
 	char m_achName[TIGER_CHAIN_NAME_LEN + 1];
 	gint m_nRoadNameSuffixID;
+
+	gint m_nFIPS55Left;
+	gint m_nFIPS55Right;
 
 	gint m_nCountyIDLeft;	// if left and right are in diff counties, we've found a boundary line!
 	gint m_nCountyIDRight;
@@ -109,20 +126,31 @@ typedef struct tiger_import_process {
 
 	GHashTable* m_pTableRT1;
 	GHashTable* m_pTableRT2;
-	GHashTable* m_pTableRTi;
 	GHashTable* m_pTableRT7;
 	GHashTable* m_pTableRT8;
+	GHashTable* m_pTableRTi;
+	GHashTable* m_pTableRTc;
 
 	GPtrArray* m_pBoundaryRT1s;
 } tiger_import_process_t;
 
-// indexed by POLYID
 typedef struct tiger_record_rti
 {
 	// store a list of TLIDs for a polygonID
 	gint m_nPOLYID;	// index
 	GPtrArray* m_pRT1LinksArray;
 } tiger_record_rti_t;
+
+#define TIGER_CITY_NAME_LEN 	(60)
+#define TIGER_FIPS55_LEN		(5)
+typedef struct tiger_record_rtc
+{
+	// store a list of city names
+	gint m_nFIPS55;	// index
+	char m_achName[TIGER_CITY_NAME_LEN + 1];	// note the +1!!
+	gint m_nCityID;								// a database ID, stored here after it is inserted
+} tiger_record_rtc_t;
+
 
 static gboolean import_tiger_read_lat(gint8* pBuffer, gdouble* pValue)
 {
@@ -432,7 +460,7 @@ static gboolean import_tiger_parse_MET(const gchar* pszMET, tiger_import_process
 static gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTable* pTable, GPtrArray* pBoundaryRT1s)
 {
 	gint i;
-	for(i=0 ; i<(nLength-TIGER_RT1_LINE_LENGTH) ; i+=TIGER_RT1_LINE_LENGTH) {
+	for(i=0 ; i<=(nLength-TIGER_RT1_LINE_LENGTH) ; i+=TIGER_RT1_LINE_LENGTH) {
 		if((i%ROWS_PER_PULSE) == 0) importwindow_progress_pulse();
 
 		gchar* pLine = &pBuffer[i];
@@ -450,9 +478,17 @@ static gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTa
 		import_tiger_read_address(&pLine[81-1], 11, &pRecord->m_nAddressRightStart);
 		import_tiger_read_address(&pLine[92-1], 11, &pRecord->m_nAddressRightEnd);
 
+		// columns 107-111 and 112-116 are zip codes
+		import_tiger_read_int(&pLine[107-1], 5, &pRecord->m_nZIPCodeLeft);
+		import_tiger_read_int(&pLine[112-1], 5, &pRecord->m_nZIPCodeRight);
+
 		// columns 6 to 15 is the TLID -
 		import_tiger_read_int(&pLine[6-1], TIGER_TLID_LENGTH, &pRecord->m_nTLID);
 		import_tiger_read_string(&pLine[20-1], TIGER_CHAIN_NAME_LEN, &pRecord->m_achName[0]);
+
+		// columns 141-145 and 146-150 are FIPS55 codes which link this road to a city
+		import_tiger_read_int(&pLine[141-1], TIGER_FIPS55_LEN, &pRecord->m_nFIPS55Left);
+		import_tiger_read_int(&pLine[146-1], TIGER_FIPS55_LEN, &pRecord->m_nFIPS55Right);
 
 		// Read suffix name and convert it to an integer
 		gchar achType[5];
@@ -494,7 +530,7 @@ if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 static gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
-	for(i=0 ; i<(nLength-TIGER_RT2_LINE_LENGTH) ; i+=TIGER_RT2_LINE_LENGTH) {
+	for(i=0 ; i<=(nLength-TIGER_RT2_LINE_LENGTH) ; i+=TIGER_RT2_LINE_LENGTH) {
 		if((i%ROWS_PER_PULSE) == 0) importwindow_progress_pulse();
 
 		gchar* pLine = &pBuffer[i];
@@ -537,7 +573,7 @@ static gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTa
 static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
-	for(i=0 ; i<(nLength-TIGER_RT7_LINE_LENGTH) ; i+=TIGER_RT7_LINE_LENGTH) {
+	for(i=0 ; i<=(nLength-TIGER_RT7_LINE_LENGTH) ; i+=TIGER_RT7_LINE_LENGTH) {
 		if((i%ROWS_PER_PULSE) == 0) importwindow_progress_pulse();
 
 		gchar* pLine = &pBuffer[i];
@@ -571,7 +607,7 @@ static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTa
 static gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
-	for(i=0 ; i<(nLength-TIGER_RT8_LINE_LENGTH) ; i+=TIGER_RT8_LINE_LENGTH) {
+	for(i=0 ; i<=(nLength-TIGER_RT8_LINE_LENGTH) ; i+=TIGER_RT8_LINE_LENGTH) {
 		if((i%ROWS_PER_PULSE) == 0) importwindow_progress_pulse();
 
 		gchar* pLine = &pBuffer[i];
@@ -593,6 +629,33 @@ static gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTa
 	return TRUE;
 }
 
+static gboolean import_tiger_parse_table_c(gint8* pBuffer, gint nLength, GHashTable *pTable)
+{
+	gint i;
+	for(i=0 ; i<=(nLength-TIGER_RTc_LINE_LENGTH) ; i+=TIGER_RTc_LINE_LENGTH) {
+		if((i%ROWS_PER_PULSE) == 0) importwindow_progress_pulse();
+
+		gchar* pLine = &pBuffer[i];
+
+		// We only want Entity Type M (??)
+		char chEntityType = pLine[25-1];
+		if(chEntityType != 'M') continue;
+
+		tiger_record_rtc_t* pRecord;
+		pRecord = g_new0(tiger_record_rtc_t, 1);
+
+		// columns 15 to 19 is the FIPS number (links roads to cities)
+		import_tiger_read_int(&pLine[15-1], TIGER_FIPS55_LEN, &pRecord->m_nFIPS55);
+		import_tiger_read_string(&pLine[63-1], TIGER_CITY_NAME_LEN, &pRecord->m_achName[0]);
+		
+g_print("record c: FIPS55=%d NAME=%s\n", pRecord->m_nFIPS55, pRecord->m_achName);
+
+		// add to table
+		g_hash_table_insert(pTable, &pRecord->m_nFIPS55, pRecord);
+	}
+	return TRUE;
+}
+
 
 static gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
@@ -600,7 +663,7 @@ static gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTa
 	// Gather RTi records (chainID,TZID-A,TZID-B) and index them by POLYGON ID in the given hash table
 	//
 	gint i;
-	for(i=0 ; i<(nLength-TIGER_RTi_LINE_LENGTH) ; i+=TIGER_RTi_LINE_LENGTH) {
+	for(i=0 ; i<=(nLength-TIGER_RTi_LINE_LENGTH) ; i+=TIGER_RTi_LINE_LENGTH) {
 		gchar* pLine = &pBuffer[i];
 
 		gint nTLID;
@@ -610,24 +673,24 @@ static gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTa
 
 		// 11-20 is the TLID
 		import_tiger_read_int(&pLine[11-1], TIGER_TLID_LENGTH, &nTLID);
+		
 		// 46-55 is left polygon id
 		import_tiger_read_int(&pLine[46-1], TIGER_POLYID_LENGTH, &nLeftPolygonID);
-		// 61-70 is left polygon id
+		// 61-70 is right polygon id
 		import_tiger_read_int(&pLine[61-1], TIGER_POLYID_LENGTH, &nRightPolygonID);
 
-		// zero-cell for start point is 21-30
+		// 21-30 is zero-cell for start point
 		gint nZeroCellA;
 		import_tiger_read_int(&pLine[21-1], TIGER_ZEROCELL_LENGTH, &nZeroCellA);
-
-		// zero-cell for end point is 31-40
+		// 31-40 is zero-cell for end point
 		gint nZeroCellB;
 		import_tiger_read_int(&pLine[31-1], TIGER_ZEROCELL_LENGTH, &nZeroCellB);
 
-		if(nZeroCellA == nZeroCellB) {
-			// we can't link this with anything..?
-			//g_print("nZeroCellA == nZeroCellB\n");
-			continue;
-		}
+//         if(nZeroCellA == nZeroCellB) {
+//             // we can't link this with anything..?
+//             //g_print("nZeroCellA == nZeroCellB\n");
+//             continue;
+//         }
 
 		if(nLeftPolygonID != 0) {
 			// is there an existing RTi for this POLYID?
@@ -702,15 +765,49 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 	}
 	g_ptr_array_add(pTempPointsArray, &pRecordRT1->m_PointB);
 
+	// use RT1's FIPS code to lookup related RTc record, which contains a CityID
+	gint nCityLeftID=0;
+	gint nCityRightID=0;
+
+	tiger_record_rtc_t* pRecordRTc;
+
+	// lookup left CityID, if the FIPS is valid
+	if(pRecordRT1->m_nFIPS55Left != 0) {
+		pRecordRTc = g_hash_table_lookup(pImportProcess->m_pTableRTc, &pRecordRT1->m_nFIPS55Left);
+		if(pRecordRTc) {
+			nCityLeftID = pRecordRTc->m_nCityID;
+		}
+		else {
+			g_warning("couldn't lookup CityID by FIPS %d for road %s\n", pRecordRT1->m_nFIPS55Left, pRecordRT1->m_achName);
+		}
+	}
+
+	// lookup right CityID, if the FIPS is valid
+	if(pRecordRT1->m_nFIPS55Right != 0) {
+		pRecordRTc = g_hash_table_lookup(pImportProcess->m_pTableRTc, &pRecordRT1->m_nFIPS55Right);
+		if(pRecordRTc) {
+			nCityRightID = pRecordRTc->m_nCityID;
+		}
+		else {
+			g_warning("couldn't lookup city ID by FIPS %d for road %s\n", pRecordRT1->m_nFIPS55Right, pRecordRT1->m_achName);
+		}
+	}
+
 	// insert, then free temp array
 	if(pRecordRT1->m_nRecordType != LAYER_NONE) {
+		gchar azZIPCodeLeft[6];
+		g_snprintf(azZIPCodeLeft, 6, "%05d", pRecordRT1->m_nZIPCodeLeft);
+		gchar azZIPCodeRight[6];
+		g_snprintf(azZIPCodeRight, 6, "%05d", pRecordRT1->m_nZIPCodeRight);
+
 		gint nRoadID;
-		
 		db_insert_road(pRecordRT1->m_nRecordType,
 			pRecordRT1->m_nAddressLeftStart,
 			pRecordRT1->m_nAddressLeftEnd,
 			pRecordRT1->m_nAddressRightStart,
 			pRecordRT1->m_nAddressRightEnd,
+			nCityLeftID, nCityRightID,
+			azZIPCodeLeft, azZIPCodeRight,
 			pTempPointsArray, &nRoadID);
 		if(pRecordRT1->m_achName[0] != '\0') {
 			//printf("inserting road name %s\n", pRecordRT1->m_achName);
@@ -759,6 +856,18 @@ static void tiger_util_add_RT1_points_to_array(tiger_import_process_t* pImportPr
 		}
 		g_ptr_array_add(pPointsArray, &pRecordRT1->m_PointA);
 	}
+}
+
+static void callback_save_rtc_cities(gpointer key, gpointer value, gpointer user_data)
+{
+	tiger_record_rtc_t* pRecordRTc = (tiger_record_rtc_t*)value;
+	g_assert(pRecordRTc != NULL);
+
+	gint nCityID = 0;
+	if(!db_insert_city(pRecordRTc->m_achName, g_nStateID, &nCityID)) {
+		g_warning("insert city %s failed\n", pRecordRTc->m_achName);
+	}
+	pRecordRTc->m_nCityID = nCityID;
 }
 
 static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data)
@@ -876,11 +985,19 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 			g_print("Found a polygon that doesn't loop %s\n", pRecordRT7->m_achName);
 		}
 
+		// XXX: looking up a city for a polygon?  unimplemented.
+		gint nCityLeftID = 0;
+		gchar* pszZIPCodeLeft = "";
+		gint nCityRightID = 0;
+		gchar* pszZIPCodeRight = "";
+
 		// insert record
 		if(pRecordRT7->m_nRecordType != LAYER_NONE) {
 			gint nRoadID;
 			db_insert_road(pRecordRT7->m_nRecordType,
 				0,0,0,0,
+				nCityLeftID, nCityRightID,
+				pszZIPCodeLeft, pszZIPCodeRight,
 				pTempPointsArray, &nRoadID);
 
 			if(pRecordRT7->m_achName[0] != '\0') {
@@ -906,7 +1023,7 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 //
 //
 static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint nTigerSetNumber);
-static gboolean import_tiger_from_buffers(gint8* pBufferMET, gint nLengthMET, gint8* pBufferRT1, gint nLengthRT1, gint8* pBufferRT2, gint nLengthRT2,	gint8* pBufferRT7, gint nLengthRT7,	gint8* pBufferRT8, gint nLengthRT8, gint8* pBufferRTi, gint nLengthRTi);
+static gboolean import_tiger_from_buffers(gint8* pBufferMET, gint nLengthMET, gint8* pBufferRT1, gint nLengthRT1, gint8* pBufferRT2, gint nLengthRT2,	gint8* pBufferRT7, gint nLengthRT7,	gint8* pBufferRT8, gint nLengthRT8, gint8* pBufferRTc, gint nLengthRTc, gint8* pBufferRTi, gint nLengthRTi);
 
 gboolean import_tiger_from_uri(const gchar* pszURI, gint nTigerSetNumber)
 {
@@ -930,7 +1047,7 @@ gboolean import_tiger_from_uri(const gchar* pszURI, gint nTigerSetNumber)
 	//
 	// Create unzip command line
 	//
-	gchar* pszCommandLine = g_strdup_printf("unzip -qq -o -j %s -d %s -x *RT4 *RT5 *RT6 *RTA *RTC *RTE *RTH *RTP *RTR *RTT *RTS *RTZ", pszLocalFilePath, pszTempDir);
+	gchar* pszCommandLine = g_strdup_printf("unzip -qq -o -j %s -d %s -x *RT4 *RT5 *RT6 *RTA *RTE *RTH *RTP *RTR *RTT *RTS *RTZ", pszLocalFilePath, pszTempDir);
 	// NOTE: to use other TIGER file types, remove them from the 'exclude' list (-x)
 	// -qq = be very quiet (no output)
 	// -o = overwrite files without prompting
@@ -971,9 +1088,9 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 
 	gchar* pszFilePath;
 
-	gchar* apszExtensions[6] = {"MET", "RT1", "RT2", "RT7", "RT8", "RTI"};	
-	gint8* apBuffers[6] = {0};
-	gint nSizes[6] = {0};
+	gchar* apszExtensions[7] = {"MET", "RT1", "RT2", "RT7", "RT8", "RTC", "RTI"};	
+	gint8* apBuffers[NUM_ELEMS(apszExtensions)] = {0};
+	gint nSizes[NUM_ELEMS(apszExtensions)] = {0};
 
 	// open, read, and delete (unlink) each file
 	gint i;
@@ -989,8 +1106,14 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 
 	// did we read all files?
 	if(bSuccess) {
-		g_assert(NUM_ELEMS(apszExtensions) == 6);
-		bSuccess = import_tiger_from_buffers(apBuffers[0], nSizes[0], apBuffers[1], nSizes[1], apBuffers[2], nSizes[2], apBuffers[3], nSizes[3], apBuffers[4], nSizes[4], apBuffers[5], nSizes[5]);
+		gint nStateID = (nTigerSetNumber / 1000);	// int division (eg. turn 25017 into 25)
+		if(nStateID < NUM_ELEMS(g_aStates)) {
+			gint nCountryID = 1;	// USA is #1 *gag*
+			db_insert_state(g_aStates[nStateID].m_pszName, g_aStates[nStateID].m_pszCode, nCountryID, &g_nStateID);
+		}
+
+		g_assert(NUM_ELEMS(apszExtensions) == 7);
+		bSuccess = import_tiger_from_buffers(apBuffers[0], nSizes[0], apBuffers[1], nSizes[1], apBuffers[2], nSizes[2], apBuffers[3], nSizes[3], apBuffers[4], nSizes[4], apBuffers[5], nSizes[5], apBuffers[6], nSizes[6]);
 	}
 	for(i=0 ; i<NUM_ELEMS(apszExtensions) ; i++) {
 		g_free(apBuffers[i]); // can be null
@@ -1004,6 +1127,7 @@ static gboolean import_tiger_from_buffers(
 	gint8* pBufferRT2, gint nLengthRT2,
 	gint8* pBufferRT7, gint nLengthRT7,
 	gint8* pBufferRT8, gint nLengthRT8,
+	gint8* pBufferRTc, gint nLengthRTc,
 	gint8* pBufferRTi, gint nLengthRTi)
 {
 	//	g_hash_table_lookup
@@ -1061,6 +1185,11 @@ static gboolean import_tiger_from_buffers(
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
 
+	g_print("parsing RTc\n");
+	importProcess.m_pTableRTc = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	import_tiger_parse_table_c(pBufferRTc, nLengthRTc, importProcess.m_pTableRTc);
+	g_print("RTc: %d records\n", g_hash_table_size(importProcess.m_pTableRTc));
+
 	g_print("parsing RTi\n");
 	importProcess.m_pTableRTi = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
 	import_tiger_parse_table_i(pBufferRTi, nLengthRTi, importProcess.m_pTableRTi);
@@ -1069,15 +1198,32 @@ static gboolean import_tiger_from_buffers(
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
 
-	// Now stitch them together
+	//
+	// Insert cities first
+	//
+	g_print("iterating over RTc cities...\n");
+	g_hash_table_foreach(importProcess.m_pTableRTc, callback_save_rtc_cities, &importProcess);
+	g_print("done.\n");
+	
+	importwindow_log_append(".");
+	importwindow_progress_pulse();
+
+	//
+	// Stitch and insert polygons
+	//
 	g_print("iterating over RTi polygons...\n");
 	g_hash_table_foreach(importProcess.m_pTableRTi, callback_save_rti_polygons, &importProcess);
+	g_print("done.\n");
 
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
 
+	//
+	// Roads
+	//
 	g_print("iterating over RT1 chains...\n");
 	g_hash_table_foreach(importProcess.m_pTableRT1, callback_save_rt1_chains, &importProcess);
+	g_print("done.\n");
 	
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
@@ -1089,6 +1235,7 @@ static gboolean import_tiger_from_buffers(
 	g_hash_table_destroy(importProcess.m_pTableRT2);
 	g_hash_table_destroy(importProcess.m_pTableRT7);
 	g_hash_table_destroy(importProcess.m_pTableRT8);
+	g_hash_table_destroy(importProcess.m_pTableRTc);
 	g_hash_table_destroy(importProcess.m_pTableRTi);
 	g_free(importProcess.m_pszFileDescription);
 
@@ -1109,3 +1256,72 @@ static void debug_print_string(char* str, gint len)
 }
 #endif
 
+state_t g_aStates[79] = {
+			{"", 	""},	// NOTE: these are in the proper order to line up with the TIGER data's FIPS code.  don't mess with them. :)
+/* 1 */		{"AL", 	"Alabama"},
+/* 2 */		{"AK", 	"Alaska"},
+/* 3 */		{"", 	""},	// unused
+/* 4 */		{"AZ", 	"Arizona"},
+/* 5 */		{"AR", 	"Arkansas"},
+/* 6 */		{"CA", 	"California"},
+/* 7 */		{"", 	""},
+/* 8 */		{"CO", 	"Colorado"},
+/* 9 */		{"CT", 	"Connecticut"},
+/* 10 */	{"DE", 	"Delaware"},
+/* 11 */	{"DC", 	"District of Columbia"},
+/* 12 */	{"FL", 	"Florida"},
+/* 13 */	{"GA", 	"Georgia"},
+/* 14 */	{"", 	""},
+/* 15 */	{"HI", 	"Hawaii"},
+/* 16 */	{"ID", 	"Idaho"},
+/* 17 */	{"IL", 	"Illinois"},
+/* 18 */	{"IN", 	"Indiana"},
+/* 19 */	{"IA", 	"Iowa"},
+/* 20 */	{"KS", 	"Kansas"},
+/* 21 */	{"KY", 	"Kentucky"},
+/* 22 */	{"LA", 	"Louisiana"},
+/* 23 */	{"ME", 	"Maine"},
+/* 24 */	{"MD", 	"Maryland"},
+/* 25 */	{"MA", 	"Massachusetts"},
+/* 26 */	{"MI", 	"Michigan"},
+/* 27 */	{"MN", 	"Minnesota"},
+/* 28 */	{"MS", 	"Mississippi"},
+/* 29 */	{"MO", 	"Missouri"},
+/* 30 */	{"MT", 	"Montana"},
+/* 31 */	{"NE", 	"Nebraska"},
+/* 32 */	{"NV", 	"Nevade"},
+/* 33 */	{"NH", 	"New Hampshire"},
+/* 34 */	{"NJ", 	"New Jersey"},
+/* 35 */	{"NM", 	"New Mexico"},
+/* 36 */	{"NY", 	"New York"},
+/* 37 */	{"NC", 	"North Carolina"},
+/* 38 */	{"ND", 	"North Dakota"},
+/* 39 */	{"OH", 	"Ohio"},
+/* 40 */	{"OK", 	"Oklahoma"},
+/* 41 */	{"OR", 	"Oregon"},
+/* 42 */	{"PA", 	"Pennsylvania"},
+/* 43 */	{"", 	""},
+/* 44 */	{"RI", 	"Rhode Island"},
+/* 45 */	{"SC", 	"South Carolina"},
+/* 46 */	{"SD", 	"South Dakota"},
+/* 47 */	{"TN", 	"Tennessee"},
+/* 48 */	{"TX", 	"Texas"},
+/* 49 */	{"UT", 	"Utah"},
+/* 50 */	{"VT", 	"Vermont"},
+/* 51 */	{"VA", 	"Virginia"},
+/* 52 */	{"", 	""},
+/* 53 */	{"WA", 	"Washington"},
+/* 54 */	{"WV", 	"West Virginia"},
+/* 55 */	{"WI", 	"Wisconsin"},
+/* 56 */	{"WY", 	"Wyoming"},
+/* 57-59 */	{"", 	""},{"", 	""},{"", 	""},
+/* 60 */	{"AS", 	"American Samoa"},
+/* 61-65 */	{"", 	""},{"", 	""},{"", 	""},{"", 	""},{"", 	""},
+/* 66 */	{"GU", 	"Guam"},
+/* 67-68 */	{"", 	""}, {"", 	""},
+/* 69 */	{"MP", 	"Northern Mariana Islands"},
+/* 70-71 */	{"", 	""},{"", 	""},
+/* 72 */	{"PR", 	"Puerto Rico"},
+/* 73-77 */	{"", 	""},{"", 	""},{"", 	""},{"", 	""},{"", 	""},
+/* 78 */	{"VI", 	"Virgin Islands"},
+};

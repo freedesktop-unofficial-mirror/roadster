@@ -56,8 +56,6 @@ const gchar* db_get_connection_info(void);
 // utility
 gboolean db_is_empty(void);
 
-gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, GPtrArray* pPointsArray, gint* pReturnID);
-
 gboolean db_insert_roadname(gint nRoadID, const gchar* pszName, gint nSuffixID);
 
 //~ gboolean db_create_points_db(const gchar* name);
@@ -83,5 +81,13 @@ void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gbo
 
 void db_enable_keys(void);
 void db_disable_keys(void);
+
+gboolean db_insert_city(const gchar* pszName, gint nStateID, gint* pnReturnCityID);
+gboolean db_insert_road(gint nLayerType,
+							gint nAddressLeftStart, gint nAddressLeftEnd,
+							gint nAddressRightStart, gint nAddressRightEnd,
+							gint nCityLeftID, gint nCityRightID,
+							const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight,
+							GPtrArray* pPointsArray, gint* pReturnID);
 
 #endif

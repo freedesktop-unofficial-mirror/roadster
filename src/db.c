@@ -23,6 +23,8 @@
 
 #include <mysql.h>
 
+#define HAVE_MYSQL_EMBED
+
 #ifdef HAVE_MYSQL_EMBED
 # include <mysql_embed.h>
 #endif
@@ -299,7 +301,7 @@ static void db_disconnect(void)
 /******************************************************
 ** data inserting
 ******************************************************/
-gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, GPtrArray* pPointsArray, gint* pReturnID)
+gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GPtrArray* pPointsArray, gint* pReturnID)
 {
 	g_assert(pReturnID != NULL);
 	if(!db_is_connected()) return FALSE;
@@ -322,11 +324,13 @@ gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLe
 	gchar azQuery[MAX_SQLBUFFER_LEN];
 	g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
 		"INSERT INTO %s SET TypeID=%d, Coordinates=GeometryFromText('LINESTRING(%s)')"
-		", AddressLeftStart=%d, AddressLeftEnd=%d, AddressRightStart=%d, AddressRightEnd=%d",
-		DB_ROADS_TABLENAME,
-		nLayerType,
-		azCoordinateList,
-		nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRightEnd);
+		", AddressLeftStart=%d, AddressLeftEnd=%d, AddressRightStart=%d, AddressRightEnd=%d"
+		", CityLeftID=%d, CityRightID=%d"
+		", ZIPCodeLeft='%s', ZIPCodeRight='%s'",
+		DB_ROADS_TABLENAME, nLayerType, azCoordinateList,
+	    nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRightEnd,
+		nCityLeftID, nCityRightID,
+		pszZIPCodeLeft, pszZIPCodeRight);
 
 	if(MYSQL_RESULT_SUCCESS != mysql_query(g_pDB->m_pMySQLConnection, azQuery)) {
 		g_warning("db_insert_road failed: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), azQuery);
@@ -395,6 +399,120 @@ gboolean db_insert_roadname(gint nRoadID, const gchar* pszName, gint nSuffixID)
 		}
 	}
 	return FALSE;
+}
+
+//
+// insert / select city
+//
+
+// lookup numerical ID of a city by name
+static gboolean db_city_get_id(const gchar* pszName, gint* pnReturnID)
+{
+	gint nReturnID = 0;
+
+	// create SQL for selecting City.ID
+	gchar* pszSafeName = db_make_escaped_string(pszName);
+	gchar* pszSQL = g_strdup_printf("SELECT City.ID FROM City WHERE City.Name='%s';", pszSafeName);
+	db_free_escaped_string(pszSafeName);
+
+	// try query
+	db_resultset_t* pResultSet = NULL;
+	db_row_t aRow;
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+	// get result?
+	if(pResultSet) {
+		if((aRow = db_fetch_row(pResultSet)) != NULL) {
+			nReturnID = atoi(aRow[0]);
+		}
+		db_free_result(pResultSet);
+
+		if(nReturnID != 0) {
+			*pnReturnID = nReturnID;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+gboolean db_insert_city(const gchar* pszName, gint nStateID, gint* pnReturnCityID)
+{
+	gint nCityID = 0;
+
+	// Step 1. Insert into RoadName
+	if(db_city_get_id(pszName, &nCityID) == FALSE) {
+		gchar* pszSafeName = db_make_escaped_string(pszName);
+		gchar* pszSQL = g_strdup_printf("INSERT INTO City SET Name='%s', StateID=%d", pszSafeName, nStateID);
+		db_free_escaped_string(pszSafeName);
+
+		if(db_insert(pszSQL, NULL)) {
+			*pnReturnCityID = db_get_last_insert_id();
+		}
+		g_free(pszSQL);
+	}
+	else {
+		// already exists, use the existing one.
+		*pnReturnCityID = nCityID;
+	}
+	return TRUE;
+}
+
+
+//
+// insert / select state
+//
+// lookup numerical ID of a city by name
+static gboolean db_state_get_id(const gchar* pszName, gint* pnReturnID)
+{
+	gint nReturnID = 0;
+
+	// create SQL for selecting City.ID
+	gchar* pszSafeName = db_make_escaped_string(pszName);
+	gchar* pszSQL = g_strdup_printf("SELECT State.ID FROM State WHERE State.Name='%s';", pszSafeName);
+	db_free_escaped_string(pszSafeName);
+
+	// try query
+	db_resultset_t* pResultSet = NULL;
+	db_row_t aRow;
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+	// get result?
+	if(pResultSet) {
+		if((aRow = db_fetch_row(pResultSet)) != NULL) {
+			nReturnID = atoi(aRow[0]);
+		}
+		db_free_result(pResultSet);
+
+		if(nReturnID != 0) {
+			*pnReturnID = nReturnID;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+gboolean db_insert_state(const gchar* pszName, const gchar* pszCode, gint nCountryID, gint* pnReturnStateID)
+{
+	gint nStateID = 0;
+
+	// Step 1. Insert into RoadName
+	if(db_state_get_id(pszName, &nStateID) == FALSE) {
+		gchar* pszSafeName = db_make_escaped_string(pszName);
+		gchar* pszSafeCode = db_make_escaped_string(pszCode);
+		gchar* pszSQL = g_strdup_printf("INSERT INTO State SET Name='%s', Code='%s', CountryID=%d", pszSafeName, pszSafeCode, nCountryID);
+		db_free_escaped_string(pszSafeName);
+		db_free_escaped_string(pszSafeCode);
+
+		if(db_insert(pszSQL, NULL)) {
+			*pnReturnStateID = db_get_last_insert_id();
+		}
+		g_free(pszSQL);
+	}
+	else {
+		// already exists, use the existing one.
+		*pnReturnStateID = nStateID;
+	}
+	return TRUE;
 }
 
 
@@ -688,6 +806,10 @@ void db_create_tables()
 		" AddressLeftEnd INT2 UNSIGNED NOT NULL,"
 		" AddressRightStart INT2 UNSIGNED NOT NULL,"
 		" AddressRightEnd INT2 UNSIGNED NOT NULL,"
+	    " CityLeftID INT4 UNSIGNED NOT NULL,"
+		" CityRightID INT4 UNSIGNED NOT NULL,"
+		" ZIPCodeLeft CHAR(6) NOT NULL,"
+		" ZIPCodeRight CHAR(6) NOT NULL,"
 		" Coordinates point NOT NULL,"
 		
 	    // lots of indexes:
@@ -712,6 +834,28 @@ void db_create_tables()
 		
 	    " PRIMARY KEY (RoadID, RoadNameID),"	// allows search on (RoadID,RoadName) and just (RoadID)
 		" INDEX(RoadNameID));", NULL);			// allows search the other way, going from a Name to a RoadID
+
+	// City
+	db_query("CREATE TABLE IF NOT EXISTS City("
+		// a unique ID for the value
+		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
+		" StateID INT4 UNSIGNED NOT NULL,"
+		" Name CHAR(60) NOT NULL,"
+		" PRIMARY KEY (ID),"
+		" INDEX (StateID),"		// for finding all cities by state (needed?)
+		" INDEX (Name(15)));"	// only index the first X chars of name (who types more than that?) (are city names ever 60 chars anyway??  TIGER think so)
+	    ,NULL);
+
+	// State
+	db_query("CREATE TABLE IF NOT EXISTS State("
+		// a unique ID for the value
+		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
+	    " Name CHAR(40) NOT NULL,"
+	    " Code CHAR(3) NOT NULL,"		//
+		" CountryID INT4 NOT NULL,"		//
+		" PRIMARY KEY (ID),"
+		" INDEX (Name(15)));"	// only index the first X chars of name (who types more than that?)
+	    ,NULL);
 
 	// Location
 	db_query("CREATE TABLE IF NOT EXISTS Location("

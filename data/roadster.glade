@@ -264,6 +264,7 @@
 		      <child>
 			<widget class="GtkMenuItem" id="bookmark_this_location1">
 			  <property name="visible">True</property>
+			  <property name="sensitive">False</property>
 			  <property name="label" translatable="yes">Bookmark This Location...</property>
 			  <property name="use_underline">True</property>
 			</widget>
@@ -272,6 +273,7 @@
 		      <child>
 			<widget class="GtkMenuItem" id="manage_bookmarks1">
 			  <property name="visible">True</property>
+			  <property name="sensitive">False</property>
 			  <property name="label" translatable="yes">Manage Bookmarks...</property>
 			  <property name="use_underline">True</property>
 			</widget>
@@ -3050,7 +3052,7 @@ After downloading, select &quot;Import Map Data...&quot;  from the main window's
   </child>
 </widget>
 
-<widget class="GtkWindow" id="pointeditwindow">
+<widget class="GtkWindow" id="locationeditwindow">
   <property name="title" translatable="yes">Add Point</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_NONE</property>
