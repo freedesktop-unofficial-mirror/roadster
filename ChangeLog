@@ -1,3 +1,14 @@
+2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/point.c:
+	* src/track.c:
+	* src/location.c:
+	* src/locationset.c:
+	* src/pointstring.c: Change name of chunk allocators (just the text name used for debugging).
+	* src/pointstring.c: Pass TRUE to g_ptr_array_free to free array memory.  Properly free pointstring name.
+	* src/import_tiger.c: Pass TRUE to g_ptr_array_free to free array memory.
+	* src/map.c: Add assertion that cleanup behaves as expected.
+
 2005-03-10  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/map.c: Commented out scenemanager demo (rectangle).

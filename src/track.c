@@ -43,7 +43,7 @@ struct {
 void track_init(void)
 {
 	g_Tracks.m_pTracksHash = g_hash_table_new(g_int_hash, g_int_equal);
-	g_Tracks.g_pTrackChunkAllocator = g_mem_chunk_new("track chunk allocator",
+	g_Tracks.g_pTrackChunkAllocator = g_mem_chunk_new("ROADSTER tracks",
 			sizeof(track_t), 1000, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_Tracks.g_pTrackChunkAllocator != NULL);
 }

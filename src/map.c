@@ -582,6 +582,7 @@ static void map_data_clear(map_t* pMap)
 			pointstring_t* pPointString = g_ptr_array_remove_index_fast(pLayerData->m_pPointStringsArray, j);
 			pointstring_free(pPointString);
 		}
+		g_assert(pLayerData->m_pPointStringsArray->len == 0);
 	}
 }
 

@@ -818,7 +818,7 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 			azZIPCodeLeft, azZIPCodeRight,
 			pTempPointsArray, &nRoadID);
 	}
-	g_ptr_array_free(pTempPointsArray, FALSE);
+	g_ptr_array_free(pTempPointsArray, TRUE);
 }
 
 typedef enum {
@@ -1014,7 +1014,7 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 
 		}
 	}
-	g_ptr_array_free(pTempPointsArray, FALSE);
+	g_ptr_array_free(pTempPointsArray, TRUE);
 
 	// we SHOULD have used all RT1 links up!
 	if(pRecordRTi->m_pRT1LinksArray->len > 0) {

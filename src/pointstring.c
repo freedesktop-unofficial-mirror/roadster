@@ -30,7 +30,7 @@ GMemChunk* g_pPointStringChunkAllocator;
 
 void pointstring_init(void)
 {
-	g_pPointStringChunkAllocator = g_mem_chunk_new("pointstring chunk allocator",
+	g_pPointStringChunkAllocator = g_mem_chunk_new("ROADSTER pointstrings",
 			sizeof(pointstring_t), 1000, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_pPointStringChunkAllocator != NULL);
 }
@@ -66,6 +66,10 @@ void pointstring_free(pointstring_t* pPointString)
 		mappoint_t* pPoint = g_ptr_array_remove_index_fast(pPointString->m_pPointsArray, i);
 		point_free(pPoint);
 	}
+	g_assert(pPointString->m_pPointsArray->len == 0);
+
+	g_ptr_array_free(pPointString->m_pPointsArray, TRUE);
+	g_free(pPointString->m_pszName);
 	g_mem_chunk_free(g_pPointStringChunkAllocator, pPointString);
 }
 

@@ -44,7 +44,7 @@ void locationset_init()
 	g_LocationSet.m_pLocationSetHash = g_hash_table_new(g_int_hash, g_int_equal);
 
 	// create memory allocator
-	g_LocationSet.m_pLocationSetChunkAllocator = g_mem_chunk_new("locationset chunk allocator",
+	g_LocationSet.m_pLocationSetChunkAllocator = g_mem_chunk_new("ROADSTER locationsets",
 			sizeof(locationset_t), 1000, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL);
 }
@@ -155,6 +155,8 @@ static gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLo
 // reads points in given rect into memory
 gboolean locationset_load_locations(maprect_t* pRect)
 {
+	g_assert_not_reached();	// not used/tested
+
 //	TIMER_BEGIN(mytimer, "BEGIN POINT LOAD");
 
 //~ //	g_return_val_if_fail(pGeometrySet != NULL, FALSE);

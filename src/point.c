@@ -30,7 +30,7 @@ GMemChunk* g_pPointChunkAllocator;		// chunk allocators to be shared by all geom
 void point_init(void)
 {
 	// create memory allocators
-	g_pPointChunkAllocator = g_mem_chunk_new("point chunk allocator",
+	g_pPointChunkAllocator = g_mem_chunk_new("ROADSTER points",
 			sizeof(mappoint_t), 1000, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_pPointChunkAllocator != NULL);
 }

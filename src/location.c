@@ -31,7 +31,7 @@ struct {
 
 void location_init()
 {
-	g_Location.m_pLocationChunkAllocator = g_mem_chunk_new("location chunk allocator",
+	g_Location.m_pLocationChunkAllocator = g_mem_chunk_new("ROADSTER locations",
 			sizeof(location_t), 1000, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_Location.m_pLocationChunkAllocator != NULL);
 }
