@@ -47,7 +47,7 @@ PKG_CHECK_MODULES(CAIRO, cairo libsvg libsvg-cairo,,exit)
 AC_SUBST(CAIRO_LIBS)
 AC_SUBST(CAIRO_CFLAGS)
 
-PKG_CHECK_MODULES(, cairo>0.2.0,
+PKG_CHECK_MODULES(, cairo > 0.2.0,
     [AC_DEFINE([HAVE_CAIRO_0_2_0], [1], [Newer Cairo])],
     continue
 )
