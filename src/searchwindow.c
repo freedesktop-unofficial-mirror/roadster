@@ -210,8 +210,6 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 		mainwindow_set_not_busy(&pBusy);
 	}
 
-
-
 	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.m_pFindButton), TRUE);
 }
 

@@ -896,6 +896,11 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 			db_insert_road(pRecordRT7->m_nRecordType,
 				0,0,0,0,
 				pTempPointsArray, &nRoadID);
+
+			if(pRecordRT7->m_achName[0] != '\0') {
+				printf("inserting area name %s\n", pRecordRT7->m_achName);
+				db_insert_roadname(nRoadID, pRecordRT7->m_achName, 0);
+			}
 		}
 	}
 	g_ptr_array_free(pTempPointsArray, FALSE);

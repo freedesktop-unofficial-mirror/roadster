@@ -1,3 +1,8 @@
+2005-02-22  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* import_tiger.c: Added extracting of polygon labels.
+	* map.c: Added polygon label drawing.
+
 2005-02-22  Carl Worth  <cworth@cworth.org>
 
 	* configure.in:
