@@ -33,13 +33,13 @@ struct {
 gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condition, gpointer data);
 //~ static void update_display(char *buf);
 
-void gpsclient_callback_update(char* p)
+static void gpsclient_callback_update(char* p)
 {
 //	g_print("gpsclient_callback_update(%s)\n", p);
 }
-void gpsclient_debug_print();
+void gpsclient_debug_print(void);
 
-void gpsclient_connect()
+static void gpsclient_connect(void)
 {
 	// don't do anything if already connected
 	if(g_GPSClient.m_pPublicGPSData->m_eStatus != GPS_STATUS_NO_GPSD) return;	// already connected
@@ -168,7 +168,7 @@ gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condit
 	//~ g_print("********************* what the hell does this do?\n");	
 //~ }
 
-void gpsclient_debug_print()
+void gpsclient_debug_print(void)
 {
 	struct gps_data_t* d = g_GPSClient.m_pGPSConnection;	// gpsd data
 

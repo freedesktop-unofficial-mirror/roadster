@@ -139,15 +139,15 @@ gboolean map_road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID);
 
 #include "db.h"
 
-GtkWidget* map_create_canvas();
+GtkWidget* map_create_canvas(void);
 
 void map_set_zoomlevel(guint16 uZoomLevel);
-guint16 map_get_zoomlevel();
-guint32 map_get_zoomlevel_scale();
+guint16 map_get_zoomlevel(void);
+guint32 map_get_zoomlevel_scale(void);
 
 void map_set_redraw_needed(gboolean bNeeded);
-gboolean map_is_redraw_needed();
-guint32 map_get_scale();
+gboolean map_is_redraw_needed(void);
+guint32 map_get_scale(void);
 //void map_draw(void* pDBConnection, cairo_t * cr);
 
 void map_get_world_coordinates(float* pLongitude, float* pLatitude);
@@ -157,7 +157,7 @@ void map_center_on_worldpoint(double fX, double fY);
 void map_center_on_windowpoint(guint16 uX, guint16 uY);
 void map_set_window_dimensions(guint16 uWidth, guint16 uHeight);
 
-gboolean map_redraw_if_needed();
+gboolean map_redraw_if_needed(void);
 
 void map_set_view_dimensions(guint16 uWidth, guint16 uHeight);
 void map_windowpoint_to_mappoint(screenpoint_t* pScreenPoint, mappoint_t* pMapPoint);

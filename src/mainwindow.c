@@ -21,8 +21,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <glade/glade.h>
-
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -41,6 +39,7 @@
 #include "../include/locationset.h"
 #include "../include/gpsclient.h"
 #include "../include/databasewindow.h"
+#include "../include/mainwindow.h"
 
 #include <gdk/gdkx.h>
 #include <cairo.h>
@@ -63,11 +62,11 @@
 gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event);
 gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data);
 gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfigure *event);
-void mainwindow_draw_map();
+void mainwindow_draw_map(void);
 
-void mainwindow_statusbar_update_zoomscale();
-void mainwindow_statusbar_update_position();
-void mainwindow_setup_selected_tool();
+void mainwindow_statusbar_update_zoomscale(void);
+void mainwindow_statusbar_update_position(void);
+void mainwindow_setup_selected_tool(void);
 
 gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
 
@@ -144,24 +143,24 @@ void cursor_init()
 	}
 }
 
-void util_set_image_to_stock(GtkImage* pImage, gchar* pszStockIconID, GtkIconSize nSize)
+static void util_set_image_to_stock(GtkImage* pImage, gchar* pszStockIconID, GtkIconSize nSize)
 {
 	GdkPixbuf* pPixbuf = gtk_widget_render_icon(GTK_WIDGET(g_MainWindow.m_pStatusbarGPSIcon),pszStockIconID, nSize, "name");
 	gtk_image_set_from_pixbuf(pImage, pPixbuf);
 	gdk_pixbuf_unref(pPixbuf);
 }
 
-void mainwindow_set_statusbar_position(gchar* pMessage)
+static void mainwindow_set_statusbar_position(gchar* pMessage)
 {
 	gtk_label_set_text(GTK_LABEL(g_MainWindow.m_pPositionLabel), pMessage);
 }
 
-void mainwindow_set_statusbar_zoomscale(gchar* pMessage)
+static void mainwindow_set_statusbar_zoomscale(gchar* pMessage)
 {
 	gtk_label_set_text(GTK_LABEL(g_MainWindow.m_pZoomScaleLabel), pMessage);
 }
 
-void* mainwindow_set_busy()
+void* mainwindow_set_busy(void)
 {
 	GdkCursor* pCursor = gdk_cursor_new(GDK_WATCH);
 	// set it for the whole window
@@ -188,7 +187,7 @@ void mainwindow_set_not_busy(void** ppCursor)
 ** Status bar
 */
 
-void mainwindow_load_locationset_list();
+void mainwindow_load_locationset_list(void);
 
 void mainwindow_init(GladeXML* pGladeXML)
 {
@@ -306,7 +305,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	mainwindow_callback_on_gps_redraw_timeout(NULL);
 }
 
-void mainwindow_load_locationset_list()
+void mainwindow_load_locationset_list(void)
 {
 	const GPtrArray* pLocationSetArray = locationset_get_set_array();
 
@@ -331,13 +330,13 @@ void mainwindow_load_locationset_list()
 	}
 }
 
-void mainwindow_show()
+void mainwindow_show(void)
 {
 	gtk_widget_show(GTK_WIDGET(g_MainWindow.m_pWindow));
 	gtk_window_present(g_MainWindow.m_pWindow);
 }
 
-void mainwindow_hide()
+void mainwindow_hide(void)
 {
 	gtk_widget_hide(GTK_WIDGET(g_MainWindow.m_pWindow));
 }
@@ -360,7 +359,7 @@ void mainwindow_set_toolbar_visible(gboolean bVisible)
 	}
 }
 
-gboolean mainwindow_get_toolbar_visible()
+gboolean mainwindow_get_toolbar_visible(void)
 {
 	return GTK_WIDGET_VISIBLE(g_MainWindow.m_pToolbar);
 }
@@ -378,12 +377,12 @@ void mainwindow_set_statusbar_visible(gboolean bVisible)
 	}
 }
 
-gboolean mainwindow_get_statusbar_visible()
+gboolean mainwindow_get_statusbar_visible(void)
 {
 	return GTK_WIDGET_VISIBLE(g_MainWindow.m_pStatusbar);
 }
 
-void mainwindow_statusbar_update_zoomscale()
+void mainwindow_statusbar_update_zoomscale(void)
 {
 	char buf[200];
 	guint32 uZoomLevelScale = map_get_zoomlevel_scale();
@@ -392,7 +391,7 @@ void mainwindow_statusbar_update_zoomscale()
 	mainwindow_set_statusbar_zoomscale(buf);
 }
 
-void mainwindow_statusbar_update_position()
+void mainwindow_statusbar_update_position(void)
 {
 	char buf[200];
 	float fLatitude, fLongitude;
@@ -414,13 +413,13 @@ void mainwindow_set_sidebox_visible(gboolean bVisible)
 	}
 }
 
-gboolean mainwindow_get_sidebox_visible()
+gboolean mainwindow_get_sidebox_visible(void)
 {
 	return GTK_WIDGET_VISIBLE(g_MainWindow.m_pSidebox);
 }
 
 
-GtkWidget* mainwindow_get_window()
+GtkWidget* mainwindow_get_window(void)
 {
 	return GTK_WIDGET(g_MainWindow.m_pWindow);
 }
@@ -445,7 +444,7 @@ GtkWidget* mainwindow_get_window()
 	//~ gtk_progress_bar_set_fraction(g_MainWindow.m_pProgressBar, 0.0);
 //~ }
 
-void mainwindow_toggle_fullscreen()
+void mainwindow_toggle_fullscreen(void)
 {
     GdkWindow* toplevelgdk = gdk_window_get_toplevel(GTK_WIDGET(g_MainWindow.m_pWindow)->window);
 	if(toplevelgdk) {
@@ -469,7 +468,8 @@ void mainwindow_toggle_fullscreen()
 	//~ g_free(pchSearchString);
 //~ }
 
-gboolean on_searchbox_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+#if ROADSTER_DEAD_CODE
+static gboolean on_searchbox_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	// Enter key?
 	if(event->keyval == 65293) {
@@ -480,6 +480,7 @@ gboolean on_searchbox_key_press_event(GtkWidget *widget, GdkEventKey *event, gpo
 	}
 	return FALSE;
 }
+#endif /* ROADSTER_DEAD_CODE */
 
 // User clicked Quit window
 void on_quitmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -494,10 +495,12 @@ gboolean on_application_delete_event(GtkWidget *widget, GdkEvent *event, gpointe
 	return FALSE; // satisfy strick compiler
 }
 
-void on_searchbox_editing_done(GtkCellEditable *celleditable, gpointer user_data)
+#if ROADSTER_DEAD_CODE
+static void on_searchbox_editing_done(GtkCellEditable *celleditable, gpointer user_data)
 {
 //	g_message("on_searchbox_editing_done()\n");
 }
+#endif /* ROADSTER_DEAD_CODE */
 
 // the range slider changed value
 void on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
@@ -515,21 +518,21 @@ void on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 //
 // Zoom
 //
-void zoom_in_one()
+static void zoom_in_one(void)
 {
 	map_set_zoomlevel( map_get_zoomlevel() + 1);
 
 	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), map_get_zoomlevel());
 }
 
-void zoom_out_one()
+static void zoom_out_one(void)
 {
 	map_set_zoomlevel( map_get_zoomlevel() - 1 );
 
 	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), map_get_zoomlevel());
 }
 
-void gui_set_tool(EToolType eTool)
+static void gui_set_tool(EToolType eTool)
 {
 	g_MainWindow.m_eSelectedTool = eTool;
 	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, g_Tools[eTool].m_Cursor.m_pGdkCursor);
@@ -560,11 +563,13 @@ void on_toolbarmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 	mainwindow_set_toolbar_visible( !mainwindow_get_toolbar_visible() );
 }
 
+#if ROADSTER_DEAD_CODE
 // Show preferences dialog
-void on_preferencesmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
+static void on_preferencesmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 //	gui_show_preferences_window();
 }
+#endif
 
 // Toggle statusbar visibility
 void on_statusbarmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
@@ -610,10 +615,12 @@ void on_gotobutton_clicked(GtkToolButton *toolbutton,  gpointer user_data)
 	gotowindow_show();
 }
 
-void on_gotodialoggobutton_activate(GtkButton *button, gpointer user_data)
+#if ROADSTER_DEAD_CODE
+static void on_gotodialoggobutton_activate(GtkButton *button, gpointer user_data)
 {
 	gotowindow_show();
 }
+#endif /* ROADSTER_DEAD_CODE */
 
 gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event)
 {
@@ -652,7 +659,7 @@ gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event)
 	return TRUE;
 }
 
-void mainwindow_begin_import_geography_data()
+void mainwindow_begin_import_geography_data(void)
 {
 	GtkWidget* pDialog = gtk_file_chooser_dialog_new(
 				"Select Map Data for Import",
@@ -691,7 +698,7 @@ void on_import_maps_activate(GtkWidget *widget, gpointer user_data)
 	mainwindow_begin_import_geography_data();
 }
 
-void mainwindow_setup_selected_tool()
+void mainwindow_setup_selected_tool(void)
 {
 	if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.m_pPointerToolButton))) {
 		gui_set_tool(kToolPointer);
@@ -708,7 +715,7 @@ void on_toolbutton_clicked(GtkToolButton *toolbutton, gpointer user_data)
 	mainwindow_setup_selected_tool();
 }
 
-void mainwindow_draw_map()
+void mainwindow_draw_map(void)
 {
 //	g_print("mainwindow_draw_map()\n");
 
@@ -791,7 +798,7 @@ void mainwindow_on_datasetmenuitem_activate(GtkWidget *pWidget, gpointer* p)
 	datasetwindow_show();
 }
 
-void mainwindow_show_on_startup()
+void mainwindow_show_on_startup(void)
 {
 }
 

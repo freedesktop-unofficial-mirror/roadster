@@ -106,8 +106,8 @@ typedef struct layer {
 
 extern layer_t g_aLayers[NUM_LAYERS+1];
 
-void layers_init();
-void layers_clear();
+void layers_init(void);
+void layers_clear(void);
 
 #ifdef __cplusplus
 }

@@ -89,7 +89,7 @@ gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 	return TRUE;
 }
 
-gboolean db_insert(const gchar* pszSQL, gint* pnReturnRowsInserted)
+static gboolean db_insert(const gchar* pszSQL, gint* pnReturnRowsInserted)
 {
 	g_assert(pszSQL != NULL);
 	if(g_pDB == NULL) return FALSE;
@@ -129,7 +129,7 @@ gint db_get_last_insert_id()
 ** database utility functions
 ******************************************************/
 
-gboolean db_is_connected()
+static gboolean db_is_connected(void)
 {
 	// 'mysql_ping' will also attempt a re-connect if necessary
 	return (g_pDB != NULL && mysql_ping(g_pDB->m_pMySQLConnection) == MYSQL_RESULT_SUCCESS);
@@ -166,7 +166,7 @@ void db_free_escaped_string(gchar* pszString)
 	g_free(pszString);
 }
 
-guint db_count_table_rows(const gchar* pszTable)
+static guint db_count_table_rows(const gchar* pszTable)
 {
 	if(!db_is_connected()) return 0;
 
@@ -253,7 +253,8 @@ gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* p
 	return TRUE;
 }
 
-void db_disconnect()
+#if 0
+static void db_disconnect(void)
 {
 	g_return_if_fail(g_pDB != NULL);
 
@@ -268,6 +269,7 @@ void db_disconnect()
 	g_free(g_pDB);
 	g_pDB = NULL;
 }
+#endif
 
 /******************************************************
 ** data inserting
@@ -310,7 +312,7 @@ gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLe
 	return TRUE;
 }
 
-gboolean db_roadname_get_id(const gchar* pszName, gint nSuffixID, gint* pnReturnID)
+static gboolean db_roadname_get_id(const gchar* pszName, gint nSuffixID, gint* pnReturnID)
 {
 	gint nReturnID = 0;
 

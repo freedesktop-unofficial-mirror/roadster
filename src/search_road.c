@@ -30,6 +30,7 @@
 #include "../include/geometryset.h"
 #include "../include/searchwindow.h"
 #include "../include/search.h"
+#include "../include/search_road.h"
 
 typedef struct {
 	gint m_nNumber;			// house number	eg. 51
@@ -43,7 +44,7 @@ typedef struct {
 #define MAX_QUERY 	(4000)
 
 // if glib < 2.6
-#if ((GLIB_MAJOR_VERSION <= 2) || ((GLIB_MAJOR_VERSION == 2) && (GLIB_MINOR_VERSION < 6)))
+#if ((GLIB_MAJOR_VERSION < 2) || ((GLIB_MAJOR_VERSION == 2) && (GLIB_MINOR_VERSION < 6)))
 gint g_strv_length(const gchar** a)
 {
 	gint nCount=0;
@@ -59,7 +60,7 @@ gint g_strv_length(const gchar** a)
 // prototypes
 
 void search_road_on_cleaned_sentence(const gchar* pszCleanedSentence);
-void search_road_on_words(const gchar** aWords, gint nWordCount);
+void search_road_on_words(gchar** aWords, gint nWordCount);
 void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch);
 void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint nRoadSuffixID, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, pointstring_t* pPointString);
 
@@ -98,7 +99,7 @@ void search_road_on_cleaned_sentence(const gchar* pszCleanedSentence)
 	g_strfreev(aWords);	// free the array of strings	
 }
 
-void search_road_on_words(const gchar** aWords, gint nWordCount)
+void search_road_on_words(gchar** aWords, gint nWordCount)
 {
 	g_assert(nWordCount > 0);
 	roadsearch_t roadsearch = {0};
@@ -240,7 +241,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 }
 
 
-gfloat point_calc_distance(mappoint_t* pA, mappoint_t* pB)
+static gfloat point_calc_distance(mappoint_t* pA, mappoint_t* pB)
 {
 	// determine slope of the line
 	gdouble fRise = pB->m_fLatitude - pA->m_fLatitude;
@@ -257,7 +258,7 @@ typedef enum {
 
 #define HIGHLIGHT_DISTANCE_FROM_ROAD (0.00012)		// this seems like a good amount...
 
-void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPercent, ERoadSide eRoadSide, mappoint_t* pReturnPoint)
+static void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPercent, ERoadSide eRoadSide, mappoint_t* pReturnPoint)
 {
 	gint i;
 	if(pPointString->m_pPointsArray->len < 2) {
@@ -324,19 +325,21 @@ void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPercent, 
 	g_assert_not_reached();
 }
 
-gint min4(gint a, gint b, gint c, gint d)
+#if ROADSTER_DEAD_CODE
+static gint min4(gint a, gint b, gint c, gint d)
 {
 	gint x = min(a,b);
 	gint y = min(c,d);
 	return min(x,y);
 }
 
-gint max4(gint a, gint b, gint c, gint d)
+static gint max4(gint a, gint b, gint c, gint d)
 {
 	gint x = max(a,b);
 	gint y = max(c,d);
 	return max(x,y);
 }
+#endif /* ROADSTER_DEAD_CODE */
 
 #define BUFFER_SIZE 200
 void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint nRoadSuffixID, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, pointstring_t* pPointString)

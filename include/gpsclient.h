@@ -63,8 +63,8 @@ typedef struct gpsdata {
 	gdouble m_fSpeedInMilesPerHour;
 } gpsdata_t;
 
-void gpsclient_init();
-gpsdata_t* gpsclient_getdata();
+void gpsclient_init(void);
+gpsdata_t* gpsclient_getdata(void);
 
 #ifdef __cplusplus
 }

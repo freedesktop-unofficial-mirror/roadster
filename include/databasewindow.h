@@ -30,7 +30,14 @@ extern "C"
 #endif
 
 void databasewindow_init(GladeXML* pGladeXML);
-gboolean databasewindow_connect();
+gboolean databasewindow_connect(void);
+
+/* Funky, auto-lookup glade signal handlers.
+
+   XXX: Better would be to hook these up manually, remove these
+   declarations, and make the functions static.
+*/
+void databasewindow_on_connectbutton_clicked(void);
 
 #ifdef __cplusplus
 }

@@ -21,6 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include "../include/locationset.h"
 #include "../include/db.h"
@@ -78,7 +79,7 @@ static void locationset_util_free_location(location_t* pLocation)
 }
 
 // get a new locationset struct from the allocator
-locationset_t* locationset_util_new_locationset()
+static locationset_t* locationset_util_new_locationset(void)
 {
 	g_return_val_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL, NULL);
 
@@ -99,6 +100,7 @@ static void locationset_util_clear_locationset(locationset_t* pLocationSet)
 }
 
 // return a locationset struct (and all locations) to the allocator
+#if 0
 static void locationset_util_free_locationset(locationset_t* pLocationSet)
 {
 	locationset_util_clear_locationset(pLocationSet);
@@ -106,8 +108,9 @@ static void locationset_util_free_locationset(locationset_t* pLocationSet)
 	// give back to allocator
 	g_mem_chunk_free(g_LocationSet.m_pLocationSetChunkAllocator, pLocationSet);
 }
+#endif
 
-void locationset_clear_all_locations()
+static void locationset_clear_all_locations(void)
 {
 	// delete all sets but don't delete array of sets
 	gint i;
@@ -222,7 +225,7 @@ gboolean locationset_add_location(gint nLocationSetID, mappoint_t* pPoint, gint*
 	return TRUE;
 }
 
-gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationSet)
+static gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationSet)
 {
 	locationset_t* pLocationSet = g_hash_table_lookup(g_LocationSet.m_pLocationSetHash, &nLocationSetID);
 	if(pLocationSet) {

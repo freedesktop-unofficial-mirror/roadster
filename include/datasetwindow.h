@@ -24,14 +24,23 @@
 #ifndef _DATASETWINDOW_H
 #define _DATASETWINDOW_H
 
+#include <glade/glade.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 void datasetwindow_init(GladeXML* pGladeXML);
-void datasetwindow_show();
+void datasetwindow_show(void);
 
+/* Funky, auto-lookup glade signal handlers.
+
+   XXX: Better would be to hook these up manually, remove these
+   declarations, and make the functions static.
+*/
+void datasetwindow_on_datasetdeletebutton_clicked(GtkWidget *widget, gpointer user_data);
+void datasetwindow_on_datasetimportbutton_clicked(GtkWidget *widget, gpointer user_data);
 
 #ifdef __cplusplus
 }

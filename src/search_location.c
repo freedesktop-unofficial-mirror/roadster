@@ -21,10 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include "../include/db.h"
 #include "../include/util.h"
 #include "../include/search.h"
+#include "../include/searchwindow.h"
+#include "../include/search_location.h"
 
 #define MAX_QUERY					(4000)
 #define SEARCH_RESULT_COUNT_LIMIT	(100)
@@ -48,7 +51,7 @@ void search_location_execute(const gchar* pszSentence, gint nLocationSetID, gflo
 
 	TIMER_BEGIN(search, "\n\n****************************\nSEARCH BEGIN");
 
-	locationsearch_t locationsearch = {0};
+	locationsearch_t locationsearch = { {0}, 0};
 	locationsearch.m_nLocationSetID = nLocationSetID;
 	locationsearch.m_fRadiusInDegrees = map_distance_in_units_to_degrees(fDistance, nDistanceUnit);
 

@@ -29,6 +29,7 @@
 
 #include <gnome.h>
 #include "../include/mainwindow.h"
+#include "../include/welcomewindow.h"
 
 #define URL_CENSUS_GOV_TIGER_DATA_WEBSITE ("http://www.census.gov/geo/www/tiger/tiger2003/tgr2003.html")
 
@@ -41,13 +42,13 @@ void welcomewindow_init(GladeXML* pGladeXML)
 	g_WelcomeWindow.m_pWindow = GTK_WINDOW(glade_xml_get_widget(pGladeXML, "welcomewindow"));			g_return_if_fail(g_WelcomeWindow.m_pWindow != NULL);
 }
 
-void welcomewindow_show()
+void welcomewindow_show(void)
 {
 	gtk_widget_show(GTK_WIDGET(g_WelcomeWindow.m_pWindow));
 	gtk_window_present(g_WelcomeWindow.m_pWindow);
 }
 
-void welcomewindow_hide()
+static void welcomewindow_hide(void)
 {
 	gtk_widget_hide(GTK_WIDGET(g_WelcomeWindow.m_pWindow));
 }

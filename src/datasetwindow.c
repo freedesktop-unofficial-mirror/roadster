@@ -30,6 +30,7 @@
 #include <gnome.h>
 
 #include "../include/util.h"
+#include "../include/datasetwindow.h"
 #include "../include/mainwindow.h"
 
 #define DATASETLIST_COLUMN_ID			(0)
@@ -104,7 +105,7 @@ void datasetwindow_init(GladeXML* pGladeXML)
 	}
 }
 
-void datasetwindow_show()
+void datasetwindow_show(void)
 {
 	gtk_widget_show(GTK_WIDGET(g_DataSetWindow.m_pWindow));
 	gtk_window_present(g_DataSetWindow.m_pWindow);
@@ -116,7 +117,7 @@ void datasetwindow_on_dataset_list_selection_changed(GtkTreeSelection *treeselec
 	gtk_widget_set_sensitive(GTK_WIDGET(g_DataSetWindow.m_pDeleteButton), gtk_tree_selection_count_selected_rows(treeselection) > 0);	
 }
 
-gboolean datasetwindow_confirm_delete(const gchar* pszName)
+static gboolean datasetwindow_confirm_delete(const gchar* pszName)
 {
 	/* Create confirmation dialog */
 	GtkWidget* pDialog = gtk_message_dialog_new(g_DataSetWindow.m_pWindow,

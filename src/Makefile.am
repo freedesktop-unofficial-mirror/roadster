@@ -8,9 +8,7 @@ INCLUDES = \
 	$(GNOME_CFLAGS)\
 	 -I/usr/include/mysql
 
-AM_CFLAGS =\
-	 -Wall\
-	 -g
+AM_CFLAGS = $(WARN_CFLAGS)
 
 bin_PROGRAMS = roadster
 

@@ -1,3 +1,89 @@
+2005-02-22  Carl Worth  <cworth@cworth.org>
+
+	* configure.in:
+	* include/databasewindow.h:
+	* include/datasetwindow.h:
+	* include/db.h:
+	* include/geometryset.h:
+	* include/gotowindow.h:
+	* include/gpsclient.h:
+	* include/gui.h:
+	* include/import.h:
+	* include/importwindow.h:
+	* include/layers.h:
+	* include/locationset.h:
+	* include/mainwindow.h:
+	* include/map.h:
+	* include/scenemanager.h:
+	* include/searchwindow.h:
+	* include/util.h:
+	* include/welcomewindow.h:
+	* src/Makefile.am:
+	* src/databasewindow.c: (databasewindow_connect),
+	(databasewindow_on_connectbutton_clicked):
+	* src/datasetwindow.c: (datasetwindow_show),
+	(datasetwindow_confirm_delete):
+	* src/db.c: (db_insert), (db_is_connected), (db_count_table_rows),
+	(db_disconnect), (db_roadname_get_id):
+	* src/geometryset.c:
+	* src/gotowindow.c: (gotowindow_show), (gotowindow_hide),
+	(util_string_to_double), (gotowindow_go):
+	* src/gpsclient.c: (gpsclient_callback_update),
+	(gpsclient_connect), (gpsclient_debug_print):
+	* src/import.c: (import_progress_pulse):
+	* src/import_tiger.c: (import_tiger_read_lat),
+	(import_tiger_read_lon), (import_tiger_read_int),
+	(import_tiger_read_address), (import_tiger_read_string),
+	(import_tiger_read_layer_type), (debug_print_string),
+	(import_tiger_copy_line), (import_tiger_parse_MET),
+	(import_tiger_parse_table_1), (import_tiger_parse_table_2),
+	(import_tiger_parse_table_7), (import_tiger_parse_table_8),
+	(import_tiger_parse_table_i), (callback_save_rt1_chains),
+	(tiger_util_add_RT1_points_to_array), (callback_save_rti_polygons):
+	* src/importwindow.c: (importwindow_show),
+	(importwindow_progress_pulse), (importwindow_begin):
+	* src/locationset.c: (locationset_util_new_locationset),
+	(locationset_clear_all_locations), (locationset_find_by_id):
+	* src/mainwindow.c: (util_set_image_to_stock),
+	(mainwindow_set_statusbar_position),
+	(mainwindow_set_statusbar_zoomscale), (mainwindow_set_busy),
+	(mainwindow_load_locationset_list), (mainwindow_show),
+	(mainwindow_hide), (mainwindow_get_toolbar_visible),
+	(mainwindow_get_statusbar_visible),
+	(mainwindow_statusbar_update_zoomscale),
+	(mainwindow_statusbar_update_position),
+	(mainwindow_get_sidebox_visible), (mainwindow_get_window),
+	(mainwindow_toggle_fullscreen), (on_searchbox_key_press_event),
+	(on_searchbox_editing_done), (zoom_in_one), (zoom_out_one),
+	(gui_set_tool), (on_preferencesmenuitem_activate),
+	(on_gotodialoggobutton_activate),
+	(mainwindow_begin_import_geography_data),
+	(mainwindow_setup_selected_tool), (mainwindow_draw_map),
+	(mainwindow_show_on_startup):
+	* src/map.c: (map_pixels_to_degrees), (map_degrees_to_pixels),
+	(map_get_distance_in_meters), (map_draw_line_label):
+	* src/scenemanager.c: (scenemanager_init),
+	(scenemanager_add_label_line), (scenemanager_add_label_polygon),
+	(scenemanager_draw), (scenemanager_clear):
+	* src/search.c:
+	* src/search_location.c: (search_location_execute):
+	* src/search_road.c: (search_road_on_words), (point_calc_distance),
+	(pointstring_walk_percentage), (min4), (max4):
+	* src/searchwindow.c: (fill_combobox_with_distance_unit_names),
+	(searchwindow_get_selected_locationset),
+	(searchwindow_clear_results), (searchwindow_go_to_selected_result):
+	* src/util.c: (util_random_color):
+	* src/welcomewindow.c: (welcomewindow_show), (welcomewindow_hide):
+	Enable lots of warning flags when compiling with gcc. Fix things
+	to silence all the warnings, (missing #include, missing void in
+	prototype, missing prototypes, missing static, etc.).
+
+	* src/search_road.c: Fix glib version check logic for checking for
+	glib < 2.6.
+
+	* src/importwindow.c: (importwindow_progress_pulse): Fix to call
+	import_from_uri correctly with only one argument.
+
 2005-02-21  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* roadster.glade: Removed sidebar search, put search field in toolbar.

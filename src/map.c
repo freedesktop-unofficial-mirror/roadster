@@ -320,7 +320,7 @@ gdouble map_distance_in_units_to_degrees(gdouble fDistance, gint nDistanceUnit)
 }
 
 // convert pixels to a span of degrees
-double map_pixels_to_degrees(gint16 nPixels, guint16 uZoomLevel)
+static double map_pixels_to_degrees(gint16 nPixels, guint16 uZoomLevel)
 {
 	double fMonitorPixelsPerInch = 85 + 1/3;
 	double fPixelsPerMeter = fMonitorPixelsPerInch * INCHES_PER_METER;
@@ -333,7 +333,7 @@ double map_pixels_to_degrees(gint16 nPixels, guint16 uZoomLevel)
 	return WORLD_METERS_TO_DEGREES(fMetersOfWorld);
 }
 
-double map_degrees_to_pixels(gdouble fDegrees, guint16 uZoomLevel)
+static double map_degrees_to_pixels(gdouble fDegrees, guint16 uZoomLevel)
 {
 	double fMonitorPixelsPerInch = 85 + 1/3;
 
@@ -402,8 +402,8 @@ void map_set_view_dimensions(guint16 uWidth, guint16 uHeight)
 	g_Map.m_WindowDimensions.m_uHeight = uHeight;
 }
 
-
-double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
+#if ROADSTER_DEAD_CODE
+static double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 {
 	g_assert_not_reached();	// unused/tested
 
@@ -428,6 +428,7 @@ double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 	// Step 2. Multiply the angle by the radius of the sphere to get arc length.
 	return fAOB_Rad * RADIUS_OF_WORLD_IN_METERS;
 }
+#endif /* ROADSTER_DEAD_CODE */
 
 // ========================================================
 //  Draw Functions
@@ -462,7 +463,7 @@ static void map_draw_background(cairo_t *pCairo)
 }
 
 // EXPERIMENTAL TEXT RENDERING
-void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, gdouble fLineWidth, const gchar* pszLabel)
+static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, gdouble fLineWidth, const gchar* pszLabel)
 {
 	if(pPointString->m_pPointsArray->len < 2) return;
 

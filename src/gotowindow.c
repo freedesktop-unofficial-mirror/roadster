@@ -26,6 +26,7 @@
 #include "../include/util.h"
 #include "../include/map.h"
 #include "../include/mainwindow.h"
+#include "../include/gotowindow.h"
 
 #define LOCATIONLIST_COLUMN_NAME 		(0)
 #define LOCATIONLIST_COLUMN_LOCATION 	(1)
@@ -104,7 +105,7 @@ void gotowindow_init(GladeXML* pGladeXML)
 	}
 }
 
-void gotowindow_show()
+void gotowindow_show(void)
 {
 	if(!GTK_WIDGET_VISIBLE(g_GotoWindow.m_pWindow)) {
 //		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(g_GotoWindow.m_pKnownLocationRadioButton), TRUE);
@@ -118,12 +119,12 @@ void gotowindow_show()
 	gtk_window_present(g_GotoWindow.m_pWindow);
 }
 
-void gotowindow_hide()
+void gotowindow_hide(void)
 {
 	gtk_widget_hide(GTK_WIDGET(g_GotoWindow.m_pWindow));
 }
 
-gboolean util_string_to_double(const gchar* psz, gdouble* pReturn)
+static gboolean util_string_to_double(const gchar* psz, gdouble* pReturn)
 {
 	gdouble d = g_strtod(psz, NULL);
 	if(d == 0.0) {
@@ -141,7 +142,7 @@ gboolean util_string_to_double(const gchar* psz, gdouble* pReturn)
 	return TRUE;
 }
 
-gboolean gotowindow_go()
+static gboolean gotowindow_go(void)
 {
 	const gchar* pszLatitude = gtk_entry_get_text(g_GotoWindow.m_pLatitudeEntry);
 	const gchar* pszLongitude = gtk_entry_get_text(g_GotoWindow.m_pLongitudeEntry);

@@ -124,7 +124,7 @@ typedef struct tiger_record_rti
 	GPtrArray* m_pRT1LinksArray;
 } tiger_record_rti_t;
 
-gboolean import_tiger_read_lat(gint8* pBuffer, gdouble* pValue)
+static gboolean import_tiger_read_lat(gint8* pBuffer, gdouble* pValue)
 {
 	// 0,1,2,3
 	// - 1 2 . 1 2 3 4 5 6
@@ -144,7 +144,7 @@ gboolean import_tiger_read_lat(gint8* pBuffer, gdouble* pValue)
 	return TRUE;
 }
 
-gboolean import_tiger_read_lon(char* pBuffer, gdouble* pValue)
+static gboolean import_tiger_read_lon(char* pBuffer, gdouble* pValue)
 {
 	char buffer[12];
 	memcpy(&buffer[0], &pBuffer[0], 4);	// copy first 4 bytes (yes, this is different than lat, TIGER!!)
@@ -166,7 +166,7 @@ gboolean import_tiger_read_lon(char* pBuffer, gdouble* pValue)
 }
 
 
-gboolean import_tiger_read_int(gint8* pBuffer, gint nLen, gint32* pValue)
+static gboolean import_tiger_read_int(gint8* pBuffer, gint nLen, gint32* pValue)
 {
 	gint8 buffer[11];
 	g_assert(nLen <= 10);
@@ -177,7 +177,7 @@ gboolean import_tiger_read_int(gint8* pBuffer, gint nLen, gint32* pValue)
 	return TRUE;
 }
 
-gboolean import_tiger_read_address(gint8* pBuffer, gint nLen, gint32* pValue)
+static gboolean import_tiger_read_address(gint8* pBuffer, gint nLen, gint32* pValue)
 {
 	gint8 buffer[15];
 	g_assert(nLen <= 14);
@@ -188,7 +188,7 @@ gboolean import_tiger_read_address(gint8* pBuffer, gint nLen, gint32* pValue)
 	return TRUE;
 }
 
-gboolean import_tiger_read_string(char* pBuffer, gint nLen, char* pValue)
+static gboolean import_tiger_read_string(char* pBuffer, gint nLen, char* pValue)
 {
 	g_assert(pBuffer != NULL);
 	g_assert(nLen > 0);
@@ -222,7 +222,7 @@ gboolean import_tiger_read_string(char* pBuffer, gint nLen, char* pValue)
 	return TRUE;
 }
 
-gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
+static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 {
 	//g_print("%c%c%c\n", *(pBuffer), *(pBuffer+1), *(pBuffer+2));
 	gchar chFeatureClass 	= *(pBuffer+0);
@@ -391,7 +391,8 @@ gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 	return FALSE;
 }
 
-void debug_print_string(char* str, gint len)
+#if 0
+static void debug_print_string(char* str, gint len)
 {
 	char* p = str;
 	while(len > 0) {
@@ -402,8 +403,9 @@ void debug_print_string(char* str, gint len)
 	}
 	g_print("\n");
 }
+#endif
 
-gchar* import_tiger_copy_line(const gchar* pszString)
+static gchar* import_tiger_copy_line(const gchar* pszString)
 {
 	char azBuffer[LINE_LENGTH_MAX];
 	const gchar* pszFrom = pszString;
@@ -418,7 +420,7 @@ gchar* import_tiger_copy_line(const gchar* pszString)
 }
 
 // The MET file *is* zero terminated
-gboolean import_tiger_parse_MET(const gchar* pszMET, tiger_import_process_t* pImportProcess)
+static gboolean import_tiger_parse_MET(const gchar* pszMET, tiger_import_process_t* pImportProcess)
 {
 	gboolean bSuccess = FALSE;
 	const gchar* p = pszMET;
@@ -441,7 +443,7 @@ gboolean import_tiger_parse_MET(const gchar* pszMET, tiger_import_process_t* pIm
 
 
 // See TGR2003.PDF page 186 for field description
-gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTable* pTable, GPtrArray* pBoundaryRT1s)
+static gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTable* pTable, GPtrArray* pBoundaryRT1s)
 {
 	gint i;
 	for(i=0 ; i<(nLength-TIGER_RT1_LINE_LENGTH) ; i+=TIGER_RT1_LINE_LENGTH) {
@@ -503,7 +505,7 @@ if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 	return TRUE;
 }
 
-gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
 	for(i=0 ; i<(nLength-TIGER_RT2_LINE_LENGTH) ; i+=TIGER_RT2_LINE_LENGTH) {
@@ -546,7 +548,7 @@ gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTable *pT
 	return TRUE;
 }
 
-gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
 	for(i=0 ; i<(nLength-TIGER_RT7_LINE_LENGTH) ; i+=TIGER_RT7_LINE_LENGTH) {
@@ -580,7 +582,7 @@ gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTable *pT
 	return TRUE;
 }
 
-gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
 	for(i=0 ; i<(nLength-TIGER_RT8_LINE_LENGTH) ; i+=TIGER_RT8_LINE_LENGTH) {
@@ -606,7 +608,7 @@ gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pT
 }
 
 
-gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
 	//
 	// Gather RTi records (chainID,TZID-A,TZID-B) and index them by POLYGON ID in the given hash table
@@ -692,7 +694,7 @@ gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pT
 //
 // Callbacks
 //
-void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user_data)
+static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user_data)
 {
 	static int nCallCount=0; nCallCount++;
 	if((nCallCount%CALLBACKS_PER_PULSE) == 0) importwindow_progress_pulse();
@@ -737,7 +739,7 @@ typedef enum {
 	ORDER_BACKWARD
 } EOrder;
 
-void tiger_util_add_RT1_points_to_array(tiger_import_process_t* pImportProcess, gint nTLID, GPtrArray* pPointsArray, EOrder eOrder)
+static void tiger_util_add_RT1_points_to_array(tiger_import_process_t* pImportProcess, gint nTLID, GPtrArray* pPointsArray, EOrder eOrder)
 {
 	g_assert(pImportProcess != NULL);
 	g_assert(pImportProcess->m_pTableRT1 != NULL);
@@ -773,7 +775,7 @@ void tiger_util_add_RT1_points_to_array(tiger_import_process_t* pImportProcess, 
 	}
 }
 
-void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data)
+static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data)
 {
 	static int nCallCount=0; nCallCount++;
 	if((nCallCount%CALLBACKS_PER_PULSE) == 0) importwindow_progress_pulse();

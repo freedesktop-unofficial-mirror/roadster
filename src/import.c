@@ -23,17 +23,21 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <gtk/gtk.h>
+#include "../include/import.h"
 #include "../include/importwindow.h"
 #include "../include/import_tiger.h"
 #include "../include/db.h"
 
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
 
-void import_progress_pulse()
+#if ROADSTER_DEAD_CODE
+static void import_progress_pulse(void)
 {
 	importwindow_progress_pulse();
 }
+#endif /* ROADSTER_DEAD_CODE */
 
 gboolean import_from_uri(const gchar* pszURI)
 {

@@ -24,6 +24,8 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#include <gtk/gtk.h>
+
 #define NUM_ELEMS(a) (sizeof(a) / sizeof(a[0]))
 
 void util_random_color(void* pColor);
@@ -43,5 +45,12 @@ void util_random_color(void* pColor);
 
 #define is_even(x)		(((x) & 1) == 0)
 #define is_odd(x)		(((x) & 1) == 1)
+
+/* Funky, auto-lookup glade signal handlers.
+
+   XXX: Better would be to hook these up manually, remove these
+   declarations, and make the functions static.
+*/
+void util_close_parent_window(GtkWidget* pWidget, gpointer data);
 
 #endif

@@ -34,10 +34,11 @@
 
 #include "../include/search_road.h"
 #include "../include/search_location.h"
+#include "../include/searchwindow.h"
 #include "../include/locationset.h"
 #include "../include/mainwindow.h"
 
-void fill_combobox_with_distance_unit_names(GtkComboBox* pComboBox)
+static void fill_combobox_with_distance_unit_names(GtkComboBox* pComboBox)
 {
 	gint i;
 	for(i=UNIT_FIRST ; i<=UNIT_LAST ; i++) {
@@ -156,7 +157,7 @@ void searchwindow_init(GladeXML* pGladeXML)
 	g_signal_connect(G_OBJECT(pTreeSelection), "changed", (GtkSignalFunc)searchwindow_on_resultslist_selection_changed, NULL);
 }
 
-gint searchwindow_get_selected_locationset()
+static gint searchwindow_get_selected_locationset(void)
 {
 	gint nID;
 	GtkTreeIter iter;
@@ -170,7 +171,7 @@ gint searchwindow_get_selected_locationset()
 	return 0;
 }
 
-void searchwindow_clear_results()
+void searchwindow_clear_results(void)
 {
 	// remove all search results from the list
 	if(g_SearchWindow.m_pResultsListStore != NULL) {
@@ -249,7 +250,7 @@ void searchwindow_on_searchtypecombo_changed(GtkWidget *pWidget, gpointer* p)
 	searchwindow_clear_results();
 }
 
-void searchwindow_go_to_selected_result()
+void searchwindow_go_to_selected_result(void)
 {
 	GtkTreeSelection* pSelection = gtk_tree_view_get_selection(
 		g_SearchWindow.m_pResultsTreeView);

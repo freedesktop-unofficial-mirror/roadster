@@ -27,6 +27,7 @@
 
 #include <gtk/gtk.h>
 #include <string.h>
+#include <stdlib.h>
 #include "../include/geometryset.h"
 #include "../include/map.h"
 #include "../include/util.h"

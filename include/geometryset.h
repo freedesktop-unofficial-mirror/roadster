@@ -37,7 +37,7 @@ typedef struct {
 
 #include "map.h"
 
-void geometryset_init();
+void geometryset_init(void);
 void geometryset_free(geometryset_t* pGeometrySet);
 void geometryset_clear(geometryset_t* pGeometrySet);
 

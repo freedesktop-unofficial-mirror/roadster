@@ -23,6 +23,7 @@
 
 #include <gtk/gtk.h>
 #include "../include/geometryset.h"
+#include "../include/scenemanager.h"
 
 /*
 Goals:
@@ -40,29 +41,31 @@ struct {
 	GHashTable* m_pLabelHash;
 } g_SceneManager;
 
-void scenemanager_init()
+void scenemanager_init(void)
 {
 	g_SceneManager.m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
 }
 
-void scenemanager_add_label_line(geometryset_t* pGeometry, gchar* pszLabel)
+#if ROADSTER_DEAD_CODE
+static void scenemanager_add_label_line(geometryset_t* pGeometry, gchar* pszLabel)
 {
 	
 }
 
-void scenemanager_add_label_polygon(geometryset_t* pGeometry, gchar* pszLabel)
+static void scenemanager_add_label_polygon(geometryset_t* pGeometry, gchar* pszLabel)
 {
 	
 }
 
-void scenemanager_draw()
+static void scenemanager_draw(void)
 {
 	
 }
 
-void scenemanager_clear()
+static void scenemanager_clear(void)
 {
 	g_hash_table_destroy(g_SceneManager.m_pLabelHash);
 
 	scenemanager_init();
 }
+#endif /* ROADSTER_DEAD_CODE */

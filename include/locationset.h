@@ -53,11 +53,11 @@ typedef struct locationset {
 	GPtrArray* m_pLocationsArray;
 } locationset_t;
 
-void locationset_init();
-void locationset_load_locationsets();
+void locationset_init(void);
+void locationset_load_locationsets(void);
 gboolean locationset_load_locations(maprect_t* pRect);
 gboolean locationset_add_location(gint nLocationSetID, mappoint_t* pPoint, gint* pReturnID);
-const GPtrArray* locationset_get_set_array();
+const GPtrArray* locationset_get_set_array(void);
 
 #ifdef __cplusplus
 }

@@ -26,6 +26,7 @@
 #include "../include/db.h"
 #include "../include/import.h"
 #include "../include/mainwindow.h"
+#include "../include/importwindow.h"
 
 //#define G_PROCESS_MAINLOOP  while(g_main_context_iteration(g_main_context_default(), FALSE)) { /* do nothing */ }
 // #define G_PROCESS_MAINLOOP  while(g_main_iteration(FALSE)) { /* do nothing */ }
@@ -52,7 +53,7 @@ void importwindow_init(GladeXML* pGladeXML)
 }
 
 
-void importwindow_show()
+void importwindow_show(void)
 {
 	gtk_widget_show(GTK_WIDGET(g_ImportWindow.m_pWindow));
 	gtk_window_present(g_ImportWindow.m_pWindow);
@@ -78,7 +79,7 @@ void importwindow_log_append(const gchar* pszFormat, ...)
 	GTK_PROCESS_MAINLOOP;
 }
 
-void importwindow_progress_pulse()
+void importwindow_progress_pulse(void)
 {
 //	gtk_progress_bar_set_text(g_ImportWindow.m_pProgressBar, azBuffer);
 	
@@ -107,7 +108,7 @@ void importwindow_begin(GSList* pSelectedFileList)
 	GSList* pFile = pSelectedFileList;
 	while(pFile != NULL) {
 		// do some work
-		if(import_from_uri((gchar*)pFile->data, importwindow_progress_pulse)) {
+		if(import_from_uri((gchar*)pFile->data)) {
 			nTotalSuccess++;
 		}
 

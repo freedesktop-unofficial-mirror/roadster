@@ -24,17 +24,19 @@
 #ifndef _IMPORTWINDOW_H
 #define _IMPORTWINDOW_H
 
+#include <glade/glade.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-void importwindow_init(void* pGladeXML);
-void importwindow_show();
+void importwindow_init(GladeXML* pGladeXML);
+void importwindow_show(void);
 
 void importwindow_begin(GSList* pSelectedFileList);
 void importwindow_log_append(const gchar* pszText, ...);
-void importwindow_progress_pulse();
+void importwindow_progress_pulse(void);
 
 // void importwindow_progress_callback(gdouble fPercent, gpointer pData);
 	

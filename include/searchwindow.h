@@ -30,12 +30,25 @@ extern "C"
 #endif
 
 #include <glade/glade.h>
+#include "gpsclient.h"
 	
 void searchwindow_init(GladeXML* pGladeXML);
 
 void searchwindow_add_result(gint nRoadID, const gchar* pszText, mappoint_t* pPoint);
 
-void searchwindow_clear_results();
+void searchwindow_go_to_selected_result(void);
+
+void searchwindow_clear_results(void);
+
+/* Funky, auto-lookup glade signal handlers.
+
+   XXX: Better would be to hook these up manually, remove these
+   declarations, and make the functions static.
+*/
+void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p);
+void searchwindow_on_searchtypecombo_changed(GtkWidget *pWidget, gpointer* p);
+void searchwindow_on_addressresultstreeview_row_activated(GtkWidget *pWidget, gpointer* p);
+void searchwindow_on_gobutton_clicked(GtkWidget *pWidget, gpointer* p);
 
 #ifdef __cplusplus
 }

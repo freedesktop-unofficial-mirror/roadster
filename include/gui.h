@@ -39,12 +39,12 @@ struct gui_state_t {
 //
 // prototypes
 //
-void gui_init();
-void gui_run();
-extern gboolean gui_redraw_map_if_needed();
+void gui_init(void);
+void gui_run(void);
+extern gboolean gui_redraw_map_if_needed(void);
 extern void gui_set_tool_label(gchar* pMessage);
-extern void gui_exit();
-extern GtkWidget* gui_get_top_window();
+extern void gui_exit(void);
+extern GtkWidget* gui_get_top_window(void);
 
 //~ void gui_show_goto_window();
 //~ void gui_hide_goto_window();
@@ -58,7 +58,7 @@ extern GtkWidget* gui_get_top_window();
 //~ void gui_show_preferences_window();
 //~ void gui_hide_preferences_window();
 
-void cursor_init();
+void cursor_init(void);
 //~ void gui_statusbar_update_zoomscale();
 //~ void gui_statusbar_update_position();
 //~ void gui_statusbar_set_position(gchar* pMessage);

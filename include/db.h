@@ -43,19 +43,21 @@ typedef MYSQL_ROW db_row_t;
 #include "map.h"
 #include "layers.h"
 
-void db_create_tables();
+void db_create_tables(void);
 
-void db_init();
-void db_deinit();
+void db_init(void);
+void db_deinit(void);
 
 // connect
 gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* pzPassword, const gchar* pzDatabase);
-const gchar* db_get_connection_info();
+const gchar* db_get_connection_info(void);
 
 // utility
-gboolean db_is_empty();
+gboolean db_is_empty(void);
 
 gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, GPtrArray* pPointsArray, gint* pReturnID);
+
+gboolean db_insert_roadname(gint nRoadID, const gchar* pszName, gint nSuffixID);
 
 //~ gboolean db_create_points_db(const gchar* name);
 
@@ -70,7 +72,7 @@ gboolean db_insert_road(gint nLayerType, gint nAddressLeftStart, gint nAddressLe
 gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet);
 db_row_t db_fetch_row(db_resultset_t* pResultSet);
 void db_free_result(db_resultset_t* pResultSet);
-gint db_get_last_insert_id();
+gint db_get_last_insert_id(void);
 
 gchar* db_make_escaped_string(const gchar* pszString);
 void db_free_escaped_string(gchar* pszString);

@@ -30,7 +30,15 @@ extern "C"
 #endif
 
 void welcomewindow_init(GladeXML* pGladeXML);
-void welcomewindow_show();
+void welcomewindow_show(void);
+
+/* Funky, auto-lookup glade signal handlers.
+
+   XXX: Better would be to hook these up manually, remove these
+   declarations, and make the functions static.
+*/
+void welcomewindow_on_url_clicked(GtkWidget* pButton, gpointer data);
+void welcomewindow_on_okbutton_clicked(GtkWidget* pButton, gpointer data);
 
 #ifdef __cplusplus
 }

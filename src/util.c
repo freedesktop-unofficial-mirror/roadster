@@ -20,8 +20,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
-#include <gtk/gtk.h>
+
+#include <stdlib.h> 
+#include "../include/util.h"
 #include "../include/layers.h"		// for color_t -- move it elsewhere!
 
 void util_close_parent_window(GtkWidget* pWidget, gpointer data)
@@ -29,10 +30,12 @@ void util_close_parent_window(GtkWidget* pWidget, gpointer data)
 	gtk_widget_hide(gtk_widget_get_toplevel(pWidget));
 }
 
-void util_random_color(color_t* pColor)
+#if ROADSTER_DEAD_CODE
+static void util_random_color(color_t* pColor)
 {
 	pColor->m_fRed = (random()%1000)/1000.0;
 	pColor->m_fGreen = (random()%1000)/1000.0;
 	pColor->m_fBlue = (random()%1000)/1000.0;
 	pColor->m_fAlpha = 1.0;
 }
+#endif /* ROADSTER_DEAD_CODE */

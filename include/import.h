@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-gboolean import_from_uri(const gchar* pszURI, void (*func_progress_callback)());
+gboolean import_from_uri(const gchar* pszURI);
 
 #ifdef __cplusplus
 }

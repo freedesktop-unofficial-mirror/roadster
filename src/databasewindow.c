@@ -26,6 +26,7 @@
 
 #include "../include/db.h"
 #include "../include/gui.h"
+#include "../include/databasewindow.h"
 
 struct {
 	GtkDialog* m_pWindow;	
@@ -44,7 +45,7 @@ void databasewindow_init(GladeXML* pGladeXML)
 	g_DatabaseWindow.m_pPasswordEntry = GTK_ENTRY(glade_xml_get_widget(pGladeXML, "databasewindowpasswordentry")); g_return_if_fail(g_DatabaseWindow.m_pPasswordEntry != NULL);	
 }
 
-gboolean databasewindow_connect()
+gboolean databasewindow_connect(void)
 {
 	while(TRUE) {
 		gint nResponse = gtk_dialog_run(g_DatabaseWindow.m_pWindow);
@@ -78,6 +79,6 @@ gboolean databasewindow_connect()
 	}
 }
 
-void databasewindow_on_connectbutton_clicked()
+void databasewindow_on_connectbutton_clicked(void)
 {
 }

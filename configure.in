@@ -97,6 +97,25 @@ AC_DEFINE_UNQUOTED(PACKAGE_HELP_DIR, "${packageprefix}/${packagehelpdir}")
 AC_DEFINE_UNQUOTED(PACKAGE_MENU_DIR, "${packageprefix}/${packagemenudir}")
 AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR, "${packagesrcdir}")
 
+dnl ==================================
+dnl Use lots of warning flags with GCC
+
+# I'd prefer to use "-Wstrict-prototypes" but there's a bug in the gtk
+# headers that triggers this warning, which makes it very annoying to
+# use.
+
+WARN_CFLAGS=""
+
+if test "x$GCC" = "xyes"; then
+	WARN_CFLAGS="-Wall -Wpointer-arith \
+	-Wmissing-prototypes -Wmissing-declarations \
+	-Wnested-externs -fno-strict-aliasing"
+fi
+
+AC_SUBST(WARN_CFLAGS)
+dnl ==================================
+
+
 AC_OUTPUT([
 Makefile
 intl/Makefile
