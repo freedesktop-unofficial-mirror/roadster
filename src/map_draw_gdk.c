@@ -201,9 +201,9 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap)
 {
 	GdkColor clr;
-	clr.red = 247/255.0 * 65535;
-	clr.green = 235/255.0 * 65535;
-	clr.blue = 230/255.0 * 65535;
+	clr.red = 239/255.0 * 65535;
+	clr.green = 239/255.0 * 65535;
+	clr.blue = 239/255.0 * 65535;
 	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
 	
 	gdk_draw_rectangle(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],

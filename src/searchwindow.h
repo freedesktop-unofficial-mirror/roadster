@@ -31,9 +31,9 @@ G_BEGIN_DECLS
 	
 void searchwindow_init(GladeXML* pGladeXML);
 
-void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint);
+void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint, gint nZoomLevel);
 
-void searchwindow_go_to_selected_result(void);
+static void searchwindow_go_to_selected_result(void);
 
 void searchwindow_clear_results(void);
 

@@ -196,6 +196,7 @@ void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions);
 // Conversions
 void map_windowpoint_to_mappoint(map_t* pMap, screenpoint_t* pScreenPoint, mappoint_t* pMapPoint);
 gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nDistanceUnit);
+double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB);
 
 
 // remove this!

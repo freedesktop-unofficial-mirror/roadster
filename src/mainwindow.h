@@ -61,6 +61,8 @@ gboolean mainwindow_get_sidebox_visible(void);
 void mainwindow_statusbar_update_zoomscale(void);
 void mainwindow_statusbar_update_position(void);
 
+void mainwindow_set_zoomlevel(gint nZoomLevel);
+
 void mainwindow_statusbar_progressbar_set_text(const gchar* pszText);
 void mainwindow_statusbar_progressbar_pulse(void);
 void mainwindow_statusbar_progressbar_clear(void);
@@ -69,6 +71,7 @@ void mainwindow_statusbar_update_position(void);
 
 // Map
 void mainwindow_set_centerpoint(mappoint_t* pPoint);
+void mainwindow_get_centerpoint(mappoint_t* pPoint);
 
 typedef enum {
 	DIRECTION_NONE, DIRECTION_N, DIRECTION_NE, DIRECTION_E, DIRECTION_SE, DIRECTION_S, DIRECTION_SW, DIRECTION_W, DIRECTION_NW

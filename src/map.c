@@ -567,12 +567,9 @@ static void map_data_clear(map_t* pMap)
 	}
 }
 
-
-#if ROADSTER_DEAD_CODE
-/*
-static double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
+double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 {
-	g_assert_not_reached();	// unused/tested
+//	g_assert_not_reached();	// unused/tested
 
 	// This functions calculates the length of the arc of the "greatcircle" that goes through
 	// the two points A and B and whos center is the center of the sphere, O.
@@ -595,6 +592,9 @@ static double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 	// Step 2. Multiply the angle by the radius of the sphere to get arc length.
 	return fAOB_Rad * RADIUS_OF_WORLD_IN_METERS;
 }
+
+#if ROADSTER_DEAD_CODE
+/*
 
 // ========================================================
 //  Redraw

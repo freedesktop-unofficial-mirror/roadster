@@ -35,10 +35,13 @@
 
 #define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
 
-#define RESULTLIST_COLUMN_NAME 	0
+#define RESULTLIST_COLUMN_NAME 	0	// visible data
 #define RESULTLIST_LATITUDE	1
 #define RESULTLIST_LONGITUDE	2
+#define RESULTLIST_DISTANCE	3
+#define RESULTLIST_ZOOMLEVEL	4
 
+#define MAGIC_GTK_NO_SORT_COLUMN (-2)	// why -2?  dunno.  is there a real define for this?  dunno.
 
 struct {
 	// window
@@ -53,9 +56,6 @@ struct {
 	// results list (on the sidebar)
 	GtkTreeView* m_pResultsTreeView;
 	GtkListStore* m_pResultsListStore;
-	
-	// go to selected result button (on the sidebar)
-	GtkButton* m_pGoButton;
 } g_SearchWindow = {0};
 
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data);
@@ -65,10 +65,9 @@ void searchwindow_init(GladeXML* pGladeXML)
 	g_SearchWindow.m_pSearchEntry 		= GTK_ENTRY(glade_xml_get_widget(pGladeXML, "searchentry"));			g_return_if_fail(g_SearchWindow.m_pSearchEntry != NULL);	
 	g_SearchWindow.m_pSearchButton		= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "searchbutton"));			g_return_if_fail(g_SearchWindow.m_pSearchButton != NULL);	
 	g_SearchWindow.m_pResultsTreeView	= GTK_TREE_VIEW(glade_xml_get_widget(pGladeXML, "searchresultstreeview"));	g_return_if_fail(g_SearchWindow.m_pResultsTreeView != NULL);	
-	g_SearchWindow.m_pGoButton		= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "searchgobutton"));		g_return_if_fail(g_SearchWindow.m_pGoButton != NULL);	
 
 	// create results tree view
-	g_SearchWindow.m_pResultsListStore = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+	g_SearchWindow.m_pResultsListStore = gtk_list_store_new(5, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INT);
 	gtk_tree_view_set_model(g_SearchWindow.m_pResultsTreeView, GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore));
 
 	GtkCellRenderer* pCellRenderer;
@@ -95,15 +94,13 @@ void searchwindow_clear_results(void)
 // begin a search
 void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 {
-	g_print("begin search\n");
-
-	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.m_pSearchButton), FALSE);
-
-	searchwindow_clear_results();
+	// make list unsorted (sorting once at the end is much faster than for each insert)
+	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), MAGIC_GTK_NO_SORT_COLUMN, GTK_SORT_ASCENDING);
 
 	const gchar* pszSearch = gtk_entry_get_text(g_SearchWindow.m_pSearchEntry);
 
 	void* pBusy = mainwindow_set_busy();
+	searchwindow_clear_results();
 	search_road_execute(pszSearch);
 	mainwindow_set_not_busy(&pBusy);
 
@@ -111,21 +108,30 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 	mainwindow_sidebar_set_tab(SIDEBAR_TAB_SEARCH_RESULTS);
 	mainwindow_set_sidebox_visible(TRUE);
 
-	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.m_pSearchButton), TRUE);
+	// Sort the list by distance from viewer!
+	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), RESULTLIST_DISTANCE, GTK_SORT_ASCENDING);
 }
 
 // add a result row to the list
-void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint)
+void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint, gint nZoomLevel)
 {
 	GtkTreeIter iter;
+
+	mappoint_t ptCenter;
+	mainwindow_get_centerpoint(&ptCenter);
+
+	gdouble fDistance = map_get_distance_in_meters(&ptCenter, pPoint);
 
 	gchar* pszBuffer = g_strdup_printf("<span size='small'>%s</span>", pszText);
 	gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
 	gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter,
 		RESULTLIST_COLUMN_NAME, pszBuffer,
 		RESULTLIST_LATITUDE, pPoint->m_fLatitude,
-		RESULTLIST_LONGITUDE, pPoint->m_fLongitude,		
+		RESULTLIST_LONGITUDE, pPoint->m_fLongitude,
+		RESULTLIST_DISTANCE, fDistance,
+		RESULTLIST_ZOOMLEVEL, nZoomLevel,
 		-1);
+
 	g_free(pszBuffer);
 }
 
@@ -138,11 +144,14 @@ static void searchwindow_go_to_selected_result(void)
 	GtkTreeModel* pModel = GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore);
 	if(gtk_tree_selection_get_selected(pSelection, &pModel, &iter)) {
 		mappoint_t pt;
+		gint nZoomLevel;
 		gtk_tree_model_get(GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore), &iter,
 			RESULTLIST_LATITUDE, &pt.m_fLatitude,
 			RESULTLIST_LONGITUDE, &pt.m_fLongitude,
+			RESULTLIST_ZOOMLEVEL, &nZoomLevel,
 			-1);
 
+		mainwindow_set_zoomlevel(nZoomLevel);
 		mainwindow_set_centerpoint(&pt);
 		mainwindow_draw_map(DRAWFLAG_ALL);
 		mainwindow_statusbar_update_position();
@@ -154,19 +163,8 @@ void searchwindow_on_addressresultstreeview_row_activated(GtkWidget *pWidget, gp
 	searchwindow_go_to_selected_result();
 }
 
-void searchwindow_on_gobutton_clicked(GtkWidget *pWidget, gpointer* p)
-{
-	searchwindow_go_to_selected_result();
-}
-
-#define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
-
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data)
 {
 	GTK_PROCESS_MAINLOOP;
-
 	searchwindow_go_to_selected_result();
-
-	/* set "Go" button sensitive if >0 items selected */
-//	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.m_pGoButton), gtk_tree_selection_count_selected_rows(treeselection) > 0);	
 }

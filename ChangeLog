@@ -1,7 +1,14 @@
+2005-03-07  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/searchwindow.c: Sort search results by distance from user, starting with closest.  Also set zoomlevel based on type of result (road, city, state).
+	* src/mainwindow.c: Add mainwindow_set_zoomlevel() and mainwindow_get_centerpoint() functions for searchwindow's use.
+	* src/map.c: Uncomment map_get_distance_in_meters() for use by searchwindow.
+	* src/search_road.c: Suggest zoomlevel of 3 for road search results.
+
 2005-03-06  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
-	* mainwindow.c: Scroll once when user clicks map border.
-	* map_draw_cairo.c: Fix halo drawing.
+	* src/mainwindow.c: Scroll once when user clicks map border.  Change map drag mouse cursor to closed hand.
+	* src/map_draw_cairo.c: Fix halo drawing.
 
 2005-03-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 

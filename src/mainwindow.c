@@ -547,6 +547,11 @@ void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 //
 // Zoom
 //
+void mainwindow_set_zoomlevel(gint nZoomLevel)
+{
+	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), nZoomLevel);
+}
+
 static void zoom_in_one(void)
 {
 	map_set_zoomlevel(g_MainWindow.m_pMap, map_get_zoomlevel(g_MainWindow.m_pMap) + 1);
@@ -713,9 +718,9 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				// else begin a drag
 //                                 GdkCursor* pCursor = gdk_cursor_new(GDK_HAND2);
 //                                 if(GDK_GRAB_SUCCESS == gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME)) {
-				GdkCursor* pCursor = gdk_cursor_new(GDK_FLEUR);
-				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
-				gdk_cursor_unref(pCursor);
+//                                 GdkCursor* pCursor = gdk_cursor_new(GDK_FLEUR);
+//                                 gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+//                                 gdk_cursor_unref(pCursor);
 
 				g_MainWindow.m_bMouseDragging = TRUE;
 				g_MainWindow.m_ptClickLocation.m_nX = nX;
@@ -778,6 +783,11 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 	EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
 	if(g_MainWindow.m_bMouseDragging) {
+		// Set it here and no when first clicking because now we know it's a drag (on click it could be a double-click)
+		GdkCursor* pCursor = gdk_cursor_new(GDK_FLEUR);
+		gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+		gdk_cursor_unref(pCursor);
+
 		gint nDeltaX = g_MainWindow.m_ptClickLocation.m_nX - nX;
                 gint nDeltaY = g_MainWindow.m_ptClickLocation.m_nY - nY;
 
@@ -1007,6 +1017,11 @@ void mainwindow_set_centerpoint(mappoint_t* pPoint)
 {
 	map_set_centerpoint(g_MainWindow.m_pMap, pPoint);
 	mainwindow_statusbar_update_position();
+}
+
+void mainwindow_get_centerpoint(mappoint_t* pPoint)
+{
+	map_get_centerpoint(g_MainWindow.m_pMap, pPoint);
 }
 
 void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* __unused)
