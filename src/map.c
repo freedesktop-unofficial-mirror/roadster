@@ -705,6 +705,29 @@ double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 	return fAOB_Rad * RADIUS_OF_WORLD_IN_METERS;
 }
 
+gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2)
+{
+	rendermetrics_t metrics;
+	map_get_render_metrics(pMap, &metrics);
+
+	gdouble fX1 = SCALE_X(&metrics, p1->m_fLongitude);
+	gdouble fY1 = SCALE_Y(&metrics, p1->m_fLongitude);
+	gdouble fX2 = SCALE_X(&metrics, p2->m_fLongitude);
+	gdouble fY2 = SCALE_Y(&metrics, p2->m_fLongitude);
+
+	gdouble fDeltaX = fX2 - fX1;
+	gdouble fDeltaY = fY2 - fY1;
+
+	gdouble d = sqrt((fDeltaX*fDeltaX) + (fDeltaY*fDeltaY));
+//	g_print("%f\n", d);
+	return d;
+}
+
+gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2)
+{
+	return( p1->m_fLatitude == p2->m_fLatitude && p1->m_fLongitude == p2->m_fLongitude);
+}
+
 #if ROADSTER_DEAD_CODE
 /*
 

@@ -70,8 +70,9 @@ void mainwindow_statusbar_update_zoomscale(void);
 void mainwindow_statusbar_update_position(void);
 
 // Map
-void mainwindow_map_set_centerpoint(mappoint_t* pPoint);
+void mainwindow_map_center_on_mappoint(mappoint_t* pPoint);
 void mainwindow_map_get_centerpoint(mappoint_t* pPoint);
+void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint);
 
 typedef enum {
 	DIRECTION_NONE, DIRECTION_N, DIRECTION_NE, DIRECTION_E, DIRECTION_SE, DIRECTION_S, DIRECTION_SW, DIRECTION_W, DIRECTION_NW

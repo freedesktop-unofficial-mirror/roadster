@@ -502,18 +502,21 @@ static void map_draw_cairo_line_label_one_segment(map_t* pMap, cairo_t *pCairo, 
         // get total width of string
         cairo_text_extents_t extents;
         cairo_text_extents(pCairo, pszLabel, &extents);
+	gdouble fLabelWidth = extents.width;
+	gdouble fFontHeight = extents.height;
 
-        cairo_font_extents_t font_extents;
-        cairo_current_font_extents(pCairo, &font_extents);
+//        cairo_font_extents_t font_extents;
+//        cairo_current_font_extents(pCairo, &font_extents);
+//	gdouble fFontHeight = font_extents.ascent;
 
         // text too big for line?       XXX: This math is not right but good enough for now ;)
-        if((extents.width * extents.width) > (fLineLengthSquared + (ACCEPTABLE_LINE_LABEL_OVERDRAW_IN_PIXELS_SQUARED))) {
+        if((fLabelWidth * fLabelWidth) > (fLineLengthSquared + (ACCEPTABLE_LINE_LABEL_OVERDRAW_IN_PIXELS_SQUARED))) {
             cairo_restore(pCairo);
             return;
         }
         gdouble fLineLength = sqrt(fLineLengthSquared);
 
-        gdouble fTotalPadding = fLineLength - extents.width;
+        gdouble fTotalPadding = fLineLength - fLabelWidth;
 
         // Normalize (make length = 1.0) by dividing by line length
         // This makes a line with length 1 from the origin (0,0)
@@ -538,22 +541,24 @@ static void map_draw_cairo_line_label_one_segment(map_t* pMap, cairo_t *pCairo, 
                 gdouble fDrawY = fY1 + (fNormalizedY * fFrontPadding);
                 
                 // center text vertically by shifting down by half of height
-                fDrawX -= (fPerpendicularNormalizedX * font_extents.ascent/2);
-                fDrawY -= (fPerpendicularNormalizedY * font_extents.ascent/2);
-                
+                fDrawX -= (fPerpendicularNormalizedX * fFontHeight/2);
+                fDrawY -= (fPerpendicularNormalizedY * fFontHeight/2);
+
+		#define B (3)	// a border around the text to keep things readable, in pixels
+
                 GdkPoint aBoundingPolygon[4];
                 // 0 is bottom left point
-                aBoundingPolygon[0].x = fDrawX;	
-                aBoundingPolygon[0].y = fDrawY;
+                aBoundingPolygon[0].x = fDrawX - (fPerpendicularNormalizedX * B) - (fNormalizedX * B);
+                aBoundingPolygon[0].y = fDrawY - (fPerpendicularNormalizedX * B) - (fNormalizedX * B);
                 // 1 is upper left point
-                aBoundingPolygon[1].x = fDrawX + (fPerpendicularNormalizedX * font_extents.ascent);
-                aBoundingPolygon[1].y = fDrawY + (fPerpendicularNormalizedY * font_extents.ascent);
+                aBoundingPolygon[1].x = fDrawX + (fPerpendicularNormalizedX * (fFontHeight+B)) - (fNormalizedX * B); ;
+                aBoundingPolygon[1].y = fDrawY + (fPerpendicularNormalizedY * (fFontHeight+B)) - (fNormalizedY * B);;
                 // 2 is upper right point
-                aBoundingPolygon[2].x = aBoundingPolygon[1].x + (fNormalizedX * extents.width);
-                aBoundingPolygon[2].y = aBoundingPolygon[1].y + (fNormalizedY * extents.width);
+                aBoundingPolygon[2].x = aBoundingPolygon[1].x + (fNormalizedX * (fLabelWidth+B+B));
+                aBoundingPolygon[2].y = aBoundingPolygon[1].y + (fNormalizedY * (fLabelWidth+B+B));
                 // 3 is lower right point
-                aBoundingPolygon[3].x = fDrawX + (fNormalizedX * extents.width);
-                aBoundingPolygon[3].y = fDrawY + (fNormalizedY * extents.width);
+                aBoundingPolygon[3].x = fDrawX + (fNormalizedX * (fLabelWidth+B)) - (fPerpendicularNormalizedX * B);
+                aBoundingPolygon[3].y = fDrawY + (fNormalizedY * (fLabelWidth+B)) - (fPerpendicularNormalizedY * B);
                 
                 // Ask whether we can draw here
                 if(FALSE == scenemanager_can_draw_polygon(pMap->m_pSceneManager, aBoundingPolygon, 4)) {
@@ -1159,8 +1164,8 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 	gdouble fPolygonHeight = fMaxY - fMinY;
 	gdouble fPolygonWidth = fMaxX - fMinX;
 
-	gdouble fDrawX = fTotalX / pPointString->m_pPointsArray->len;
-	gdouble fDrawY = fTotalY / pPointString->m_pPointsArray->len;
+	gdouble fDrawX = fMinX + fPolygonWidth/2;	//fTotalX / pPointString->m_pPointsArray->len;
+	gdouble fDrawY = fMinY + fPolygonHeight/2; 	//fTotalY / pPointString->m_pPointsArray->len;
 
 	cairo_save(pCairo);
 

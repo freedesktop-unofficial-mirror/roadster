@@ -66,12 +66,12 @@ void gui_init()
 
 void gui_run()
 {
-	if(db_is_empty()) {
+//	if(db_is_empty()) {
 		welcomewindow_show();
-	}
-	else {
-		mainwindow_show();
-	}
+//	}
+//	else {
+//		mainwindow_show();
+//	}
 	gtk_main();
 }
 

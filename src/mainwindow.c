@@ -64,11 +64,13 @@
 #define DRAW_PRETTY_RESIZE_TIMEOUT_MS	(180)
 
 #define SCROLL_TIMEOUT_MS		(80)	// how often (in MS) to move
-#define SCROLL_DISTANCE_IN_PIXELS	(80)	// how far to move every (above) MS
+#define SCROLL_DISTANCE_IN_PIXELS	(70)	// how far to move every (above) MS
 #define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)	// the size of the click target (distance from edge of map view) to begin scrolling
 
-#define SLIDE_TIMEOUT_MS		(90)	// time between frames (in MS) for smooth-sliding (on double click?)
-#define	SLIDE_TIME_IN_SECONDS		(1.2)	// how long the whole slide should take, in seconds
+#define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
+#define	SLIDE_TIME_IN_SECONDS		(0.7)	// how long the whole slide should take, in seconds
+
+#define	SLIDE_TIME_IN_SECONDS_AUTO	(1.4)
 
 // Layerlist columns
 #define LAYERLIST_COLUMN_ENABLED	(0)
@@ -80,6 +82,8 @@
 
 // Settings
 #define TIMER_GPS_REDRAW_INTERVAL_MS	(2500)		// lower this (to 1?) when it's faster to redraw track
+
+#define MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS	(3500.0)
 
 // Types
 typedef struct {
@@ -1158,6 +1162,32 @@ void mainwindow_map_center_on_mappoint(mappoint_t* pPoint)
 	map_set_centerpoint(g_MainWindow.m_pMap, pPoint);
 
 	mainwindow_statusbar_update_position();
+}
+
+void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint)
+{
+	mappoint_t centerPoint;
+	map_get_centerpoint(g_MainWindow.m_pMap, &centerPoint);
+
+	if(map_points_equal(pPoint, &centerPoint)) return;
+
+	if(map_get_distance_in_pixels(g_MainWindow.m_pMap, pPoint, &centerPoint) < MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS) {
+		g_MainWindow.m_bSliding = TRUE;
+		g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS_AUTO);
+
+		// set startpoint
+		g_MainWindow.m_ptSlideStartLocation.m_fLatitude = centerPoint.m_fLatitude;
+		g_MainWindow.m_ptSlideStartLocation.m_fLongitude = centerPoint.m_fLongitude;
+
+		// set endpoint
+		g_MainWindow.m_ptSlideEndLocation.m_fLatitude = pPoint->m_fLatitude;
+		g_MainWindow.m_ptSlideEndLocation.m_fLongitude = pPoint->m_fLongitude;
+
+		//mainwindow_callback_on_slide_timeout(NULL);
+	}
+	else {
+		mainwindow_map_center_on_mappoint(pPoint);
+	}
 }
 
 void mainwindow_get_centerpoint(mappoint_t* pPoint)

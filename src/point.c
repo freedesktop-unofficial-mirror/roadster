@@ -25,14 +25,24 @@
 #include "map.h"
 #include "point.h"
 
+#define USE_GFREELIST
+
+#ifdef USE_GFREELIST
+#include "gfreelist.h"
+GFreeList* g_pPointFreeList;
+#else
 GMemChunk* g_pPointChunkAllocator;		// chunk allocators to be shared by all geometrysets
+#endif
 
 void point_init(void)
 {
+#ifdef USE_GFREELIST
+	g_pPointFreeList = g_free_list_new(sizeof(mappoint_t), 1000);
+#else
 	// create memory allocators
 	g_pPointChunkAllocator = g_mem_chunk_new("ROADSTER points",
 			sizeof(mappoint_t), 1000, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_pPointChunkAllocator != NULL);
+#endif
 }
 
 /*******************************************************
@@ -44,7 +54,12 @@ gboolean point_alloc(mappoint_t** ppPoint)
 	g_return_val_if_fail(*ppPoint == NULL, FALSE);	// must be a pointer to a NULL pointer
 
 	// get a new point struct from the allocator
+#ifdef USE_GFREELIST
+	mappoint_t* pNew = g_free_list_alloc(g_pPointFreeList);
+	memset(pNew, 0, sizeof(mappoint_t));
+#else
 	mappoint_t* pNew = g_mem_chunk_alloc0(g_pPointChunkAllocator);
+#endif
 	if(pNew) {
 		*ppPoint = pNew;
 		return TRUE;
@@ -57,6 +72,10 @@ void point_free(mappoint_t* pPoint)
 	g_return_if_fail(pPoint != NULL);
 
 	// give back to allocator
+#ifdef USE_GFREELIST
+	g_free_list_free(g_pPointFreeList, pPoint);
+#else
 	g_mem_chunk_free(g_pPointChunkAllocator, pPoint);
+#endif
 }
 

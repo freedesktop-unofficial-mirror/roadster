@@ -21,6 +21,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define USE_GNOME_VFS
+
 #include <mysql.h>
 
 #define HAVE_MYSQL_EMBED
@@ -33,7 +35,10 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef USE_GNOME_VFS
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
+#endif
 
 #include "db.h"
 #include "mainwindow.h"
@@ -50,7 +55,7 @@
 //						better for embedded or local servers
 // mysql_store_result - more client memory, gets all results right away and frees up server
 //						better for remote servers
-#define MYSQL_GET_RESULT(x)		mysql_use_result((x))
+#define MYSQL_GET_RESULT(x)		mysql_store_result((x))
 
 db_connection_t* g_pDB = NULL;
 
@@ -70,10 +75,12 @@ void db_init()
 	gchar* pszSetQueryCacheSize = g_strdup_printf("--query-cache-size=%dMB", 40);
 	gchar* pszKeyBufferSize	= g_strdup_printf("--key-buffer-size=%dMB", 32);
 
+#ifdef USE_GNOME_VFS
 	// Create directory if it doesn't exist
 	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszDataDir, 0700)) {
 		// no big deal, probably already exists (should we check?)
 	}
+#endif
 
 	gchar* apszServerOptions[] = {
 		"",	// program name -- unused

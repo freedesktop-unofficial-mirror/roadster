@@ -37,9 +37,9 @@ typedef enum {
 
 #define INCHES_PER_METER (39.37007)
 
-#define MIN_ZOOMLEVEL (1)
+#define MIN_ZOOMLEVEL (6)	// 1
 #define MAX_ZOOMLEVEL (10)
-#define NUM_ZOOMLEVELS (10)
+#define NUM_ZOOMLEVELS (10)	// 10
 
 #define WORLD_CIRCUMFERENCE_IN_METERS (40076000)
 #define WORLD_METERS_PER_DEGREE (WORLD_CIRCUMFERENCE_IN_METERS / 360.0)
@@ -208,5 +208,9 @@ void map_release_pixmap(map_t* pMap);
 
 void map_draw(map_t* pMap, gint nDrawFlags);
 double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
+
+gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2);
+
+gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2);
 
 #endif

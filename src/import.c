@@ -21,6 +21,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define USE_GNOME_VFS
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +33,9 @@
 #include "import_tiger.h"
 #include "db.h"
 
+#ifdef USE_GNOME_VFS
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
+#endif
 
 #if ROADSTER_DEAD_CODE
 static void import_progress_pulse(void)
@@ -42,6 +46,7 @@ static void import_progress_pulse(void)
 
 gboolean import_from_uri(const gchar* pszURI)
 {
+#ifdef USE_GNOME_VFS
 	gboolean bResult = FALSE;
 
 	GnomeVFSFileInfo info;
@@ -83,4 +88,5 @@ gboolean import_from_uri(const gchar* pszURI)
 
 //	func_progress_callback(1.0, pCallbackData);
 	return bResult;
+#endif
 }

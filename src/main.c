@@ -20,12 +20,13 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+#define USE_GNOME_VFS
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
-#include <gnome.h>
+#include <gtk/gtk.h>
 #include "gui.h"
 #include "db.h"
 #include "map.h"
@@ -44,13 +45,16 @@ int main (int argc, char *argv[])
 		textdomain(PACKAGE);
 	#endif
 
-	gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, NULL);
+//	gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, NULL);
+	gtk_init(&argc, &argv);
 
+	g_type_init();
 	if(!main_init())
 		return 1;
 
 	prefs_read();
 
+	g_print("Running in %s mode\n", g_thread_supported() ? "multi-threaded" : "single-threaded");
 	gui_run();
 	main_deinit();
 
@@ -59,10 +63,7 @@ int main (int argc, char *argv[])
 
 gboolean main_init(void)
 {
-	// Initialize GLib thread system
-	//g_thread_init(NULL);
-	//gdk_threads_init();
-
+#ifdef USE_GNOME_VFS
 	if(!gnome_vfs_init()) {	
 		g_warning("gnome_vfs_init failed\n");
 		return FALSE;
@@ -71,7 +72,7 @@ gboolean main_init(void)
 	gchar* pszApplicationDir = g_strdup_printf("%s/.roadster", g_get_home_dir());
 	gnome_vfs_make_directory(pszApplicationDir, 0700);
 	g_free(pszApplicationDir);
-
+#endif
 	g_print("initializing prefs\n");
 	prefs_init();	// note: doesn't READ prefs yet
 

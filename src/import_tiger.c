@@ -22,11 +22,15 @@
  */
 
 // See TGR2003.PDF page 208 for county list
+#define USE_GNOME_VFS
 
 #include <stdlib.h>			// for strtod
 
 #include <string.h>
+
+#ifdef USE_GNOME_VFS
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
+#endif
 
 #include "util.h"
 #include "import_tiger.h"
@@ -1035,6 +1039,7 @@ static gboolean import_tiger_from_buffers(gint8* pBufferMET, gint nLengthMET, gi
 
 gboolean import_tiger_from_uri(const gchar* pszURI, gint nTigerSetNumber)
 {
+#ifdef USE_GNOME_VFS
 	//g_print("pszURI = %s\n", pszURI);
 
 	importwindow_progress_pulse();
@@ -1088,10 +1093,12 @@ gboolean import_tiger_from_uri(const gchar* pszURI, gint nTigerSetNumber)
 	
 	g_free(pszTempDir);
 	return bSuccess;
+#endif
 }
 
 static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint nTigerSetNumber)
 {
+#ifdef USE_GNOME_VFS
 	g_print("import_tiger_from_directory\n");
 
 	gchar* pszFilePath;
@@ -1127,6 +1134,7 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 		g_free(apBuffers[i]); // can be null
 	}
 	return bSuccess;
+#endif
 }
 
 static gboolean import_tiger_from_buffers(

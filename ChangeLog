@@ -1,3 +1,20 @@
+2005-03-19  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/gfreelist.h:
+	* src/gfreelist.c: Added.
+	* src/Makefile.am: Added gfreelist.c.
+	* src/animator.c: Cleanup.
+	* src/gui.c: Always show welcome window.
+	* src/main.c: Remove gnome_program_init() and add gtk_init() and g_type_init().
+	* src/mainwindow.c: Slide to search results, if close enough.
+	* src/map.c: Add map_get_distance_in_pixels() and map_points_equal().
+	* src/map.h: Limit zoomlevels to 6-10 for preview release.
+	* src/map_draw_cairo.c: Add a little padding around labels.
+	* src/point.c:
+	* src/pointstring.c: Use gfreelist instead of gmemchunk.
+	* src/searchwindow.c: Slide to results.
+	* data/roadster.glade: Remove gnome widgets.  Change welcome window to explain preview release.
+
 2005-03-18  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/animator.h:

@@ -26,13 +26,23 @@
 #include "point.h"
 #include "pointstring.h"
 
-GMemChunk* g_pPointStringChunkAllocator;
+#define USE_GFREELIST
+
+#ifdef USE_GFREELIST
+#include "gfreelist.h"
+GFreeList* g_pPointStringFreeList = NULL;
+#else
+GMemChunk* g_pPointStringChunkAllocator = NULL;
+#endif
 
 void pointstring_init(void)
 {
+#ifdef USE_GFREELIST
+	g_pPointStringFreeList = g_free_list_new(sizeof(pointstring_t), 1000);
+#else
 	g_pPointStringChunkAllocator = g_mem_chunk_new("ROADSTER pointstrings",
 			sizeof(pointstring_t), 1000, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_pPointStringChunkAllocator != NULL);
+#endif
 }
 
 /*******************************************************
@@ -46,7 +56,14 @@ gboolean pointstring_alloc(pointstring_t** ppPointString)
 	g_return_val_if_fail(*ppPointString == NULL, FALSE);	// must be a pointer to a NULL pointer
 
 	// allocate it
+#ifdef USE_GFREELIST
+	g_assert(g_pPointStringFreeList != NULL);
+	pointstring_t* pNew = g_free_list_alloc(g_pPointStringFreeList);
+	memset(pNew, 0, sizeof(pointstring_t));
+#else
+	g_assert(g_pPointStringChunkAllocator != NULL);
 	pointstring_t* pNew = g_mem_chunk_alloc0(g_pPointStringChunkAllocator);
+#endif
 	if(pNew) {
 		// configure it
 		pNew->m_pPointsArray = g_ptr_array_sized_new(2);
@@ -70,7 +87,12 @@ void pointstring_free(pointstring_t* pPointString)
 
 	g_ptr_array_free(pPointString->m_pPointsArray, TRUE);
 	g_free(pPointString->m_pszName);
+
+#ifdef USE_GFREELIST
+	g_free_list_free(g_pPointStringFreeList, pPointString);
+#else
 	g_mem_chunk_free(g_pPointStringChunkAllocator, pPointString);
+#endif
 }
 
 // copies pPoint and adds it
@@ -83,4 +105,3 @@ void pointstring_append_point(pointstring_t* pPointString, const mappoint_t* pPo
 
 	g_ptr_array_add(pPointString->m_pPointsArray, pNewPoint);
 }
-
