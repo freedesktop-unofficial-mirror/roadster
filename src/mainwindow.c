@@ -46,7 +46,7 @@
 #include <gdk/gdkx.h>
 #include <cairo.h>
 
-#ifdef HAVE_NEWER_CAIRO
+#ifdef HAVE_CAIRO_0_2_0
 #  include <cairo-xlib.h>
 #endif
 
@@ -87,6 +87,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data);
 static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfigure *event);
 static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
+static void mainwindow_setup_selected_tool(void);
 
 struct {
 	GtkWindow* m_pWindow;

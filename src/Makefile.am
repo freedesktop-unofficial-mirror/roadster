@@ -49,6 +49,5 @@ roadster_LDADD = \
 	$(CAIRO_LIBS) \
 	$(MYSQL_LIBS) \
 	$(GPSD_LIBS) \
-	-lsvg-cairo \
 	$(NULL)
 

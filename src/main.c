@@ -39,24 +39,30 @@
 #include "pointstring.h"
 #include "track.h"
 
+static int main_init(void);
 static void main_deinit(void);
-static void main_init(void);
 
 int main (int argc, char *argv[])
 {
+	int ret;
+
 	#ifdef ENABLE_NLS
 		bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
 		textdomain(PACKAGE);
 	#endif
 	gnome_init(PACKAGE, VERSION, argc, argv);
 
-	main_init();
+	ret = main_init();
+
+	if (ret)
+		return ret;
+
 	gui_run();
 	main_deinit();	// usually doesn't get here
 	return 0;
 }
 
-void main_init(void)
+int main_init(void)
 {
 	if(!gnome_vfs_init()) {	
 		g_warning("gnome_vfs_init failed\n");
@@ -100,6 +106,8 @@ void main_init(void)
 	db_create_tables();
 
 	g_print("initialization complete\n");
+
+	return 0;
 }
 
 static void main_deinit(void)

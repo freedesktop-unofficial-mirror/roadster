@@ -42,15 +42,15 @@ AC_SUBST(GNOME_LIBS)
 AC_SUBST(GNOME_CFLAGS)
 
 dnl ========= check for cairo ==================================================
-dnl PKG_CHECK_MODULES(CAIRO, cairo libsvg-cairo,,exit)
-
-PKG_CHECK_MODULES(CAIRO, cairo > 0.2.0,
-    [AC_DEFINE([HAVE_NEWER_CAIRO], [1], [Newer Cairo])],
-    [PKG_CHECK_MODULES(CAIRO, cairo,,exit)]
-)
+PKG_CHECK_MODULES(CAIRO, cairo libsvg libsvg-cairo,,exit)
 
 AC_SUBST(CAIRO_LIBS)
 AC_SUBST(CAIRO_CFLAGS)
+
+PKG_CHECK_MODULES(, cairo>0.2.0,
+    [AC_DEFINE([HAVE_CAIRO_0_2_0], [1], [Newer Cairo])],
+    continue
+)
 
 dnl ========= deprecated options ===============================================
 AC_ARG_ENABLE(deprecated,
@@ -95,7 +95,7 @@ dnl    MYSQL_LIBS=`${mysqlconfig} --libs | sed -e \
 dnl    's/-lmysqlclient /-lmysqlclient_r /' -e 's/-lmysqlclient$/-lmysqlclient_r/'`
 
 dnl test embedded mysql
-    MYSQL_LIBS="`${mysqlconfig} --libmysqld-libs` -lmygcc -lsupc++"
+    MYSQL_LIBS="`${mysqlconfig} --libmysqld-libs` -lsupc++"
     AC_DEFINE([HAVE_MYSQL_EMBED], [1], [Have embedded MySQL])
 
     AC_MSG_RESULT($MYSQL_LIBS)

@@ -1,3 +1,9 @@
+2005-02-28  Nathan Fredrickson  <nathan@silverorange.com>
+	* main.c: Make main_init() return a value.
+	* mainwindow.c: Add missing prototype. 
+	* configure.ac: Add pkgconfig check for libsvg and libsvg-cairo.
+	* src/Makefile.am: Remove the hacky inclusion of libsvg-cairo.
+
 2005-02-27  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* configure.ac: Added libsvg-cairo as dependency. (Not quite correct. Nate will fix it.:)
