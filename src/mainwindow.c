@@ -796,7 +796,17 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 {
         gint nX,nY;
-	gdk_window_get_pointer(w->window, &nX, &nY, NULL);
+	gint nState;
+	if (event->is_hint) {
+		gdk_window_get_pointer(event->window, &nX, &nY, &nState);
+	}
+	else
+	{
+		nX = event->x;
+		nY = event->y;
+		nState = event->state;
+	}
+
 
 	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
 	gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;

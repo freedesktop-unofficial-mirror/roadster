@@ -1,5 +1,11 @@
 2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/db.c: Index on column 'Name' of table 'LocationAttributeName' should be UNIQUE.
+	* src/mainwindow.c: Add test for event->is_hint in mainwindow_on_mouse_motion to hopefully avoid situation where we continue drawing after mouse button is up.
+	* src/map.c: Play with zoom level ratios.
+
+2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/db.c: Switch to mysql_use_result().  Add more memory related paramaters to embedded MySQL.
 	* src/mainwindow.c: Rename a few map related functions.  Fix mousewheel zoomin/zoomout.  Keep statusbar lat/lon updated when dragging/scrolling.  Slow down scrolling slightly.
 	* src/searchwindow.c:

@@ -45,6 +45,8 @@ void search_location_on_cleaned_sentence(locationsearch_t* pLocationSearch);
 void search_location_on_locationsearch_struct(locationsearch_t* pLocationSearch);
 void search_location_filter_result(gint nLocationID);
 
+// SELECT Location.ID, LocationAttributeValue_Name.Value AS Name, AsText(Location.Coordinates) FROM LocationAttributeValue LEFT JOIN LocationAttributeName ON (LocationAttributeValue.AttributeNameID=LocationAttributeName.ID) LEFT JOIN Location ON (LocationAttributeValue.LocationID=Location.ID) LEFT JOIN LocationAttributeValue AS LocationAttributeValue_Name ON (Location.ID=LocationAttributeValue_Name.LocationID AND LocationAttributeValue_Name.AttributeNameID=1) WHERE MATCH(LocationAttributeValue.Value) AGAINST ('Chang*' IN BOOLEAN MODE) GROUP BY Location.ID;
+
 void search_location_execute(const gchar* pszSentence, gint nLocationSetID, gfloat fDistance, gint nDistanceUnit)
 {
 	return;

@@ -594,7 +594,7 @@ void db_create_tables()
 		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
 		" Name VARCHAR(30) NOT NULL,"
 		" PRIMARY KEY (ID),"
-		" INDEX (Name));", NULL);
+		" UNIQUE INDEX (Name));", NULL);
 
 	// Location Attribute Value
 	db_query("CREATE TABLE IF NOT EXISTS LocationAttributeValue("
