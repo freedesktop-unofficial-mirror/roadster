@@ -80,7 +80,6 @@ typedef enum {
 	kToolZoom = 1,
 } EToolType;
 
-
 // Prototypes
 gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event);
 gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data);

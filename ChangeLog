@@ -1,4 +1,9 @@
 2005-02-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+	
+	* track.c:
+	* track.h: Actually include these files.
+
+2005-02-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* track.c:
 	* track.h:
