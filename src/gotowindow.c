@@ -22,7 +22,7 @@
  */
 
 #include <glade/glade.h>
-#include <gnome.h>
+#include <gtk/gtk.h>
 #include "mainwindow.h"
 #include "gotowindow.h"
 
@@ -84,7 +84,7 @@ static gboolean gotowindow_go(void)
 	if(!util_string_to_double(pszLongitude, &(pt.m_fLongitude))) return FALSE;
 
 	mainwindow_set_centerpoint(&pt);
-	mainwindow_draw_map();
+	mainwindow_draw_map(DRAWFLAG_ALL);
 	mainwindow_statusbar_update_position();
 	return TRUE;
 }

@@ -21,9 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <stdlib.h> 
 #include "util.h"
-#include "layers.h"		// for color_t -- move it elsewhere!
 
 void util_close_parent_window(GtkWidget* pWidget, gpointer data)
 {
@@ -31,6 +29,8 @@ void util_close_parent_window(GtkWidget* pWidget, gpointer data)
 }
 
 #if ROADSTER_DEAD_CODE
+#include <stdlib.h>
+#include "layers.h"		// for color_t -- move it elsewhere!
 static void util_random_color(color_t* pColor)
 {
 	pColor->m_fRed = (random()%1000)/1000.0;

@@ -26,7 +26,7 @@
 #endif
 
 #include <glade/glade.h>
-#include <gnome.h>
+#include <gtk/gtk.h>
 
 #include "gui.h"
 #include "db.h"

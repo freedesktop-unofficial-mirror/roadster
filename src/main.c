@@ -37,14 +37,10 @@ static void main_deinit(void);
 
 int main (int argc, char *argv[])
 {
-
 	#ifdef ENABLE_NLS
 		bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
 		textdomain(PACKAGE);
 	#endif
-
-//	g_thread_init(NULL);
-//	gdk_threads_init();
 
 	gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, NULL);
 
@@ -61,6 +57,7 @@ gboolean main_init(void)
 {
 	// Initialize GLib thread system
 	//g_thread_init(NULL);
+	//gdk_threads_init();
 
 	if(!gnome_vfs_init()) {	
 		g_warning("gnome_vfs_init failed\n");
@@ -89,10 +86,13 @@ gboolean main_init(void)
 
 	g_print("initializing locationsets\n");
 	locationset_init();
+
 	g_print("initializing gpsclient\n");
 	gpsclient_init();
+
 	g_print("initializing gui\n");
 	gui_init();
+
 	g_print("initializing db\n");
 	db_init();
 

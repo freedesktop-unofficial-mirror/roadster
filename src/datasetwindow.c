@@ -27,7 +27,7 @@
 #  include <config.h>
 #endif
 
-#include <gnome.h>
+#include <gtk/gtk.h>
 
 #include "util.h"
 #include "datasetwindow.h"

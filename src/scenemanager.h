@@ -24,8 +24,6 @@
 #ifndef _SCENEMANAGER_H_
 #define _SCENEMANAGER_H_
 
-//#include <gnome.h>
-
 typedef struct scenemanager {
 	GPtrArray* m_p;
 	GHashTable* m_pLabelHash;

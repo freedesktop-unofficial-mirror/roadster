@@ -30,7 +30,7 @@
 G_BEGIN_DECLS
 
 void mainwindow_init(GladeXML* pGladeXML);
-void mainwindow_draw_map(void);
+void mainwindow_draw_map(gint nDrawFlags);
 GtkWidget* mainwindow_get_window(void);
 
 // Visibility
@@ -67,30 +67,7 @@ void mainwindow_statusbar_progressbar_clear(void);
 void mainwindow_statusbar_update_zoomscale(void);
 void mainwindow_statusbar_update_position(void);
 
-/* Funky, auto-lookup glade signal handlers.
-
-   XXX: Better would be to hook these up manually, remove these
-   declarations, and make the functions static.
-*/
-void on_import_maps_activate(GtkWidget *widget, gpointer user_data);
-void on_quitmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
-gboolean on_application_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data);
-void on_zoomscale_value_changed(GtkRange *range, gpointer user_data);
-void on_aboutmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
-void on_toolbarmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
-void on_statusbarmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
-void on_sidebarmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
-void on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data);
-void on_zoomout_activate(GtkMenuItem *menuitem, gpointer user_data);
-void on_fullscreenmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
-void on_importmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
-void on_gotobutton_clicked(GtkToolButton *toolbutton,  gpointer user_data);
-void on_toolbutton_clicked(GtkToolButton *toolbutton, gpointer user_data);
-
-void mainwindow_on_gotomenuitem_activate(GtkMenuItem     *menuitem, gpointer user_data);
-void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* __unused);
-void mainwindow_on_datasetmenuitem_activate(GtkWidget *pWidget, gpointer* p);
-
+// Map
 void mainwindow_set_centerpoint(mappoint_t* pPoint);
 
 G_END_DECLS

@@ -22,7 +22,7 @@
  */
 
 #include <glade/glade.h>
-#include <gnome.h>
+#include <gtk/gtk.h>
 #include "db.h"
 #include "import.h"
 #include "mainwindow.h"
@@ -132,7 +132,7 @@ void importwindow_begin(GSList* pSelectedFileList)
 	// redraw map to show any potential new data (?)
 
 //	map_set_zoomlevel(7);
-	mainwindow_draw_map();
+	mainwindow_draw_map(DRAWFLAG_ALL);
 }
 
 //~ void importwindow_on_okbutton_clicked(GtkWidget* pWidget, gpointer pdata)

@@ -23,7 +23,7 @@
 
 #include <gdk/gdkx.h>
 #include <cairo.h>
-#include <gnome.h>
+#include <gtk/gtk.h>
 #include <math.h>
 
 //#define THREADED_RENDERING
@@ -158,14 +158,12 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 //         }
 
 
-#define RENDERMODE_FAST		1
-#define RENDERMODE_PRETTY	2
+#define	RENDERMODE_FAST 	1
+#define	RENDERMODE_PRETTY 	2
 
-void map_draw(map_t* pMap)
+void map_draw(map_t* pMap, gint nDrawFlags)
 {
 	g_assert(pMap != NULL);
-
-	gint nRenderMode = RENDERMODE_FAST;
 
 	scenemanager_clear(pMap->m_pSceneManager);
 
@@ -182,12 +180,18 @@ void map_draw(map_t* pMap)
 //	locationset_load_locations(&(pRenderMetrics->m_rWorldBoundingBox));
 	TIMER_END(loadtimer, "--- END ALL DB LOAD");
 
+	gint nRenderMode = RENDERMODE_FAST;
+
 	if(nRenderMode == RENDERMODE_FAST) {
-		map_draw_gdk(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_BACKGROUND | DRAWFLAG_GEOMETRY);
-//		map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_LABELS);
+		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
+			map_draw_gdk(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_GEOMETRY);
+		}
+		if(nDrawFlags & DRAWFLAG_LABELS) {
+			map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_LABELS);
+		}
 	}
 	else {
-		map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_BACKGROUND | DRAWFLAG_GEOMETRY | DRAWFLAG_LABELS);
+		map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, nDrawFlags);
 	}
 	gtk_widget_queue_draw(pMap->m_pTargetWidget);
 }

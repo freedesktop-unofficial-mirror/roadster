@@ -30,7 +30,7 @@
 
 #include <gdk/gdkx.h>
 #include <cairo.h>
-#include <gnome.h>
+#include <gtk/gtk.h>
 #include <math.h>
 
 #include "gui.h"
@@ -72,7 +72,7 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 	cairo_set_fill_rule(pCairo, CAIRO_FILL_RULE_WINDING);
 
 	// 2.2. Draw Background
-	if(nDrawFlags & DRAWFLAG_BACKGROUND) {
+	if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 		map_draw_cairo_background(pMap, pCairo);
 	}
 

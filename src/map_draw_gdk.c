@@ -21,9 +21,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define MAX_GDK_LINE_SEGMENTS (2000)
+
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
-#include <gnome.h>
+#include <gtk/gtk.h>
 #include <math.h>
 
 #include "gui.h"
@@ -52,7 +54,7 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 	// 2. Drawing
 	
 	// 2.1. Draw Background
-	if(nDrawFlags & DRAWFLAG_BACKGROUND) {
+	if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 		map_draw_gdk_background(pMap, pPixmap);
 	}
 
@@ -115,7 +117,6 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
 		pPointString = g_ptr_array_index(pPointStringsArray, iString);
 
-#define MAX_GDK_LINE_SEGMENTS (1000)
 		if(pPointString->m_pPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
@@ -151,9 +152,17 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	// Raise the tolerance way up for thin lines
 	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
 
-	// Set line style
-	gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			   ((gint)fLineWidth), GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_MITER);
+	// XXX: Don't use round at low zoom levels
+	if(fLineWidth < 8) {
+		// Set line style
+		gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+				   ((gint)fLineWidth), GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER);
+	}
+	else {
+		// Set line style
+		gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+				   ((gint)fLineWidth), GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_MITER);
+	}
 
 	GdkColor clr;
 	clr.red = pSubLayerStyle->m_clrColor.m_fRed * 65535;
@@ -161,21 +170,9 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	clr.blue = pSubLayerStyle->m_clrColor.m_fBlue * 65535;
 	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
 
-//         cairo_set_line_join(pCairo, pSubLayerStyle->m_nJoinStyle);
-//         cairo_set_line_cap(pCairo, nCapStyle);  /* CAIRO_LINE_CAP_BUTT, CAIRO_LINE_CAP_ROUND, CAIRO_LINE_CAP_CAP */
-//         if(g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount > 1) {
-//                 cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_pfList, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount, 0.0);
-//         }
-
-//         // Set layer attributes
-//         cairo_set_rgb_color(pCairo, pSubLayerStyle->m_clrColor.m_fRed, pSubLayerStyle->m_clrColor.m_fGreen, pSubLayerStyle->m_clrColor.m_fBlue);
-//         cairo_set_alpha(pCairo, pSubLayerStyle->m_clrColor.m_fAlpha);
-//         cairo_set_line_width(pCairo, fLineWidth);
-
 	for(iString=0 ; iString<pPointStringsArray->len ; iString++) {
 		pPointString = g_ptr_array_index(pPointStringsArray, iString);
 
-#define MAX_GDK_LINE_SEGMENTS (1000)
 		if(pPointString->m_pPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 

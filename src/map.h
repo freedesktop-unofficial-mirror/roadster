@@ -167,9 +167,9 @@ typedef struct {
 
 // Draw flags
 #define DRAWFLAG_LABELS 	(1)
-#define DRAWFLAG_BACKGROUND	(2)
-#define DRAWFLAG_GEOMETRY	(4) // next is 8
-
+#define DRAWFLAG_GEOMETRY	(2)
+// next is 4 :)
+#define DRAWFLAG_ALL 		(1|2)
 
 #define NUM_SUBLAYER_TO_DRAW (22)
 extern draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW];	//
@@ -205,7 +205,7 @@ GdkPixmap* map_get_pixmap(map_t* pMap);
 void map_release_pixmap(map_t* pMap);
 //void map_draw_thread_begin(map_t* pMap, GtkWidget* pTargetWidget);
 
-void map_draw(map_t* pMap);
+void map_draw(map_t* pMap, gint nDrawFlags);
 double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
 
 #endif

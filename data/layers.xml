@@ -7,16 +7,16 @@
 	<sublayer>
 		<property name="width" level="5" value="1.0" />
 		<property name="width" level="7" value="5.0" />
-		<property name="width" level="8" value="12.0" />
-		<property name="width" level="9" value="18.0" />
+		<property name="width" level="8" value="6.0" />
+		<property name="width" level="9" value="17.0" />
 		<property name="width" level="10" value="35.0" />
 		<property name="color" value="#898f8dff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
 	</sublayer>
 	<sublayer>
-		<property name="width" level="7" value="4.0" />
-		<property name="width" level="8" value="9.0" />
+		<property name="width" level="7" value="3.0" />
+		<property name="width" level="8" value="4.0" />
 		<property name="width" level="9" value="15.0" />
 		<property name="width" level="10" value="32.0" />
 		<property name="color" value="#fffbffff" />
@@ -27,14 +27,14 @@
 		<property name="color" value="#00000000" />
 		<property name="font-size" level="8" value="10" />
 		<property name="font-size" level="9" value="14" />
-		<property name="font-size" level="10" value="32" />
+		<property name="font-size" level="10" value="24" />
 	</label>
 </layer>
 
 <layer name="major-roads">
 	<sublayer>
-		<property name="width" level="7" value="13.0" />
-		<property name="width" level="8" value="18.0" />
+		<property name="width" level="7" value="8.0" />
+		<property name="width" level="8" value="10.0" />
 		<property name="width" level="9" value="24.0" />
 		<property name="width" level="10" value="35.0" />
 		<property name="color" value="#ada28cff" />
@@ -46,8 +46,8 @@
 		<property name="width" level="4" value="2.5" />
 		<property name="width" level="5" value="3.3" />
 		<property name="width" level="6" value="6.0" />
-		<property name="width" level="7" value="10.0" />
-		<property name="width" level="8" value="15.0" />
+		<property name="width" level="7" value="6.0" />
+		<property name="width" level="8" value="8.0" />
 		<property name="width" level="9" value="21.0" />
 		<property name="width" level="10" value="32.0" />
 		<property name="color" value="#FFfb73ff" />
@@ -71,10 +71,10 @@
 		<property name="width" level="4" value="5.0" />
 		<property name="width" level="5" value="8.0" />
 		<property name="width" level="6" value="9.0" />
-		<property name="width" level="7" value="17.0" />
-		<property name="width" level="8" value="22.0" />
-		<property name="width" level="9" value="28.0" />
-		<property name="width" level="10" value="36.0" />
+		<property name="width" level="7" value="10.0" />
+		<property name="width" level="8" value="11.0" />
+		<property name="width" level="9" value="27.0" />
+		<property name="width" level="10" value="35.0" />
 		<property name="color" value="#ad8e21ff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="round" />
@@ -84,8 +84,8 @@
 		<property name="width" level="4" value="3.1" />
 		<property name="width" level="5" value="6.5" />
 		<property name="width" level="6" value="7.0" />
-		<property name="width" level="7" value="15.0" />
-		<property name="width" level="8" value="19.5" />
+		<property name="width" level="7" value="8.0" />
+		<property name="width" level="8" value="9.0" />
 		<property name="width" level="9" value="25.0" />
 		<property name="width" level="10" value="33.0" />
 		<property name="color" value="#f7df4aff" />

@@ -20,7 +20,7 @@
   <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
   <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
   <property name="enable_layout_config">True</property>
-  <signal name="delete_event" handler="on_application_delete_event" last_modification_time="Fri, 03 Sep 2004 10:32:59 GMT"/>
+  <signal name="delete_event" handler="mainwindow_on_application_delete_event" last_modification_time="Fri, 04 Mar 2005 04:21:54 GMT"/>
 
   <child internal-child="dock">
     <widget class="BonoboDock" id="bonobodock1">
@@ -50,10 +50,10 @@
 			  <property name="visible">True</property>
 			  <property name="label" translatable="yes">Import _Map Data...</property>
 			  <property name="use_underline">True</property>
-			  <signal name="activate" handler="on_import_maps_activate" last_modification_time="Tue, 25 Jan 2005 19:06:57 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_import_maps_activate" last_modification_time="Fri, 04 Mar 2005 04:28:20 GMT"/>
 
 			  <child internal-child="image">
-			    <widget class="GtkImage" id="image9542">
+			    <widget class="GtkImage" id="image9548">
 			      <property name="visible">True</property>
 			      <property name="stock">gtk-open</property>
 			      <property name="icon_size">1</property>
@@ -74,7 +74,7 @@
 			  <property name="use_underline">True</property>
 
 			  <child internal-child="image">
-			    <widget class="GtkImage" id="image9543">
+			    <widget class="GtkImage" id="image9549">
 			      <property name="visible">True</property>
 			      <property name="stock">gtk-open</property>
 			      <property name="icon_size">1</property>
@@ -97,7 +97,7 @@
 			<widget class="GtkImageMenuItem" id="quit_menuitem">
 			  <property name="visible">True</property>
 			  <property name="stock_item">GNOMEUIINFO_MENU_EXIT_ITEM</property>
-			  <signal name="activate" handler="on_quitmenuitem_activate" last_modification_time="Wed, 15 Sep 2004 07:23:54 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_quitmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
 			</widget>
 		      </child>
 		    </widget>
@@ -119,7 +119,7 @@
 			  <property name="label" translatable="yes">_Toolbar</property>
 			  <property name="use_underline">True</property>
 			  <property name="active">True</property>
-			  <signal name="activate" handler="on_toolbarmenuitem_activate" last_modification_time="Fri, 03 Sep 2004 10:44:42 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_toolbarmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
 			  <accelerator key="t" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 			</widget>
 		      </child>
@@ -130,7 +130,7 @@
 			  <property name="label" translatable="yes">_Sidebar</property>
 			  <property name="use_underline">True</property>
 			  <property name="active">True</property>
-			  <signal name="activate" handler="on_sidebarmenuitem_activate" last_modification_time="Wed, 12 Jan 2005 17:44:05 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_sidebarmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
 			  <accelerator key="S" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 			</widget>
 		      </child>
@@ -141,7 +141,7 @@
 			  <property name="label" translatable="yes">Statusbar</property>
 			  <property name="use_underline">True</property>
 			  <property name="active">True</property>
-			  <signal name="activate" handler="on_statusbarmenuitem_activate" last_modification_time="Sun, 05 Sep 2004 08:47:43 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_statusbarmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
 			</widget>
 		      </child>
 
@@ -156,7 +156,7 @@
 			  <property name="visible">True</property>
 			  <property name="label" translatable="yes">Zoom _In</property>
 			  <property name="use_underline">True</property>
-			  <signal name="activate" handler="on_zoomin_activate" last_modification_time="Sat, 18 Sep 2004 07:23:22 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_zoomin_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
 			  <accelerator key="equal" modifiers="0" signal="activate"/>
 			</widget>
 		      </child>
@@ -166,7 +166,7 @@
 			  <property name="visible">True</property>
 			  <property name="label" translatable="yes">Zoom _Out</property>
 			  <property name="use_underline">True</property>
-			  <signal name="activate" handler="on_zoomout_activate" last_modification_time="Sat, 18 Sep 2004 07:23:42 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_zoomout_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
 			  <accelerator key="minus" modifiers="0" signal="activate"/>
 			</widget>
 		      </child>
@@ -183,7 +183,7 @@
 			  <property name="label" translatable="yes">Full Screen</property>
 			  <property name="use_underline">True</property>
 			  <property name="active">False</property>
-			  <signal name="activate" handler="on_fullscreenmenuitem_activate" last_modification_time="Thu, 09 Sep 2004 04:38:34 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_fullscreenmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
 			  <accelerator key="F11" modifiers="0" signal="activate"/>
 			</widget>
 		      </child>
@@ -204,7 +204,7 @@
 			  <accelerator key="g" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 			  <child internal-child="image">
-			    <widget class="GtkImage" id="image9544">
+			    <widget class="GtkImage" id="image9550">
 			      <property name="visible">True</property>
 			      <property name="stock">gtk-jump-to</property>
 			      <property name="icon_size">1</property>
@@ -250,7 +250,7 @@
 			<widget class="GtkImageMenuItem" id="aboutmenuitem">
 			  <property name="visible">True</property>
 			  <property name="stock_item">GNOMEUIINFO_MENU_ABOUT_ITEM</property>
-			  <signal name="activate" handler="on_aboutmenuitem_activate" last_modification_time="Fri, 03 Sep 2004 09:21:47 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_aboutmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:26:27 GMT"/>
 			</widget>
 		      </child>
 		    </widget>
@@ -272,11 +272,11 @@
 			  <property name="visible">True</property>
 			  <property name="label" translatable="yes">Reload Styles</property>
 			  <property name="use_underline">True</property>
-			  <signal name="activate" handler="on_reloadstylesmenuitem_activate" last_modification_time="Thu, 03 Mar 2005 07:25:08 GMT"/>
+			  <signal name="activate" handler="mainwindow_on_reloadstylesmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:30:08 GMT"/>
 			  <accelerator key="F5" modifiers="0" signal="activate"/>
 
 			  <child internal-child="image">
-			    <widget class="GtkImage" id="image9545">
+			    <widget class="GtkImage" id="image9551">
 			      <property name="visible">True</property>
 			      <property name="stock">gtk-refresh</property>
 			      <property name="icon_size">1</property>
@@ -512,7 +512,7 @@
 		      <property name="visible">True</property>
 		      <property name="relief">GTK_RELIEF_NONE</property>
 		      <property name="focus_on_click">False</property>
-		      <signal name="clicked" handler="on_zoomout_activate" last_modification_time="Sun, 27 Feb 2005 16:23:02 GMT"/>
+		      <signal name="clicked" handler="mainwindow_on_zoomout_activate" last_modification_time="Fri, 04 Mar 2005 04:25:21 GMT"/>
 
 		      <child>
 			<widget class="GtkImage" id="image9533">
@@ -554,10 +554,10 @@
 			  <property name="draw_value">True</property>
 			  <property name="value_pos">GTK_POS_RIGHT</property>
 			  <property name="digits">0</property>
-			  <property name="update_policy">GTK_UPDATE_DISCONTINUOUS</property>
+			  <property name="update_policy">GTK_UPDATE_CONTINUOUS</property>
 			  <property name="inverted">False</property>
 			  <property name="adjustment">8 1 11 1 1 1</property>
-			  <signal name="value_changed" handler="on_zoomscale_value_changed" last_modification_time="Sat, 28 Aug 2004 16:55:50 GMT"/>
+			  <signal name="value_changed" handler="mainwindow_on_zoomscale_value_changed" last_modification_time="Fri, 04 Mar 2005 04:21:33 GMT"/>
 			</widget>
 		      </child>
 		    </widget>
@@ -581,7 +581,7 @@
 		      <property name="visible">True</property>
 		      <property name="relief">GTK_RELIEF_NONE</property>
 		      <property name="focus_on_click">False</property>
-		      <signal name="clicked" handler="on_zoomin_activate" last_modification_time="Sun, 27 Feb 2005 16:23:50 GMT"/>
+		      <signal name="clicked" handler="mainwindow_on_zoomin_activate" last_modification_time="Fri, 04 Mar 2005 04:25:10 GMT"/>
 
 		      <child>
 			<widget class="GtkImage" id="image9534">
@@ -623,7 +623,7 @@
 		  <property name="visible_vertical">True</property>
 		  <property name="is_important">False</property>
 		  <property name="active">False</property>
-		  <signal name="clicked" handler="on_toolbutton_clicked" last_modification_time="Wed, 08 Sep 2004 20:25:04 GMT"/>
+		  <signal name="clicked" handler="mainwindow_on_toolbutton_clicked" last_modification_time="Fri, 04 Mar 2005 04:24:59 GMT"/>
 		</widget>
 		<packing>
 		  <property name="expand">False</property>
@@ -640,7 +640,7 @@
 		  <property name="is_important">False</property>
 		  <property name="active">False</property>
 		  <property name="group">pointertoolbutton</property>
-		  <signal name="clicked" handler="on_toolbutton_clicked" last_modification_time="Wed, 08 Sep 2004 20:25:04 GMT"/>
+		  <signal name="clicked" handler="mainwindow_on_toolbutton_clicked" last_modification_time="Fri, 04 Mar 2005 04:24:52 GMT"/>
 		</widget>
 		<packing>
 		  <property name="expand">False</property>
