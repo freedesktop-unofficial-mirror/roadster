@@ -1,4 +1,10 @@
 2005-02-22  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* main.c: Added call to init scenemanager. 
+	* scenemanager.c: Added quasi-hack to prevent road/label names from showing up twice on one screen.
+	* map.c: Request permission from scenemanager before drawing a label.
+
+2005-02-22  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 	
 	* import_tiger.c: Removed some debug output.
 

@@ -46,6 +46,34 @@ void scenemanager_init(void)
 	g_SceneManager.m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
 }
 
+gboolean scenemanager_can_draw_label(const gchar* pszLabel)
+{
+	gpointer pKey;
+	gpointer pValue;
+
+	// can draw if it doesn't exist in table
+    gboolean bOK = (g_hash_table_lookup_extended(g_SceneManager.m_pLabelHash,
+                                        pszLabel,
+										&pKey, &pValue) == FALSE);
+
+//	g_print("permission for %s: %s\n", pszLabel, bOK ? "YES" : "NO");
+	return bOK;
+}
+
+void scenemanager_label_drawn(const gchar* pszLabel)
+{
+//	g_print("drawn! %s\n", pszLabel);
+	g_hash_table_insert(g_SceneManager.m_pLabelHash, pszLabel, NULL);
+}
+
+void scenemanager_clear(void)
+{
+	g_hash_table_destroy(g_SceneManager.m_pLabelHash);
+
+	scenemanager_init();
+}
+
+
 #if ROADSTER_DEAD_CODE
 static void scenemanager_add_label_line(geometryset_t* pGeometry, gchar* pszLabel)
 {
@@ -60,12 +88,5 @@ static void scenemanager_add_label_polygon(geometryset_t* pGeometry, gchar* pszL
 static void scenemanager_draw(void)
 {
 	
-}
-
-static void scenemanager_clear(void)
-{
-	g_hash_table_destroy(g_SceneManager.m_pLabelHash);
-
-	scenemanager_init();
 }
 #endif /* ROADSTER_DEAD_CODE */

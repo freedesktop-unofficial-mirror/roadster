@@ -34,6 +34,7 @@
 #include "../include/import.h"
 #include "../include/gpsclient.h"
 #include "../include/locationset.h"
+#include "../include/scenemanager.h"
 
 int main (int argc, char *argv[])
 {
@@ -47,6 +48,7 @@ int main (int argc, char *argv[])
 	/*
 	** init our modules
 	*/
+	scenemanager_init();
 	geometryset_init();
 	locationset_init();
 	gpsclient_init();

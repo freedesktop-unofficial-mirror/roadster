@@ -22,3 +22,7 @@
  */
 
 void scenemanager_init(void);
+gboolean scenemanager_can_draw_label(const gchar* pszLabel);
+void scenemanager_label_drawn(const gchar* pszLabel);
+void scenemanager_clear(void);
+

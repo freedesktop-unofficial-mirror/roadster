@@ -36,6 +36,7 @@
 #include "../include/db.h"
 #include "../include/layers.h"
 #include "../include/locationset.h"
+#include "../include/scenemanager.h"
 
 // 4,382,755 inches per degree
 // 363 inches of world represented in 3.63 inches
@@ -482,6 +483,11 @@ static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, 
 	gfloat fFontSize = pLabelStyle->m_afFontSizeAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 	if(fFontSize == 0) return;
 
+	if(!scenemanager_can_draw_label(pszLabel)) {
+		//g_print("dup label: %s\n", pszLabel);
+		return;
+	}
+
 	mappoint_t* apPoints[ROAD_MAX_SEGMENTS];
 	gint nNumPoints = pPointString->m_pPointsArray->len;
 
@@ -529,8 +535,10 @@ static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, 
 		fTotalLineLength += fLineLength;
 	}
 
+	gchar* pszFontFamily = "Bitstream Vera Sans";
+
 	cairo_save(pCairo);
-	cairo_select_font(pCairo, "Monospace",
+	cairo_select_font(pCairo, pszFontFamily,
 						CAIRO_FONT_SLANT_NORMAL,
 						pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_scale_font(pCairo, fFontSize);	
@@ -700,6 +708,8 @@ static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, 
 				cairo_save(pCairo);
 					cairo_set_line_width(pCairo, 4);
 					cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
+					cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
+					//cairo_set_miter_limit(pCairo, 0.1);
 					cairo_stroke(pCairo);
 				cairo_restore(pCairo);
 			}
@@ -707,6 +717,8 @@ static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, 
 		cairo_restore(pCairo);
 	}
 	cairo_restore(pCairo);
+	
+	scenemanager_label_drawn(pszLabel);
 }
 
 void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, const gchar* pszLabel)
@@ -718,6 +730,11 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 
 	gdouble fAlpha = pLabelStyle->m_clrColor.m_fAlpha;
 	if(fAlpha == 0.0) return;
+
+	if(!scenemanager_can_draw_label(pszLabel)) {
+		//g_print("dup label: %s\n", pszLabel);
+		return;
+	}
 
 	gdouble fTotalX = 0.0;
 	gdouble fTotalY = 0.0;
@@ -756,9 +773,11 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 	gdouble fDrawX = fTotalX / pPointString->m_pPointsArray->len;
 	gdouble fDrawY = fTotalY / pPointString->m_pPointsArray->len;
 
+	gchar* pszFontFamily = "Bitstream Vera Sans";
+
 	cairo_save(pCairo);
 
-		cairo_select_font(pCairo, "Monospace",
+		cairo_select_font(pCairo, pszFontFamily,
 							CAIRO_FONT_SLANT_NORMAL,
 							pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
 		cairo_scale_font(pCairo, fFontSize);	
@@ -788,11 +807,15 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 			cairo_save(pCairo);
 				cairo_set_line_width(pCairo, 3);
 				cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
+				cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
+//				cairo_set_miter_limit(pCairo, 0.1);
 				cairo_stroke(pCairo);
 			cairo_restore(pCairo);
 		}
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
+	
+	scenemanager_label_drawn(pszLabel);
 }
 // g_print("map (%f,%f)->(%f,%f) screen (%f,%f)->(%f,%f) center (%f,%f)\n",pMapPoint1->m_fLatitude,pMapPoint1->m_fLongitude,  pMapPoint2->m_fLatitude,pMapPoint2->m_fLongitude,  fX1,fY1,  fX2,fY2,  fX,fY);
 		// Calculate line length (in screen pixels)
@@ -931,6 +954,8 @@ void map_draw(cairo_t *pCairo)
 	rendermetrics_t renderMetrics = {0};
 	map_get_render_metrics(&renderMetrics);
 	rendermetrics_t* pRenderMetrics = &renderMetrics;
+
+	scenemanager_clear();
 
 	//
 	// Load geometry
@@ -1218,7 +1243,6 @@ void map_draw_layer_polygon_labels(cairo_t* pCairo, rendermetrics_t* pRenderMetr
 		pointstring_t* pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, i);
 		
 		if(pPointString->m_pszName[0] != '\0') {
-			g_print("printing %s\n", pPointString->m_pszName);
 			map_draw_polygon_label(pCairo, pLabelStyle, pRenderMetrics, pPointString, pPointString->m_pszName);
 		}
 	}
