@@ -32,11 +32,11 @@
 layer_t * g_aLayers[NUM_LAYERS+1];
 
 gdouble pDash_Solid[] = {10};
-gdouble pDash_10_10[] = {1, 14};
+gdouble pDash_1_14[] = {1, 14};
 
 dashstyle_t g_aDashStyles[NUM_DASH_STYLES] = {
 	{NULL, 0},
-	{pDash_10_10, 2},
+	{pDash_1_14, 2},
 };
 
 static void layers_load_from_file();
@@ -65,7 +65,7 @@ layers_init(void)
 	g_aLayers[LAYER_MINORHIGHWAY_RAMP] = layers_new(LAYER_MINORHIGHWAY_RAMP, "minor-highway-ramps");
 	g_aLayers[LAYER_MAJORHIGHWAY] = layers_new(LAYER_MAJORHIGHWAY, "major-highways");
 	g_aLayers[LAYER_MAJORHIGHWAY_RAMP] = layers_new(LAYER_MAJORHIGHWAY_RAMP, "major-highway-ramps");
-	g_aLayers[LAYER_RAILROAD] = layers_new(LAYER_RAILROAD, "railroad");
+	g_aLayers[LAYER_RAILROAD] = layers_new(LAYER_RAILROAD, "railroads");
 	g_aLayers[LAYER_PARK] = layers_new(LAYER_PARK, "parks");
 	g_aLayers[LAYER_RIVER] = layers_new(LAYER_RIVER, "rivers");
 	g_aLayers[LAYER_LAKE] = layers_new(LAYER_LAKE, "lakes");
@@ -239,6 +239,9 @@ layers_parse_sublayer_property(xmlDocPtr doc, sublayerstyle_t *sublayer, xmlNode
 			else if (!strcmp(value, "round"))
 				sublayer->m_nCapStyle = CAIRO_LINE_CAP_ROUND;
 
+		} else if (!strcmp(name, "dash-style")) {
+			sublayer->m_nDashStyle = (gint)atoi(value);
+
 		}
 	}
 }
@@ -346,6 +349,7 @@ layers_print_sublayer(sublayerstyle_t *sublayer)
 	
 	printf("join style: %d\n", sublayer->m_nJoinStyle);
 	printf("cap style: %d\n", sublayer->m_nCapStyle);
+	printf("dash style: %d\n", sublayer->m_nDashStyle);
 }
 
 static void

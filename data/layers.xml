@@ -196,6 +196,7 @@
 		<property name="color" value="#50506eff" />
 		<property name="join-style" value="miter" />
 		<property name="cap-style" value="butt" />
+		<property name="dash-style" value="1" />
 	</sublayer>
 	<label>
 		<property name="color" value="#00000000" />

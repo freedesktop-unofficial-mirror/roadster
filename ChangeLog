@@ -1,4 +1,10 @@
 2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
+	* data/layers.xml:
+	* src/layers.c: Parse dash style and fix the railroads.
+	* src/mainwindow.c: Redraw map after reloading styles.
+	* data/roadster.glade: Set accelerator for style reload to F5.
+
+2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
 	* src/*.h: Change extern "C" to G_BEGIN_DECLS/G_END_DECLS
 	* src/layers.h:
 	* src/layers.c: Add layers_reload() to reload the layer styles.

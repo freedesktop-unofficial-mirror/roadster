@@ -621,6 +621,7 @@ void mainwindow_on_gotomenuitem_activate(GtkMenuItem *menuitem, gpointer user_da
 void on_reloadstylesmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	layers_reload();
+	mainwindow_draw_map();
 }
 
 
