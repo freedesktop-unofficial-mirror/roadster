@@ -140,13 +140,26 @@ static void map_draw_cairo_background(map_t* pMap, cairo_t *pCairo)
 	cairo_restore(pCairo);
 }
 
-// EXPERIMENTAL TEXT RENDERING
+#define ROAD_MAX_SEGMENTS 100
+#define DRAW_LABEL_BUFFER_LEN	(200)
+
+typedef struct labelposition {
+	guint m_nSegments;
+	gdouble m_fLength;
+	gdouble m_fRunTotal;
+	gdouble m_fMeanSlope;
+	gdouble m_fMeanAbsSlope;
+	gdouble m_fScore;
+} labelposition_t;
+
 static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, pointstring_t* pPointString, gdouble fLineWidth, const gchar* pszLabel)
 {
 	if(pPointString->m_pPointsArray->len < 2) return;
 
-#define ROAD_MAX_SEGMENTS 100
-	if(pPointString->m_pPointsArray->len > ROAD_MAX_SEGMENTS) { g_warning("not drawing label for road '%s' with > %d segments.\n", pszLabel, ROAD_MAX_SEGMENTS); return; }
+	if(pPointString->m_pPointsArray->len > ROAD_MAX_SEGMENTS) { 
+		g_warning("not drawing label for road '%s' with > %d segments.\n", pszLabel, ROAD_MAX_SEGMENTS);
+		return;
+	}
 
 	gfloat fFontSize = pLabelStyle->m_afFontSizeAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 	if(fFontSize == 0) return;
@@ -156,36 +169,41 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 		return;
 	}
 
+	gchar* pszFontFamily = ROAD_FONT;
+
+	cairo_save(pCairo);
+	cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL,
+	                  pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? 
+                          CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_scale_font(pCairo, fFontSize);
+
+	// get total width of string
+	cairo_text_extents_t extents;
+	cairo_text_extents(pCairo, pszLabel, &extents);
+
+	// now find the ideal location
+
+	// place to store potential label positions
+	labelposition_t aPositions[ROAD_MAX_SEGMENTS];
+	gdouble aSlopes[ROAD_MAX_SEGMENTS];
+
 	mappoint_t* apPoints[ROAD_MAX_SEGMENTS];
 	gint nNumPoints = pPointString->m_pPointsArray->len;
 
-	// figure out which way the road goes overall, by looking at the first and last points
-	mappoint_t* pMapPoint1 = g_ptr_array_index(pPointString->m_pPointsArray, 0);
-	mappoint_t* pMapPoint2 = g_ptr_array_index(pPointString->m_pPointsArray, pPointString->m_pPointsArray->len-1);
+	mappoint_t* pMapPoint1;
+	mappoint_t* pMapPoint2;
 
-	// Does it go left-to-right?
-	// NOTE: a better test would be to figure out the total length of roadsegment that goes left-to-right
-	// and the total length that goes right-to-left, and swap the whole thing if right-to-left wins
-	if(pMapPoint1->m_fLongitude < pMapPoint2->m_fLongitude) {
-		// YES-- just copy the array
-		gint iRead;
-		for(iRead=0 ; iRead<pPointString->m_pPointsArray->len ; iRead++) {
-			apPoints[iRead] = g_ptr_array_index(pPointString->m_pPointsArray, iRead);
-		}
-	}
-	else {
-		// NO-- (right-to-left) so reverse the array
-		gint iRead,iWrite;
-		for(iWrite=0, iRead=pPointString->m_pPointsArray->len-1 ; iRead>= 0 ; iWrite++, iRead--) {
-			apPoints[iWrite] = g_ptr_array_index(pPointString->m_pPointsArray, iRead);
-		}
+	// load point string into an array
+	gint iRead;
+	for(iRead=0 ; iRead<nNumPoints ; iRead++) {
+		apPoints[iRead] = g_ptr_array_index(pPointString->m_pPointsArray, iRead);
 	}
 
-	//
-	// Measure total line length	(perhaps this should be passed in)
-	//
+	// measure total line length
 	gdouble fTotalLineLength = 0.0;
-	gint iPoint;
+	gint nPositions = 1;
+	gint iPoint, iPosition;
+
 	for(iPoint=1 ; iPoint<nNumPoints ; iPoint++) {
 		pMapPoint1 = apPoints[iPoint-1];
 		pMapPoint2 = apPoints[iPoint];
@@ -198,43 +216,102 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 		// determine slope of the line
 		gdouble fRise = fY2 - fY1;
 		gdouble fRun = fX2 - fX1;
+		gdouble fSlope = (fRun==0) ? G_MAXDOUBLE : (fRise/fRun);
 		gdouble fLineLength = sqrt((fRun*fRun) + (fRise*fRise));
+
+		aSlopes[iPoint] = fSlope;
+		aPositions[iPoint].m_nSegments = 0;
+		aPositions[iPoint].m_fLength = 0.0;
+		aPositions[iPoint].m_fRunTotal = 0.0;
+		aPositions[iPoint].m_fMeanSlope = 0.0;
+		aPositions[iPoint].m_fMeanAbsSlope = 0.0;
+
+		for(iPosition = nPositions ; iPosition <= iPoint ; iPosition++) {
+			aPositions[iPosition].m_fLength += fLineLength;
+			aPositions[iPosition].m_fRunTotal += fRun;
+			aPositions[iPosition].m_nSegments++;
+			aPositions[iPosition].m_fMeanSlope += fSlope;
+			aPositions[iPosition].m_fMeanAbsSlope += (fSlope<0) ? -fSlope : fSlope;
+
+			if(aPositions[iPosition].m_fLength >= extents.width) nPositions++;
+		}
 
 		fTotalLineLength += fLineLength;
 	}
 
-	gchar* pszFontFamily = ROAD_FONT;
-
-	cairo_save(pCairo);
-	cairo_select_font(pCairo, pszFontFamily,
-						CAIRO_FONT_SLANT_NORMAL,
-						pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_scale_font(pCairo, fFontSize);	
-
-	// Get total width of string
-	cairo_text_extents_t extents;
-	cairo_text_extents(pCairo, pszLabel, &extents);
+	// if label is longer than entire line, we're out of luck
 	if(extents.width > fTotalLineLength) {
 		cairo_restore(pCairo);
 		return;
 	}
 
+	gdouble fMaxScore = 0.0;
+	gint iBestPosition;
+
+	for(iPosition = 1 ; iPosition < nPositions ; iPosition++) {
+		// finish calculating mean slope
+		aPositions[iPosition].m_fMeanSlope /= aPositions[iPosition].m_nSegments;
+		aPositions[iPosition].m_fMeanAbsSlope /= aPositions[iPosition].m_nSegments;
+		
+		// calculating std dev of slope
+		gint iEndPoint = iPosition + aPositions[iPosition].m_nSegments;
+		gdouble fDiffSquaredSum = 0.0;
+
+		for(iPoint = iPosition ; iPoint < iEndPoint ; iPoint++) {
+			gdouble fDiff = aSlopes[iPoint] - aPositions[iPosition].m_fMeanSlope;
+			fDiffSquaredSum += (fDiff*fDiff);
+		}
+
+		gdouble fStdDevSlope = sqrt(fDiffSquaredSum / aPositions[iPosition].m_nSegments);
+
+		// calculate a score between 0 (worst) and 1 (best), we want to minimize both the mean and std dev of slope
+		aPositions[iPosition].m_fScore = 1.0/((aPositions[iPosition].m_fMeanAbsSlope+1.0)*(fStdDevSlope+1.0));
+		
+		// find position with highest score
+		if(aPositions[iPosition].m_fScore > fMaxScore) {
+			fMaxScore = aPositions[iPosition].m_fScore;
+			iBestPosition = iPosition;
+		}
+		// TODO: sort postions by score and test each against scene manager until we get go ahead
+
+
+		/*
+		g_print("%s: [%d] segments = %d, slope = %2.2f, stddev = %2.2f, score = %2.2f\n", pszLabel, iPosition,
+			aPositions[iPosition].m_nSegments,
+			aPositions[iPosition].m_fMeanAbsSlope,
+			fStdDevSlope,
+			aPositions[iPosition].m_fScore);
+		*/
+	}
+	
+
 	cairo_font_extents_t font_extents;
 	cairo_current_font_extents(pCairo, &font_extents);
 
-	// CENTER IT on the line ?
-	// (padding) |-text-| (padding)
-	// ============================
 	gdouble fFrontPadding = 0.0;
-	gdouble fFrontPaddingNext = (fTotalLineLength - extents.width) / 2;	
-	// NOTE: we only worry about padding at the start, the padding at the end should just happen...	
+	gdouble fFrontPaddingNext = (aPositions[iBestPosition].m_fLength - extents.width) / 2;
+	gint iStartPoint;
+
+	iStartPoint = iBestPosition;
+	if(aPositions[iBestPosition].m_fRunTotal > 0) {
+		iStartPoint = iBestPosition;
+	}
+	else {
+		// road runs backwards, reverse everything
+		iStartPoint = nNumPoints - iBestPosition - aPositions[iBestPosition].m_nSegments + 1;
+		// reverse the array
+		gint iRead,iWrite;
+		for(iWrite=0, iRead=nNumPoints-1 ; iRead>= 0 ; iWrite++, iRead--) {
+			apPoints[iWrite] = g_ptr_array_index(pPointString->m_pPointsArray, iRead);
+		}
+	}
+
+	gint iEndPoint = iStartPoint + aPositions[iBestPosition].m_nSegments;
 
 	gint nTotalStringLength = strlen(pszLabel);
 	gint nStringStartIndex = 0;
 
-//	g_print("=== NEW STRING: %s (padding %f)\n", pszLabel, fPaddingRemaining);
-
-	for(iPoint=1 ; iPoint<nNumPoints ; iPoint++) {
+	for(iPoint = iStartPoint ; iPoint < iEndPoint ; iPoint++) {
 		RENDERING_THREAD_YIELD;
 
 		if(nTotalStringLength == nStringStartIndex) break;	// done
@@ -256,29 +333,23 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 		fFrontPadding = fFrontPaddingNext;
 		fFrontPaddingNext = 0.0;
 
+		// this is probably not needed now that we only loop over line segments that will contain some label
 		if(fFrontPadding > fLineLength) {
 			fFrontPaddingNext = fFrontPadding - fLineLength;
 			continue;
 		}
 
 		// do this after the padding calculation to possibly save some CPU cycles
-		//~ gdouble fAngleInRadians = atan2(fRise, fRun); // * (M_PI/180.0);
-
-		// this way works too:
 		gdouble fAngleInRadians = atan(fRise / fRun);
 		if(fRun < 0.0) fAngleInRadians += M_PI;
 
-//		g_print("(fRise(%f) / fRun(%f)) = %f, atan(fRise / fRun) = %f: ", fRise, fRun, fRise / fRun, fAngleInRadians);
+		//g_print("(fRise(%f) / fRun(%f)) = %f, atan(fRise / fRun) = %f: ", fRise, fRun, fRise / fRun, fAngleInRadians);
+		//g_print("=== NEW SEGMENT, pixel (deltaY=%f, deltaX=%f), line len=%f, (%f,%f)->(%f,%f)\n",fRise, fRun, fLineLength, pMapPoint1->m_fLatitude,pMapPoint1->m_fLongitude,pMapPoint2->m_fLatitude,pMapPoint2->m_fLongitude);
+		//g_print("  has screen coords (%f,%f)->(%f,%f)\n", fX1,fY1,fX2,fY2);
 
-//		g_print("=== NEW SEGMENT, pixel (deltaY=%f, deltaX=%f), line len=%f, (%f,%f)->(%f,%f)\n",fRise, fRun, fLineLength, pMapPoint1->m_fLatitude,pMapPoint1->m_fLongitude,pMapPoint2->m_fLatitude,pMapPoint2->m_fLongitude);
-//		g_print("  has screen coords (%f,%f)->(%f,%f)\n", fX1,fY1,fX2,fY2);
-
-#define DRAW_LABEL_BUFFER_LEN	(200)
 		gchar azLabelSegment[DRAW_LABEL_BUFFER_LEN];
 
-		//
 		// Figure out how much of the string we can put in this line segment
-		//
 		gboolean bFoundWorkableStringLength = FALSE;
 		gint nWorkableStringLength;
 		if(iPoint == (nNumPoints-1)) {
@@ -293,7 +364,7 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 			g_assert((nTotalStringLength - nStringStartIndex) > 0);
 
 			for(nWorkableStringLength = (nTotalStringLength - nStringStartIndex) ; nWorkableStringLength >= 1 ; nWorkableStringLength--) {
-//				g_print("trying nWorkableStringLength = %d\n", nWorkableStringLength);
+				//g_print("trying nWorkableStringLength = %d\n", nWorkableStringLength);
 
 				if(nWorkableStringLength >= DRAW_LABEL_BUFFER_LEN) break;
 
@@ -301,20 +372,20 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 				memcpy(azLabelSegment, &pszLabel[nStringStartIndex], nWorkableStringLength);
 				azLabelSegment[nWorkableStringLength] = '\0';
 	
-//				g_print("azLabelSegment = %s\n", azLabelSegment);
+				//g_print("azLabelSegment = %s\n", azLabelSegment);
 	
 				// measure the label
 				cairo_text_extents(pCairo, azLabelSegment, &extents);
 
 				// if we're skipping ahead some (frontpadding), effective line length is smaller, so subtract padding
 				if(extents.width <= (fLineLength - fFrontPadding)) {
-//					g_print("found length %d for %s\n", nWorkableStringLength, azLabelSegment);	
+					//g_print("found length %d for %s\n", nWorkableStringLength, azLabelSegment);	
 					bFoundWorkableStringLength = TRUE;
 
 					// if we have 3 pixels, and we use 2, this should be NEGATIVE 1
 					// TODO: we should only really do this if the next segment doesn't take a huge bend
 					fFrontPaddingNext = extents.width - (fLineLength - fFrontPadding);
-		fFrontPaddingNext /= 2;	// no good explanation for this
+					fFrontPaddingNext /= 2;	// no good explanation for this
 					break;
 				}
 			}
@@ -326,7 +397,7 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 
 				// give the next segment some padding if we went over on this segment
 				fFrontPaddingNext = extents.width - (fLineLength - fFrontPadding);
-	//			g_print("forcing a character (%s) on small segment, giving next segment front-padding: %f\n", azLabelSegment, fFrontPaddingNext);
+				//g_print("forcing a character (%s) on small segment, giving next segment front-padding: %f\n", azLabelSegment, fFrontPaddingNext);
 			}
 		}
 
@@ -351,44 +422,30 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 		gdouble fPerpendicularNormalizedY = -(fRun / fLineLength);
 
 		// we want the normal pointing towards the top of the screen.  that's the negative Y direction.
-//		if(fPerpendicularNormalizedY > 0) fPerpendicularNormalizedY = -fPerpendicularNormalizedY;	
+		//if(fPerpendicularNormalizedY > 0) fPerpendicularNormalizedY = -fPerpendicularNormalizedY;	
 
-		// text too big to fit?  then move the text "up" above the line
-		//~ if(extents.height > (fLineWidth - LABEL_PIXEL_RELIEF_INSIDE_LINE)) {
-			//~ // Raise the text "up" (away from center of line) half the width of the line
-			//~ // This leaves it resting on the line.  Then add a few pixels of relief.
-	
-			//~ // NOTE: the point started in the dead-center of the line
-			//~ fDrawX += (fPerpendicularNormalizedX * ((fLineWidth / 2) + LABEL_PIXELS_ABOVE_LINE));
-			//~ fDrawY += (fPerpendicularNormalizedY * ((fLineWidth / 2) + LABEL_PIXELS_ABOVE_LINE));
-		//~ }
-		//~ else {
-			//~ // just nudge it "down" slightly-- the text shows up "ABOVE" and to the "RIGHT" of the point
-//                         fDrawX -= (fPerpendicularNormalizedX * extents.height/2);
-//                         fDrawY -= (fPerpendicularNormalizedY * extents.height/2);
-			fDrawX -= (fPerpendicularNormalizedX * font_extents.ascent/2);
-			fDrawY -= (fPerpendicularNormalizedY * font_extents.ascent/2);
-		//~ }
+		fDrawX -= (fPerpendicularNormalizedX * font_extents.ascent/2);
+		fDrawY -= (fPerpendicularNormalizedY * font_extents.ascent/2);
 
 		cairo_save(pCairo);
-			cairo_move_to(pCairo, fDrawX, fDrawY);
-			cairo_set_rgb_color(pCairo, 0.0,0.0,0.0);
-			cairo_set_alpha(pCairo, 1.0);
-			cairo_rotate(pCairo, fAngleInRadians);
+		cairo_move_to(pCairo, fDrawX, fDrawY);
+		cairo_set_rgb_color(pCairo, 0.0,0.0,0.0);
+		cairo_set_alpha(pCairo, 1.0);
+		cairo_rotate(pCairo, fAngleInRadians);
 
-			gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
-			if(fHaloSize >= 0) {
-				cairo_save(pCairo);
-					cairo_text_path(pCairo, azLabelSegment);
-					cairo_set_line_width(pCairo, fHaloSize);
-					cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
-					cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
-					//cairo_set_miter_limit(pCairo, 0.1);
-					cairo_stroke(pCairo);
-				cairo_restore(pCairo);
-			}
-			cairo_show_text(pCairo, azLabelSegment);
-			//cairo_fill(pCairo);
+		gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
+		if(fHaloSize >= 0) {
+			cairo_save(pCairo);
+			cairo_text_path(pCairo, azLabelSegment);
+			cairo_set_line_width(pCairo, fHaloSize);
+			cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
+			cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
+			//cairo_set_miter_limit(pCairo, 0.1);
+			cairo_stroke(pCairo);
+			cairo_restore(pCairo);
+		}
+		cairo_show_text(pCairo, azLabelSegment);
+		//cairo_fill(pCairo);
 		cairo_restore(pCairo);
 
 		// scenemanager_claim_polygon(pMap->m_pSceneManager, GdkPoint *pPoints, gint nNumPoints);

@@ -1,3 +1,7 @@
+2005-03-09  Nathan Fredrickson  <nathan@silverorange.com>
+
+	* src/map_draw_cairo.c: First round of improvements to map_draw_cairo_line_label(). Instead of centering the label on the line, the label is now positioned so that it is as horizontal as possible with the fewest bends.
+
 2005-03-08  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/location.c:
@@ -47,7 +51,7 @@
 
 2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
 	* configure.ac: Enable directives to disable deprecated features.
-	* src/main.c: Call gnome_program_init() instead of deprecated gnome_program_init().
+	* src/main.c: Call gnome_program_init() instead of deprecated gnome_init().
 	* src/mainwindow.c: Call gdk_draw_drawable() instead of deprecated gdk_draw_pixmap().
 
 2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
