@@ -1,5 +1,9 @@
 2005-02-18  Carl Worth  <cworth@cworth.org>
 
+	* .cvsignore: Ignore config.h.in.
+
+2005-02-18  Carl Worth  <cworth@cworth.org>
+
 	* .cvsignore: Don't ignore autogen.sh.
 
 2005-02-18  Carl Worth  <cworth@cworth.org>
