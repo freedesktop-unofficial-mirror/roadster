@@ -3,9 +3,7 @@
 NULL =
 
 gladedir = $(pkgdatadir)
-glade_DATA = 				\
-	roadster.glade		\
-	$(NULL)
+glade_DATA = roadster.glade
 
 DESKTOP_IN_FILES= roadster.desktop.in
 DESKTOP_FILES= $(DESKTOP_IN_FILES:.desktop.in=.desktop)
@@ -13,10 +11,14 @@ DESKTOP_FILES= $(DESKTOP_IN_FILES:.desktop.in=.desktop)
 desktopdir = $(datadir)/applications
 desktop_DATA = $(DESKTOP_FILES)
 
+styledir = $(pkgdatadir)
+style_DATA = layers.xml
+
 install-data-local:
 
 EXTRA_DIST =				\
 	$(glade_DATA)			\
+	$(style_DATA)			\
 	$(DESKTOP_IN_FILES)		\
 	$(NULL)
 

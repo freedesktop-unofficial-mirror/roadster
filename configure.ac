@@ -37,7 +37,7 @@ AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Gettext package.])
 
 dnl ========= check for gnome libraries ========================================
-PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 gtk+-2.0 libglade-2.0,,exit)
+PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 gtk+-2.0 libglade-2.0 libxml-2.0,,exit)
 AC_SUBST(GNOME_LIBS)
 AC_SUBST(GNOME_CFLAGS)
 

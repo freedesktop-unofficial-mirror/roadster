@@ -1,8 +1,9 @@
 /***************************************************************************
  *            layers.h
  *
- *  Copyright  2005  Ian McIntosh
- *  ian_mcintosh@linuxadvocate.org
+ *  Copyright 2005
+ *  Ian McIntosh <ian_mcintosh@linuxadvocate.org>
+ *  Nathan Fredrickson <nathan@silverorange.com>
  ****************************************************************************/
 
 /*
@@ -95,7 +96,10 @@ typedef struct layer {
 	textlabelstyle_t m_TextLabelStyle;
 } layer_t;
 
-extern layer_t g_aLayers[NUM_LAYERS+1];
+extern layer_t * g_aLayers[NUM_LAYERS+1];
+
+void layers_init(void);
+void layers_deinit(void);
 
 #ifdef __cplusplus
 }

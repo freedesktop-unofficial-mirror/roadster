@@ -807,8 +807,8 @@ void map_draw(map_t* pMap, cairo_t *pCairo)
 			layerdraworder[i].pFunc(pMap, pCairo,
 						pRenderMetrics,
 				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pPointStringsArray,
-				/* style */ 	&g_aLayers[nLayer].m_Style.m_aSubLayers[nSubLayer],
-						&g_aLayers[nLayer].m_TextLabelStyle
+				/* style */ 	&(g_aLayers[nLayer]->m_Style.m_aSubLayers[nSubLayer]),
+						&(g_aLayers[nLayer]->m_TextLabelStyle)
 						);
 		}
 	TIMER_END(maptimer, "END RENDER MAP");
@@ -1125,8 +1125,8 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 	gint nActiveLayerCount = 0;
 	gint i;
 	for(i=LAYER_FIRST ; i <= LAYER_LAST ;i++) {
-		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
-		   g_aLayers[i].m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
+		if(g_aLayers[i]->m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
+		   g_aLayers[i]->m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
 		{
 			gchar azLayerNumber[10];
 

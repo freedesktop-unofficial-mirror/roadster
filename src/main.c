@@ -83,6 +83,8 @@ gboolean main_init(void)
 	pointstring_init();
 	g_print("initializing tracks\n");
 	track_init();
+	g_print("initializing layers\n");
+	layers_init();
 	g_print("initializing glyphs\n");
 	glyph_init();
 	g_print("initializing map\n");

@@ -1,4 +1,13 @@
-2005-02-28  Nathan Fredrickson  <nathan@silverorange.com>
+2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
+	* data/Makefile.am:
+	* configure.ac: Add dependency on libxml-2.0.
+	* data/layers.xml: Map layer styles defined in XML.
+	* src/main.c:
+	* src/map.c:
+	* src/layers.h:
+	* src/layers.c: Load map layer styles from an XML file.
+
+2005-03-02  Nathan Fredrickson  <nathan@silverorange.com>
 	* src/Makefile.am:
 	* configure.ac: Check separately for libsvg and continue if not found. Define HAVE_LIBSVG if present.
 
