@@ -1,3 +1,7 @@
+2005-03-16  Carl Worth  <cworth@cworth.org>
+
+	* README: Clean up URL.
+
 2005-03-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/db.c: Index on column 'Name' of table 'LocationAttributeName' should be UNIQUE.
