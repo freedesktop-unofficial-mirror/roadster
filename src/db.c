@@ -23,7 +23,7 @@
 
 #include <mysql.h>
 
-#if HAVE_MYSQL_EMBED
+#ifdef HAVE_MYSQL_EMBED
 # include <mysql_embed.h>
 #endif
 
@@ -31,6 +31,7 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <string.h>
+#include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
 
 #include "db.h"
 #include "mainwindow.h"
@@ -65,7 +66,7 @@ Notes on the database:
 //						better for embedded or local servers
 // mysql_store_result - more client memory, gets all results right away and frees up server
 //						better for remote servers
-#define MYSQL_GET_RESULT(x)		mysql_use_result((x))
+#define MYSQL_GET_RESULT(x)		mysql_store_result((x))
 
 db_connection_t* g_pDB = NULL;
 
@@ -202,20 +203,43 @@ gboolean db_is_empty()
 // call once on program start-up
 void db_init()
 {
-#if HAVE_MYSQL_EMBED
+#ifdef HAVE_MYSQL_EMBED
+	g_print("Initializing embedded MySQL server: ");
+
+	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
+	gchar* pszSetDataDirCommand = g_strdup_printf("--datadir=%s", pszDataDir);
+
+	// Create directory if it doesn't exist
+	g_print("creating directory: %s\n", pszDataDir);
+	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszDataDir, 0700)) {
+		g_print("failed to create directory: %s\n", pszDataDir);
+	}
+
+	gchar* apszServerOptions[] = {
+		"",	// program name -- unused
+		"--skip-innodb",	// don't bother with table types we don't use
+		"--skip-bdb",		//
+//		"--flush",			// seems like a good idea since users can quickly kill the app/daemon
+		pszSetDataDirCommand
+	};
+
 	// Initialize the embedded server
 	// NOTE: if not linked with libmysqld, this call will do nothing (but will succeed)
- 	if(mysql_server_init(0, NULL, NULL) != 0) {
-		g_print("mysql_server_init failed\n");
+ 	if(mysql_server_init(NUM_ELEMS(apszServerOptions), apszServerOptions, NULL) != 0) {
+		g_print("failed\n");
 		return;
 	}
+	g_free(pszDataDir);
+	g_free(pszSetDataDirCommand);
+
+	g_print("success\n");
 #endif
 }
 
 // call once on program shut-down
 void db_deinit()
 {
-#if HAVE_MYSQL_EMBED
+#ifdef HAVE_MYSQL_EMBED
 	// Close embedded server if present
 	mysql_server_end();
 #endif
@@ -237,6 +261,7 @@ gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* p
 		g_warning("mysql_real_connect failed: %s\n", mysql_error(pMySQLConnection));
 		return FALSE;
 	}
+//	db_enable_keys(); // just in case
 
 	// on success, alloc our connection struct and fill it
 	db_connection_t* pNewConnection = g_new0(db_connection_t, 1);
@@ -478,7 +503,7 @@ void db_parse_point(const gchar* pszText, mappoint_t* pPoint)
 
 	p = pszText;
 
-	if(g_str_has_prefix(p, "POINT")) {
+	if(p[0] == 'P') { //g_str_has_prefix(p, "POINT")) {
 		// format is "POINT(1.2345 -5.4321)"
 
 		p += (6); 	// move past "POINT("
@@ -501,7 +526,7 @@ void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gbo
 {
 	// parse string and add points to the string
 	const gchar* p = pszText;
-	if(g_str_has_prefix(p, "LINESTRING")) {
+	if(p[0] == 'L') { //g_str_has_prefix(p, "LINESTRING")) {
 		// format is "LINESTRING(1.2345 5.4321, 10 10, 20 20)"
 		mappoint_t* pPoint;
 
@@ -664,8 +689,10 @@ void db_create_tables()
 		" AddressRightStart INT2 UNSIGNED NOT NULL,"
 		" AddressRightEnd INT2 UNSIGNED NOT NULL,"
 		" Coordinates point NOT NULL,"
+		
+	    // lots of indexes:
 		" PRIMARY KEY (ID),"
-" INDEX(TypeID),"
+	    " INDEX(TypeID),"
 		" INDEX(AddressLeftStart, AddressLeftEnd),"
 		" INDEX(AddressRightStart, AddressRightEnd),"
 		" SPATIAL KEY (Coordinates));", NULL);
@@ -682,8 +709,9 @@ void db_create_tables()
 	db_query("CREATE TABLE IF NOT EXISTS Road_RoadName("
 		" RoadID INT4 UNSIGNED NOT NULL,"
 		" RoadNameID INT4 UNSIGNED NOT NULL,"
-		" PRIMARY KEY (RoadID, RoadNameID),"
-		" INDEX(RoadNameID));", NULL);
+		
+	    " PRIMARY KEY (RoadID, RoadNameID),"	// allows search on (RoadID,RoadName) and just (RoadID)
+		" INDEX(RoadNameID));", NULL);			// allows search the other way, going from a Name to a RoadID
 
 	// Location
 	db_query("CREATE TABLE IF NOT EXISTS Location("
@@ -724,16 +752,20 @@ void db_create_tables()
 
 void db_enable_keys(void)
 {
-	db_query("ALTER TABLE Road ENABLE KEYS", NULL);
-	db_query("ALTER TABLE RoadName ENABLE KEYS", NULL);
-	db_query("ALTER TABLE Road_RoadName ENABLE KEYS", NULL);
+//	g_print("Enabling keys\n");
+
+//	db_query("ALTER TABLE Road ENABLE KEYS", NULL);
+//	db_query("ALTER TABLE RoadName ENABLE KEYS", NULL);
+//	db_query("ALTER TABLE Road_RoadName ENABLE KEYS", NULL);
 }
 
 void db_disable_keys(void)
 {
-	db_query("ALTER TABLE Road DISABLE KEYS", NULL);
-	db_query("ALTER TABLE RoadName DISABLE KEYS", NULL);
-	db_query("ALTER TABLE Road_RoadName DISABLE KEYS", NULL);
+//	g_print("Disabling keys\n");
+	
+//	db_query("ALTER TABLE Road DISABLE KEYS", NULL);
+//	db_query("ALTER TABLE RoadName DISABLE KEYS", NULL);
+//	db_query("ALTER TABLE Road_RoadName DISABLE KEYS", NULL);
 }
 
 /*

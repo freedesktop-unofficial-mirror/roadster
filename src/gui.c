@@ -66,25 +66,18 @@ void gui_init()
 	importwindow_init(pGladeXML);
 	datasetwindow_init(pGladeXML);
 	welcomewindow_init(pGladeXML);
-	databasewindow_init(pGladeXML);
+//	databasewindow_init(pGladeXML);
 }
 
 void gui_run()
 {
-	if(databasewindow_connect()) {
-		db_create_tables();
-
-		if(db_is_empty()) {
-			welcomewindow_show();
-		}
-		else {
-			mainwindow_show();
-		}
-		gtk_main();
+	if(db_is_empty()) {
+		welcomewindow_show();
 	}
 	else {
-		return;
+		mainwindow_show();
 	}
+	gtk_main();
 }
 
 void gui_exit()

@@ -31,80 +31,9 @@
 #include "geometryset.h"
 #include "map.h"
 #include "util.h"
+#include "point.h"
+#include "pointstring.h"
 
-GMemChunk* g_pPointChunkAllocator;		// chunk allocators to be shared by all geometrysets
-GMemChunk* g_pPointStringChunkAllocator;
-
-void geometryset_init()
-{
-	// create memory allocators
-	g_pPointChunkAllocator = g_mem_chunk_new("point chunk allocator",
-			sizeof(mappoint_t), 1000, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_pPointChunkAllocator != NULL);
-	
-	g_pPointStringChunkAllocator = g_mem_chunk_new("pointstring chunk allocator",
-			sizeof(pointstring_t), 1000, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_pPointStringChunkAllocator != NULL);
-}
-
-/*******************************************************
-** point alloc/free
-*******************************************************/
-gboolean geometryset_util_new_point(mappoint_t** ppPoint)
-{
-	g_return_val_if_fail(ppPoint != NULL, FALSE);
-	g_return_val_if_fail(*ppPoint == NULL, FALSE);	// must be a pointer to a NULL pointer
-
-	// get a new point struct from the allocator
-	mappoint_t* pNew = g_mem_chunk_alloc0(g_pPointChunkAllocator);
-	if(pNew) {
-		*ppPoint = pNew;
-		return TRUE;
-	}
-	return FALSE;
-}
-
-static void geometryset_util_free_point(mappoint_t* pPoint)
-{
-	g_return_if_fail(pPoint != NULL);
-
-	// give back to allocator
-	g_mem_chunk_free(g_pPointChunkAllocator, pPoint);
-}
-
-/*******************************************************
-** pointstring alloc/free
-*******************************************************/
-
-// create a new pointstring (polygon and road)
-gboolean geometryset_util_new_pointstring(pointstring_t** ppPointString)
-{
-	g_return_val_if_fail(ppPointString != NULL, FALSE);
-	g_return_val_if_fail(*ppPointString == NULL, FALSE);	// must be a pointer to a NULL pointer
-
-	// allocate it
-	pointstring_t* pNew = g_mem_chunk_alloc0(g_pPointStringChunkAllocator);
-	if(pNew) {
-		// configure it
-		pNew->m_pPointsArray = g_ptr_array_sized_new(2);
-		*ppPointString = pNew;
-		return TRUE;
-	}
-	return FALSE;
-}
-
-// return a pointstring struct to the allocator
-void geometryset_util_free_pointstring(pointstring_t* pPointString)
-{
-	g_return_if_fail(pPointString != NULL);
-
-	int i;
-	for(i = (pPointString->m_pPointsArray->len - 1) ; i>=0 ; i--) {
-		mappoint_t* pPoint = g_ptr_array_remove_index_fast(pPointString->m_pPointsArray, i);
-		geometryset_util_free_point(pPoint);
-	}
-	g_mem_chunk_free(g_pPointStringChunkAllocator, pPointString);
-}
 
 /*******************************************************
 ** construction / destruction
@@ -133,7 +62,7 @@ void geometryset_clear(geometryset_t* pGeometrySet)
 	// Free each pointstring
 	for(i = (pGeometrySet->m_pPointStringsArray->len - 1) ; i>=0 ; i--) {
 		pointstring_t* pPointString = g_ptr_array_remove_index_fast(pGeometrySet->m_pPointStringsArray, i);
-		geometryset_util_free_pointstring(pPointString);
+		pointstring_free(pPointString);
 	}
 }
 
@@ -153,7 +82,6 @@ void geometryset_free(geometryset_t* pGeometrySet)
 	g_ptr_array_free(pGeometrySet->m_pPointStringsArray, FALSE);	// FALSE means don't delete items
 	pGeometrySet->m_pPointStringsArray = NULL;
 }
-
 
 gboolean geometryset_load_geometry(maprect_t* pRect)
 {
@@ -175,8 +103,10 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 		   g_aLayers[i].m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
 		{
 			gchar azLayerNumber[10];
+
 			if(nActiveLayerCount > 0) g_snprintf(azLayerNumber, 10, ",%d", i);
 			else g_snprintf(azLayerNumber, 10, "%d", i);
+
 			g_strlcat(azLayerNumberList, azLayerNumber, 200);
 			nActiveLayerCount++;
 		}
@@ -234,11 +164,11 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 
 			// Extract points
 			pointstring_t* pNewPointString = NULL;
-			if(!geometryset_util_new_pointstring(&pNewPointString)) {
+			if(!pointstring_alloc(&pNewPointString)) {
 				g_warning("out of memory loading pointstrings\n");
 				continue;
 			}
-			db_parse_pointstring(aRow[2], pNewPointString, geometryset_util_new_point);
+			db_parse_pointstring(aRow[2], pNewPointString, point_alloc);
 
 			// Build name by adding suffix, if one is present
 			gchar azFullName[100] = "";
@@ -277,24 +207,24 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 /*******************************************************
 ** Debug functions
 *******************************************************/
-void geometryset_debug_print(geometryset_t* pGeometrySet)
-{
-	if(pGeometrySet->m_pPointStringsArray == NULL) {
-		g_print("m_pPointStringsArray is NULL\n");
-	}
-	else {
-		g_print("pointstring list (%d items):\n", pGeometrySet->m_pPointStringsArray->len);
-		int i;
-		for(i=0 ; i<pGeometrySet->m_pPointStringsArray->len ; i++) {
-			pointstring_t* pPointString = g_ptr_array_index(pGeometrySet->m_pPointStringsArray, i);
-			
-			g_print("- string (%d items): ", pPointString->m_pPointsArray->len);
-			int j;
-			for(j=0 ; j<pPointString->m_pPointsArray->len ; j++) {
-				mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, j);
-				g_print("(%.5f,%.5f), ", pPoint->m_fLatitude, pPoint->m_fLongitude);
-			}
-			g_print("\n");
-		}
-	}
-}
+// void geometryset_debug_print(geometryset_t* pGeometrySet)
+// {
+//     if(pGeometrySet->m_pPointStringsArray == NULL) {
+//         g_print("m_pPointStringsArray is NULL\n");
+//     }
+//     else {
+//         g_print("pointstring list (%d items):\n", pGeometrySet->m_pPointStringsArray->len);
+//         int i;
+//         for(i=0 ; i<pGeometrySet->m_pPointStringsArray->len ; i++) {
+//             pointstring_t* pPointString = g_ptr_array_index(pGeometrySet->m_pPointStringsArray, i);
+//
+//             g_print("- string (%d items): ", pPointString->m_pPointsArray->len);
+//             int j;
+//             for(j=0 ; j<pPointString->m_pPointsArray->len ; j++) {
+//                 mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, j);
+//                 g_print("(%.5f,%.5f), ", pPoint->m_fLatitude, pPoint->m_fLongitude);
+//             }
+//             g_print("\n");
+//         }
+//     }
+// }

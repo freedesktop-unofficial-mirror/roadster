@@ -48,9 +48,9 @@
 #  include <cairo-xlib.h>
 #endif
 
-#define PROGRAM_NAME		"Roadster"
-#define PROGRAM_COPYRIGHT	"Copyright (c) 2005 Ian McIntosh"
-#define PROGRAM_DESCRIPTION	"Mapping for everyone!"
+#define PROGRAM_NAME			"Roadster"
+#define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
+#define PROGRAM_DESCRIPTION		"Mapping for everyone!"
 
 // Layerlist columns
 #define LAYERLIST_COLUMN_ENABLED	(0)
@@ -61,17 +61,8 @@
 
 #define SPEED_LABEL_FORMAT			("<span font_desc='32'>%.0f</span>")
 
-// Prototypes
-gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event);
-gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data);
-gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfigure *event);
-void mainwindow_draw_map(void);
-
-void mainwindow_statusbar_update_zoomscale(void);
-void mainwindow_statusbar_update_position(void);
-void mainwindow_setup_selected_tool(void);
-
-gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
+// Settings
+#define TIMER_GPS_REDRAW_INTERVAL_MS	(2500)		// lower this (to 1?) when it's faster to redraw track
 
 // Types
 typedef struct {
@@ -88,6 +79,19 @@ typedef enum {
 	kToolPointer = 0,
 	kToolZoom = 1,
 } EToolType;
+
+
+// Prototypes
+gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event);
+gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data);
+gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfigure *event);
+void mainwindow_draw_map(void);
+
+void mainwindow_statusbar_update_zoomscale(void);
+void mainwindow_statusbar_update_position(void);
+void mainwindow_setup_selected_tool(void);
+
+gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer pData);
 
 struct {
 	GtkWindow* m_pWindow;
@@ -131,6 +135,8 @@ struct {
 	GdkPixmap* m_pOffscreenPixmap;
 	
 	EToolType m_eSelectedTool;
+
+	gint m_nCurrentGPSPath;
 } g_MainWindow = {0};
 
 // Data
@@ -299,7 +305,6 @@ void mainwindow_init(GladeXML* pGladeXML)
 			-1);
 	}
 
-#define TIMER_GPS_REDRAW_INTERVAL_MS	(5000)
 	g_timeout_add(TIMER_GPS_REDRAW_INTERVAL_MS,
 			  (GSourceFunc)mainwindow_callback_on_gps_redraw_timeout,
 			  (gpointer)NULL);
@@ -736,6 +741,12 @@ void mainwindow_draw_map(void)
 		
 		cairo_set_target_drawable(pCairoInstance, dpy, drawable);
 		map_draw(pCairoInstance);
+	
+		pointstring_t* pTrackPointString = track_get_pointstring(g_MainWindow.m_nCurrentGPSPath);
+		if(pTrackPointString) {
+			map_draw_gps_trail(pCairoInstance, pTrackPointString);
+		}
+
 	cairo_destroy(pCairoInstance);
 
 	gtk_widget_queue_draw(GTK_WIDGET(g_MainWindow.m_pDrawingArea));
@@ -812,11 +823,21 @@ gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 
 	gpsdata_t* pData = gpsclient_getdata();
 	if(pData->m_eStatus == GPS_STATUS_LIVE) {
+
+		if(g_MainWindow.m_nCurrentGPSPath == 0) {
+			// create a new track for GPS trail
+			g_MainWindow.m_nCurrentGPSPath = track_new();
+		}
+
+		track_add_point(g_MainWindow.m_nCurrentGPSPath, &pData->m_ptPosition);
+
 		// if(keep position centered) {
-		map_center_on_worldpoint(pData->m_ptPosition.m_fLatitude, pData->m_ptPosition.m_fLongitude);
-		mainwindow_statusbar_update_position();
-		mainwindow_draw_map();
+//         map_center_on_worldpoint(pData->m_ptPosition.m_fLatitude, pData->m_ptPosition.m_fLongitude);
+//         mainwindow_statusbar_update_position();
 		// }
+
+		// redraw because GPS icon/trail may be different
+		mainwindow_draw_map();
 
 		// update image and tooltip for GPS icon
 		util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_OK, GTK_ICON_SIZE_MENU);

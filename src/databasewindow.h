@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #ifndef _DATABASEWINDOW_H
 #define _DATABASEWINDOW_H
 
@@ -28,6 +28,8 @@
 extern "C"
 {
 #endif
+
+#ifdef ROADSTER_DEAD_CODE
 
 void databasewindow_init(GladeXML* pGladeXML);
 gboolean databasewindow_connect(void);
@@ -38,6 +40,10 @@ gboolean databasewindow_connect(void);
    declarations, and make the functions static.
 */
 void databasewindow_on_connectbutton_clicked(void);
+
+#endif
+
+
 
 #ifdef __cplusplus
 }

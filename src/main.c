@@ -35,6 +35,9 @@
 #include "gpsclient.h"
 #include "locationset.h"
 #include "scenemanager.h"
+#include "point.h"
+#include "pointstring.h"
+#include "track.h"
 
 int main (int argc, char *argv[])
 {
@@ -45,16 +48,32 @@ int main (int argc, char *argv[])
 
 	gnome_init(PACKAGE, VERSION, argc, argv);
 
+	if(!gnome_vfs_init()) {	
+		g_warning("gnome_vfs_init failed\n");
+		return 1;
+	}
+	gchar* pszApplicationDir = g_strdup_printf("%s/.roadster", g_get_home_dir());
+	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszApplicationDir, 0700)) {
+		g_print("failed to create directory: %s\n", pszApplicationDir);
+	}
+
 	/*
 	** init our modules
 	*/
+	point_init();
+	pointstring_init();
+	track_init();
+
 	scenemanager_init();
-	geometryset_init();
+	//geometryset_init();
 	locationset_init();
 	gpsclient_init();
 	gui_init();
 	layers_init();
 	db_init();
+
+	gboolean bConnected = db_connect(NULL, NULL, NULL, "");
+	db_create_tables();
 
 	map_set_zoomlevel(7);
 	mainwindow_statusbar_update_zoomscale();

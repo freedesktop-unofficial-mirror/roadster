@@ -391,20 +391,6 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 	return FALSE;
 }
 
-#if 0
-static void debug_print_string(char* str, gint len)
-{
-	char* p = str;
-	while(len > 0) {
-		g_print("(%c %02d)", *p, *p);
-		p++;
-		len--;
-		if(*p == '\0') break;
-	}
-	g_print("\n");
-}
-#endif
-
 static gchar* import_tiger_copy_line(const gchar* pszString)
 {
 	char azBuffer[LINE_LENGTH_MAX];
@@ -1108,3 +1094,18 @@ static gboolean import_tiger_from_buffers(
 
 	return TRUE;
 }
+
+#ifdef ROADSTER_DEAD_CODE
+static void debug_print_string(char* str, gint len)
+{
+	char* p = str;
+	while(len > 0) {
+		g_print("(%c %02d)", *p, *p);
+		p++;
+		len--;
+		if(*p == '\0') break;
+	}
+	g_print("\n");
+}
+#endif
+

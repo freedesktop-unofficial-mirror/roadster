@@ -90,8 +90,14 @@ then
 else
     AC_MSG_CHECKING(mysql libraries)
     MYSQL_VERSION=`${mysqlconfig} --version`
-    MYSQL_LIBS=`${mysqlconfig} --libs | sed -e \
-    's/-lmysqlclient /-lmysqlclient_r /' -e 's/-lmysqlclient$/-lmysqlclient_r/'`
+
+dnl    MYSQL_LIBS=`${mysqlconfig} --libs | sed -e \
+dnl    's/-lmysqlclient /-lmysqlclient_r /' -e 's/-lmysqlclient$/-lmysqlclient_r/'`
+
+dnl test embedded mysql
+    MYSQL_LIBS="`${mysqlconfig} --libmysqld-libs` -lmygcc -lsupc++"
+    AC_DEFINE([HAVE_MYSQL_EMBED], [1], [Have embedded MySQL])
+
     AC_MSG_RESULT($MYSQL_LIBS)
     AC_MSG_CHECKING(mysql includes)
     MYSQL_CFLAGS=`${mysqlconfig} --cflags`

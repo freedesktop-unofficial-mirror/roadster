@@ -42,10 +42,6 @@ static void import_progress_pulse(void)
 
 gboolean import_from_uri(const gchar* pszURI)
 {
-	if(!gnome_vfs_init()) {	
-		g_warning("gnome_vfs_init failed\n");
-		return FALSE;
-	}
 	gboolean bResult = FALSE;
 
 	GnomeVFSFileInfo info;
@@ -55,7 +51,9 @@ gboolean import_from_uri(const gchar* pszURI)
 	}
 
 //	func_progress_callback(0.0, pCallbackData);
+
 	gchar* pszFileBaseName = info.name;
+
 	g_return_val_if_fail(pszFileBaseName != NULL, FALSE);
 	// does it look like a tgr file name (tgr00000.zip) ?
 	if(strlen(pszFileBaseName) == 12 && g_str_has_prefix(pszFileBaseName, "tgr") && g_str_has_suffix(pszFileBaseName, ".zip")) {
@@ -66,10 +64,10 @@ gboolean import_from_uri(const gchar* pszURI)
 
 		gint nTigerSetNumber = atoi(buf);
 		// just assume it's a TIGER file for now since it's all we support
-		
-//		db_disable_keys();
+
+		//	db_disable_keys();
 		bResult = import_tiger_from_uri(pszURI, nTigerSetNumber);
-//		db_enable_keys();
+		//	db_enable_keys();
 
 		if(bResult) {
 			importwindow_log_append("success.\n\n");
@@ -78,7 +76,7 @@ gboolean import_from_uri(const gchar* pszURI)
 			importwindow_log_append("\n** Failed.\n\n");
 		}
 	}
-	g_free(pszFileBaseName);
+//	g_free(pszFileBaseName);
 
 	// free file info
 	gnome_vfs_file_info_unref(&info);

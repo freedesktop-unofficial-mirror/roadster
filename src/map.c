@@ -26,7 +26,11 @@
 #include <gnome.h>
 #include <math.h>
 
-#define HACK_AROUND_CAIRO_LINE_CAP_BUG
+#define HACK_AROUND_CAIRO_LINE_CAP_BUG	// enable to ensure roads have rounded caps if the style dictates
+
+#define ROAD_FONT	"Bitstream Vera Sans"
+#define AREA_FONT	"Bitstream Vera Sans" // "Bitstream Charter"
+
 
 #include "gui.h"
 #include "map.h"
@@ -53,6 +57,10 @@ struct {
 	7,
 	TRUE
 };
+
+// ADD:
+// 'Mal' - ?
+// 'Trce - Trace
 
 struct {
 	gchar* m_pszLong;
@@ -523,7 +531,7 @@ gboolean map_redraw_if_needed()
 static void map_draw_background(cairo_t *pCairo)
 {
 	cairo_save(pCairo);
-		cairo_set_rgb_color(pCairo, 239/255.0, 231/255.0, 230/255.0);
+		cairo_set_rgb_color(pCairo, 247/255.0, 235/255.0, 230/255.0);
 		cairo_rectangle(pCairo, 0, 0, g_Map.m_WindowDimensions.m_uWidth, g_Map.m_WindowDimensions.m_uHeight);
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
@@ -592,7 +600,7 @@ static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, 
 		fTotalLineLength += fLineLength;
 	}
 
-	gchar* pszFontFamily = "Bitstream Vera Sans";
+	gchar* pszFontFamily = ROAD_FONT;
 
 	cairo_save(pCairo);
 	cairo_select_font(pCairo, pszFontFamily,
@@ -760,10 +768,10 @@ static void map_draw_line_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, 
 			cairo_rotate(pCairo, fAngleInRadians);
 			cairo_text_path(pCairo, azLabelSegment);
 
-			gboolean bDrawHalo = pLabelStyle->m_abHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
-			if(bDrawHalo) {
+			gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
+			if(fHaloSize >= 0) {
 				cairo_save(pCairo);
-					cairo_set_line_width(pCairo, 4);
+					cairo_set_line_width(pCairo, fHaloSize);
 					cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
 					cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
 					//cairo_set_miter_limit(pCairo, 0.1);
@@ -830,7 +838,7 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 	gdouble fDrawX = fTotalX / pPointString->m_pPointsArray->len;
 	gdouble fDrawY = fTotalY / pPointString->m_pPointsArray->len;
 
-	gchar* pszFontFamily = "Bitstream Vera Sans";
+	gchar* pszFontFamily = AREA_FONT;
 
 	cairo_save(pCairo);
 
@@ -859,10 +867,10 @@ void map_draw_polygon_label(cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rend
 		cairo_set_alpha(pCairo, fAlpha);
 		cairo_text_path(pCairo, pszLabel);
 
-		gboolean bDrawHalo = pLabelStyle->m_abHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
-		if(bDrawHalo) {
+		gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
+		if(fHaloSize >= 0) {
 			cairo_save(pCairo);
-				cairo_set_line_width(pCairo, 3);
+				cairo_set_line_width(pCairo, fHaloSize);
 				cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
 				cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
 //				cairo_set_miter_limit(pCairo, 0.1);
@@ -1212,39 +1220,42 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 	gint iPoint;
 
 	gdouble fLineWidth = pSubLayerStyle->m_afLineWidths[pRenderMetrics->m_nZoomLevel-1];
-	if(fLineWidth == 0.0) return;	// Don't bother drawing with line width 0
+	if(fLineWidth <= 0.0) return;	// Don't draw invisible lines
 	if(pSubLayerStyle->m_clrColor.m_fAlpha == 0.0) return;	// invisible?
 
 	cairo_save(pCairo);
 
+	// Raise the tolerance way up for thin lines
+	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
+
 	gdouble fTolerance;
-	if(fLineWidth <= 2.0) {
-		fTolerance = 5;
-	}
-	else if(fLineWidth <= 5.0) {
-		fTolerance = 1;
-	}
-	else { 	// anything bigger...
+	if(fLineWidth >= 6.0) {
 		fTolerance = 0.5;
 	}
+	else {
+		if(nCapStyle == CAIRO_LINE_CAP_ROUND) {
+			//g_print("forcing round->square cap style\n");
+			nCapStyle = CAIRO_LINE_CAP_SQUARE;
+		}
 
-	//g_print("setting tolerance %f\n", fTolerance);
-	cairo_set_tolerance(pCairo, fTolerance);
-
-	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
-	if(nCapStyle == CAIRO_LINE_CAP_ROUND && fLineWidth <= 4.0) {
-		g_print("forcing square cap style\n");
-		nCapStyle = CAIRO_LINE_CAP_SQUARE;
+//         if(fLineWidth >= 3.0) {
+//             fTolerance = 1.2;
+//         }
+//         else {  // smaller...
+//             fTolerance = 10;
+//         }
 	}
-	
+	cairo_set_tolerance(pCairo, fTolerance);
+	cairo_set_line_join(pCairo, pSubLayerStyle->m_nJoinStyle);
+	cairo_set_line_cap(pCairo, nCapStyle);	/* CAIRO_LINE_CAP_BUTT, CAIRO_LINE_CAP_ROUND, CAIRO_LINE_CAP_CAP */
+	if(g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount > 1) {
+		cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_pfList, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount, 0.0);
+	}
+
 	// Set layer attributes	
 	cairo_set_rgb_color(pCairo, pSubLayerStyle->m_clrColor.m_fRed, pSubLayerStyle->m_clrColor.m_fGreen, pSubLayerStyle->m_clrColor.m_fBlue);
 	cairo_set_alpha(pCairo, pSubLayerStyle->m_clrColor.m_fAlpha);
 	cairo_set_line_width(pCairo, fLineWidth);
-
-	cairo_set_line_join(pCairo, pSubLayerStyle->m_nJoinStyle);
-	cairo_set_line_cap(pCairo, nCapStyle);	/* CAIRO_LINE_CAP_BUTT, CAIRO_LINE_CAP_ROUND, CAIRO_LINE_CAP_CAP */
-	cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_pfList, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount, 0.0);
 
 	for(iString=0 ; iString<pGeometry->m_pPointStringsArray->len ; iString++) {
 		pPointString = g_ptr_array_index(pGeometry->m_pPointStringsArray, iString);
@@ -1266,10 +1277,11 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 				cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
 			}
 #ifdef HACK_AROUND_CAIRO_LINE_CAP_BUG
-			cairo_stroke(pCairo);	// this is wrong place of it (see below)
+			cairo_stroke(pCairo);	// this is wrong place for it (see below)
 #endif
    		}
 	}
+
 #ifndef HACK_AROUND_CAIRO_LINE_CAP_BUG
 	// this is correct place to stroke, but we can't do this until Cairo fixes this bug:
 	// http://cairographics.org/samples/xxx_multi_segment_caps.html
@@ -1329,4 +1341,30 @@ gboolean map_road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID)
 		}
 	}
 	return FALSE;
+}
+
+void map_draw_gps_trail(cairo_t* pCairo, pointstring_t* pPointString)
+{
+	rendermetrics_t renderMetrics = {0};
+	map_get_render_metrics(&renderMetrics);
+	rendermetrics_t* pRenderMetrics = &renderMetrics;
+
+	if(pPointString->m_pPointsArray->len > 2) {
+		mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, 0);
+		
+		// move to index 0
+		cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
+
+		gint i;
+		for(i=1 ; i<pPointString->m_pPointsArray->len ; i++) {
+			pPoint = g_ptr_array_index(pPointString->m_pPointsArray, i);
+
+			cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
+		}
+
+		cairo_set_rgb_color(pCairo, 0.0, 0.0, 0.7);
+		cairo_set_alpha(pCairo, 0.6);
+		cairo_set_line_width(pCairo, 10);
+		cairo_stroke(pCairo);
+	}
 }

@@ -27,7 +27,9 @@
 
 #include "db.h"
 #include "util.h"
-#include "geometryset.h"
+//#include "geometryset.h"
+#include "pointstring.h"
+#include "point.h"
 #include "searchwindow.h"
 #include "search.h"
 #include "search_road.h"
@@ -220,13 +222,13 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 			nCount++;
 			if(nCount <= SEARCH_RESULT_COUNT_LIMIT) {
 				pointstring_t* pPointString = NULL;
-				geometryset_util_new_pointstring(&pPointString);
-				db_parse_pointstring(aRow[3], pPointString, geometryset_util_new_point);
+				pointstring_alloc(&pPointString);
+				db_parse_pointstring(aRow[3], pPointString, point_alloc);
 
 //	g_print("raw: %s\n", aRow[3]);
 				search_road_filter_result(aRow[1], pRoadSearch->m_nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), pPointString);
 //	g_print("%03d: Road.ID='%s' RoadName.Name='%s', Suffix=%s, L:%s-%s, R:%s-%s\n", nCount, aRow[0], aRow[1], aRow[3], aRow[4], aRow[5], aRow[6], aRow[7]);
-				geometryset_util_free_pointstring(pPointString);
+				pointstring_free(pPointString);
 			}
 		}
 		db_free_result(pResultSet);

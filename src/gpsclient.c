@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <gtk/gtk.h>
 #include <gps.h>	// gpslib
 #include "gpsclient.h"
@@ -31,12 +31,12 @@ struct {
 } g_GPSClient = {0};
 
 gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condition, gpointer data);
-//~ static void update_display(char *buf);
 
-static void gpsclient_callback_update(char* p)
+static void gpsclient_callback_raw_data(char* p)
 {
-//	g_print("gpsclient_callback_update(%s)\n", p);
+	// g_print("raw: %s\n", p);
 }
+
 void gpsclient_debug_print(void);
 
 static void gpsclient_connect(void)
@@ -51,40 +51,30 @@ static void gpsclient_connect(void)
 
 	// connect
  	g_GPSClient.m_pGPSConnection = gps_open("localhost", DEFAULT_GPSD_PORT);
-	g_GPSClient.m_pPublicGPSData->m_eStatus = GPS_STATUS_NO_GPSD;
 
 	if(g_GPSClient.m_pGPSConnection) {
-//		g_print("Connected to GPSD\n");
-		
-		// 
-		gps_set_raw_hook(g_GPSClient.m_pGPSConnection, gpsclient_callback_update);
-		
 		// turn on streaming of GPS data
 		gps_query(g_GPSClient.m_pGPSConnection, "w+x\n");
-//		g_print("gps_query = %d\n", b);
 
-//		g_print("g_GPSClient.m_pGPSConnection->gps_fd = %d\n", g_GPSClient.m_pGPSConnection->gps_fd);
-		g_io_add_watch(g_io_channel_unix_new(g_GPSClient.m_pGPSConnection->gps_fd), 
+		g_io_add_watch(g_io_channel_unix_new(g_GPSClient.m_pGPSConnection->gps_fd),
 			G_IO_IN, gpsclient_callback_data_waiting, NULL);
 
-//		g_print("g_io_add_watch = %d\n", x);
-	
-		// assume no device
+		// assume no GPS device is present
 		g_GPSClient.m_pPublicGPSData->m_eStatus = GPS_STATUS_NO_DEVICE;
 	}
 	else {
-//		g_print("FAILED to connect to GPSD\n");
-	}	
+		g_GPSClient.m_pPublicGPSData->m_eStatus = GPS_STATUS_NO_GPSD;
+	}
 }
+
 void gpsclient_init()
 {
 	g_GPSClient.m_pPublicGPSData = g_new0(gpsdata_t, 1);
-	
+
 	gpsclient_connect();
 }
 
-// fill structure with data
-gpsdata_t* gpsclient_getdata()
+const gpsdata_t* gpsclient_getdata()
 {
 	gpsclient_connect();	// connect if necessary
 	
@@ -94,8 +84,7 @@ gpsdata_t* gpsclient_getdata()
 // callback for g_io_add_watch on the GPSD file descriptor
 gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condition, gpointer data)
 {
-//	g_print("gpsclient_callback_data_waiting\n");
-	gpsdata_t* l = g_GPSClient.m_pPublicGPSData;	// our public data struct
+	gpsdata_t* l = g_GPSClient.m_pPublicGPSData;	// our public data struct, for easy access
 
 	// is there data waiting on the socket?
 	if(condition == G_IO_IN) {
@@ -133,17 +122,14 @@ gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condit
 					l->m_fSignalQuality = GPS_SIGNALQUALITY_1_TERRIBLE;
 				}
 
-				//
 				// Set speed
-				//
 				l->m_fSpeedInKilometersPerHour = (d->speed * KNOTS_TO_KPH);
 				l->m_fSpeedInMilesPerHour = (d->speed * KNOTS_TO_MPH);
 
-				// dampen noise
+				// Dampen Noise when not moving fast enough for trustworthy data
 				if(l->m_fSignalQuality <= GPS_SIGNALQUALITY_2_POOR &&
 					l->m_fSpeedInMilesPerHour <= 2.0)
 				{
-					g_print("low quality signal, setting speed to 0\n");
 					l->m_fSpeedInMilesPerHour = 0.0;
 					l->m_fSpeedInKilometersPerHour = 0.0;
 				}
@@ -157,18 +143,13 @@ gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condit
 		else {
 			l->m_eStatus = GPS_STATUS_NO_DEVICE;
 		}
-	//	gpsclient_debug_print();
-	//	g_print("GPS Status: %d\n", l->m_eStatus);
 	}
-	return TRUE; // keep socket notification coming
+	return TRUE; // TRUE = keep socket notification coming
 }
 
-//~ static void update_display(char *buf)
-//~ {
-	//~ g_print("********************* what the hell does this do?\n");	
-//~ }
+#ifdef ROADSTER_DEAD_CODE
 
-void gpsclient_debug_print(void)
+static void gpsclient_debug_print(void)
 {
 	struct gps_data_t* d = g_GPSClient.m_pGPSConnection;	// gpsd data
 
@@ -189,3 +170,5 @@ void gpsclient_debug_print(void)
 
 	g_print("gps_fd = %d\n\n", d->gps_fd);
 }
+
+#endif

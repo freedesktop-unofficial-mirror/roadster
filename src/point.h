@@ -1,5 +1,5 @@
 /***************************************************************************
- *            geometryset.h
+ *            point.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -21,28 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __GEOMETRYSET_H__
-#define __GEOMETRYSET_H__
+void point_init(void);
+gboolean point_alloc(mappoint_t** ppPoint);
+void point_free(mappoint_t* pPoint);
 
-// a geometry set holds all the geometry for a layer
-typedef struct geometryset {
-	GPtrArray* m_pPointStringsArray;
-} geometryset_t;
-
-#include "map.h"
-
-void geometryset_init(void);
-void geometryset_free(geometryset_t* pGeometrySet);
-void geometryset_clear(geometryset_t* pGeometrySet);
-
-gboolean geometryset_new(geometryset_t** ppGeometrySet);
-
-//gboolean geometryset_util_new_point(mappoint_t** ppPoint);
-//gboolean geometryset_util_new_pointstring(pointstring_t** ppPointString);
-//void geometryset_util_free_pointstring(pointstring_t* pPointString);
-
-gboolean geometryset_load_geometry(maprect_t* pRect);
-
-//void geometryset_debug_print(geometryset_t* pGeometrySet);
-
-#endif

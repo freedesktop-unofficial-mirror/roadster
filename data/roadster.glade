@@ -266,7 +266,6 @@
 			  <property name="visible">True</property>
 			  <property name="label" translatable="yes">Bookmark This Location...</property>
 			  <property name="use_underline">True</property>
-			  <signal name="activate" handler="on_bookmark_this_location1_activate" last_modification_time="Tue, 22 Feb 2005 06:37:55 GMT"/>
 			</widget>
 		      </child>
 
@@ -275,7 +274,6 @@
 			  <property name="visible">True</property>
 			  <property name="label" translatable="yes">Manage Bookmarks...</property>
 			  <property name="use_underline">True</property>
-			  <signal name="activate" handler="on_manage_bookmarks1_activate" last_modification_time="Tue, 22 Feb 2005 06:37:55 GMT"/>
 			</widget>
 		      </child>
 
@@ -420,7 +418,7 @@
 		      <property name="has_frame">True</property>
 		      <property name="invisible_char" translatable="yes">*</property>
 		      <property name="activates_default">True</property>
-		      <property name="width_chars">19</property>
+		      <property name="width_chars">24</property>
 		    </widget>
 		  </child>
 		</widget>
@@ -645,7 +643,7 @@
 
 	      <child>
 		<widget class="GtkHBox" id="mainwindowsidebox">
-		  <property name="width_request">220</property>
+		  <property name="width_request">230</property>
 		  <property name="visible">True</property>
 		  <property name="homogeneous">False</property>
 		  <property name="spacing">0</property>
@@ -978,7 +976,7 @@
 			    <widget class="GtkFrame" id="frame30">
 			      <property name="visible">True</property>
 			      <property name="label_xalign">0</property>
-			      <property name="label_yalign">0.5</property>
+			      <property name="label_yalign">0</property>
 			      <property name="shadow_type">GTK_SHADOW_NONE</property>
 
 			      <child>
@@ -1002,7 +1000,6 @@
 				      <child>
 					<widget class="GtkCheckButton" id="checkbutton33">
 					  <property name="visible">True</property>
-					  <property name="sensitive">False</property>
 					  <property name="can_focus">True</property>
 					  <property name="label" translatable="yes">_Show position on map</property>
 					  <property name="use_underline">True</property>
@@ -1035,7 +1032,7 @@
 					      <property name="yscale">1</property>
 					      <property name="top_padding">0</property>
 					      <property name="bottom_padding">0</property>
-					      <property name="left_padding">12</property>
+					      <property name="left_padding">8</property>
 					      <property name="right_padding">0</property>
 
 					      <child>
@@ -1066,7 +1063,6 @@
 						  <child>
 						    <widget class="GtkCheckButton" id="checkbutton35">
 						      <property name="visible">True</property>
-						      <property name="sensitive">False</property>
 						      <property name="can_focus">True</property>
 						      <property name="label" translatable="yes">Show GPS _trail</property>
 						      <property name="use_underline">True</property>
@@ -1369,7 +1365,7 @@
 		      <child>
 			<widget class="GtkLabel" id="label92243">
 			  <property name="visible">True</property>
-			  <property name="label" translatable="yes">&lt;span font_desc=&quot;11&quot;&gt;USA &gt; Massachusetts &gt; Middlesex &gt; Cambridge&lt;/span&gt;</property>
+			  <property name="label" translatable="yes">&lt;span font_desc=&quot;11&quot;&gt; United States   Massachusetts   Cambridge&lt;/span&gt;</property>
 			  <property name="use_underline">False</property>
 			  <property name="use_markup">True</property>
 			  <property name="justify">GTK_JUSTIFY_LEFT</property>
@@ -2574,7 +2570,6 @@ Two</property>
 		  <property name="can_focus">True</property>
 		  <property name="relief">GTK_RELIEF_NORMAL</property>
 		  <property name="focus_on_click">False</property>
-		  <signal name="clicked" handler="databasewindow_on_connectbutton_clicked" last_modification_time="Mon, 14 Feb 2005 08:38:18 GMT"/>
 
 		  <child>
 		    <widget class="GtkAlignment" id="alignment65">
@@ -3605,8 +3600,7 @@ Restaurants</property>
   </child>
 </widget>
 
-<widget class="GtkDialog" id="databasewindow">
-  <property name="visible">True</property>
+<widget class="GtkDialog" id="_____databasewindow">
   <property name="title" translatable="yes">Connect</property>
   <property name="type">GTK_WINDOW_TOPLEVEL</property>
   <property name="window_position">GTK_WIN_POS_CENTER</property>

@@ -1,3 +1,25 @@
+2005-02-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* track.c:
+	* track.h:
+	* point.c:
+	* point.h:
+	* pointstring.c:
+	* pointstring.h: Added.
+	* configure.ac: Updated for embedded mysql.
+	* src/Makefile.am: Added new files.
+	* databasewindow.c: Made all dead code.  (No need for database window with embedded mysql)
+	* db.c: Assume string format from embedded DB is reasonable in db_parse_point() and db_parse_pointstring().
+	* geometryset.c: Move point and pointstring code into separate files.
+	* gpsclient.c: Misc cleanup.
+	* gui.c: Remove databasewindow from startup code path.
+	* import.c: Remove GnomeVFS init.
+	* main.c: Add GnomeVFS init.  Create ~/.roadster if missing.
+	* layers.c: Style tweaks.
+	* mainwindow.c: Add quasi-hack to record/draw GPS tracks.
+	* map.c: Layer "halo" setting is now a stroke width number, not a boolean. Don't call cairo_set_dash for solid lines.  New track drawing.
+	* search_road.c: Use renamed pointstring functions.
+
 2005-02-24  Nathan Fredrickson  <nathan@silverorange.com>
 	
 	* po/roadster.pot: Removed, this is generated.
@@ -44,7 +66,7 @@
 
 2005-02-22  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
-	* main.c: Added call to init scenemanager. 
+	* main.c: Added call to init scenemanager.
 	* scenemanager.c: Added quasi-hack to prevent road/label names from showing up twice on one screen.
 	* map.c: Request permission from scenemanager before drawing a label.
 

@@ -85,7 +85,7 @@ typedef struct sublayerstyle {
 typedef struct textlabelstyle {
 	gdouble m_afFontSizeAtZoomLevel[MAX_ZOOM_LEVEL];
 	gint m_abBoldAtZoomLevel[MAX_ZOOM_LEVEL];	// 0s or 1s
-	gint m_abHaloAtZoomLevel[MAX_ZOOM_LEVEL];	// 0s or 1s
+	gint m_afHaloAtZoomLevel[MAX_ZOOM_LEVEL];	// stroke width
 	color_t m_clrColor;
 	// font family...
 	// font style...

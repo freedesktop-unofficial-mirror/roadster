@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-NULL = 
+NULL =
 
 INCLUDES= \
 	-DDATADIR=\"$(pkgdatadir)\" \
@@ -38,7 +38,10 @@ roadster_SOURCES = \
 	search_location.c\
 	search.c\
 	scenemanager.c\
-	databasewindow.c
+	databasewindow.c\
+	point.c\
+	pointstring.c\
+	track.c
 
 roadster_LDADD = \
 	$(GNOME_LIBS) \

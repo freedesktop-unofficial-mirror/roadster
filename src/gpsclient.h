@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #ifndef _GPSCLIENT_H
 #define _GPSCLIENT_H
 
@@ -64,7 +64,7 @@ typedef struct gpsdata {
 } gpsdata_t;
 
 void gpsclient_init(void);
-gpsdata_t* gpsclient_getdata(void);
+const gpsdata_t* gpsclient_getdata(void);
 
 #ifdef __cplusplus
 }

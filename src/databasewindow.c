@@ -20,7 +20,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
+#ifdef ROADSTER_DEAD_CODE
+
+
+
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 
@@ -82,3 +86,5 @@ gboolean databasewindow_connect(void)
 void databasewindow_on_connectbutton_clicked(void)
 {
 }
+
+#endif
