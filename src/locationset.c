@@ -23,9 +23,9 @@
 
 #include <stdlib.h>
 #include <gtk/gtk.h>
-#include "../include/locationset.h"
-#include "../include/db.h"
-#include "../include/util.h"
+#include "locationset.h"
+#include "db.h"
+#include "util.h"
 
 #define DB_LOCATIONS_TABLENAME		("Location")
 #define DB_LOCATIONSETS_TABLENAME	("LocationSet")

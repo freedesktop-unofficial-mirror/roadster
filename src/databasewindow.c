@@ -24,9 +24,9 @@
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 
-#include "../include/db.h"
-#include "../include/gui.h"
-#include "../include/databasewindow.h"
+#include "db.h"
+#include "gui.h"
+#include "databasewindow.h"
 
 struct {
 	GtkDialog* m_pWindow;	

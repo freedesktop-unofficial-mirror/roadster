@@ -22,7 +22,7 @@
  */
 
 #include <cairo.h>
-#include "../include/layers.h"
+#include "layers.h"
 
 gdouble pDash_Solid[] = {10};
 gdouble pDash_10_10[] = {1, 14};

@@ -23,7 +23,7 @@
  
 #include <gtk/gtk.h>
 #include <gps.h>	// gpslib
-#include "../include/gpsclient.h"
+#include "gpsclient.h"
 
 struct {
 	struct gps_data_t * m_pGPSConnection;

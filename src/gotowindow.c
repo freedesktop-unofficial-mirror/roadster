@@ -23,10 +23,10 @@
  
 #include <glade/glade.h>
 #include <gnome.h>
-#include "../include/util.h"
-#include "../include/map.h"
-#include "../include/mainwindow.h"
-#include "../include/gotowindow.h"
+#include "util.h"
+#include "map.h"
+#include "mainwindow.h"
+#include "gotowindow.h"
 
 #define LOCATIONLIST_COLUMN_NAME 		(0)
 #define LOCATIONLIST_COLUMN_LOCATION 	(1)

@@ -22,8 +22,8 @@
  */
 
 #include <gtk/gtk.h>
-#include "../include/geometryset.h"
-#include "../include/scenemanager.h"
+#include "geometryset.h"
+#include "scenemanager.h"
 
 /*
 Goals:

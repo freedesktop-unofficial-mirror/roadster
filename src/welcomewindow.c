@@ -28,8 +28,8 @@
 #endif
 
 #include <gnome.h>
-#include "../include/mainwindow.h"
-#include "../include/welcomewindow.h"
+#include "mainwindow.h"
+#include "welcomewindow.h"
 
 #define URL_CENSUS_GOV_TIGER_DATA_WEBSITE ("http://www.census.gov/geo/www/tiger/tiger2003/tgr2003.html")
 

@@ -25,12 +25,12 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "../include/db.h"
-#include "../include/util.h"
-#include "../include/geometryset.h"
-#include "../include/searchwindow.h"
-#include "../include/search.h"
-#include "../include/search_road.h"
+#include "db.h"
+#include "util.h"
+#include "geometryset.h"
+#include "searchwindow.h"
+#include "search.h"
+#include "search_road.h"
 
 typedef struct {
 	gint m_nNumber;			// house number	eg. 51

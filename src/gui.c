@@ -29,28 +29,28 @@
 
 #include <gnome.h>
 
-#include "../include/gui.h"
-#include "../include/map.h"
-#include "../include/util.h"
-#include "../include/db.h"
+#include "gui.h"
+#include "map.h"
+#include "util.h"
+#include "db.h"
 
-#include "../include/mainwindow.h"
-#include "../include/gotowindow.h"
-#include "../include/importwindow.h"
-#include "../include/datasetwindow.h"
-#include "../include/welcomewindow.h"
-#include "../include/searchwindow.h"
-#include "../include/databasewindow.h"
+#include "mainwindow.h"
+#include "gotowindow.h"
+#include "importwindow.h"
+#include "datasetwindow.h"
+#include "welcomewindow.h"
+#include "searchwindow.h"
+#include "databasewindow.h"
 
 void gui_init()
 {
 	GladeXML *pGladeXML;
 
 	// Load glade UI definition file and connect to callback functions	
-	pGladeXML = glade_xml_new (PACKAGE_DATA_DIR"/roadster/glade/roadster.glade", NULL, NULL);
+	pGladeXML = glade_xml_new (PACKAGE_DATA_DIR"/roadster.glade", NULL, NULL);
 	if(pGladeXML == NULL) {
 		// try source directory if user hasn't done a 'make install' (good for development, too!)
-		pGladeXML = glade_xml_new (PACKAGE_SOURCE_DIR"/roadster.glade", NULL, NULL);
+		pGladeXML = glade_xml_new (PACKAGE_SOURCE_DIR"/data/roadster.glade", NULL, NULL);
 
 		if(pGladeXML == NULL) {
 			g_message("can't find glade xml file");

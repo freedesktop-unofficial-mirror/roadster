@@ -28,9 +28,9 @@
 #include <string.h>
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
 
-#include "../include/util.h"
-#include "../include/import_tiger.h"
-#include "../include/importwindow.h"
+#include "util.h"
+#include "import_tiger.h"
+#include "importwindow.h"
 
 #define TIGER_RT1_LINE_LENGTH 				(230)
 #define TIGER_RT2_LINE_LENGTH				(210)

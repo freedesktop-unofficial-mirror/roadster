@@ -32,12 +32,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../include/db.h"
-#include "../include/mainwindow.h"
-#include "../include/geometryset.h"
-#include "../include/util.h"
-#include "../include/layers.h"
-#include "../include/locationset.h"
+#include "db.h"
+#include "mainwindow.h"
+#include "geometryset.h"
+#include "util.h"
+#include "layers.h"
+#include "locationset.h"
 
 /*
 Notes on the database:

@@ -26,10 +26,10 @@
 #include <string.h>
 #include <gtk/gtk.h>
 
-#include "../include/import.h"
-#include "../include/importwindow.h"
-#include "../include/import_tiger.h"
-#include "../include/db.h"
+#include "import.h"
+#include "importwindow.h"
+#include "import_tiger.h"
+#include "db.h"
 
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
 

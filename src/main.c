@@ -26,15 +26,15 @@
 #endif
 
 #include <gnome.h>
-#include "../include/gui.h"
-#include "../include/db.h"
-#include "../include/geometryset.h"
-#include "../include/mainwindow.h"
-#include "../include/map.h"
-#include "../include/import.h"
-#include "../include/gpsclient.h"
-#include "../include/locationset.h"
-#include "../include/scenemanager.h"
+#include "gui.h"
+#include "db.h"
+#include "geometryset.h"
+#include "mainwindow.h"
+#include "map.h"
+#include "import.h"
+#include "gpsclient.h"
+#include "locationset.h"
+#include "scenemanager.h"
 
 int main (int argc, char *argv[])
 {

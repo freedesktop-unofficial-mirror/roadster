@@ -29,9 +29,9 @@
 
 #include <gnome.h>
 
-#include "../include/util.h"
-#include "../include/datasetwindow.h"
-#include "../include/mainwindow.h"
+#include "util.h"
+#include "datasetwindow.h"
+#include "mainwindow.h"
 
 #define DATASETLIST_COLUMN_ID			(0)
 #define DATASETLIST_COLUMN_NAME 		(1)

@@ -22,7 +22,7 @@
  */
  
 #include <gtk/gtk.h>
-#include "../include/search.h"
+#include "search.h"
 
 // functions common to all searches
 

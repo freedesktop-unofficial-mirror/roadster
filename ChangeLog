@@ -1,3 +1,9 @@
+2005-02-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+	
+	* Major build file cleanup by Nathan Fredrickson <nathan@silverorange.com>
+	* All header files moved into src/
+	* configure: Check for mysql and gpsd.
+
 2005-02-22  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* main.c: Added call to init scenemanager. 

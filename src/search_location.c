@@ -23,11 +23,11 @@
 
 #include <stdlib.h>
 #include <gtk/gtk.h>
-#include "../include/db.h"
-#include "../include/util.h"
-#include "../include/search.h"
-#include "../include/searchwindow.h"
-#include "../include/search_location.h"
+#include "db.h"
+#include "util.h"
+#include "search.h"
+#include "searchwindow.h"
+#include "search_location.h"
 
 #define MAX_QUERY					(4000)
 #define SEARCH_RESULT_COUNT_LIMIT	(100)

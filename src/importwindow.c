@@ -23,10 +23,10 @@
 
 #include <glade/glade.h>
 #include <gnome.h>
-#include "../include/db.h"
-#include "../include/import.h"
-#include "../include/mainwindow.h"
-#include "../include/importwindow.h"
+#include "db.h"
+#include "import.h"
+#include "mainwindow.h"
+#include "importwindow.h"
 
 //#define G_PROCESS_MAINLOOP  while(g_main_context_iteration(g_main_context_default(), FALSE)) { /* do nothing */ }
 // #define G_PROCESS_MAINLOOP  while(g_main_iteration(FALSE)) { /* do nothing */ }

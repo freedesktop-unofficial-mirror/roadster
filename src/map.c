@@ -28,15 +28,15 @@
 
 #define HACK_AROUND_CAIRO_LINE_CAP_BUG
 
-#include "../include/gui.h"
-#include "../include/map.h"
-#include "../include/geometryset.h"
-#include "../include/mainwindow.h"
-#include "../include/util.h"
-#include "../include/db.h"
-#include "../include/layers.h"
-#include "../include/locationset.h"
-#include "../include/scenemanager.h"
+#include "gui.h"
+#include "map.h"
+#include "geometryset.h"
+#include "mainwindow.h"
+#include "util.h"
+#include "db.h"
+#include "layers.h"
+#include "locationset.h"
+#include "scenemanager.h"
 
 // 4,382,755 inches per degree
 // 363 inches of world represented in 3.63 inches

@@ -22,8 +22,8 @@
  */
 
 #include <stdlib.h> 
-#include "../include/util.h"
-#include "../include/layers.h"		// for color_t -- move it elsewhere!
+#include "util.h"
+#include "layers.h"		// for color_t -- move it elsewhere!
 
 void util_close_parent_window(GtkWidget* pWidget, gpointer data)
 {

@@ -28,9 +28,9 @@
 #include <gtk/gtk.h>
 #include <string.h>
 #include <stdlib.h>
-#include "../include/geometryset.h"
-#include "../include/map.h"
-#include "../include/util.h"
+#include "geometryset.h"
+#include "map.h"
+#include "util.h"
 
 GMemChunk* g_pPointChunkAllocator;		// chunk allocators to be shared by all geometrysets
 GMemChunk* g_pPointStringChunkAllocator;

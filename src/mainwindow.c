@@ -27,23 +27,26 @@
 
 #include <gnome.h>
 
-#include "../include/search_road.h"
-#include "../include/gui.h"
-#include "../include/util.h"
-#include "../include/gotowindow.h"
-#include "../include/db.h"
-#include "../include/map.h"
-#include "../include/importwindow.h"
-#include "../include/datasetwindow.h"
-#include "../include/welcomewindow.h"
-#include "../include/locationset.h"
-#include "../include/gpsclient.h"
-#include "../include/databasewindow.h"
-#include "../include/mainwindow.h"
+#include "search_road.h"
+#include "gui.h"
+#include "util.h"
+#include "gotowindow.h"
+#include "db.h"
+#include "map.h"
+#include "importwindow.h"
+#include "datasetwindow.h"
+#include "welcomewindow.h"
+#include "locationset.h"
+#include "gpsclient.h"
+#include "databasewindow.h"
+#include "mainwindow.h"
 
 #include <gdk/gdkx.h>
 #include <cairo.h>
-#include <cairo-xlib.h>
+
+#ifdef HAVE_NEWER_CAIRO
+#  include <cairo-xlib.h>
+#endif
 
 #define PROGRAM_NAME		"Roadster"
 #define PROGRAM_COPYRIGHT	"Copyright (c) 2005 Ian McIntosh"

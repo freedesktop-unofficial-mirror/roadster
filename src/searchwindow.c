@@ -32,11 +32,11 @@
 
 #include <gnome.h>
 
-#include "../include/search_road.h"
-#include "../include/search_location.h"
-#include "../include/searchwindow.h"
-#include "../include/locationset.h"
-#include "../include/mainwindow.h"
+#include "search_road.h"
+#include "search_location.h"
+#include "searchwindow.h"
+#include "locationset.h"
+#include "mainwindow.h"
 
 static void fill_combobox_with_distance_unit_names(GtkComboBox* pComboBox)
 {

@@ -1,14 +1,18 @@
 ## Process this file with automake to produce Makefile.in
 
-## Created by Anjuta - will be overwritten
-## If you don't want it to overwrite it,
-## 	Please disable it in the Anjuta project configuration
+NULL = 
 
-INCLUDES = \
-	$(GNOME_CFLAGS)\
-	 -I/usr/include/mysql
-
-AM_CFLAGS = $(WARN_CFLAGS)
+INCLUDES= \
+	-DDATADIR=\"$(pkgdatadir)\" \
+	-DGNOMELOCALEDIR=\"$(datadir)/locale\" \
+	-DGNOMEICONDIR=\""$(datadir)/pixmaps"\" \
+	-I. \
+	$(GNOME_CFLAGS) \
+	$(CAIRO_CFLAGS) \
+	$(MYSQL_CFLAGS) \
+	$(GPSD_CFLAGS) \
+	$(ROADSTER_DISABLE_DEPRECATED) \
+	$(NULL)
 
 bin_PROGRAMS = roadster
 
@@ -36,10 +40,10 @@ roadster_SOURCES = \
 	scenemanager.c\
 	databasewindow.c
 
-roadster_LDFLAGS = \
-	 -L/usr/lib/mysql
-
-roadster_LDADD =  \
-	$(GNOME_LIBS)\
-	 -lcairo -lmysqlclient -lgps
+roadster_LDADD = \
+	$(GNOME_LIBS) \
+	$(CAIRO_LIBS) \
+	$(MYSQL_LIBS) \
+	$(GPSD_LIBS) \
+	$(NULL)
 
