@@ -1,3 +1,9 @@
+2005-02-19  Carl Worth  <cworth@cworth.org>
+
+	* acconfig.h: Add this file which was in the original tar file, so
+	that autogen.sh works again, (the file sure looked auto-generated
+	to me...).
+
 2005-02-19  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* autogen.sh: Add autogen.sh.
