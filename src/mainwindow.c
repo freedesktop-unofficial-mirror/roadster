@@ -726,12 +726,12 @@ static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpo
 
 	// Copy relevant portion of off-screen bitmap to window
 //	TIMER_BEGIN(mytimer, "BEGIN EXPOSE");
-	gdk_draw_pixmap(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window,
-                  GTK_WIDGET(g_MainWindow.m_pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.m_pDrawingArea)],
-                  pMapPixmap,
-                  event->area.x, event->area.y,
-                  event->area.x, event->area.y,
-                  event->area.width, event->area.height);
+	gdk_draw_drawable(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window,
+                      GTK_WIDGET(g_MainWindow.m_pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.m_pDrawingArea)],
+                      pMapPixmap,
+                      event->area.x, event->area.y,
+                      event->area.x, event->area.y,
+                      event->area.width, event->area.height);
 //	TIMER_END(mytimer, "END EXPOSE");
 	
 	map_release_pixmap(g_MainWindow.m_pMap);

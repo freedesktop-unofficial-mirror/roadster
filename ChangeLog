@@ -1,4 +1,9 @@
 2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
+	* configure.ac: Enable directives to disable deprecated features.
+	* src/main.c: Call gnome_program_init() instead of deprecated gnome_program_init().
+	* src/mainwindow.c: Call gdk_draw_drawable() instead of deprecated gdk_draw_pixmap().
+
+2005-03-03  Nathan Fredrickson  <nathan@silverorange.com>
 	* src/gui.c: Call gtk_main_quit() to shutdown properly and look for glade file in source dir first.
 	* src/main.c: Clean up.
 	* src/layers.c: Look for style file in source dir first.

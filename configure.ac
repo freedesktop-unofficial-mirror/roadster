@@ -18,7 +18,6 @@ AC_PROG_CC
 AM_PROG_CC_STDC
 AC_PROG_CXX
 AC_STDC_HEADERS
-dnl AC_PROG_RANLIB
 AC_PROG_LIBTOOL
 AC_PROG_INTLTOOL
 
@@ -75,9 +74,7 @@ else
 AC_MSG_CHECKING([whether to disable deprecated glib/gtk+/etc. features])
 if test "$set_enable_deprecated" != "yes"; then
 	AC_MSG_RESULT(yes)
-dnl disbale this until we're ready to clean up deprecated stuff
-dnl	ROADSTER_DISABLE_DEPRECATED="-DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGNOME_DISABLE_DEPRECATED"
-	ROADSTER_DISABLE_DEPRECATED=""
+	ROADSTER_DISABLE_DEPRECATED="-DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGNOME_DISABLE_DEPRECATED"
 else
 	AC_MSG_RESULT(no)
 	ROADSTER_DISABLE_DEPRECATED=""
@@ -85,7 +82,6 @@ fi
 AC_SUBST(ROADSTER_DISABLE_DEPRECATED)
 
 dnl ========= check for MySQL ==================================================
-dnl AM_PATH_MYSQL([4.1.0], , AC_MSG_ERROR([MySQL >= 4.1.0 is required.]))
 AC_ARG_WITH(mysql,
     [  --with-mysql=<path>     prefix of mysql installation.],
     [ MYSQL_PREFIX=$with_mysql ],

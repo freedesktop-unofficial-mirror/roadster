@@ -46,7 +46,7 @@ int main (int argc, char *argv[])
 //	g_thread_init(NULL);
 //	gdk_threads_init();
 
-	gnome_init(PACKAGE, VERSION, argc, argv);
+	gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, NULL);
 
 	if(!main_init())
 		return 1;
