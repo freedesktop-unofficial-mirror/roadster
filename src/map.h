@@ -37,9 +37,9 @@ typedef enum {
 
 #define INCHES_PER_METER (39.37007)
 
-#define MIN_ZOOMLEVEL (6)	// 1
-#define MAX_ZOOMLEVEL (10)
-#define NUM_ZOOMLEVELS (10)	// 10
+#define NUM_ZOOMLEVELS (10)	// the real total # in the array
+#define MIN_ZOOMLEVEL (6)	// the min/max that we allow, for now
+#define MAX_ZOOMLEVEL (9)
 
 #define WORLD_CIRCUMFERENCE_IN_METERS (40076000)
 #define WORLD_METERS_PER_DEGREE (WORLD_CIRCUMFERENCE_IN_METERS / 360.0)

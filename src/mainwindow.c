@@ -65,9 +65,10 @@
 #define DRAW_PRETTY_DRAG_TIMEOUT_MS	(250)
 #define DRAW_PRETTY_RESIZE_TIMEOUT_MS	(180)
 
-#define SCROLL_TIMEOUT_MS		(80)	// how often (in MS) to move
-#define SCROLL_DISTANCE_IN_PIXELS	(70)	// how far to move every (above) MS
-#define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)	// the size of the click target (distance from edge of map view) to begin scrolling
+#define SCROLL_TIMEOUT_MS		(80)		// how often (in MS) to move
+#define SCROLL_DISTANCE_IN_PIXELS	(120)		// how far to move every (above) MS
+#define SCROLL_SINGLE_CLICK_DISTANCE_IN_PIXELS	(500)	// how to move in response to a single border click
+#define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)		// the size of the click target (distance from edge of map view) to begin scrolling
 
 #define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
 #define	SLIDE_TIME_IN_SECONDS		(0.7)	// how long the whole slide should take, in seconds
@@ -80,6 +81,8 @@
 // Limits
 #define MAX_SEARCH_TEXT_LENGTH		(100)
 #define SPEED_LABEL_FORMAT		("<span font_desc='32'>%.0f</span>")
+
+#define TOOLTIP_FORMAT			(" %s ")
 
 // Settings
 #define TIMER_GPS_REDRAW_INTERVAL_MS	(2500)		// lower this (to 1000?) when it's faster to redraw track
@@ -182,6 +185,7 @@ struct {
 
 	gboolean m_bScrolling;
 	EDirection m_eScrollDirection;
+	gboolean m_bScrollMovement;
 	
 	gboolean m_bMouseDragging;
 	gboolean m_bMouseDragMovement;
@@ -469,6 +473,8 @@ void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels)
 gboolean mainwindow_on_scroll_timeout(gpointer _unused)
 {
 	mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
+	g_MainWindow.m_bScrollMovement = TRUE;
+
 	return TRUE;	// more events, please
 }
 void mainwindow_cancel_scroll_timeout()
@@ -812,10 +818,11 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 
 				g_MainWindow.m_bScrolling = TRUE;
 				g_MainWindow.m_eScrollDirection = eScrollDirection;
+				g_MainWindow.m_bScrollMovement = FALSE;	// no movement yet
 
 				// XXX: s.garrity asked for a single click to scroll once, BUT when we added double-click to slide
 				// it resulted in weird behavior
-		//		mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
+				//mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
 				
 				mainwindow_set_scroll_timeout();
 			}
@@ -859,29 +866,36 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			// end scrolling, if active
 			if(g_MainWindow.m_bScrolling == TRUE) {
 				g_MainWindow.m_bScrolling = FALSE;
-				g_MainWindow.m_eScrollDirection = DIRECTION_NONE;
-//                                 gdk_pointer_ungrab(GDK_CURRENT_TIME);
-
 				mainwindow_cancel_draw_pretty_timeout();
-				mainwindow_draw_map(DRAWFLAG_ALL);
 
+				// has there been any movement?
+				if(g_MainWindow.m_bScrollMovement) {
+					g_MainWindow.m_bScrollMovement = FALSE;
+					mainwindow_draw_map(DRAWFLAG_ALL);
+				}
+				else {
+					mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_SINGLE_CLICK_DISTANCE_IN_PIXELS);
+				}
+				g_MainWindow.m_eScrollDirection = DIRECTION_NONE;
 				mainwindow_add_history();
 			}
 		}
 		else if(event->type == GDK_2BUTTON_PRESS) {
-			
-			animator_destroy(g_MainWindow.m_pAnimator);
-
-			g_MainWindow.m_bSliding = TRUE;
-			g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS);
-
-			// set startpoint
-			map_get_centerpoint(g_MainWindow.m_pMap, &g_MainWindow.m_ptSlideStartLocation);
-
-			// set endpoint
-			screenpoint_t ptScreenPoint = {nX, nY};
-			map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &ptScreenPoint, &(g_MainWindow.m_ptSlideEndLocation));
-
+			// can only double click in the middle (not on a scroll border)
+			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+			if(eScrollDirection == DIRECTION_NONE) {
+				animator_destroy(g_MainWindow.m_pAnimator);
+	
+				g_MainWindow.m_bSliding = TRUE;
+				g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS);
+	
+				// set startpoint
+				map_get_centerpoint(g_MainWindow.m_pMap, &g_MainWindow.m_ptSlideStartLocation);
+	
+				// set endpoint
+				screenpoint_t ptScreenPoint = {nX, nY};
+				map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &ptScreenPoint, &(g_MainWindow.m_ptSlideEndLocation));
+			}
 //			map_center_on_windowpoint(g_MainWindow.m_pMap, nX, nY);
 //			mainwindow_draw_map(DRAWFLAG_ALL);
 		}
@@ -982,7 +996,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 				// A hit!  Move the tooltip here, format the text, and show it.
 				tooltip_set_upper_left_corner(g_MainWindow.m_pTooltip, (gint)(event->x_root) + TOOLTIP_OFFSET_X, (gint)(event->y_root) + TOOLTIP_OFFSET_Y);
 
-				gchar* pszMarkup = g_strdup_printf(" %s ", pszReturnString);
+				gchar* pszMarkup = g_strdup_printf(TOOLTIP_FORMAT, pszReturnString);
 				tooltip_set_markup(g_MainWindow.m_pTooltip, pszMarkup);
 				g_free(pszMarkup);
 
@@ -1006,7 +1020,6 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 
 static gboolean mainwindow_on_enter_notify(GtkWidget* w, GdkEventCrossing *event)
 {
-	tooltip_show(g_MainWindow.m_pTooltip);
 }
 
 static gboolean mainwindow_on_leave_notify(GtkWidget* w, GdkEventCrossing *event)

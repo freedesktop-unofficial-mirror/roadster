@@ -1,5 +1,9 @@
 2005-03-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/mainwindow.c: Single click on the border now does a big jump, instead of a single 80-pixel scroll.
+
+2005-03-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/tooltip.h:
 	* src/tooltip.c: Added.
 	* src/mainwindow.c: Added tooltip (currently only showing name of road under mouse).  Change border-scroll corner hit targets to be L shaped and take 1/3 of each border.
