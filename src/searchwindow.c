@@ -40,6 +40,7 @@
 #define RESULTLIST_LONGITUDE	2
 #define RESULTLIST_DISTANCE	3
 #define RESULTLIST_ZOOMLEVEL	4
+#define RESULTLIST_CLICKABLE	5
 
 #define MAGIC_GTK_NO_SORT_COLUMN (-2)	// why -2?  dunno.  is there a real define for this?  dunno.
 
@@ -56,6 +57,8 @@ struct {
 	// results list (on the sidebar)
 	GtkTreeView* m_pResultsTreeView;
 	GtkListStore* m_pResultsListStore;
+
+	gint m_nNumResults;
 } g_SearchWindow = {0};
 
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data);
@@ -67,7 +70,7 @@ void searchwindow_init(GladeXML* pGladeXML)
 	g_SearchWindow.m_pResultsTreeView	= GTK_TREE_VIEW(glade_xml_get_widget(pGladeXML, "searchresultstreeview"));	g_return_if_fail(g_SearchWindow.m_pResultsTreeView != NULL);	
 
 	// create results tree view
-	g_SearchWindow.m_pResultsListStore = gtk_list_store_new(5, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INT);
+	g_SearchWindow.m_pResultsListStore = gtk_list_store_new(6, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INT, G_TYPE_BOOLEAN);
 	gtk_tree_view_set_model(g_SearchWindow.m_pResultsTreeView, GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore));
 
 	GtkCellRenderer* pCellRenderer;
@@ -89,6 +92,7 @@ void searchwindow_clear_results(void)
 	if(g_SearchWindow.m_pResultsListStore != NULL) {
 		gtk_list_store_clear(g_SearchWindow.m_pResultsListStore);
 	}
+	g_SearchWindow.m_nNumResults = 0;
 }
 
 // begin a search
@@ -103,6 +107,18 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 	searchwindow_clear_results();
 	search_road_execute(pszSearch);
 	mainwindow_set_not_busy(&pBusy);
+
+	if(g_SearchWindow.m_nNumResults == 0) {
+		// insert a "no results" message
+		gchar* pszBuffer = g_strdup_printf("<span size='small'><i>Your search did not match any\nstreets or Points of Interest.</i></span>", pszSearch);
+		GtkTreeIter iter;
+		gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
+		gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter, 
+				   RESULTLIST_COLUMN_NAME, pszBuffer, 
+				   RESULTLIST_CLICKABLE, FALSE,
+				   -1);
+		g_free(pszBuffer);
+	}
 
 	// ensure the search results are visible
 	mainwindow_sidebar_set_tab(SIDEBAR_TAB_SEARCH_RESULTS);
@@ -130,30 +146,34 @@ void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint, gint nZoo
 		RESULTLIST_LONGITUDE, pPoint->m_fLongitude,
 		RESULTLIST_DISTANCE, fDistance,
 		RESULTLIST_ZOOMLEVEL, nZoomLevel,
+		RESULTLIST_CLICKABLE, TRUE,
 		-1);
 
 	g_free(pszBuffer);
+
+	g_SearchWindow.m_nNumResults++;
 }
 
 static void searchwindow_go_to_selected_result(void)
 {
-	GtkTreeSelection* pSelection = gtk_tree_view_get_selection(
-		g_SearchWindow.m_pResultsTreeView);
+	GtkTreeSelection* pSelection = gtk_tree_view_get_selection(g_SearchWindow.m_pResultsTreeView);
 
 	GtkTreeIter iter;
 	GtkTreeModel* pModel = GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore);
 	if(gtk_tree_selection_get_selected(pSelection, &pModel, &iter)) {
 		mappoint_t pt;
 		gint nZoomLevel;
+		gboolean bClickable;
 		gtk_tree_model_get(GTK_TREE_MODEL(g_SearchWindow.m_pResultsListStore), &iter,
 			RESULTLIST_LATITUDE, &pt.m_fLatitude,
 			RESULTLIST_LONGITUDE, &pt.m_fLongitude,
 			RESULTLIST_ZOOMLEVEL, &nZoomLevel,
+			RESULTLIST_CLICKABLE, &bClickable,
 			-1);
 
+		if(!bClickable) return;	// XXX: is this the right way to make a treeview item not clickable?
+
 		mainwindow_map_slide_to_mappoint(&pt);
-//		mainwindow_map_center_on_mappoint(&pt);
-		//mainwindow_statusbar_update_position();
 		mainwindow_set_zoomlevel(nZoomLevel);
 		mainwindow_draw_map(DRAWFLAG_ALL);
 	}
@@ -166,6 +186,6 @@ void searchwindow_on_addressresultstreeview_row_activated(GtkWidget *pWidget, gp
 
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data)
 {
-	GTK_PROCESS_MAINLOOP;
+	GTK_PROCESS_MAINLOOP;	// make sure GUI updates before we start our cpu-intensive move to the result
 	searchwindow_go_to_selected_result();
 }

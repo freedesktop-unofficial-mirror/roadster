@@ -1,3 +1,10 @@
+2005-03-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/mainwindow.c: Made zoom and history buttons (and menuitems) go insentitive when clicking them would do nothing.  Changed single-click on border to always scroll half of window width/height/diagonal.
+	* src/map.c: Added map_can_zoom_in() and map_can_zoom_out().
+	* src/searchwindow.c: Added a "no results" message.
+	* src/db.c: Cleanup.
+
 2005-03-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/mainwindow.c: Tweak when mouse cursor changes during drags, etc.

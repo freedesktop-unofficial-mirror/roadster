@@ -556,7 +556,7 @@ static gboolean map_data_load(map_t* pMap, maprect_t* pRect)
 			g_ptr_array_add(
 				pMap->m_apLayerData[nTypeID]->m_pPointStringsArray, pNewPointString);
 		} // end while loop on rows
-		g_print("[%d rows]\n", uRowCount);
+		//g_print("[%d rows]\n", uRowCount);
 		TIMER_SHOW(mytimer, "after rows retrieved");
 
 		db_free_result(pResultSet);
@@ -781,3 +781,15 @@ static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mapp
 	}
 	return FALSE;
 }
+
+gboolean map_can_zoom_in(map_t* pMap)
+{
+	// can we increase zoom level?
+	return (pMap->m_uZoomLevel < MAX_ZOOMLEVEL);
+}
+gboolean map_can_zoom_out(map_t* pMap)
+{
+	return (pMap->m_uZoomLevel > MIN_ZOOMLEVEL);
+}
+
+

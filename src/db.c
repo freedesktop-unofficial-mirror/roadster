@@ -67,8 +67,6 @@ db_connection_t* g_pDB = NULL;
 // call once on program start-up
 void db_init()
 {
-//	g_pDBMutex = g_mutex_new();
-
 #ifdef HAVE_MYSQL_EMBED
 	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
 	gchar* pszSetDataDirCommand = g_strdup_printf("--datadir=%s", pszDataDir);

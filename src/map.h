@@ -225,4 +225,7 @@ void map_add_track(map_t* pMap, gint hTrack);
 
 gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, gchar** ppReturnString);
 
+gboolean map_can_zoom_in(map_t* pMap);
+gboolean map_can_zoom_out(map_t* pMap);
+
 #endif
