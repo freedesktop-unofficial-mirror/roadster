@@ -255,13 +255,13 @@ struct {
 	//
 	// Labels
 	//
-	{LAYER_MINORSTREET, 0, map_draw_layer_labels},
-	{LAYER_MAJORSTREET, 0, map_draw_layer_labels},
+     	{LAYER_MINORSTREET, 0, map_draw_layer_labels},
+     	{LAYER_MAJORSTREET, 0, map_draw_layer_labels},
 
-	{LAYER_MINORHIGHWAY, 0, map_draw_layer_labels},
-	{LAYER_MAJORHIGHWAY, 0, map_draw_layer_labels},
+     	{LAYER_MINORHIGHWAY, 0, map_draw_layer_labels},
+     	{LAYER_MAJORHIGHWAY, 0, map_draw_layer_labels},
 
-	{LAYER_RAILROAD, 0, map_draw_layer_labels},
+     	{LAYER_RAILROAD, 0, map_draw_layer_labels},
 };
 
 // ========================================================
@@ -925,7 +925,6 @@ void map_draw_layer_points(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPt
 	gboolean bAddition = FALSE;
 
 	cairo_save(pCairo);
-//		cairo_set_tolerance(pCairo, 30);
 		cairo_set_rgb_color(pCairo, 123.0/255.0, 48.0/255.0, 1.0);
 		cairo_set_alpha(pCairo, 0.3);
 
@@ -1047,16 +1046,16 @@ void map_draw_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, geom
 		cairo_set_tolerance(pCairo, 8);
 	}
 	else if(fLineWidth <= 6.0) {
-		cairo_set_tolerance(pCairo, 4);
+		cairo_set_tolerance(pCairo, 6);
 	}
 	else {
 		cairo_set_tolerance(pCairo, 0.5);
 	}
 
 	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
-	if(nCapStyle == CAIRO_LINE_CAP_ROUND && fLineWidth <= 4.0) {
-		nCapStyle = CAIRO_LINE_CAP_BUTT;
-	}
+//     if(nCapStyle == CAIRO_LINE_CAP_ROUND && fLineWidth <= 6.0) {
+//         nCapStyle = CAIRO_LINE_CAP_SQUARE;
+//     }
 	
 	// Set layer attributes	
 	cairo_set_rgb_color(pCairo, pSubLayerStyle->m_clrColor.m_fRed, pSubLayerStyle->m_clrColor.m_fGreen, pSubLayerStyle->m_clrColor.m_fBlue);

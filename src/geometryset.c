@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 /*
 	A GeometrySet holds an array of geometry objects (used for roads, railroads and parks right now)
 */
@@ -169,7 +169,7 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 	gint nActiveLayerCount = 0;
 	gint i;
 	for(i=LAYER_FIRST ; i <= LAYER_LAST ;i++) {
-		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 || 
+		if(g_aLayers[i].m_Style.m_aSubLayers[0].m_afLineWidths[nZoomLevel-1] != 0.0 ||
 		   g_aLayers[i].m_Style.m_aSubLayers[1].m_afLineWidths[nZoomLevel-1] != 0.0)
 		{
 			gchar azLayerNumber[10];
@@ -202,7 +202,7 @@ gboolean geometryset_load_geometry(maprect_t* pRect)
 		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
 		);
 	TIMER_SHOW(mytimer, "after SQL generation");
-g_print("sql: %s\n", pszSQL);
+//g_print("sql: %s\n", pszSQL);
 
 	db_query(pszSQL, &pResultSet);
 	g_free(pszSQL);
@@ -246,7 +246,7 @@ g_print("sql: %s\n", pszSQL);
 			if(aRow[3] != NULL && aRow[4] != NULL) {
 				gint nSuffixID = atoi(aRow[4]);
 				const gchar* pszSuffix = map_road_suffix_itoa(nSuffixID, SUFFIX_TYPE_SHORT);
-				g_snprintf(azFullName, 100, "%s%s%s", 
+				g_snprintf(azFullName, 100, "%s%s%s",
 					aRow[3], (pszSuffix[0] != '\0') ? " " : "", pszSuffix);
 			}
 			pNewPointString->m_pszName = g_strdup(azFullName);
@@ -254,7 +254,7 @@ g_print("sql: %s\n", pszSQL);
 			// Add this item to layer's list of pointstrings
 			g_ptr_array_add(g_aLayers[nTypeID].m_pGeometrySet->m_pPointStringsArray, pNewPointString);
 		} // end while loop on rows
-		g_print(" -- got %d rows\n", uRowCount);
+		g_print("[%d rows]\n", uRowCount);
 		TIMER_SHOW(mytimer, "after rows retrieved");
 
 		db_free_result(pResultSet);

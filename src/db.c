@@ -248,6 +248,8 @@ gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* p
 
 	g_assert(g_pDB == NULL);
 	g_pDB = pNewConnection;
+
+	// just in case (this could mess with multi-user databases)
 	return TRUE;
 }
 
@@ -716,6 +718,20 @@ void db_create_tables()
 		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
 		" Name VARCHAR(60) NOT NULL,"
 		" PRIMARY KEY (ID));", NULL);
+}
+
+void db_enable_keys(void)
+{
+	db_query("ALTER TABLE Road ENABLE KEYS", NULL);
+	db_query("ALTER TABLE RoadName ENABLE KEYS", NULL);
+	db_query("ALTER TABLE Road_RoadName ENABLE KEYS", NULL);
+}
+
+void db_disable_keys(void)
+{
+	db_query("ALTER TABLE Road DISABLE KEYS", NULL);
+	db_query("ALTER TABLE RoadName DISABLE KEYS", NULL);
+	db_query("ALTER TABLE Road_RoadName DISABLE KEYS", NULL);
 }
 
 /*

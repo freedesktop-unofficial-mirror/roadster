@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #ifndef _MAP_H_
 #define _MAP_H_
 
@@ -33,8 +33,8 @@ struct GtkWidget;
 
 // World space
 typedef struct mappoint {
-	double m_fLatitude;
-	double m_fLongitude;
+	gdouble m_fLatitude;
+	gdouble m_fLongitude;
 } mappoint_t;
 
 typedef struct maprect {

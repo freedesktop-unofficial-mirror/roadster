@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #ifndef _DB_H_
 #define _DB_H_
 
@@ -77,5 +77,8 @@ void db_free_escaped_string(gchar* pszString);
 
 void db_parse_point(const gchar* pszText, mappoint_t* pPoint);
 void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**));
+
+void db_enable_keys(void);
+void db_disable_keys(void);
 
 #endif

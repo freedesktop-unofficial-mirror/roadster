@@ -2,7 +2,7 @@
  *            mainwindow.c
  *
  *  Copyright  2005  Ian McIntosh
- *  ian_mcintosh@linuxadvocate.org 
+ *  ian_mcintosh@linuxadvocate.org
  ****************************************************************************/
 
 /*
@@ -20,7 +20,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <glade/glade.h>
 
 #ifdef HAVE_CONFIG_H
@@ -43,7 +43,8 @@
 #include "../include/databasewindow.h"
 
 #include <gdk/gdkx.h>
-#include <cairo.h>
+#include <cairo/cairo.h>
+#include <cairo/cairo-xlib.h>
 
 #define PROGRAM_NAME		"Roadster"
 #define PROGRAM_COPYRIGHT	"Copyright (c) 2005 Ian McIntosh"
@@ -89,7 +90,7 @@ typedef enum {
 struct {
 	GtkWindow* m_pWindow;
 	GtkTooltips* m_pTooltips;
-	GtkMenu* m_pMapPopupMenu; 
+	GtkMenu* m_pMapPopupMenu;
 
 	screenpoint_t m_ptClickLocation;
 
@@ -105,7 +106,7 @@ struct {
 	
 	// Sidebar
 	
-	// "Draw" Sidebar 
+	// "Draw" Sidebar
 	GtkTreeView* m_pLayersListTreeView;
 	GtkTreeView* m_pLocationSetsTreeView;
 	
@@ -135,12 +136,11 @@ toolsettings_t g_Tools[] = {
 	{"Pointer Tool", {GDK_LEFT_PTR, NULL}},
 	{"Zoom Tool", {GDK_CIRCLE, NULL}},
 };
-
 void cursor_init()
 {
 	int i;
 	for(i=0 ; i<NUM_ELEMS(g_Tools) ; i++) {
-        g_Tools[i].m_Cursor.m_pGdkCursor = gdk_cursor_new(g_Tools[i].m_Cursor.m_CursorType);
+		g_Tools[i].m_Cursor.m_pGdkCursor = gdk_cursor_new(g_Tools[i].m_Cursor.m_CursorType);
 	}
 }
 
@@ -149,6 +149,16 @@ void util_set_image_to_stock(GtkImage* pImage, gchar* pszStockIconID, GtkIconSiz
 	GdkPixbuf* pPixbuf = gtk_widget_render_icon(GTK_WIDGET(g_MainWindow.m_pStatusbarGPSIcon),pszStockIconID, nSize, "name");
 	gtk_image_set_from_pixbuf(pImage, pPixbuf);
 	gdk_pixbuf_unref(pPixbuf);
+}
+
+void mainwindow_set_statusbar_position(gchar* pMessage)
+{
+	gtk_label_set_text(GTK_LABEL(g_MainWindow.m_pPositionLabel), pMessage);
+}
+
+void mainwindow_set_statusbar_zoomscale(gchar* pMessage)
+{
+	gtk_label_set_text(GTK_LABEL(g_MainWindow.m_pZoomScaleLabel), pMessage);
 }
 
 void* mainwindow_set_busy()
@@ -170,47 +180,13 @@ void mainwindow_set_not_busy(void** ppCursor)
 	gdk_cursor_unref(*ppCursor);
 	gdk_flush();
 
-	// HACK: manually restore the cursor for selected tool :/ 
+	// HACK: manually restore the cursor for selected tool :/
 	mainwindow_setup_selected_tool();
 }
 
 /*
 ** Status bar
 */
-void mainwindow_set_statusbar_position(gchar* pMessage)
-{
-	gtk_label_set_text(GTK_LABEL(g_MainWindow.m_pPositionLabel), pMessage);
-}
-
-void mainwindow_set_statusbar_zoomscale(gchar* pMessage)
-{
-	gtk_label_set_text(GTK_LABEL(g_MainWindow.m_pZoomScaleLabel), pMessage);
-}
-
-static void on_layervisible_checkbox_clicked(GtkCellRendererToggle *cell, gchar *path_str, gpointer data)
-{
-	GtkTreeModel *model = (GtkTreeModel *)data;
-	GtkTreePath *path = gtk_tree_path_new_from_string (path_str);
-	GtkTreeIter iter;
-	gboolean toggle_item;
-	gint *column;
-
-	column = g_object_get_data (G_OBJECT (cell), "column");
-
-	/* get toggled iter */
-	gtk_tree_model_get_iter (model, &iter, path);
-	gtk_tree_model_get (model, &iter, column, &toggle_item, -1);
-
-	/* do something with the value */
-	toggle_item ^= 1;
-
-	/* set new value */
-	gtk_tree_store_set (GTK_TREE_STORE (model), &iter, column,
-			  toggle_item, -1);
-
-	/* clean up */
-	gtk_tree_path_free (path);
-}
 
 void mainwindow_load_locationset_list();
 
@@ -242,7 +218,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	// add signal handlers to drawing area
 	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea),"configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
 
 	// Pack canvas into application window
@@ -255,7 +231,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	cursor_init();
 
 	/*
-	** 
+	**
 	*/
 	// create layers tree view
 	GtkListStore* pLocationSetsListStore = gtk_list_store_new(2, G_TYPE_BOOLEAN, G_TYPE_STRING);
@@ -267,7 +243,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	// add a checkbox column for layer enabled/disabled
 	pCellRenderer = gtk_cell_renderer_toggle_new();
   	g_object_set_data(G_OBJECT(pCellRenderer), "column", (gint *)LAYERLIST_COLUMN_ENABLED);
-	g_signal_connect(pCellRenderer, "toggled", G_CALLBACK(on_layervisible_checkbox_clicked), pLocationSetsListStore);
+//	g_signal_connect(pCellRenderer, "toggled", G_CALLBACK(on_layervisible_checkbox_clicked), pLocationSetsListStore);
 	pColumn = gtk_tree_view_column_new_with_attributes("Visible", pCellRenderer, "active", LAYERLIST_COLUMN_ENABLED, NULL);	
 	gtk_tree_view_append_column(g_MainWindow.m_pLocationSetsTreeView, pColumn);
 
@@ -277,7 +253,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	gtk_tree_view_append_column(g_MainWindow.m_pLocationSetsTreeView, pColumn);
 
 	/*
-	** 
+	**
 	*/
 	// create layers tree view
 	GtkListStore* pLayersListStore = gtk_list_store_new(2, G_TYPE_BOOLEAN, G_TYPE_STRING);
@@ -299,7 +275,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	gtk_tree_view_append_column(g_MainWindow.m_pLayersListTreeView, pColumn);
 
 	/*
-	** 
+	**
 	*/
 	mainwindow_statusbar_update_zoomscale();
 	mainwindow_statusbar_update_position();	
@@ -315,7 +291,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 		gboolean bEnabled = TRUE;
 
 		gtk_list_store_append(GTK_LIST_STORE(pLayersListStore), &iter);
-		gtk_list_store_set(GTK_LIST_STORE(pLayersListStore), &iter, 
+		gtk_list_store_set(GTK_LIST_STORE(pLayersListStore), &iter,
 			LAYERLIST_COLUMN_ENABLED, bEnabled,
 			LAYERLIST_COLUMN_NAME, g_aLayers[i].m_pszName,
 			-1);
@@ -348,7 +324,7 @@ void mainwindow_load_locationset_list()
 		gboolean bEnabled = TRUE;
 
 		gtk_list_store_append(pListStore, &iter);
-		gtk_list_store_set(pListStore, &iter, 
+		gtk_list_store_set(pListStore, &iter,
 			LAYERLIST_COLUMN_ENABLED, bEnabled,
 			LAYERLIST_COLUMN_NAME, pLocationSet->m_pszName,
 			-1);
@@ -683,7 +659,7 @@ void mainwindow_begin_import_geography_data()
                 g_MainWindow.m_pWindow,
                 GTK_FILE_CHOOSER_ACTION_OPEN,
     			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				"Import", GTK_RESPONSE_ACCEPT,                                         
+				"Import", GTK_RESPONSE_ACCEPT,
 				NULL);
 
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(pDialog), TRUE);
@@ -747,6 +723,7 @@ void mainwindow_draw_map()
 	cairo_t *pCairoInstance;
 	pCairoInstance = cairo_create ();
 		// draw on an off-screen buffer
+		
 		cairo_set_target_drawable(pCairoInstance, dpy, drawable);
 		map_draw(pCairoInstance);
 	cairo_destroy(pCairoInstance);
@@ -820,7 +797,7 @@ void mainwindow_show_on_startup()
 
 gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 {
-	// NOTE: we're setting tooltips on the image's 
+	// NOTE: we're setting tooltips on the image's
 	GtkWidget* pWidget = gtk_widget_get_parent(GTK_WIDGET(g_MainWindow.m_pStatusbarGPSIcon));
 
 	gpsdata_t* pData = gpsclient_getdata();
@@ -879,3 +856,30 @@ gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 //	g_print("set GPS status = %d\n", pData->m_eStatus);
 	return TRUE;
 }
+
+#if 0
+static void on_layervisible_checkbox_clicked(GtkCellRendererToggle *cell, gchar *path_str, gpointer data)
+{
+	GtkTreeModel *model = (GtkTreeModel *)data;
+	GtkTreePath *path = gtk_tree_path_new_from_string (path_str);
+	GtkTreeIter iter;
+	gboolean toggle_item;
+	gint *column;
+
+	column = g_object_get_data (G_OBJECT (cell), "column");
+
+	/* get toggled iter */
+	gtk_tree_model_get_iter (model, &iter, path);
+	gtk_tree_model_get (model, &iter, column, &toggle_item, -1);
+
+	/* do something with the value */
+	toggle_item ^= 1;
+
+	/* set new value */
+	gtk_tree_store_set (GTK_TREE_STORE (model), &iter, column,
+			  toggle_item, -1);
+
+	/* clean up */
+	gtk_tree_path_free (path);
+}
+#endif

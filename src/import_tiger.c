@@ -20,8 +20,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 // See TGR2003.PDF page 208 for county list
+
+#include <stdlib.h>			// for strtod
 
 #include <string.h>
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
@@ -88,7 +90,7 @@ typedef struct tiger_record_rt7
 
 typedef struct tiger_record_rt8
 {
-	gint m_nPOLYID;		// index (for each polygon, we'll get the 
+	gint m_nPOLYID;		// index (for each polygon, we'll get the
 	gint m_nLANDID;		// FK to table 7
 } tiger_record_rt8_t;
 
@@ -117,25 +119,47 @@ typedef struct tiger_record_rti
 	GPtrArray* m_pRT1LinksArray;
 } tiger_record_rti_t;
 
-
-gboolean import_tiger_read_float(gint8* pBuffer, gdouble* pValue)
+gboolean import_tiger_read_lat(gint8* pBuffer, gdouble* pValue)
 {
-	gint8 buffer[10];
-	memcpy(buffer, pBuffer, 9);
-	buffer[9] = '\0';
+	// 0,1,2,3
+	// - 1 2 . 1 2 3 4 5 6
+	char buffer[11];
+	memcpy(&buffer[0], &pBuffer[0], 3);	// copy first 3 bytes
+	buffer[3] = '.';					// and 1
+	memcpy(&buffer[4], &pBuffer[3], 6);	// copy next 6
+	buffer[10] = '\0';
 
-	gint* pEnd;
-	gdouble fVal = strtod(buffer, &pEnd);
-	if(pEnd == buffer) {
-		// if the pointer hasn't moved, it's a parsing error
-		g_assert_not_reached();
+	char* p = buffer;
+	gdouble fVal = strtod(buffer, &p);
+	if(p == buffer) {
+		g_warning("strtod('%s') resulted in an error\n", buffer);
+		return FALSE;
 	}
-//	gdouble fVal = atof(buffer);
-	
-	fVal /= 1000000.0;
 	*pValue = fVal;
 	return TRUE;
 }
+
+gboolean import_tiger_read_lon(char* pBuffer, gdouble* pValue)
+{
+	char buffer[12];
+	memcpy(&buffer[0], &pBuffer[0], 4);	// copy first 4 bytes (yes, this is different than lat, TIGER!!)
+	buffer[4] = '.';
+	memcpy(&buffer[5], &pBuffer[4], 6);
+	buffer[11] = '\0';
+
+	char* p = buffer;
+	gdouble fVal = strtod(buffer, &p);
+	if(p == buffer) {
+		g_warning("strtod('%s') resulted in an error\n", buffer);
+		return FALSE;
+	}
+	if(fVal > 180.0 || fVal < -180.0) {
+		g_warning("bad longitude fVal (%f) from string (%s)\n", fVal, buffer);
+	}
+	*pValue = fVal;
+	return TRUE;
+}
+
 
 gboolean import_tiger_read_int(gint8* pBuffer, gint nLen, gint32* pValue)
 {
@@ -197,8 +221,8 @@ gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 {
 	//g_print("%c%c%c\n", *(pBuffer), *(pBuffer+1), *(pBuffer+2));
 	gchar chFeatureClass 	= *(pBuffer+0);
-	gint8 chCode 			= *(pBuffer+1); 
-	gint8 chSubCode 		= *(pBuffer+2); 
+	gint8 chCode 			= *(pBuffer+1);
+	gint8 chSubCode 		= *(pBuffer+2);
 
 	// See TGR2003.PDF pages 81-96 for full list of feature classes/codes
 	if(chFeatureClass == 'A') {
@@ -265,7 +289,6 @@ gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 		//~ }
 		//~ else
 		if(chCode == '8') {
-			g_print("found D8%c: open space (park)\n", chSubCode);
 			*pValue = LAYER_PARK;
 			return TRUE;
 		}
@@ -299,10 +322,10 @@ gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 	else if(chFeatureClass == 'E') {		// topographic
 		/*
 		E2*
-		E23 island 
+		E23 island
 		E25 marsh
 		*/
-		g_print("found topographic (E%c%c)\n", chCode, chSubCode);
+//		g_print("found topographic (E%c%c)\n", chCode, chSubCode);
 	}
 	else if(chFeatureClass == 'H') { 	// water
 		if(chCode == '0') {
@@ -348,12 +371,13 @@ gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 void debug_print_string(char* str, gint len)
 {
 	char* p = str;
-	while(*p != '\0' && len > 0) {
-		printf("(%c %02d)", *p, *p);
+	while(len > 0) {
+		g_print("(%c %02d)", *p, *p);
 		p++;
 		len--;
+		if(*p == '\0') break;
 	}
-	printf("\n");
+	g_print("\n");
 }
 
 gchar* import_tiger_copy_line(const gchar* pszString)
@@ -415,7 +439,7 @@ gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTable* pT
 		import_tiger_read_address(&pLine[81-1], 11, &pRecord->m_nAddressRightStart);
 		import_tiger_read_address(&pLine[92-1], 11, &pRecord->m_nAddressRightEnd);
 
-		// columns 6 to 15 is the TLID - 
+		// columns 6 to 15 is the TLID -
 		import_tiger_read_int(&pLine[6-1], TIGER_TLID_LENGTH, &pRecord->m_nTLID);
 		import_tiger_read_string(&pLine[20-1], TIGER_CHAIN_NAME_LEN, &pRecord->m_achName[0]);
 
@@ -433,11 +457,15 @@ if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 		//~ import_tiger_read_int(&pLine[50-1], 4, &nFeatureType);
 		//~ g_print("name: '%s' (%d)\n", pRecord->m_achName, nFeatureType);
 
+//g_print("for name %s\n", pRecord->m_achName);
+
  		// lat/lon coordinates...
-		import_tiger_read_float(&pLine[191-1], &pRecord->m_PointA.m_fLongitude);
-		import_tiger_read_float(&pLine[201-1], &pRecord->m_PointA.m_fLatitude);
-		import_tiger_read_float(&pLine[210-1], &pRecord->m_PointB.m_fLongitude);
-		import_tiger_read_float(&pLine[220-1], &pRecord->m_PointB.m_fLatitude);
+		import_tiger_read_lon(&pLine[191-1], &pRecord->m_PointA.m_fLongitude);
+		import_tiger_read_lat(&pLine[201-1], &pRecord->m_PointA.m_fLatitude);
+		import_tiger_read_lon(&pLine[210-1], &pRecord->m_PointB.m_fLongitude);
+		import_tiger_read_lat(&pLine[220-1], &pRecord->m_PointB.m_fLatitude);
+
+//g_print("name: %s, (%f,%f) (%f,%f)\n", pRecord->m_achName, pRecord->m_PointA.m_fLongitude, pRecord->m_PointA.m_fLatitude, pRecord->m_PointB.m_fLongitude, pRecord->m_PointB.m_fLatitude);
 
 		// add to table
 		g_hash_table_insert(pTable, &pRecord->m_nTLID, pRecord);
@@ -453,7 +481,7 @@ gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTable *pT
 
 		gchar* pLine = &pBuffer[i];
 
-		// columns 6 to 15 is the TLID - 
+		// columns 6 to 15 is the TLID -
 		gint nTLID;
 		import_tiger_read_int(&pLine[6-1], TIGER_TLID_LENGTH, &nTLID);
 		tiger_record_rt2_t* pRecord = g_hash_table_lookup(pTable, &nTLID);
@@ -473,8 +501,8 @@ gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTable *pT
 		mappoint_t point;
 		gint iPoint;
 		for(iPoint=0 ; iPoint< TIGER_RT2_MAX_POINTS ; iPoint++) {
-			import_tiger_read_float(&pLine[19 + (iPoint * 19)], &point.m_fLongitude);
-			import_tiger_read_float(&pLine[28 + (iPoint * 19)], &point.m_fLatitude);
+			import_tiger_read_lon(&pLine[19-1 + (iPoint * 19)], &point.m_fLongitude);
+			import_tiger_read_lat(&pLine[29-1 + (iPoint * 19)], &point.m_fLatitude);
 			if(point.m_fLatitude == 0.0 && point.m_fLongitude == 0.0) {
 				break;
 			}
@@ -506,7 +534,7 @@ gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTable *pT
 		pRecord = g_new0(tiger_record_rt7_t, 1);
 		pRecord->m_nRecordType = nRecordType;
 
-		// columns 11 to 20 is the TLID - 
+		// columns 11 to 20 is the TLID -
 		import_tiger_read_int(&pLine[11-1], TIGER_LANDID_LENGTH, &pRecord->m_nLANDID);
 
 		import_tiger_read_string(&pLine[25-1], TIGER_LANDMARK_NAME_LEN, &pRecord->m_achName[0]);
@@ -530,10 +558,10 @@ gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pT
 		tiger_record_rt8_t* pRecord;
 		pRecord = g_new0(tiger_record_rt8_t, 1);
 
-		// columns 16 to 25 is the TLID - 
+		// columns 16 to 25 is the TLID -
 		import_tiger_read_int(&pLine[16-1], TIGER_POLYID_LENGTH, &pRecord->m_nPOLYID);
 		
-		// columns 26 to 35 is the TLID - 
+		// columns 26 to 35 is the TLID -
 		import_tiger_read_int(&pLine[26-1], TIGER_LANDID_LENGTH, &pRecord->m_nLANDID);
 
 // g_print("record 8: POLYID=%d LANDID=%d\n", pRecord->m_nPOLYID, pRecord->m_nLANDID);
@@ -544,8 +572,10 @@ gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pT
 	return TRUE;
 }
 
+
 gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pTable)
 {
+	g_print("nLength = %d, TIGER_RTi_LINE_LENGTH = %d\n", nLength, TIGER_RTi_LINE_LENGTH);
 	gint i;
 	for(i=0 ; i<(nLength-TIGER_RTi_LINE_LENGTH) ; i+=TIGER_RTi_LINE_LENGTH) {
 		gchar* pLine = &pBuffer[i];
@@ -648,7 +678,7 @@ void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user_data)
 	if(pRecordRT1->m_nRecordType != LAYER_NONE) {
 		gint nRoadID;
 		
-		db_insert_road(pRecordRT1->m_nRecordType, 
+		db_insert_road(pRecordRT1->m_nRecordType,
 			pRecordRT1->m_nAddressLeftStart,
 			pRecordRT1->m_nAddressLeftEnd,
 			pRecordRT1->m_nAddressRightStart,
@@ -721,17 +751,18 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 	tiger_record_rt7_t* pRecordRT7 = g_hash_table_lookup(pImportProcess->m_pTableRT7, &pRecordRT8->m_nLANDID);
 	if(pRecordRT7 == NULL) return;	// allowed to be null(?)
 
+	// create a temp array to hold the points for this polygon (in order)
 	GPtrArray* pTempPointsArray = g_ptr_array_new();
 
-	// start with the RT1Link at index 0 (and remove it)
 	g_assert(pRecordRTi->m_pRT1LinksArray != NULL);
 	g_assert(pRecordRTi->m_pRT1LinksArray->len >= 1);
 
+	// start with the RT1Link at index 0 (and remove it)
 	tiger_rt1_link_t* pCurrentRT1Link = g_ptr_array_index(pRecordRTi->m_pRT1LinksArray, 0);
 	g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, 0);	// TODO: should maybe choose the last one instead? :)  easier to remove and arbitrary anyway!
 
 	// we'll use the first RT1 in forward order, that is A->B...
-	tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID, 
+	tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID,
 		pTempPointsArray, ORDER_FORWARD);
 	// ...so B is the last TZID for now.
 	gint nLastTZID = pCurrentRT1Link->m_nPointBTZID;
@@ -754,13 +785,13 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 				// this (pNextRT1Link) RT1Link becomes the new "current"
 				// remove it from the array!
 				g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, iRT1Link);
-				// we're done forever with the old 'current' 
+				// we're done forever with the old 'current'
 				// (the RT1 it links to has already had its points copied to the list!)
 				g_free(pCurrentRT1Link);
 				pCurrentRT1Link = pNextRT1Link;
 
 				// add this new RT1's points
-				tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID, 
+				tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID,
 					pTempPointsArray, ORDER_FORWARD);
 
 				nLastTZID = pCurrentRT1Link->m_nPointBTZID;	// Note: point *B* of this RT1Link
@@ -776,7 +807,7 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 				pCurrentRT1Link = pNextRT1Link;
 
 				// add this new RT1's points
-				tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID, 
+				tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID,
 					pTempPointsArray, ORDER_BACKWARD);
 
 				nLastTZID = pCurrentRT1Link->m_nPointATZID;	// Note: point *A* of this RT1Link
@@ -797,7 +828,7 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 		// insert record
 		if(pRecordRT7->m_nRecordType != LAYER_NONE) {
 			gint nRoadID;
-			db_insert_road(pRecordRT7->m_nRecordType, 
+			db_insert_road(pRecordRT7->m_nRecordType,
 				0,0,0,0,
 				pTempPointsArray, &nRoadID);
 		}
@@ -813,7 +844,7 @@ void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data
 }
 
 //
-// 
+//
 //
 static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint nTigerSetNumber);
 static gboolean import_tiger_from_buffers(gint8* pBufferMET, gint nLengthMET, gint8* pBufferRT1, gint nLengthRT1, gint8* pBufferRT2, gint nLengthRT2,	gint8* pBufferRT7, gint nLengthRT7,	gint8* pBufferRT8, gint nLengthRT8, gint8* pBufferRTi, gint nLengthRTi);

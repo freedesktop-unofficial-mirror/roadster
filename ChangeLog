@@ -1,3 +1,13 @@
+2005-02-20  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* roadster.glade.scrap: Moved some unused windows from roadster.glade here to quiet libglade on startup.
+	* configure.in: Added 'cairo' to package config.
+	* db.c: Added ability to temporarily enable/disable database indexes.
+	* import.c: Disable database indexes during import.
+	* import_tiger.c: Fix bug in lat/lon parsing for values < -100 or > 100.
+	* mainwindow.c: Commented out some unused code.
+	* map.c: Tweaked some style settings.
+
 2005-02-19  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* intl/Makefile.in: Added so configure works.
