@@ -1,10 +1,11 @@
-To compile, you will need:
+To compile, you will need develement packages of:
 
 - cairo
 - libpixman
-- mysql libraries and header files (v4.1 or newer)
+- libsvg
+- libsvg-cairo
+- libmysqld (embedded MySQL server, v4.1 or newer)
+- openssl (required by MySQL only)
 - gettext library and header files
-- gpsd program and header files
+- gpsd (libgps library and header files)
 
-To run Roadster, you will need:
-- mysql server (v4.1+ or newer)

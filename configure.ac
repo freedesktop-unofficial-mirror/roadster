@@ -88,14 +88,10 @@ if test [ -z "$mysqlconfig" ]
 then
     AC_MSG_ERROR([mysql_config executable not found: MySQL 4.1.0 or greater is required.])
 else
-    AC_MSG_CHECKING(mysql libraries)
+    AC_MSG_CHECKING(MySQL libraries)
     MYSQL_VERSION=`${mysqlconfig} --version`
 
-dnl    MYSQL_LIBS=`${mysqlconfig} --libs | sed -e \
-dnl    's/-lmysqlclient /-lmysqlclient_r /' -e 's/-lmysqlclient$/-lmysqlclient_r/'`
-
-dnl test embedded mysql
-    MYSQL_LIBS="`${mysqlconfig} --libmysqld-libs` -lsupc++"
+    MYSQL_LIBS="`${mysqlconfig} --libmysqld-libs` -lmygcc -lsupc++"
     AC_DEFINE([HAVE_MYSQL_EMBED], [1], [Have embedded MySQL])
 
     AC_MSG_RESULT($MYSQL_LIBS)
@@ -104,7 +100,7 @@ dnl test embedded mysql
 
     AX_COMPARE_VERSION("$MYSQL_VERSION", [ge], [4.1.0], 
         AC_MSG_RESULT("$MYSQL_CFLAGS"),
-        AC_MSG_ERROR([mysql version 4.1.0 or greater required]))
+        AC_MSG_ERROR([MySQL version 4.1.0 or greater required.]))
 
     AC_SUBST(MYSQL_LIBS)
     AC_SUBST(MYSQL_CFLAGS)
