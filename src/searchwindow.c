@@ -151,8 +151,8 @@ static void searchwindow_go_to_selected_result(void)
 			RESULTLIST_ZOOMLEVEL, &nZoomLevel,
 			-1);
 
-		mainwindow_set_zoomlevel(nZoomLevel);
 		mainwindow_set_centerpoint(&pt);
+		mainwindow_set_zoomlevel(nZoomLevel);
 		mainwindow_draw_map(DRAWFLAG_ALL);
 		mainwindow_statusbar_update_position();
 	}

@@ -150,6 +150,7 @@ struct {
 	EDirection m_eScrollDirection;
 	
 	gboolean m_bMouseDragging;
+	gboolean m_bMouseDragMovement;
 	screenpoint_t m_ptClickLocation;
 
 	gint m_nCurrentGPSPath;
@@ -723,6 +724,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 //                                 gdk_cursor_unref(pCursor);
 
 				g_MainWindow.m_bMouseDragging = TRUE;
+				g_MainWindow.m_bMouseDragMovement = FALSE;
 				g_MainWindow.m_ptClickLocation.m_nX = nX;
 				g_MainWindow.m_ptClickLocation.m_nY = nY;
 //                                 }
@@ -739,10 +741,10 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			// end mouse dragging, if active
 			if(g_MainWindow.m_bMouseDragging == TRUE) {
 				g_MainWindow.m_bMouseDragging = FALSE;
-//                                 gdk_pointer_ungrab(GDK_CURRENT_TIME);
-
-				mainwindow_cancel_draw_pretty_timeout();
-				mainwindow_draw_map(DRAWFLAG_ALL);
+				if(g_MainWindow.m_bMouseDragMovement) {
+					mainwindow_cancel_draw_pretty_timeout();
+					mainwindow_draw_map(DRAWFLAG_ALL);
+				}
 			}
 
 			// end scrolling, if active
@@ -754,6 +756,10 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				mainwindow_cancel_draw_pretty_timeout();
 				mainwindow_draw_map(DRAWFLAG_ALL);
 			}
+		}
+		else if(event->type == GDK_2BUTTON_PRESS) {
+			map_center_on_windowpoint(g_MainWindow.m_pMap, nX, nY);
+			mainwindow_draw_map(DRAWFLAG_ALL);
 		}
 	}
 	// Right-click?
@@ -783,6 +789,8 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 	EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
 	if(g_MainWindow.m_bMouseDragging) {
+		g_MainWindow.m_bMouseDragMovement = TRUE;
+
 		// Set it here and no when first clicking because now we know it's a drag (on click it could be a double-click)
 		GdkCursor* pCursor = gdk_cursor_new(GDK_FLEUR);
 		gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
@@ -797,7 +805,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 			(nWidth / 2) + nDeltaX,
 			(nHeight / 2) + nDeltaY);
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
-//		mainwindow_set_draw_pretty_timeout();
+		mainwindow_set_draw_pretty_timeout();
 
 		g_MainWindow.m_ptClickLocation.m_nX = nX;
 		g_MainWindow.m_ptClickLocation.m_nY = nY;

@@ -31,6 +31,7 @@
 #include "map.h"
 #include "gpsclient.h"
 #include "scenemanager.h"
+#include "prefs.h"
 
 static gboolean main_init(void);
 static void main_deinit(void);
@@ -46,6 +47,8 @@ int main (int argc, char *argv[])
 
 	if(!main_init())
 		return 1;
+
+	prefs_read();
 
 	gui_run();
 	main_deinit();
@@ -67,6 +70,9 @@ gboolean main_init(void)
 	gchar* pszApplicationDir = g_strdup_printf("%s/.roadster", g_get_home_dir());
 	gnome_vfs_make_directory(pszApplicationDir, 0700);
 	g_free(pszApplicationDir);
+
+	g_print("initializing prefs\n");
+	prefs_init();	// note: doesn't READ prefs yet
 
 	g_print("initializing points\n");
 	point_init();

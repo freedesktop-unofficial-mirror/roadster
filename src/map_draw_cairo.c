@@ -367,10 +367,8 @@ static void map_draw_cairo_line_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 //                         fDrawY -= (fPerpendicularNormalizedY * extents.height/2);
 			fDrawX -= (fPerpendicularNormalizedX * font_extents.ascent/2);
 			fDrawY -= (fPerpendicularNormalizedY * font_extents.ascent/2);
-
 		//~ }
 
-		//
 		cairo_save(pCairo);
 			cairo_move_to(pCairo, fDrawX, fDrawY);
 			cairo_set_rgb_color(pCairo, 0.0,0.0,0.0);

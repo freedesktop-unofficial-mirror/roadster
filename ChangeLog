@@ -1,5 +1,12 @@
 2005-03-07  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/prefs.c:
+	* src/prefs.h: Added. (Not currently used.)
+	* src/main.c: Add init for prefs.
+	* src/mainwindow.c: Squelch redraw user drags 0 distance.
+
+2005-03-07  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/searchwindow.c: Sort search results by distance from user, starting with closest.  Also set zoomlevel based on type of result (road, city, state).
 	* src/mainwindow.c: Add mainwindow_set_zoomlevel() and mainwindow_get_centerpoint() functions for searchwindow's use.
 	* src/map.c: Uncomment map_get_distance_in_meters() for use by searchwindow.

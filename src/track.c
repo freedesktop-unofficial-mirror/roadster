@@ -53,7 +53,7 @@ gint track_new()
 	// insert into DB to get a unique ID
 	gint nID = 1;
 
-	// alloce structure for it
+	// allocate structure for it
 	track_t* pNew = g_mem_chunk_alloc0(g_Tracks.g_pTrackChunkAllocator);
 	pNew->m_nID = nID;
 	pointstring_alloc(&pNew->m_pPointString);

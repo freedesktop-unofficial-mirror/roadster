@@ -33,10 +33,10 @@
 
 <layer name="major-roads">
 	<sublayer>
-		<property name="width" level="5" value="5.0" />
+		<property name="width" level="5" value="8.0" />
 		<property name="width" level="6" value="8.0" />
-		<property name="width" level="7" value="8.0" />
-		<property name="width" level="8" value="10.0" />
+		<property name="width" level="7" value="11.0" />
+		<property name="width" level="8" value="15.0" />
 		<property name="width" level="9" value="24.0" />
 		<property name="width" level="10" value="35.0" />
 		<property name="color" value="#b0b0b0ff" />
@@ -46,10 +46,10 @@
 	<sublayer>
 		<property name="width" level="3" value="1.8" />
 		<property name="width" level="4" value="2.5" />
-		<property name="width" level="5" value="3.3" />
+		<property name="width" level="5" value="6.0" />
 		<property name="width" level="6" value="6.0" />
-		<property name="width" level="7" value="6.0" />
-		<property name="width" level="8" value="8.0" />
+		<property name="width" level="7" value="9.0" />
+		<property name="width" level="8" value="13.0" />
 		<property name="width" level="9" value="21.0" />
 		<property name="width" level="10" value="32.0" />
 		<property name="color" value="#FFfb73ff" />
@@ -59,11 +59,11 @@
 	<label>
 		<property name="color" value="#00000000" />
 		<property name="font-size" level="6" value="8" />
-		<property name="font-size" level="7" value="9" />
-		<property name="font-size" level="8" value="10" />
+		<property name="font-size" level="7" value="10" />
+		<property name="font-size" level="8" value="12" />
 		<property name="font-size" level="9" value="20" />
 		<property name="font-size" level="10" value="34" />
-		<property name="bold" level="9" value="yes" />
+		<property name="bold" level="8" value="yes" />
 	</label>
 </layer>
 
