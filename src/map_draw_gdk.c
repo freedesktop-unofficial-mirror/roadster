@@ -102,9 +102,9 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap)
 {
 	GdkColor clr;
-	clr.red = 255/255.0 * 65535;
-	clr.green = 227/255.0 * 65535;
-	clr.blue = 181/255.0 * 65535;
+	clr.red = 239/255.0 * 65535;
+	clr.green = 239/255.0 * 65535;
+	clr.blue = 230/255.0 * 65535;
 	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
 	
 	gdk_draw_rectangle(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
@@ -366,9 +366,9 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		GdkGC* pGC = pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)];
 
 		GdkColor clr1;
-		clr1.red = 20/255.0 * 65535;
-		clr1.green = 135/255.0 * 65535;
-		clr1.blue = 20/255.0 * 65535;
+		clr1.red = 255/255.0 * 65535;
+		clr1.green = 80/255.0 * 65535;
+		clr1.blue = 80/255.0 * 65535;
 		GdkColor clr2;
 		clr2.red = 255/255.0 * 65535;
 		clr2.green = 255/255.0 * 65535;

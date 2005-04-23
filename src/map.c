@@ -74,6 +74,7 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect);
 static gboolean map_hit_test_layer_roads(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 static gboolean map_hit_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint, gdouble* pfReturnPercentAlongLine);
 static ESide map_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pClosestPointOnLine, mappoint_t* pHitPoint);
+static gboolean map_hit_test_locationselections(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 
 static gboolean map_hit_test_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 static gboolean map_hit_test_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
@@ -198,6 +199,10 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 		pMap->m_apLayerData[i] = pLayer;
 	}
 
+	// init POI selection
+	pMap->m_pLocationSelectionArray = g_ptr_array_new();
+	pMap->m_pLocationSelectionAllocator = g_free_list_new(sizeof(locationselection_t), 100);
+
 	// save it
 	*ppMap = pMap;
 	return TRUE;
@@ -249,7 +254,7 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	map_data_load_tiles(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
 	TIMER_END(loadtimer, "--- END ALL DB LOAD");
 
-	gint nRenderMode = RENDERMODE_FAST;
+	gint nRenderMode = RENDERMODE_FAST; //RENDERMODE_PRETTY; //;
 
 #ifdef SCENEMANAGER_DEBUG_TEST
         GdkRectangle rect = {200,200,100,100};
@@ -790,6 +795,12 @@ void map_hitstruct_free(map_t* pMap, maphit_t* pHitStruct)
 {
 	if(pHitStruct == NULL) return;
 
+	// free type-specific stuff
+	if(pHitStruct->m_eHitType == MAP_HITTYPE_URL) {
+		g_free(pHitStruct->m_URLHit.m_pszURL);
+	}
+
+	// free common stuff
 	g_free(pHitStruct->m_pszText);
 	g_free(pHitStruct);
 }
@@ -799,6 +810,10 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStr
 {
 	rendermetrics_t rendermetrics;
 	map_get_render_metrics(pMap, &rendermetrics);
+
+	if(map_hit_test_locationselections(pMap, &rendermetrics, pMap->m_pLocationSelectionArray, pMapPoint, ppReturnStruct)) {
+		return TRUE;
+	}
 
 	if(map_hit_test_locationsets(pMap, &rendermetrics, pMapPoint, ppReturnStruct)) {
 		return TRUE;
@@ -1098,6 +1113,66 @@ static gboolean map_hit_test_locations(map_t* pMap, rendermetrics_t* pRenderMetr
 	return FALSE;
 }
 
+gboolean hit_test_screenpoint_in_rect(screenpoint_t* pPt, screenrect_t* pRect)
+{
+	return(pPt->m_nX >= pRect->m_A.m_nX && pPt->m_nX <= pRect->m_B.m_nX && pPt->m_nY >= pRect->m_A.m_nY && pPt->m_nY <= pRect->m_B.m_nY);
+}
+
+static gboolean map_hit_test_locationselections(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
+{
+	screenpoint_t screenpoint;
+	screenpoint.m_nX = (gint)SCALE_X(pRenderMetrics, pHitPoint->m_fLongitude);
+	screenpoint.m_nY = (gint)SCALE_Y(pRenderMetrics, pHitPoint->m_fLatitude);
+
+	gint i;
+	for(i=(pLocationSelectionArray->len-1) ; i>=0 ; i--) {
+		locationselection_t* pLocationSelection = g_ptr_array_index(pLocationSelectionArray, i);
+
+		if(pLocationSelection->m_bVisible == FALSE) continue;
+
+		if(hit_test_screenpoint_in_rect(&screenpoint, &(pLocationSelection->m_InfoBoxRect))) {
+			// fill out a new maphit_t struct with details
+			maphit_t* pHitStruct = g_new0(maphit_t, 1);
+
+			if(hit_test_screenpoint_in_rect(&screenpoint, &(pLocationSelection->m_InfoBoxCloseRect))) {
+				pHitStruct->m_eHitType = MAP_HITTYPE_LOCATIONSELECTION_CLOSE;
+				pHitStruct->m_pszText = g_strdup("close");
+				pHitStruct->m_LocationSelectionHit.m_nLocationID = pLocationSelection->m_nLocationID;
+			}
+			else if(hit_test_screenpoint_in_rect(&screenpoint, &(pLocationSelection->m_EditRect))) {
+				pHitStruct->m_eHitType = MAP_HITTYPE_LOCATIONSELECTION_EDIT;
+				pHitStruct->m_pszText = g_strdup("edit");
+				pHitStruct->m_LocationSelectionHit.m_nLocationID = pLocationSelection->m_nLocationID;
+			}
+			else {
+				gboolean bURLMatch = FALSE;
+
+				gint iURL;
+				for(iURL=0 ; iURL<pLocationSelection->m_nNumURLs ; iURL++) {
+					if(hit_test_screenpoint_in_rect(&screenpoint, &(pLocationSelection->m_aURLs[iURL].m_Rect))) {
+						pHitStruct->m_eHitType = MAP_HITTYPE_URL;
+						pHitStruct->m_pszText = g_strdup("click to open location");
+						pHitStruct->m_URLHit.m_pszURL = g_strdup(pLocationSelection->m_aURLs[iURL].m_pszURL);
+
+						bURLMatch = TRUE;
+						break;
+					}
+				}
+
+				// no url match, just return a generic "hit the locationselection box"
+				if(!bURLMatch) {
+					pHitStruct->m_eHitType = MAP_HITTYPE_LOCATIONSELECTION;
+					pHitStruct->m_pszText = g_strdup("");
+					pHitStruct->m_LocationSelectionHit.m_nLocationID = pLocationSelection->m_nLocationID;
+				}
+			}
+			*ppReturnStruct = pHitStruct;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 gboolean map_can_zoom_in(map_t* pMap)
 {
 	// can we increase zoom level?
@@ -1109,3 +1184,79 @@ gboolean map_can_zoom_out(map_t* pMap)
 }
 
 
+//
+// Map selected POI
+//
+
+// lookup a selected location by ID
+locationselection_t* map_location_selection_get(map_t* pMap, gint nLocationID)
+{
+	// XXX: should we add a hash table on locationID to speed up searches?
+	gint i;
+	for(i=0 ; i<pMap->m_pLocationSelectionArray->len ; i++) {
+		locationselection_t* pSel = g_ptr_array_index(pMap->m_pLocationSelectionArray, i);
+		if(pSel->m_nLocationID == nLocationID) return pSel;
+	}
+	return NULL;
+}
+
+gint map_location_selection_sort_callback(gconstpointer ppA, gconstpointer ppB)
+{
+	locationselection_t* pA = *((locationselection_t**)ppA);
+	locationselection_t* pB = *((locationselection_t**)ppB);
+	
+	// we want them ordered from greatest latitude to smallest
+	return ((pA->m_Coordinates.m_fLatitude > pB->m_Coordinates.m_fLatitude) ? -1 : 1);
+}
+
+// add a Location to the selected list
+gboolean map_location_selection_add(map_t* pMap, gint nLocationID)
+{
+	if(map_location_selection_get(pMap, nLocationID) != NULL) {
+		// already here
+		return FALSE;
+	}
+
+	// create a new locationselection_t and initialize it
+	locationselection_t* pNew = g_free_list_alloc(pMap->m_pLocationSelectionAllocator);
+
+	pNew->m_nLocationID = nLocationID;
+	pNew->m_pAttributesArray = g_ptr_array_new();
+	
+	// load all attributes
+	location_load(nLocationID, &(pNew->m_Coordinates), NULL);
+	location_load_attributes(nLocationID, pNew->m_pAttributesArray);
+
+	g_ptr_array_add(pMap->m_pLocationSelectionArray, pNew);
+
+	g_ptr_array_sort(pMap->m_pLocationSelectionArray, map_location_selection_sort_callback);
+
+	return TRUE;	// added
+}
+
+// add a Location to the selected list
+gboolean map_location_selection_remove(map_t* pMap, gint nLocationID)
+{
+	gint i;
+	for(i=0 ; i<pMap->m_pLocationSelectionArray->len ; i++) {
+		locationselection_t* pSel = g_ptr_array_index(pMap->m_pLocationSelectionArray, i);
+		if(pSel->m_nLocationID == nLocationID) {
+			g_ptr_array_remove_index(pMap->m_pLocationSelectionArray, i);
+			return TRUE;
+		}
+	}
+	return FALSE;	// removed
+}
+
+// get an attribute from a selected location
+const gchar* map_location_selection_get_attribute(const map_t* pMap, const locationselection_t* pLocationSelection, const gchar* pszAttributeName)
+{
+	gint i;
+	for(i=0 ; i<pLocationSelection->m_pAttributesArray->len ; i++) {
+		locationattribute_t* pAttribute = g_ptr_array_index(pLocationSelection->m_pAttributesArray, i);
+		if(strcmp(pAttribute->m_pszName, pszAttributeName) == 0) {
+			return pAttribute->m_pszValue;
+		}
+	}
+	return NULL;
+}

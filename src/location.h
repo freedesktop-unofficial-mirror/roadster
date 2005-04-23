@@ -32,18 +32,26 @@ G_BEGIN_DECLS
 #define LOCATION_ATTRIBUTE_ID_ADDRESS	(2)		// "address" must be #2 in the DB
 #define LOCATION_ATTRIBUTE_ID________	(3)		// "" must be #3 in the DB
 
-// a single location (eg. "Someday Cafe")
-typedef struct location {
+// a single location (eg. "Someday Cafe").  this is all that's needed for drawing lots of points (with mouse-over name).
+typedef struct {
 	gint m_nID;
 	gchar* m_pszName;
 	mappoint_t m_Coordinates;
 } location_t;
+
+typedef struct {
+	gchar* m_pszName;
+	gchar* m_pszValue;
+	gint m_nValueID;
+} locationattribute_t;
 
 void location_init();
 gboolean location_alloc(location_t** ppLocation);
 void location_free(location_t* pLocation);
 gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturnID);
 gboolean location_insert_attribute(gint nLocationID, gint nAttributeID, const gchar* pszValue, gint* pnReturnID);
+gboolean location_load(gint nLocationID, mappoint_t* pReturnCoordinates, gint* pnReturnLocationSetID);
+void location_load_attributes(gint nLocationID, GPtrArray* pAttributeArray);
 
 G_END_DECLS
 

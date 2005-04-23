@@ -24,6 +24,8 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
+#include "gfreelist.h"
+
 #define MIN_LATITUDE	(-90.0)
 #define MAX_LATITUDE	(90.0)
 #define MIN_LONGITUDE	(-180.0)
@@ -79,33 +81,33 @@ struct GtkWidget;
 #include "scenemanager.h"
 
 // World space
-typedef struct mappoint {
+typedef struct {
 	gdouble m_fLatitude;
 	gdouble m_fLongitude;
 } mappoint_t;
 
-typedef struct maprect {
+typedef struct {
 	mappoint_t m_A;
 	mappoint_t m_B;
 } maprect_t;
 
 // Screen space
-typedef struct screenpoint {
+typedef struct {
 	gint16 m_nX;
 	gint16 m_nY;
 } screenpoint_t;
 
-typedef struct screenrect {
+typedef struct {
 	screenpoint_t m_A;
 	screenpoint_t m_B;
 } screenrect_t;
 
-typedef struct windowdimensions {
+typedef struct {
 	guint16 m_uWidth;
 	guint16 m_uHeight;
 } dimensions_t;
 
-typedef struct zoomlevel {
+typedef struct {
 	guint32 m_uScale;		// ex. 10000 for 1:10000 scale
 	gchar* m_szName;
 } zoomlevel_t;
@@ -138,6 +140,7 @@ typedef struct {
 	gint m_nWindowWidth;
 	gint m_nWindowHeight;
 } rendermetrics_t;
+
 #define SCALE_X(p, x)  ((((x) - (p)->m_rWorldBoundingBox.m_A.m_fLongitude) / (p)->m_fScreenLongitude) * (p)->m_nWindowWidth)
 #define SCALE_Y(p, y)  ((p)->m_nWindowHeight - ((((y) - (p)->m_rWorldBoundingBox.m_A.m_fLatitude) / (p)->m_fScreenLatitude) * (p)->m_nWindowHeight))
 
@@ -149,8 +152,7 @@ typedef struct {
 	GPtrArray* m_pLocationsArray;
 } maplayer_locations_t;
 
-typedef struct
-{
+typedef struct {
 	mappoint_t 		m_MapCenter;
 	dimensions_t 		m_MapDimensions;
 	guint16 		m_uZoomLevel;
@@ -164,14 +166,24 @@ typedef struct
 	// Locationsets
 	GHashTable		*m_pLocationArrayHashTable;
 
+	GPtrArray		*m_pLocationSelectionArray;
+	GFreeList		*m_pLocationSelectionAllocator;
+
 	// Mutex and the data it controls (always lock before reading/writing)
 	//GMutex* m_pPixmapMutex;
 	GdkPixmap* m_pPixmap;
 } map_t;
 
 typedef enum {
-	MAP_HITTYPE_LOCATION=1,
-	MAP_HITTYPE_ROAD=2,
+	MAP_HITTYPE_LOCATION,
+	MAP_HITTYPE_ROAD,
+	
+	// the following all use m_LocationSelectionHit in the union below
+	MAP_HITTYPE_LOCATIONSELECTION,	// hit somewhere on a locationselection graphic (info balloon)
+	MAP_HITTYPE_LOCATIONSELECTION_CLOSE,	// hit locationselection graphic close graphic (info balloon [X])
+	MAP_HITTYPE_LOCATIONSELECTION_EDIT,	// hit locationselection graphic edit graphic (info balloon "edit")
+
+	MAP_HITTYPE_URL,
 } EMapHitType;
 
 typedef struct {
@@ -187,6 +199,14 @@ typedef struct {
 			gint m_nRoadID;
 			mappoint_t m_ClosestPoint;
 		} m_RoadHit;
+
+		struct {
+			gint m_nLocationID;
+		} m_LocationSelectionHit;
+
+		struct {
+			gchar* m_pszURL;
+		} m_URLHit;
 	};
 } maphit_t;
 
@@ -205,6 +225,26 @@ typedef struct {
 //	void (*pFunc)(map_t*, cairo_t*, rendermetrics_t*, GPtrArray*, sublayerstyle_t*, textlabelstyle_t*);
 } draworder_t;
 
+#define MAX_LOCATIONSELETION_URLS	(5)
+
+typedef struct {
+	gint m_nLocationID;
+	gboolean m_bVisible;
+
+	mappoint_t m_Coordinates;
+	GPtrArray *m_pAttributesArray;
+
+	screenrect_t m_InfoBoxRect;
+	screenrect_t m_InfoBoxCloseRect;
+	screenrect_t m_EditRect;
+
+	gint m_nNumURLs;
+	struct {
+		screenrect_t m_Rect;
+		gchar* m_pszURL;
+	} m_aURLs[MAX_LOCATIONSELETION_URLS];
+} locationselection_t;
+
 // Draw flags
 #define DRAWFLAG_LABELS 	(1)
 #define DRAWFLAG_GEOMETRY	(2)
@@ -212,7 +252,7 @@ typedef struct {
 // next is 4 :)
 #define DRAWFLAG_ALL 		(1|2)
 
-#define NUM_SUBLAYER_TO_DRAW (22)
+#define NUM_SUBLAYER_TO_DRAW (24)
 extern draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW];	//
 
 void map_init(void);
@@ -261,5 +301,10 @@ void map_hitstruct_free(map_t* pMap, maphit_t* pHitStruct);
 
 gboolean map_can_zoom_in(map_t* pMap);
 gboolean map_can_zoom_out(map_t* pMap);
+
+gboolean map_location_selection_add(map_t* pMap, gint nLocationID);
+gboolean map_location_selection_remove(map_t* pMap, gint nLocationID);
+
+const gchar* map_location_selection_get_attribute(const map_t* pMap, const locationselection_t* pLocationSelection, const gchar* pszAttributeName);
 
 #endif

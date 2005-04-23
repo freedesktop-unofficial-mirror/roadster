@@ -23,6 +23,8 @@
 
 //#define ENABLE_TIMING
 
+#define LABEL_LIMIT_TO_ROAD
+
 #define RENDERING_THREAD_YIELD	// do nothing
 
 #define	ACCEPTABLE_LINE_LABEL_OVERDRAW_IN_PIXELS_SQUARED (38*38)
@@ -55,17 +57,31 @@ static void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, renderme
 static void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
 static void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
 static void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-static void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics);
+//static void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics);
 
 // Draw a single line/polygon/point
 static void map_draw_cairo_background(map_t* pMap, cairo_t *pCairo);
 static void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray);
+//static void map_draw_cairo_locationset(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
+static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionArray);
 
 // Draw a single line/polygon label
 static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, GPtrArray* pPointsArray, gdouble fLineWidth, const gchar* pszLabel);
 static void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t* pLabelStyle, rendermetrics_t* pRenderMetrics, GPtrArray* pPointsArray, const gchar* pszLabel);
 
 // static void map_draw_cairo_crosshair(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics);
+
+void cairo_underline_text(cairo_t* pCairo, gdouble fLabelWidth)
+{
+#define UNDERLINE_RELIEF	(2.0)
+
+	cairo_rel_move_to(pCairo, 2, UNDERLINE_RELIEF);
+	cairo_rel_line_to(pCairo, fLabelWidth, 0.0);
+	cairo_set_line_width(pCairo, 1.0);
+	cairo_stroke(pCairo);
+	// undo moves for underline
+	cairo_rel_move_to(pCairo, -(fLabelWidth+2), -UNDERLINE_RELIEF);
+}
 
 void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
 {
@@ -95,8 +111,8 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 	for(i=0 ; i<NUM_ELEMS(layerdraworder) ; i++) {
 		gint nLayer = layerdraworder[i].nLayer;
 		gint nSubLayer = layerdraworder[i].nSubLayer;
-
 		gint nRenderType = layerdraworder[i].eSubLayerRenderType;
+
 		if(nRenderType == SUBLAYER_RENDERTYPE_LINES) {
 			if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 				map_draw_cairo_layer_roads(pMap, pCairo,
@@ -136,6 +152,7 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 	}
 
 //	map_draw_cairo_locations(pMap, pCairo, pRenderMetrics);
+	map_draw_cairo_locationselection(pMap, pCairo, pRenderMetrics, pMap->m_pLocationSelectionArray);
 
 	// 4. Cleanup
 	cairo_restore(pCairo);
@@ -186,7 +203,7 @@ void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 }
 
 //
-// Draw a whole layer of polygons
+// Draw a whole layer of polygon labels
 //
 void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
 {
@@ -194,7 +211,7 @@ void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermet
 	if(fFontSize == 0) return;
 
 	gchar* pszFontFamily = AREA_FONT;
-	
+
 	// set font for whole layer
 	cairo_save(pCairo);
 	cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
@@ -408,8 +425,8 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 */
 }
 
-void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics)
-{
+//void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics)
+//{
 /*
 	location_t loc;
 	location_t* pLoc = &loc;
@@ -441,7 +458,7 @@ void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRe
 	cairo_fill(pCairo);
 	cairo_restore(pCairo);
 */
-}
+//}
 
 
 #define ROAD_MAX_SEGMENTS 100
@@ -1218,6 +1235,334 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 
 	// Tell scenemanager that we've drawn this label
         scenemanager_claim_label(pMap->m_pSceneManager, pszLabel);
+}
+
+/*
+static void map_draw_cairo_locations(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics)
+{
+	const GPtrArray* pLocationSetsArray = locationset_get_array();
+	gint i;
+	for(i=0 ; i<pLocationSetsArray->len ; i++) {
+		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetsArray, i);
+
+		if(!locationset_is_visible(pLocationSet)) continue;
+
+		// 2. Get array of Locations from the hash table using LocationSetID
+		GPtrArray* pLocationsArray;
+		pLocationsArray = g_hash_table_lookup(pMap->m_pLocationArrayHashTable, &(pLocationSet->m_nID));
+		if(pLocationsArray != NULL) {
+			// found existing array
+			map_draw_cairo_locationset(pMap, pCairo, pRenderMetrics, pLocationSet, pLocationsArray);
+		}
+		else {
+			// none to draw
+		}
+	}
+}
+*/
+
+static void map_draw_cairo_locationselection_outline(cairo_t *pCairo, gdouble fPointX, gdouble fPointY, const screenrect_t* pRect, screenrect_t* pCloseRect)
+{
+	gdouble fCorner = 30.0;
+	gdouble fArrowWidth = 30.0; 
+
+	gdouble fBoxX = pRect->m_A.m_nX + 0.5;
+	gdouble fBoxY = pRect->m_A.m_nY + 0.5;
+	gdouble fBoxWidth = pRect->m_B.m_nX - pRect->m_A.m_nX;
+	gdouble fBoxHeight = pRect->m_B.m_nY - pRect->m_A.m_nY;
+
+	typedef enum {
+		SIDE_BOTTOM = 1,
+		SIDE_TOP,
+		SIDE_LEFT,
+		SIDE_RIGHT
+	} ESide;
+
+	ESide eArrowSide = SIDE_BOTTOM;
+
+	// =======================================================================================
+	// BEGIN drawing balloon
+
+#define	 CCPOE	(4.0)	// # pixels to move the control points past the rectangle's corner points
+			// a higher number means less curve.  (what does it stand for?  who cares, it's short)
+
+	// move to spot just below top left curve
+	cairo_move_to(pCairo, fBoxX, (fBoxY + fCorner));
+
+	// top left curver
+	cairo_curve_to(pCairo, 	(fBoxX), (fBoxY - CCPOE),
+				(fBoxX - CCPOE), (fBoxY),
+				(fBoxX + fCorner), (fBoxY));
+
+	// top line
+	cairo_line_to(pCairo, (fBoxX + fBoxWidth) - fCorner, fBoxY);
+
+	// top right corner
+	cairo_curve_to(pCairo,	(fBoxX + fBoxWidth + CCPOE), (fBoxY),
+				(fBoxX + fBoxWidth), (fBoxY - CCPOE),
+				(fBoxX + fBoxWidth), (fBoxY + fCorner));
+
+	// right line
+	cairo_line_to(pCairo, (fBoxX + fBoxWidth), (fBoxY + fBoxHeight) - fCorner);
+
+	// bottom right corner
+	cairo_curve_to(pCairo,  (fBoxX + fBoxWidth), (fBoxY + fBoxHeight + CCPOE),
+				(fBoxX + fBoxWidth + CCPOE), (fBoxY + fBoxHeight), 
+				(fBoxX + fBoxWidth) - fCorner, (fBoxY + fBoxHeight));
+
+	// bottom line (drawing right to left)
+	if(eArrowSide == SIDE_BOTTOM) {
+#ifdef LOCATIONSELECTION_USE_CURVY_BALLOON
+		cairo_curve_to(pCairo,  
+			       (fBoxX + fBoxWidth/2) + fArrowWidth, (fBoxY + fBoxHeight), 
+			       (fBoxX + fBoxWidth/2) + fArrowWidth, (fBoxY + fBoxHeight), 
+			       fPointX, fPointY);
+
+		cairo_curve_to(pCairo,  
+			       (fBoxX + fBoxWidth/2) - 0, (fBoxY + fBoxHeight),
+			       (fBoxX + fBoxWidth/2) - 0, (fBoxY + fBoxHeight),
+			       (fBoxX + fCorner), (fBoxY + fBoxHeight));
+#else
+		// right side of arrow
+		cairo_line_to(pCairo, (fBoxX + fBoxWidth/2) + fArrowWidth, (fBoxY + fBoxHeight));
+
+		// point of array
+		cairo_line_to(pCairo, fPointX, fPointY);
+
+		// left side of arrow
+		cairo_line_to(pCairo, (fBoxX + fBoxWidth/2) - 0, (fBoxY + fBoxHeight));
+
+		// right side of bottom left corner
+		cairo_line_to(pCairo, (fBoxX + fCorner), (fBoxY + fBoxHeight));
+#endif
+	}
+	else {
+		cairo_line_to(pCairo, (fBoxX + fCorner), (fBoxY + fBoxHeight));
+	}
+
+	// bottom left corner
+	cairo_curve_to(pCairo,  (fBoxX - CCPOE), (fBoxY + fBoxHeight),
+				(fBoxX), (fBoxY + fBoxHeight + CCPOE), 
+				(fBoxX), (fBoxY + fBoxHeight) - fCorner);
+
+	// left line, headed up
+	cairo_line_to(pCairo, (fBoxX), (fBoxY + fCorner));
+
+	// DONE drawing balloon
+	// =======================================================================================
+
+	cairo_set_alpha(pCairo, 1.00);
+
+	// fill then stroke
+	cairo_save(pCairo);
+		cairo_set_rgb_color(pCairo, 1.0, 1.0, 1.0);
+		cairo_fill(pCairo);
+	cairo_restore(pCairo);
+
+//	cairo_save(pCairo);
+		cairo_set_rgb_color(pCairo, 0.0, 0.0, 0.0);
+		cairo_set_line_width(pCairo, 1.0);
+		cairo_stroke(pCairo);
+//	cairo_restore(pCairo);
+
+	// BEGIN [X]
+	gdouble fCloseRectRelief = 8.0;
+	gdouble fCloseRectWidth = 13.0;
+
+	cairo_set_line_width(pCairo, 1.0);
+	cairo_set_rgb_color(pCairo, 0.5,0.5,0.5);
+
+	cairo_move_to(pCairo, (fBoxX + fBoxWidth) - fCloseRectRelief, fBoxY + fCloseRectRelief);
+	cairo_rel_line_to(pCairo, 0.0, fCloseRectWidth);
+	cairo_rel_line_to(pCairo, -fCloseRectWidth, 0.0);
+	cairo_rel_line_to(pCairo, 0.0, -fCloseRectWidth);
+	cairo_rel_line_to(pCairo, fCloseRectWidth, 0.0);
+	cairo_stroke(pCairo);
+
+	pCloseRect->m_A.m_nX = (gint)((fBoxX + fBoxWidth) - fCloseRectRelief) - fCloseRectWidth;
+	pCloseRect->m_A.m_nY = (gint)fBoxY + fCloseRectRelief;
+	pCloseRect->m_B.m_nX = (gint)((fBoxX + fBoxWidth) - fCloseRectRelief);
+	pCloseRect->m_B.m_nY = (gint)fBoxY + fCloseRectRelief + fCloseRectWidth;
+
+	cairo_set_line_width(pCairo, 2.0);
+	cairo_move_to(pCairo, (((fBoxX + fBoxWidth) - fCloseRectRelief) - fCloseRectWidth) + 3, fBoxY + fCloseRectRelief + 3);
+	cairo_rel_line_to(pCairo, fCloseRectWidth - 6, fCloseRectWidth - 6);
+
+	cairo_move_to(pCairo, (((fBoxX + fBoxWidth) - fCloseRectRelief) - fCloseRectWidth) + 3, (fBoxY + fCloseRectRelief + fCloseRectWidth) - 3);
+	cairo_rel_line_to(pCairo, (fCloseRectWidth - 6), -(fCloseRectWidth - 6));
+	cairo_stroke(pCairo);
+	// END [X]
+}
+
+static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionArray)
+{
+	cairo_save(pCairo);
+
+	gint i;
+	for(i=0 ; i<pLocationSelectionArray->len ; i++) {
+		locationselection_t* pLocationSelection = g_ptr_array_index(pLocationSelectionArray, i);
+
+		pLocationSelection->m_nNumURLs=0;
+
+		// bounding box test
+		if(pLocationSelection->m_Coordinates.m_fLatitude < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLatitude
+		   || pLocationSelection->m_Coordinates.m_fLongitude < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLongitude
+		   || pLocationSelection->m_Coordinates.m_fLatitude > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLatitude
+		   || pLocationSelection->m_Coordinates.m_fLongitude > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLongitude)
+		{
+			pLocationSelection->m_bVisible = FALSE;
+			continue;   // not visible
+		}
+		pLocationSelection->m_bVisible = TRUE;
+
+		gdouble fX = SCALE_X(pRenderMetrics, pLocationSelection->m_Coordinates.m_fLongitude);
+		fX = floor(fX) + 0.5;
+		gdouble fY = SCALE_Y(pRenderMetrics, pLocationSelection->m_Coordinates.m_fLatitude);
+		fY = floor(fY) + 0.5;
+
+		gdouble fBoxHeight = 105.0;
+		gdouble fBoxWidth = 200.0;
+
+		gdouble fOffsetX = -(fBoxWidth/3);
+		gdouble fOffsetY = -40.0;
+
+		// determine top left corner of box
+		gdouble fBoxX = fX + fOffsetX;
+		gdouble fBoxY = (fY - fBoxHeight) + fOffsetY;
+
+		pLocationSelection->m_InfoBoxRect.m_A.m_nX = (gint)fBoxX;
+		pLocationSelection->m_InfoBoxRect.m_A.m_nY = (gint)fBoxY;
+		pLocationSelection->m_InfoBoxRect.m_B.m_nX = (gint)(fBoxX + fBoxWidth);
+		pLocationSelection->m_InfoBoxRect.m_B.m_nY = (gint)(fBoxY + fBoxHeight);
+
+		map_draw_cairo_locationselection_outline(pCairo, fX, fY, &(pLocationSelection->m_InfoBoxRect), &(pLocationSelection->m_InfoBoxCloseRect));
+
+		gchar* pszFontFamily = ROAD_FONT;
+		gint fTitleFontSize = 15.0;
+		gint fBodyFontSize = 13.0;
+
+		// BEGIN text
+		// shrink box a little
+		fBoxX += 8.0;
+		fBoxY += 10.0;
+		fBoxWidth -= 16.0;
+		fBoxHeight -= 20.0;
+
+#define LINE_RELIEF (4.0)	// space between lines in pixels
+#define BODY_RELIEF (6.0)
+#define LINK_HORIZONTAL_RELIEF (10)
+
+		const gchar* pszString;
+		cairo_text_extents_t extents;
+		cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+		cairo_scale_font(pCairo, fTitleFontSize);
+
+		// draw name
+		pszString = map_location_selection_get_attribute(pMap, pLocationSelection, "name");
+		if(pszString == NULL) pszString = "";	// unnamed POI?!
+		cairo_text_extents(pCairo, pszString, &extents);
+		gdouble fLabelWidth = extents.width;
+		gdouble fFontHeight = extents.height;
+		cairo_set_rgb_color(pCairo, 0.1,0.1,0.1);	// normal text color
+
+		gdouble fTextOffsetX = fBoxX;
+		gdouble fTextOffsetY = fBoxY + fFontHeight;
+
+		cairo_move_to(pCairo, fTextOffsetX, fTextOffsetY);
+		cairo_show_text(pCairo, pszString);
+
+		// draw address, line 1
+		pszString = map_location_selection_get_attribute(pMap, pLocationSelection, "address");
+		if(pszString != NULL) {
+			gchar** aLines = g_strsplit(pszString,"\n", 0);	// "\n" = delimeters, 0 = no max #
+
+			gchar* pszLine;
+			if(aLines[0]) {
+				pszLine = aLines[0];
+				cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+				cairo_scale_font(pCairo, fBodyFontSize);
+				cairo_text_extents(pCairo, pszLine, &extents);
+				fLabelWidth = extents.width;
+				fFontHeight = extents.height;
+
+				fTextOffsetY += (BODY_RELIEF + fFontHeight);
+				cairo_move_to(pCairo, fTextOffsetX, fTextOffsetY);
+				cairo_show_text(pCairo, pszLine);
+
+				if(aLines[1]) {
+					g_print("line 2\n");
+					// draw address, line 2
+					pszLine = aLines[1];
+
+					fTextOffsetY += (LINE_RELIEF + fFontHeight);
+					cairo_move_to(pCairo, fTextOffsetX, fTextOffsetY);
+					cairo_show_text(pCairo, pszLine);
+				}
+			}
+			g_strfreev(aLines);	// free the array of strings	
+		}
+
+		// draw phone number
+		pszString = "(617) 576-1369";
+		cairo_text_extents(pCairo, pszString, &extents);
+		fLabelWidth = extents.width;
+		fFontHeight = extents.height;
+
+		fTextOffsetY += (LINE_RELIEF + fFontHeight);
+		cairo_move_to(pCairo, fTextOffsetX, fTextOffsetY);
+		cairo_set_rgb_color(pCairo, 0.1,0.1,0.1);	// normal text color
+		cairo_show_text(pCairo, pszString);
+		// draw underline
+//                 cairo_text_extents(pCairo, pszString, &extents);
+//                 fLabelWidth = extents.width;
+//                 fFontHeight = extents.height;
+//                 cairo_underline_text(pCairo, fLabelWidth);
+		
+
+		// draw website link
+		fTextOffsetX = fBoxX;
+		fTextOffsetY = fBoxY + fBoxHeight;
+		pszString = "1369coffeehouse.com";
+		cairo_text_extents(pCairo, pszString, &extents);
+		fLabelWidth = extents.width;
+		fFontHeight = extents.height;
+		cairo_move_to(pCairo, fTextOffsetX, fTextOffsetY);
+		cairo_set_rgb_color(pCairo, 0.1,0.1,0.4);	// remote link color
+		cairo_show_text(pCairo, pszString);
+		cairo_underline_text(pCairo, fLabelWidth);
+
+		screenrect_t* pRect = &(pLocationSelection->m_aURLs[pLocationSelection->m_nNumURLs].m_Rect);
+		pRect->m_A.m_nX = fTextOffsetX;
+		pRect->m_A.m_nY = fTextOffsetY - fFontHeight;
+		pRect->m_B.m_nX = fTextOffsetX + fLabelWidth;
+		pRect->m_B.m_nY = fTextOffsetY;
+		pLocationSelection->m_aURLs[pLocationSelection->m_nNumURLs].m_pszURL = g_strdup(pszString);
+		pLocationSelection->m_nNumURLs++;
+
+		// draw 'edit' link
+		pszString = "edit";
+		cairo_set_rgb_color(pCairo, 0.1,0.4,0.1);	// local link color
+		cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+		cairo_scale_font(pCairo, fBodyFontSize);
+		cairo_text_extents(pCairo, pszString, &extents);
+		fLabelWidth = extents.width;
+		fFontHeight = extents.height;
+
+		// bottom edge, right justified
+		fTextOffsetX = (fBoxX + fBoxWidth) - fLabelWidth;
+		fTextOffsetY = (fBoxY + fBoxHeight);
+
+		cairo_move_to(pCairo, fTextOffsetX, fTextOffsetY);
+		cairo_show_text(pCairo, pszString);
+		cairo_underline_text(pCairo, fLabelWidth);
+		
+		pRect = &(pLocationSelection->m_EditRect);
+		pRect->m_A.m_nX = fTextOffsetX;
+		pRect->m_A.m_nY = fTextOffsetY - fFontHeight;
+		pRect->m_B.m_nX = fTextOffsetX + fLabelWidth;
+		pRect->m_B.m_nY = fTextOffsetY;
+	}
+	cairo_restore(pCairo);
 }
 
 #ifdef ROADSTER_DEAD_CODE

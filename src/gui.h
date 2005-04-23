@@ -25,6 +25,9 @@
 #define _GUI_H_
 
 #include <gtk/gtk.h>
+#include <glade/glade.h>
+
+#define GLADE_FILE_NAME	("roadster.glade")
 
 extern GtkWidget *g_pApplicationWidget;
 extern GtkWidget *g_pDisplaySettingsWidget;
@@ -41,34 +44,6 @@ struct gui_state_t {
 //
 void gui_init(void);
 void gui_run(void);
-extern gboolean gui_redraw_map_if_needed(void);
-extern void gui_set_tool_label(gchar* pMessage);
 extern void gui_exit(void);
-extern GtkWidget* gui_get_top_window(void);
-
-//~ void gui_show_goto_window();
-//~ void gui_hide_goto_window();
-
-//~ void gui_show_colors_window();
-//~ void gui_hide_colors_window();
-
-//~ void gui_show_about_dialog();
-//~ void gui_hide_about_window();
-
-//~ void gui_show_preferences_window();
-//~ void gui_hide_preferences_window();
-
-void cursor_init(void);
-//~ void gui_statusbar_update_zoomscale();
-//~ void gui_statusbar_update_position();
-//~ void gui_statusbar_set_position(gchar* pMessage);
-//~ void gui_statusbar_set_zoomscale(gchar* pMessage);
-
-//~ gboolean gui_get_toolbar_visible();
-//~ void gui_set_toolbar_visible(gboolean bVisible);
-
-//~ void gui_toggle_fullscreen();
-
-//~ void gui_zoomin();
-//~ void gui_zoomout();
+GladeXML* gui_load_xml(gchar* pszFileName, gchar* pszXMLTreeRoot);
 #endif

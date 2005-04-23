@@ -26,7 +26,6 @@
 	</sublayer>
 	<label>
 		<property name="color" value="#FF000000" />
-		<property name="font-size" level="7" value="11" />
 		<property name="font-size" level="8" value="11" />
 		<property name="font-size" level="9" value="13" />
 		<property name="font-size" level="10" value="24" />

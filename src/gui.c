@@ -40,19 +40,7 @@
 
 void gui_init()
 {
-	GladeXML *pGladeXML;
-
-	// Load glade UI definition file and connect to callback functions	
-	// try source directory first (good for development)
-	pGladeXML = glade_xml_new (PACKAGE_SOURCE_DIR"/data/roadster.glade", NULL, NULL);
-	if(pGladeXML == NULL) {
-		pGladeXML = glade_xml_new (PACKAGE_DATA_DIR"/roadster.glade", NULL, NULL);
-
-		if(pGladeXML == NULL) {
-			g_message("cannot find file roadster.glade\n");
-			gtk_main_quit();
-		}
-	}
+	GladeXML* pGladeXML = gui_load_xml(GLADE_FILE_NAME, NULL);
 	glade_xml_signal_autoconnect(pGladeXML);
 
 	// init all windows/dialogs
@@ -62,6 +50,30 @@ void gui_init()
 	importwindow_init(pGladeXML);
 	datasetwindow_init(pGladeXML);
 	welcomewindow_init(pGladeXML);
+}
+
+GladeXML* gui_load_xml(gchar* pszFileName, gchar* pszXMLTreeRoot)
+{
+	GladeXML *pGladeXML;
+	gchar* pszPath;
+
+	// Load glade UI definition file and connect to callback functions	
+	// try source directory first (good for development)
+	pszPath = g_strdup_printf(PACKAGE_SOURCE_DIR"/data/%s", pszFileName);
+	pGladeXML = glade_xml_new(pszPath, pszXMLTreeRoot, NULL);
+	g_free(pszPath);
+
+	if(pGladeXML == NULL) {
+		pszPath = g_strdup_printf(PACKAGE_DATA_DIR"/data/%s", pszFileName);
+		pGladeXML = glade_xml_new(pszPath, pszXMLTreeRoot, NULL);
+		g_free(pszPath);
+
+		if(pGladeXML == NULL) {
+			g_message("cannot find glade file '%s'\n", pszFileName);
+			gtk_main_quit();
+		}
+	}
+	return pGladeXML;
 }
 
 void gui_run()

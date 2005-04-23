@@ -62,19 +62,19 @@ int main (int argc, char *argv[])
 	gint nNewLocationID;
 
 	mappoint_t pt;
-	pt.m_fLatitude = 41.55130;
-	pt.m_fLongitude = -70.61409;
+	pt.m_fLatitude = 42.37382;
+	pt.m_fLongitude = -71.10054;
 	nNewLocationID = 0;
 	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "1369 Cambridge Street\nCambridge, MA, 02141", NULL);
 
-	pt.m_fLatitude = 41.55120;
-	pt.m_fLongitude = -70.61409;
+	pt.m_fLatitude = 42.36650;
+	pt.m_fLongitude = -71.10554;
 	nNewLocationID = 0;
 	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
-	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "One Cup of Coffee", NULL);
-	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "29 Shore Street\nCambridge, MA, 02141", NULL);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "757 Massachusetts Avenue\nCambridge, MA 02139", NULL);
 */
 	prefs_read();
 

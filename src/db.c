@@ -39,6 +39,7 @@
 #include "mainwindow.h"
 #include "util.h"
 #include "layers.h"
+#include "location.h"
 #include "locationset.h"
 
 #ifdef USE_GNOME_VFS
@@ -81,13 +82,21 @@ void db_init()
 
 	gchar* apszServerOptions[] = {
 		"",	// program name -- unused
-		"--skip-innodb",	// don't bother with table types we don't use
-		"--skip-bdb",
-                "--query-cache-type=1",		// enable query cache (for map tiles)
-                pszSetQueryCacheSize,	//
 
+		// Unused server features
+		"--skip-innodb",
+		"--skip-bdb",
+
+		// query cache options
+                "--query-cache-type=1",		// enable query cache (for map tiles)
+                pszSetQueryCacheSize,
+
+		// fulltext index options
+		"--ft-min-word-len=1",		// don't miss any words, even 1-letter words (esp. numbers like "3")
+		"--ft-stopword-file=''",	// non-existant stopword file. we don't want ANY stopwords (words that are ignored)
+
+		// Misc options
 		pszKeyBufferSize,
-		"--ft-min-word-len=2",		// 2 chars should count as a word for fulltext indexes
 		pszSetDataDirCommand
 	};
 
@@ -606,6 +615,14 @@ void db_create_tables()
 		" Name VARCHAR(30) NOT NULL,"
 		" PRIMARY KEY (ID),"
 		" UNIQUE INDEX (Name));", NULL);
+
+	gchar* pszSQL = g_strdup_printf("INSERT INTO LocationAttributeName SET ID=%d, Name='name'", LOCATION_ATTRIBUTE_ID_NAME);
+	db_query(pszSQL, NULL);
+        g_free(pszSQL);
+
+	pszSQL = g_strdup_printf("INSERT INTO LocationAttributeName SET ID=%d, Name='address'", LOCATION_ATTRIBUTE_ID_ADDRESS);
+	db_query(pszSQL, NULL);
+        g_free(pszSQL);
 
 	// Location Attribute Value
 	db_query("CREATE TABLE IF NOT EXISTS LocationAttributeValue("

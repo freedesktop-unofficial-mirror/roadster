@@ -47,7 +47,7 @@ void locationset_init()
 
 	// create memory allocator
 	g_LocationSet.m_pLocationSetChunkAllocator = g_mem_chunk_new("ROADSTER locationsets",
-			sizeof(locationset_t), 1000, G_ALLOC_AND_FREE);
+			sizeof(locationset_t), 20, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL);
 }
 

@@ -1,3 +1,16 @@
+2005-04-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/gui.c: Add new generic way to load XML files.
+	* src/location.c: Add loading of locations and their attributes.
+	* src/map.c: Add tracking of selected POI.  Add hit-testing for POI info boxes.
+	* src/mainwindow.c: Add response to clicks on POI info box and its various bits.
+	* src/map_draw_cairo.c: Add rendering of POI info boxes.
+	* src/map_draw_gdk.c: Minor changes to colors (shouldn't be hardcoded though!).
+	* src/search_location.c: Add new POI search.  All words must be present in ANY attribute of a POI.
+	* src/search_road.c: Cleanup.
+	* src/searchwindow.c: Cleanup.
+	* src/util.c: Add ability to open URIs.
+
 2005-03-31  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/animator.c: Use a better math function for smooth scrolling.

@@ -57,5 +57,11 @@ void util_random_color(void* pColor);
    declarations, and make the functions static.
 */
 void util_close_parent_window(GtkWidget* pWidget, gpointer data);
+void util_open_uri(const char* pszURI);
+
+// if glib < 2.6
+#if(!GLIB_CHECK_VERSION(2,6,0))
+gint g_strv_length(const gchar** a);
+#endif
 
 #endif

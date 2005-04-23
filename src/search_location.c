@@ -45,13 +45,12 @@
 //} locationsearch_t;
 
 void search_location_on_cleaned_sentence(const gchar* pszCleanedSentence);
-//void search_location_on_words(gchar** aWords, gint nWordCount);
+void search_location_on_words(gchar** aWords, gint nWordCount);
 void search_location_filter_result(gint nLocationID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates);
 
 void search_location_execute(const gchar* pszSentence)
 {
-	g_print("search_location_execute\n");
-
+//	g_print("search_location_execute\n");
 	TIMER_BEGIN(search, "BEGIN LocationSearch");
 
 	// copy sentence and clean it
@@ -63,71 +62,127 @@ void search_location_execute(const gchar* pszSentence)
 	TIMER_END(search, "END LocationSearch");
 }
 
-	// Create an array of the words
-/*         gchar** aaWords = g_strsplit(pszCleanedSentence," ", 0);        // " " = delimeters, 0 = no max # */
-/*         gint nWords = g_strv_length(aaWords);                                                             */
-/*         search_location_on_words(aaWords, nWords);                                                        */
-/*         g_strfreev(aaWords);    // free entire array of strings                                           */
 
 void search_location_on_cleaned_sentence(const gchar* pszCleanedSentence)
 {
+	// Create an array of the words
+        gchar** aaWords = g_strsplit(pszCleanedSentence, " ", 0);        // " " = delimeters, 0 = no max #
+        gint nWords = g_strv_length(aaWords);
+        search_location_on_words(aaWords, nWords);
+        g_strfreev(aaWords);    // free entire array of strings
+}
 
-	// Get POI #, Name, Address, and Coordinates. Match a POI if any of the words given are in ANY attributes of the POI.
-	// NOTE: We're using this behavior (http://dev.mysql.com/doc/mysql/en/fulltext-boolean.html):
-	// 'apple banana'
-	//   Find rows that contain at least one of the two words.
+/*
+We require ALL words that the user typed show up in 
+
+Our SQL statement for finding matching POI works like this:
+
+(1) Get a list of LocationIDs that contain each word (use DISTINCT so even if the word shows up in multiple Values, we only put the LocationID in the list once).
+(2) Combine the lists together and count how many lists each LocationID is in (MatchedWords).  This will be 0 -> nWordCount
+(3) Filter on MatchedWords.  If we use nWordCount, all words are required.  We could also use nWordCount-1, or always use 1 and ORDER BY MatchedWords DESC.
+(4) Finally join the Location table to get needed Location details.
+
+Our finished SQL statement will look something like this:
+
+SELECT Location.ID, ASBINARY(Location.Coordinates) 
+FROM 
+(
+  SELECT LocationID, COUNT(*) as MatchedWords FROM ( 
+    SELECT DISTINCT LocationID FROM LocationAttributeValue WHERE MATCH(Value) AGAINST ('coffee' IN BOOLEAN MODE) 
+    UNION ALL 
+    SELECT DISTINCT LocationID FROM LocationAttributeValue WHERE MATCH(Value) AGAINST ('food' IN BOOLEAN MODE) 
+    UNION ALL 
+    SELECT DISTINCT LocationID FROM LocationAttributeValue WHERE MATCH(Value) AGAINST ('wifi' IN BOOLEAN MODE) 
+  ) AS PossibleMatches
+  GROUP BY LocationID			# 
+  HAVING MatchedWords = 3		# use the number of words here to require a full match
+) AS Matches, Location
+WHERE
+  Matches.LocationID = Location.ID	# join our list of Matches to Location to get needed data
+*/
+
+void search_location_on_words(gchar** aWords, gint nWordCount)
+{
+	if(nWordCount == 0) return;
+
+	gchar* pszInnerSelects = g_strdup("");
+	gint i;
+	for(i=0 ; i<nWordCount ; i++) {
+		// add a join
+		gchar* pszNewSelect = g_strdup_printf(
+			" %s SELECT DISTINCT LocationID"	// the DISTINCT means a word showing up in 10 places for a POI will only count as 1 towards MatchedWords below
+			" FROM LocationAttributeValue WHERE MATCH(Value) AGAINST ('%s' IN BOOLEAN MODE)",
+				(i>0) ? "UNION ALL" : "",	// add "UNION ALL" between SELECTs
+				aWords[i]);
+
+		// out with the old, in with the new.  yes, it's slow, but not in user-time. :)
+		gchar* pszTmp = g_strconcat(pszInnerSelects, pszNewSelect, NULL);
+		g_free(pszInnerSelects);
+		g_free(pszNewSelect);
+		pszInnerSelects = pszTmp;
+	}
 
 	gchar* pszSQL = g_strdup_printf(
 		"SELECT Location.ID, LocationAttributeValue_Name.Value AS Name, LocationAttributeValue_Address.Value AS Address, AsBinary(Location.Coordinates)"
-		" FROM LocationAttributeValue"
-		" LEFT JOIN LocationAttributeName ON (LocationAttributeValue.AttributeNameID=LocationAttributeName.ID)"
-		" LEFT JOIN Location ON (LocationAttributeValue.LocationID=Location.ID)"
+		" FROM ("
+		  "SELECT LocationID, COUNT(*) AS MatchedWords FROM ("
+		    "%s"
+		  ") AS PossibleMatches" // unused alias
+		 " GROUP BY LocationID"
+		 " HAVING MatchedWords = %d"
+		 ") AS Matches, Location"
+		
+		// Get the two values we need: Name and Address
 		" LEFT JOIN LocationAttributeValue AS LocationAttributeValue_Name ON (Location.ID=LocationAttributeValue_Name.LocationID AND LocationAttributeValue_Name.AttributeNameID=%d)"
 		" LEFT JOIN LocationAttributeValue AS LocationAttributeValue_Address ON (Location.ID=LocationAttributeValue_Address.LocationID AND LocationAttributeValue_Address.AttributeNameID=%d)"
-		" WHERE"
-		" MATCH(LocationAttributeValue.Value) AGAINST ('%s' IN BOOLEAN MODE)"
-		" GROUP BY Location.ID;",
+
+		" WHERE Matches.LocationID = Location.ID",
+			pszInnerSelects,
+			nWordCount,
 			LOCATION_ATTRIBUTE_ID_NAME,
-			LOCATION_ATTRIBUTE_ID_ADDRESS,
-			pszCleanedSentence
+			LOCATION_ATTRIBUTE_ID_ADDRESS
 		);
 
+	//g_print("SQL: %s\n", pszSQL);
+
+	g_free(pszInnerSelects);
+
 	db_resultset_t* pResultSet;
-	if(db_query(pszSQL, &pResultSet)) {
-		db_row_t aRow;
+	gboolean bQueryResult = db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
 
-		// get result rows!
-		gint nCount = 0;		
-		while((aRow = mysql_fetch_row(pResultSet))) {
-			nCount++;
-			if(nCount <= SEARCH_RESULT_COUNT_LIMIT) {
-				gint nLocationID = atoi(aRow[0]);
-				gchar* pszLocationName = aRow[1];
-				gchar* pszLocationAddress = aRow[2];
-				// Parse coordinates
-				mappoint_t pt;
-				db_parse_wkb_point(aRow[3], &pt);
+	if(bQueryResult) {
+		if(pResultSet != NULL) {
+			db_row_t aRow;
 
-				search_location_filter_result(nLocationID, pszLocationName, pszLocationAddress, &pt);
+			g_assert(pResultSet);
+
+			// get result rows!
+			gint nCount = 0;		
+			while((aRow = db_fetch_row(pResultSet))) {
+				nCount++;
+				if(nCount <= SEARCH_RESULT_COUNT_LIMIT) {
+					gint nLocationID = atoi(aRow[0]);
+					gchar* pszLocationName = aRow[1];
+					gchar* pszLocationAddress = aRow[2];
+					// Parse coordinates
+					mappoint_t pt;
+					db_parse_wkb_point(aRow[3], &pt);
+
+					search_location_filter_result(nLocationID, pszLocationName, pszLocationAddress, &pt);
+				}
 			}
-		}
-		db_free_result(pResultSet);
-
-		if(nCount == 0) {
-			g_print("no location search results\n");
+			db_free_result(pResultSet);
+			//g_print("%d location results\n", nCount);
 		}
 		else {
-			g_print("%d location results\n", nCount);
+			g_print("no location search results\n");
 		}
 	}
 	else {
 		g_print("search failed\n");
 	}
 }
-
-/* void search_location_on_words(gchar** aWords, gint nWordCount) */
-/* {                                                                                         */
-/* }                                                                                         */
 
 #define LOCATION_RESULT_SUGGESTED_ZOOMLEVEL	(7)
 

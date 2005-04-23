@@ -840,7 +840,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 	map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &screenpoint, &mappoint);
 	
 	maphit_t* pHitStruct = NULL;
-	gboolean bLocationHit = (map_hit_test(g_MainWindow.m_pMap, &mappoint, &pHitStruct) && pHitStruct->m_eHitType == MAP_HITTYPE_LOCATION);
+	map_hit_test(g_MainWindow.m_pMap, &mappoint, &pHitStruct);
 	// hitstruct free'd far below
 
 	if(event->button == MOUSE_BUTTON_LEFT) {
@@ -885,8 +885,24 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 
 					mainwindow_add_history();
 				}
-				else if(bLocationHit) {
-					g_print("click on location ID #%d\n", pHitStruct->m_LocationHit.m_nLocationID);
+				else if(pHitStruct != NULL) {
+					if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATION) {
+						if(map_location_selection_add(g_MainWindow.m_pMap, pHitStruct->m_LocationHit.m_nLocationID)) {
+							mainwindow_draw_map(DRAWFLAG_ALL);
+						}
+					}
+					else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION_CLOSE) {
+						if(map_location_selection_remove(g_MainWindow.m_pMap, pHitStruct->m_LocationHit.m_nLocationID)) {
+							mainwindow_draw_map(DRAWFLAG_ALL);
+						}
+					}
+					else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION_EDIT) {
+						// edit POI
+						//g_MainWindow.m_pMap, pHitStruct->m_LocationHit.m_nLocationID
+					}
+					else if(pHitStruct->m_eHitType == MAP_HITTYPE_URL) {
+						util_open_uri(pHitStruct->m_URLHit.m_pszURL);
+					}
 				}
 			}
 
@@ -1044,14 +1060,29 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 
 					// also set mouse cursor to hand
 					nCursor = GDK_HAND2;
+					tooltip_show(g_MainWindow.m_pTooltip);
 				}
-				else {
+				else if(pHitStruct->m_eHitType == MAP_HITTYPE_ROAD) {
 					GdkColor clr = {0, ROAD_TOOLTIP_BG_COLOR};
 					tooltip_set_bg_color(g_MainWindow.m_pTooltip, &clr);
+					tooltip_show(g_MainWindow.m_pTooltip);
+				}
+				else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION) {
+					tooltip_hide(g_MainWindow.m_pTooltip);
+				}
+				else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION_CLOSE) {
+					nCursor = GDK_HAND2;
+					tooltip_hide(g_MainWindow.m_pTooltip);
+				}
+				else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION_EDIT) {
+					nCursor = GDK_HAND2;
+					tooltip_hide(g_MainWindow.m_pTooltip);
+				}
+				else if(pHitStruct->m_eHitType == MAP_HITTYPE_URL) {
+					nCursor = GDK_HAND2;
+					tooltip_hide(g_MainWindow.m_pTooltip);
 				}
 
-				tooltip_show(g_MainWindow.m_pTooltip);	// ensure it's visible
-				
 				map_hitstruct_free(g_MainWindow.m_pMap, pHitStruct);
 			}
 			else {

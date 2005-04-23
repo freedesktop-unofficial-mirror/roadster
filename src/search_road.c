@@ -50,20 +50,6 @@ typedef struct {
 #define MAX_QUERY 				(4000)
 #define ROAD_MIN_LENGTH_FOR_WILDCARD_SEARCH	(3)
 
-// if glib < 2.6
-#if(!GLIB_CHECK_VERSION(2,6,0))
-gint g_strv_length(const gchar** a)
-{
-	gint nCount=0;
-	const gchar** pp = a;
-	while(*pp != NULL) {
-		nCount++;
-		pp++;
-	}
-	return nCount;
-}
-#endif
-
 gchar* g_strjoinv_limit(const gchar* separator, gchar** a, gint iFirst, gint iLast)
 {
 	g_assert(iFirst <= iLast);
@@ -371,7 +357,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 
 		// get result rows!
 		gint nCount = 0;		
-		while((aRow = mysql_fetch_row(pResultSet))) {
+		while((aRow = db_fetch_row(pResultSet))) {
 			// [0] Road.ID
 			// [1] RoadName.Name
 			// [2] RoadName.SuffixID

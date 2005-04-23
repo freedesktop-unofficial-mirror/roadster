@@ -96,38 +96,45 @@ void searchwindow_clear_results(void)
 	g_SearchWindow.m_nNumResults = 0;
 }
 
+void searchwindow_add_message(gchar* pszMessage)
+{
+	GtkTreeIter iter;
+	gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
+	gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter, RESULTLIST_COLUMN_NAME, pszMessage, RESULTLIST_CLICKABLE, FALSE, -1);
+}
+
 // begin a search
 void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 {
 	// make list unsorted (sorting once at the end is much faster than for each insert)
 //	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), MAGIC_GTK_NO_SORT_COLUMN, GTK_SORT_ASCENDING);
+	searchwindow_clear_results();
 
 	const gchar* pszSearch = gtk_entry_get_text(g_SearchWindow.m_pSearchEntry);
 
-	void* pBusy = mainwindow_set_busy();
-	searchwindow_clear_results();
-	search_road_execute(pszSearch);
-	search_location_execute(pszSearch);
-	mainwindow_set_not_busy(&pBusy);
-
-	if(g_SearchWindow.m_nNumResults == 0) {
-		// insert a "no results" message
-		gchar* pszBuffer = g_strdup_printf("<span size='small'><i>No results.</i></span>", pszSearch);
-		GtkTreeIter iter;
-		gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
-		gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter, 
-				   RESULTLIST_COLUMN_NAME, pszBuffer, 
-				   RESULTLIST_CLICKABLE, FALSE,
-				   -1);
+	if(pszSearch[0] == '\0') {
+		gchar* pszBuffer = g_strdup_printf("<span size='small'><i>Type search words above.</i></span>");
+		searchwindow_add_message(pszBuffer);
 		g_free(pszBuffer);
 	}
+	else {
+		void* pBusy = mainwindow_set_busy();
+		search_road_execute(pszSearch);
+		search_location_execute(pszSearch);
+		mainwindow_set_not_busy(&pBusy);
 
+		if(g_SearchWindow.m_nNumResults == 0) {
+			// insert a "no results" message
+			gchar* pszBuffer = g_strdup_printf("<span size='small'><i>No results.</i></span>", pszSearch);
+			searchwindow_add_message(pszBuffer);
+			g_free(pszBuffer);
+		}
+		// Sort the list by distance from viewer!
+		gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), RESULTLIST_DISTANCE, GTK_SORT_ASCENDING);
+	}
 	// ensure the search results are visible
 	mainwindow_sidebar_set_tab(SIDEBAR_TAB_SEARCH_RESULTS);
 	mainwindow_set_sidebox_visible(TRUE);
-
-	// Sort the list by distance from viewer!
-	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), RESULTLIST_DISTANCE, GTK_SORT_ASCENDING);
 }
 
 // add a result row to the list
@@ -188,6 +195,6 @@ void searchwindow_on_addressresultstreeview_row_activated(GtkWidget *pWidget, gp
 
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data)
 {
-	GTK_PROCESS_MAINLOOP;	// make sure GUI updates before we start our cpu-intensive move to the result
+//	GTK_PROCESS_MAINLOOP;	// make sure GUI updates before we start our cpu-intensive move to the result
 	searchwindow_go_to_selected_result();
 }

@@ -25,6 +25,7 @@
 #include "main.h"
 #include "map.h"
 #include "location.h"
+#include "db.h"
 
 struct {
 	GMemChunk* m_pLocationChunkAllocator;
@@ -105,3 +106,79 @@ gboolean location_insert_attribute(gint nLocationID, gint nAttributeID, const gc
 	return TRUE;
 }
 
+gboolean location_load(gint nLocationID, mappoint_t* pReturnCoordinates, gint* pnReturnLocationSetID)
+{
+	db_resultset_t* pResultSet = NULL;
+	db_row_t aRow;
+
+	gchar* pszSQL = g_strdup_printf(
+		"SELECT LocationSetID, AsBinary(Coordinates)"
+		" FROM Location"
+		" WHERE ID=%d", nLocationID);
+
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+
+	g_return_val_if_fail(pResultSet, FALSE);
+	
+	aRow = db_fetch_row(pResultSet);
+
+	if(aRow) {
+		if(pnReturnLocationSetID != NULL) {
+			*pnReturnLocationSetID = atoi(aRow[0]);
+		}
+		if(pReturnCoordinates != NULL) {
+			db_parse_wkb_point(aRow[1], pReturnCoordinates);
+		}
+		db_free_result(pResultSet);
+		return TRUE;
+	}
+	else {
+		db_free_result(pResultSet);
+		return FALSE;
+	}
+}
+
+void location_load_attributes(gint nLocationID, GPtrArray* pAttributeArray)
+{
+	db_resultset_t* pResultSet = NULL;
+	db_row_t aRow;
+
+	g_assert(pAttributeArray->len == 0);
+
+	gchar* pszSQL = g_strdup_printf(
+		"SELECT LocationAttributeValue.ID, LocationAttributeName.Name, LocationAttributeValue.Value"
+		" FROM LocationAttributeValue"
+		" LEFT JOIN LocationAttributeName ON (LocationAttributeValue.AttributeNameID=LocationAttributeName.ID)"
+		" WHERE LocationAttributeValue.LocationID=%d",
+		nLocationID
+		);
+
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+
+	if(pResultSet) {
+		while((aRow = db_fetch_row(pResultSet))) {
+			locationattribute_t* pNew = g_new0(locationattribute_t, 1);
+
+			pNew->m_nValueID = atoi(aRow[0]);
+			pNew->m_pszName = g_strdup((aRow[1] == NULL) ? "" : aRow[1]);
+			pNew->m_pszValue = g_strdup((aRow[2] == NULL) ? "" : aRow[2]);
+
+			g_ptr_array_add(pAttributeArray, pNew);
+		}
+		db_free_result(pResultSet);
+	}
+}
+
+void location_free_attributes(GPtrArray* pAttributeArray)
+{
+	gint i;
+	for(i=(pAttributeArray->len-1) ; i>=0 ; i--) {
+		locationattribute_t* pAttribute = g_ptr_array_remove_index_fast(pAttributeArray, i);
+		g_free(pAttribute->m_pszName);
+		g_free(pAttribute->m_pszValue);
+		g_free(pAttribute);
+	}
+	g_assert(pAttributeArray->len == 0);
+}
