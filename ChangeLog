@@ -1,3 +1,22 @@
+2005-05-26  Keith Packard  <keithp@keithp.com>
+
+	reviewed by: <delete if not using a buddy>
+
+	* data/layers.xml:
+	Label more stuff.
+	* src/map.c: (map_draw):
+	Use cairo by default (it is reasonably usable this way)
+	* src/map_draw_cairo.c: (map_draw_cairo),
+	(map_draw_cairo_background), (map_draw_cairo_layer_road_labels),
+	(map_draw_cairo_layer_polygon_labels),
+	(map_draw_cairo_layer_roads), (map_draw_cairo_layer_polygons),
+	(map_draw_cairo_layer_points),
+	(map_draw_cairo_road_label_one_segment),
+	(map_draw_cairo_road_label), (map_draw_cairo_polygon_label),
+	(map_draw_cairo_locationselection_outline),
+	(map_draw_cairo_locationselection):
+	API updates to 0.5 snapshot.
+
 2005-04-23  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/gui.c: Add new generic way to load XML files.

@@ -256,6 +256,8 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 
 	gint nRenderMode = RENDERMODE_FAST; //RENDERMODE_PRETTY; //;
 
+	nRenderMode = RENDERMODE_PRETTY;
+
 #ifdef SCENEMANAGER_DEBUG_TEST
         GdkRectangle rect = {200,200,100,100};
         scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);

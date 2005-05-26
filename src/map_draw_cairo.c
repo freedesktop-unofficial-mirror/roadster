@@ -36,6 +36,7 @@
 
 #include <gdk/gdkx.h>
 #include <cairo.h>
+#include <cairo-xlib.h>
 #include <gtk/gtk.h>
 #include <math.h>
 
@@ -89,10 +90,17 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 	Display* dpy;
 	Drawable drawable;
 	dpy = gdk_x11_drawable_get_xdisplay(pPixmap);
+	Visual *visual = DefaultVisual (dpy, DefaultScreen (dpy));
+	gint width, height;
 	drawable = gdk_x11_drawable_get_xid(pPixmap);
 
-	cairo_t* pCairo = cairo_create ();
-	cairo_set_target_drawable(pCairo, dpy, drawable);
+	gdk_drawable_get_size (pPixmap, &width, &height);
+	cairo_surface_t *pSurface = cairo_xlib_surface_create (dpy,
+							       drawable,
+							       visual,
+							       width,
+							       height);
+	cairo_t* pCairo = cairo_create (pSurface);
 
 	// 2. Rendering
 	TIMER_BEGIN(maptimer, "BEGIN RENDER MAP (cairo)");
@@ -168,7 +176,7 @@ static void map_draw_cairo_background(map_t* pMap, cairo_t *pCairo)
 {
 	// XXX: Don't hardcode background color
 	cairo_save(pCairo);
-		cairo_set_rgb_color(pCairo, 247/255.0, 235/255.0, 230/255.0);
+		cairo_set_source_rgb (pCairo, 247/255.0, 235/255.0, 230/255.0);
 		cairo_rectangle(pCairo, 0, 0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
@@ -190,8 +198,8 @@ void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 
 	// set font for whole layer
 	cairo_save(pCairo);
-	cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_scale_font(pCairo, fFontSize);
+	cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(pCairo, fFontSize);
 
 	for(i=0 ; i<pRoadsArray->len ; i++) {
 		road_t* pRoad = g_ptr_array_index(pRoadsArray, i);
@@ -214,10 +222,10 @@ void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermet
 
 	// set font for whole layer
 	cairo_save(pCairo);
-	cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_scale_font(pCairo, fFontSize);
+	cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLabelStyle->m_abBoldAtZoomLevel[pRenderMetrics->m_nZoomLevel-1] ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(pCairo, fFontSize);
 
-	cairo_set_rgb_color(pCairo, pLabelStyle->m_clrColor.m_fRed, pLabelStyle->m_clrColor.m_fGreen, pLabelStyle->m_clrColor.m_fBlue);
+	cairo_set_source_rgb(pCairo, pLabelStyle->m_clrColor.m_fRed, pLabelStyle->m_clrColor.m_fGreen, pLabelStyle->m_clrColor.m_fBlue);
 
 	gint i;
 	for(i=0 ; i<pRoadsArray->len ; i++) {
@@ -276,8 +284,11 @@ void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* p
 	}
 
 	// Set layer attributes	
-	cairo_set_rgb_color(pCairo, pSubLayerStyle->m_clrColor.m_fRed, pSubLayerStyle->m_clrColor.m_fGreen, pSubLayerStyle->m_clrColor.m_fBlue);
-	cairo_set_alpha(pCairo, pSubLayerStyle->m_clrColor.m_fAlpha);
+	cairo_set_source_rgba(pCairo, 
+			      pSubLayerStyle->m_clrColor.m_fRed, 
+			      pSubLayerStyle->m_clrColor.m_fGreen, 
+			      pSubLayerStyle->m_clrColor.m_fBlue,
+			      pSubLayerStyle->m_clrColor.m_fAlpha);
 	cairo_set_line_width(pCairo, fLineWidth);
 
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
@@ -319,8 +330,11 @@ void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t
 	if(pSubLayerStyle->m_clrColor.m_fAlpha == 0.0) return;	// invisible?
 	
 	// Set layer attributes	
-	cairo_set_rgb_color(pCairo, pSubLayerStyle->m_clrColor.m_fRed, pSubLayerStyle->m_clrColor.m_fGreen, pSubLayerStyle->m_clrColor.m_fBlue);
-	cairo_set_alpha(pCairo, pSubLayerStyle->m_clrColor.m_fAlpha);
+	cairo_set_source_rgba (pCairo, 
+			       pSubLayerStyle->m_clrColor.m_fRed,
+			       pSubLayerStyle->m_clrColor.m_fGreen,
+			       pSubLayerStyle->m_clrColor.m_fBlue,
+			       pSubLayerStyle->m_clrColor.m_fAlpha);
 	cairo_set_line_width(pCairo, fLineWidth);
 	cairo_set_fill_rule(pCairo, CAIRO_FILL_RULE_EVEN_ODD);
 
@@ -354,7 +368,7 @@ void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t
 
 		// TODO: this is debugging of polygons.
 //         cairo_save(pCairo);
-//         cairo_set_rgb_color(pCairo, 1,0,0);
+//         cairo_set_source_rgb(pCairo, 1,0,0);
 //
 //         if(pPointString->m_pPointsArray->len >= 3) {
 //             gdouble fRadius = 2;
@@ -365,7 +379,7 @@ void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t
 //
 //                 color_t clr;
 //                 util_random_color(&clr);
-//                 cairo_set_rgb_color(pCairo, clr.m_fRed, clr.m_fGreen, clr.m_fBlue);
+//                 cairo_set_source_rgb(pCairo, clr.m_fRed, clr.m_fGreen, clr.m_fBlue);
 //
 //                 gchar buf[20];
 //                 g_snprintf(buf, 20, "%d", iPoint);
@@ -388,7 +402,7 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 	gboolean bAddition = FALSE;
 
 	cairo_save(pCairo);
-		cairo_set_rgb_color(pCairo, 123.0/255.0, 48.0/255.0, 1.0);
+		cairo_set_source_rgb(pCairo, 123.0/255.0, 48.0/255.0, 1.0);
 		cairo_set_alpha(pCairo, 0.3);
 
 		gint iLocation;
@@ -407,7 +421,7 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 		if(!bAddition) cairo_fill(pCairo);
 
 		// point centers
-		cairo_set_rgb_color(pCairo, 128.0/255.0, 128.0/255.0, 128.0/255.0);
+		cairo_set_source_rgb(pCairo, 128.0/255.0, 128.0/255.0, 128.0/255.0);
 		cairo_set_alpha(pCairo, 1.0);
 		fRadius = 2;
 		for(iLocation=0 ; iLocation<pLocationsArray->len ; iLocation++) {
@@ -447,7 +461,7 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 #define BIP (3)
 #define BAP (1.5)
 
-	cairo_set_rgb_color(pCairo, 20/255.0, 20/255.0, 20/255.0);
+	cairo_set_source_rgb(pCairo, 20/255.0, 20/255.0, 20/255.0);
 	cairo_set_line_width(pCairo, 2.5);
 	cairo_set_alpha(pCairo, 1.0);
 
@@ -593,22 +607,23 @@ static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, 
                 if(fRun < 0.0) fAngleInRadians += M_PI;
                 
                 cairo_save(pCairo);
-                cairo_move_to(pCairo, fDrawX, fDrawY);
-                cairo_set_rgb_color(pCairo, 0.0,0.0,0.0);
-                cairo_set_alpha(pCairo, 1.0);
-                cairo_rotate(pCairo, fAngleInRadians);
+                cairo_set_source_rgb (pCairo, 0.0,0.0,0.0);
                 
                 gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
                 if(fHaloSize >= 0) {
                         cairo_save(pCairo);
+			cairo_move_to(pCairo, fDrawX, fDrawY);
+			cairo_rotate(pCairo, fAngleInRadians);
                         cairo_text_path(pCairo, pszLabel);
                         cairo_set_line_width(pCairo, fHaloSize);
-                        cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
+                        cairo_set_source_rgb(pCairo, 1.0,1.0,1.0);
                         cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
                         //cairo_set_miter_limit(pCairo, 0.1);
                         cairo_stroke(pCairo);
                         cairo_restore(pCairo);
                 }
+                cairo_move_to(pCairo, fDrawX, fDrawY);
+		cairo_rotate(pCairo, fAngleInRadians);
                 cairo_show_text(pCairo, pszLabel);
                 cairo_restore(pCairo);
                 
@@ -1099,22 +1114,24 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, textlabelsty
 			aBoundingPolygon[3].y = fDrawY + (fNormalizedY * extents.width);
 
 			cairo_save(pCairo);
-			cairo_move_to(pCairo, fDrawX, fDrawY);
-			cairo_set_rgb_color(pCairo, 0.0,0.0,0.0);
+			cairo_set_source_rgb(pCairo, 0.0,0.0,0.0);
 			cairo_set_alpha(pCairo, 1.0);
-			cairo_rotate(pCairo, fAngleInRadians);
 
 			gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 			if(fHaloSize >= 0) {
 				cairo_save(pCairo);
+				cairo_move_to(pCairo, fDrawX, fDrawY);
+				cairo_rotate(pCairo, fAngleInRadians);
 				cairo_text_path(pCairo, azLabelSegment);
 				cairo_set_line_width(pCairo, fHaloSize);
-				cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
+				cairo_set_source_rgb(pCairo, 1.0,1.0,1.0);
 				cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
 				//cairo_set_miter_limit(pCairo, 0.1);
 				cairo_stroke(pCairo);
 				cairo_restore(pCairo);
 			}
+			cairo_move_to(pCairo, fDrawX, fDrawY);
+			cairo_rotate(pCairo, fAngleInRadians);
 			cairo_show_text(pCairo, azLabelSegment);
 			//cairo_fill(pCairo);
 			cairo_restore(pCairo);
@@ -1217,19 +1234,20 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, textlabelstyle_t
 		// claim it!  Now no one else will draw text here.
 		scenemanager_claim_rectangle(pMap->m_pSceneManager, &rcLabelOutline);
 
-		cairo_move_to(pCairo, fDrawX, fDrawY);
 
 		gdouble fHaloSize = pLabelStyle->m_afHaloAtZoomLevel[pRenderMetrics->m_nZoomLevel-1];
 		if(fHaloSize >= 0) {
 			cairo_save(pCairo);
+				cairo_move_to(pCairo, fDrawX, fDrawY);
 				cairo_text_path(pCairo, pszLabel);
 				cairo_set_line_width(pCairo, fHaloSize);
-				cairo_set_rgb_color(pCairo, 1.0,1.0,1.0);
+				cairo_set_source_rgb (pCairo, 1.0,1.0,1.0);
 				cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_BEVEL);
 //				cairo_set_miter_limit(pCairo, 0.1);
 				cairo_stroke(pCairo);
 			cairo_restore(pCairo);
 		}
+		cairo_move_to(pCairo, fDrawX, fDrawY);
 		cairo_show_text(pCairo, pszLabel);
 	cairo_restore(pCairo);
 
@@ -1351,16 +1369,14 @@ static void map_draw_cairo_locationselection_outline(cairo_t *pCairo, gdouble fP
 	// DONE drawing balloon
 	// =======================================================================================
 
-	cairo_set_alpha(pCairo, 1.00);
-
 	// fill then stroke
 	cairo_save(pCairo);
-		cairo_set_rgb_color(pCairo, 1.0, 1.0, 1.0);
+		cairo_set_source_rgb(pCairo, 1.0, 1.0, 1.0);
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
 
 //	cairo_save(pCairo);
-		cairo_set_rgb_color(pCairo, 0.0, 0.0, 0.0);
+		cairo_set_source_rgb(pCairo, 0.0, 0.0, 0.0);
 		cairo_set_line_width(pCairo, 1.0);
 		cairo_stroke(pCairo);
 //	cairo_restore(pCairo);
@@ -1370,7 +1386,7 @@ static void map_draw_cairo_locationselection_outline(cairo_t *pCairo, gdouble fP
 	gdouble fCloseRectWidth = 13.0;
 
 	cairo_set_line_width(pCairo, 1.0);
-	cairo_set_rgb_color(pCairo, 0.5,0.5,0.5);
+	cairo_set_source_rgb(pCairo, 0.5,0.5,0.5);
 
 	cairo_move_to(pCairo, (fBoxX + fBoxWidth) - fCloseRectRelief, fBoxY + fCloseRectRelief);
 	cairo_rel_line_to(pCairo, 0.0, fCloseRectWidth);
@@ -1454,8 +1470,8 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 
 		const gchar* pszString;
 		cairo_text_extents_t extents;
-		cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-		cairo_scale_font(pCairo, fTitleFontSize);
+		cairo_select_font_face (pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+		cairo_set_font_size(pCairo, fTitleFontSize);
 
 		// draw name
 		pszString = map_location_selection_get_attribute(pMap, pLocationSelection, "name");
@@ -1463,7 +1479,7 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 		cairo_text_extents(pCairo, pszString, &extents);
 		gdouble fLabelWidth = extents.width;
 		gdouble fFontHeight = extents.height;
-		cairo_set_rgb_color(pCairo, 0.1,0.1,0.1);	// normal text color
+		cairo_set_source_rgb(pCairo, 0.1,0.1,0.1);	// normal text color
 
 		gdouble fTextOffsetX = fBoxX;
 		gdouble fTextOffsetY = fBoxY + fFontHeight;
@@ -1479,8 +1495,8 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 			gchar* pszLine;
 			if(aLines[0]) {
 				pszLine = aLines[0];
-				cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-				cairo_scale_font(pCairo, fBodyFontSize);
+				cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+				cairo_set_font_size(pCairo, fBodyFontSize);
 				cairo_text_extents(pCairo, pszLine, &extents);
 				fLabelWidth = extents.width;
 				fFontHeight = extents.height;
@@ -1510,7 +1526,7 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 
 		fTextOffsetY += (LINE_RELIEF + fFontHeight);
 		cairo_move_to(pCairo, fTextOffsetX, fTextOffsetY);
-		cairo_set_rgb_color(pCairo, 0.1,0.1,0.1);	// normal text color
+		cairo_set_source_rgb(pCairo, 0.1,0.1,0.1);	// normal text color
 		cairo_show_text(pCairo, pszString);
 		// draw underline
 //                 cairo_text_extents(pCairo, pszString, &extents);
@@ -1527,7 +1543,7 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 		fLabelWidth = extents.width;
 		fFontHeight = extents.height;
 		cairo_move_to(pCairo, fTextOffsetX, fTextOffsetY);
-		cairo_set_rgb_color(pCairo, 0.1,0.1,0.4);	// remote link color
+		cairo_set_source_rgb(pCairo, 0.1,0.1,0.4);	// remote link color
 		cairo_show_text(pCairo, pszString);
 		cairo_underline_text(pCairo, fLabelWidth);
 
@@ -1541,9 +1557,9 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 
 		// draw 'edit' link
 		pszString = "edit";
-		cairo_set_rgb_color(pCairo, 0.1,0.4,0.1);	// local link color
-		cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-		cairo_scale_font(pCairo, fBodyFontSize);
+		cairo_set_source_rgb(pCairo, 0.1,0.4,0.1);	// local link color
+		cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+		cairo_set_font_size(pCairo, fBodyFontSize);
 		cairo_text_extents(pCairo, pszString, &extents);
 		fLabelWidth = extents.width;
 		fFontHeight = extents.height;
@@ -1578,7 +1594,7 @@ static void map_draw_cairo_crosshair(map_t* pMap, cairo_t* pCairo, rendermetrics
 {
 	cairo_save(pCairo);
 		cairo_set_line_width(pCairo, 1.0);
-		cairo_set_rgb_color(pCairo, 0.1, 0.1, 0.1);
+		cairo_set_source_rgb(pCairo, 0.1, 0.1, 0.1);
 		cairo_set_alpha(pCairo, 1.0);
 		
 		// left line
@@ -1618,8 +1634,8 @@ void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRe
 	//
 	cairo_save(pCairo);
 
-	cairo_select_font(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_scale_font(pCairo, fFontSize);	
+	cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(pCairo, fFontSize);	
 
 	// measure the label
 	cairo_text_extents_t extents;
@@ -1634,18 +1650,18 @@ void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRe
 
 	cairo_rectangle(pCairo, fX - LOCATION_LABEL_CELL_PADDING, fY-(fLabelHeight/2)-(LOCATION_LABEL_CELL_PADDING), fLabelWidth + (LOCATION_LABEL_CELL_PADDING*2), fLabelHeight + (LOCATION_LABEL_CELL_PADDING*2));
 	cairo_save(pCairo);
-		cairo_set_rgb_color(pCairo, 247/255.0, 247/255.0, 247/255.0);
+		cairo_set_source_rgb(pCairo, 247/255.0, 247/255.0, 247/255.0);
 		cairo_set_alpha(pCairo, 0.9);
 
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
 
-	cairo_set_rgb_color(pCairo, 232/255.0, 166/255.0, 0/255.0);
+	cairo_set_source_rgb(pCairo, 232/255.0, 166/255.0, 0/255.0);
 	cairo_set_alpha(pCairo, 1.0);
 	cairo_set_line_width(pCairo, 0.9);
 	cairo_stroke(pCairo);
 	
-	cairo_set_rgb_color(pCairo, 0/255.0, 0/255.0, 0/255.0);
+	cairo_set_source_rgb(pCairo, 0/255.0, 0/255.0, 0/255.0);
 	cairo_move_to(pCairo, fX, fY+(fLabelHeight/2));
 	cairo_show_text(pCairo, pLoc->m_pszName);
 
@@ -1672,7 +1688,7 @@ void map_draw_cairo_gps_trail(map_t* pMap, cairo_t* pCairo, pointstring_t* pPoin
 			cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
 		}
 
-		cairo_set_rgb_color(pCairo, 0.0, 0.0, 0.7);
+		cairo_set_source_rgb(pCairo, 0.0, 0.0, 0.7);
 		cairo_set_alpha(pCairo, 0.6);
 		cairo_set_line_width(pCairo, 6);
 		cairo_set_line_cap(pCairo, CAIRO_LINE_CAP_ROUND);
