@@ -1,3 +1,17 @@
+2005-08-28  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+        * data/roadster.glade: UI cleanup.  Moved many items into a 'Debug' menu.
+        * src/gpsclient.c: Update to newest gpsd lib.
+        * src/db.c: Format coordinates using g_ascii_dtostr to avoid i18n.
+        * src/mainwindow.c: Add GTK About dialog.
+        * src/map.c: Back to GDK rendering as default (not fast enough without hardware accel.).  Use g_ascii_dtostr.  Add hack to turn circular rivers into lakes.
+        * src/map_draw_cairo.c: Update to Cairo 1.0.  Add hack to round text rotation angles down to better utilize font cache (which isn't in 1.0 yet).
+        * src/pointstring.c:
+        * src/point.c: Add debugging function.
+        * src/search_road.c: Move function to util.c
+        * src/searchwindow.c: Remove unused variables.
+        * src/util.c: Added util_split_words_onto_two_lines(), currently unused.
+
 2005-05-26  Keith Packard  <keithp@keithp.com>
 
 	* data/layers.xml:
