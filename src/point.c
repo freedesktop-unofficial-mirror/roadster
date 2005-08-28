@@ -78,3 +78,8 @@ void point_free(mappoint_t* pPoint)
 #endif
 }
 
+void point_debug_print(mappoint_t* pPoint)
+{
+	g_print("pt (%f, %f)\n", pPoint->m_fLatitude, pPoint->m_fLongitude);
+}
+

@@ -77,7 +77,6 @@ layers_init(void)
 	LIBXML_TEST_VERSION
 
 	layers_load_from_file();
-
 }
 
 void
@@ -362,4 +361,3 @@ layers_print_color(color_t *color)
 {
 	printf("color: %3.2f, %3.2f, %3.2f, %3.2f\n", color->m_fRed, color->m_fGreen, color->m_fBlue, color->m_fAlpha);
 }
-

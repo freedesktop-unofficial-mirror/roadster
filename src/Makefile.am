@@ -29,7 +29,6 @@ roadster_SOURCES = \
 	import_tiger.c\
 	importwindow.c\
 	util.c\
-	datasetwindow.c\
 	welcomewindow.c\
 	gpsclient.c\
 	location.c\
@@ -39,7 +38,6 @@ roadster_SOURCES = \
 	search_location.c\
 	search.c\
 	scenemanager.c\
-	databasewindow.c\
 	point.c\
 	pointstring.c\
 	track.c\

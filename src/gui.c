@@ -34,7 +34,6 @@
 #include "mainwindow.h"
 #include "gotowindow.h"
 #include "importwindow.h"
-#include "datasetwindow.h"
 #include "welcomewindow.h"
 #include "searchwindow.h"
 
@@ -48,7 +47,7 @@ void gui_init()
 	searchwindow_init(pGladeXML);
 	gotowindow_init(pGladeXML);
 	importwindow_init(pGladeXML);
-	datasetwindow_init(pGladeXML);
+	//datasetwindow_init(pGladeXML);
 	welcomewindow_init(pGladeXML);
 }
 

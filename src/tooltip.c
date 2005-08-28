@@ -54,7 +54,7 @@ tooltip_t* tooltip_new()
 	pNew->m_pLabel = GTK_LABEL(gtk_label_new("testing"));
 	gtk_container_add(GTK_CONTAINER(pFrame), GTK_WIDGET(pNew->m_pLabel));
 
-	pNew->m_bEnabled = TRUE;	// XXX: note: currently no API to disable it
+	pNew->m_bEnabled = TRUE;	// XXX: currently no API to disable it
 
 	return pNew;
 }

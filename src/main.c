@@ -79,6 +79,7 @@ int main (int argc, char *argv[])
 	prefs_read();
 
 	g_print("Running %s\n", g_thread_supported() ? "multi-threaded" : "single-threaded");
+
 	gui_run();
 	main_deinit();
 
@@ -141,7 +142,7 @@ gboolean main_init(void)
 	g_print("creating database tables\n");
 	db_create_tables();
 
-	// Load sets from DB
+	// Load location sets from DB.  This is "coffee shops", "ATMs", etc.
 	locationset_load_locationsets();
 
 	g_print("initializing gui\n");
@@ -154,7 +155,7 @@ gboolean main_init(void)
 
 static void main_deinit(void)
 {
-	g_print("deinitializating database\n");
+	g_print("deinitializing database\n");
 	db_deinit();
 	// others?
 

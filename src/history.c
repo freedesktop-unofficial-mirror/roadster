@@ -49,22 +49,24 @@ void history_add(history_t* pHistory, mappoint_t* pPoint, gint nZoomLevel)
 	g_assert(pHistory != NULL);
 	g_assert(pPoint != NULL);
 
+	// If user has clicked BACK a few times, we won't be at the last index in the array...
 	if(pHistory->m_nCurrentIndex < (pHistory->m_MapViewArray->len - 1)) {
-		// clear out everything after currentindex in the array!
+		// ...so clear out everything after where we are
 		g_array_remove_range(pHistory->m_MapViewArray, pHistory->m_nCurrentIndex + 1, (pHistory->m_MapViewArray->len - pHistory->m_nCurrentIndex) - 1);
 
-		pHistory->m_nTotalItems = (pHistory->m_nCurrentIndex + 1);
+		pHistory->m_nTotalItems = (pHistory->m_nCurrentIndex + 1);	// +1 to change it from an index to a count, it's NOT for the new item we're adding
 	}
 
 	// Move to next one
 	pHistory->m_nCurrentIndex++;
 
+	// Grow array if necessary
 	if(pHistory->m_nCurrentIndex >= pHistory->m_MapViewArray->len) {
 		// XXX: is this doing a realloc every time?  ouch. :)
 		g_array_set_size(pHistory->m_MapViewArray, pHistory->m_MapViewArray->len + 1);
 	}
 
-	// Get pointer to it
+	// Get pointer to new current index
 	mapview_t* pNew = &g_array_index(pHistory->m_MapViewArray, mapview_t, pHistory->m_nCurrentIndex);
 	g_return_if_fail(pNew != NULL);
 
@@ -73,6 +75,8 @@ void history_add(history_t* pHistory, mappoint_t* pPoint, gint nZoomLevel)
 	pNew->m_nZoomLevel = nZoomLevel;
 
 	pHistory->m_nTotalItems++;
+
+	g_assert(pHistory->m_nCurrentIndex < pHistory->m_nTotalItems);
 }
 
 gboolean history_can_go_forward(history_t* pHistory)
@@ -110,7 +114,7 @@ void history_get_current(history_t* pHistory, mappoint_t* pReturnPoint, gint* pn
 	g_assert(pHistory->m_nCurrentIndex < pHistory->m_nTotalItems);
 
 	mapview_t* pCurrent = &g_array_index(pHistory->m_MapViewArray, mapview_t, pHistory->m_nCurrentIndex);
-	
+
 	memcpy(pReturnPoint, &(pCurrent->m_MapPoint), sizeof(mappoint_t));
 	*pnReturnZoomLevel  = pCurrent->m_nZoomLevel;
 }

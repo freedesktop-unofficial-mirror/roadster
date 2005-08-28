@@ -29,12 +29,10 @@ void prefs_read() {}
 
 /*
 #include <glib.h>
-#include <glib.h>
 
 struct {
 	GKeyFile* m_pKeyFile;
 } g_Prefs = {0};
-
 
 #define KEYFILE_GROUP_GUI_STATE  	("state")
 #define KEYFILE_KEY_LATITUDE		("latitude")
@@ -49,9 +47,7 @@ void prefs_load()
 		
 	}
 
-        gchar* pszValue;
-
-	//
+	gchar* pszValue;
 	pszValue = g_key_file_get_value(g_Prefs.m_pKeyFile,
                                              KEYFILE_GROUP_GUI_STATE,
                                              KEYFILE_KEY_LATITUDE,

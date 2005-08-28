@@ -62,11 +62,10 @@ gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gch
 gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints)
 {
 	GdkRegion* pNewRegion = gdk_region_polygon(pPoints, nNumPoints, GDK_WINDING_RULE);
-	
-	// Set pNewRegion to the intersection of it and the 'taken region'
-	gdk_region_intersect(pNewRegion, pSceneManager->m_pTakenRegion);
+
+	gdk_region_intersect(pNewRegion, pSceneManager->m_pTakenRegion); // sets pNewRegion to the intersection of itself and the 'taken region'
 	gboolean bOK = gdk_region_empty(pNewRegion);	// it's ok to draw here if the intersection is empty
-        gdk_region_destroy(pNewRegion);
+	gdk_region_destroy(pNewRegion);
 
 	return bOK;
 }
@@ -75,10 +74,9 @@ gboolean scenemanager_can_draw_rectangle(scenemanager_t* pSceneManager, GdkRecta
 {
 	GdkRegion* pNewRegion = gdk_region_rectangle(pRect);
 
-	// Set pNewRegion to the intersection of it and the 'taken region'
-	gdk_region_intersect(pNewRegion, pSceneManager->m_pTakenRegion);
+	gdk_region_intersect(pNewRegion, pSceneManager->m_pTakenRegion); // sets pNewRegion to the intersection of itself and the 'taken region'
 	gboolean bOK = gdk_region_empty(pNewRegion);	// it's ok to draw here if the intersection is empty
-        gdk_region_destroy(pNewRegion);
+	gdk_region_destroy(pNewRegion);
 
 	return bOK;
 }
@@ -96,7 +94,7 @@ void scenemanager_claim_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints
 	// Create a GdkRegion from the given points and union it with the 'taken region'
 	GdkRegion* pNewRegion = gdk_region_polygon(pPoints, nNumPoints, GDK_WINDING_RULE);
 	gdk_region_union(pSceneManager->m_pTakenRegion, pNewRegion);
-        gdk_region_destroy(pNewRegion);
+	gdk_region_destroy(pNewRegion);
 }
 
 void scenemanager_claim_rectangle(scenemanager_t* pSceneManager, GdkRectangle* pRect)
@@ -109,11 +107,11 @@ void scenemanager_clear(scenemanager_t* pSceneManager)
 {
 	g_assert(pSceneManager != NULL);
 
-	// destroy and recreate hash table (better way to clear it?)
+	// destroy and recreate hash table (XXX: better way to clear it?)
 	g_hash_table_destroy(pSceneManager->m_pLabelHash);
 	pSceneManager->m_pLabelHash = g_hash_table_new(g_str_hash, g_str_equal);
 
-	// Empty the region (better way?)
+	// Empty the region (XXX: better way?)
 	gdk_region_destroy(pSceneManager->m_pTakenRegion);
 	pSceneManager->m_pTakenRegion = gdk_region_new();
 }

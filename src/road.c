@@ -260,4 +260,3 @@ gboolean road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID)
 	}
 	return FALSE;
 }
-

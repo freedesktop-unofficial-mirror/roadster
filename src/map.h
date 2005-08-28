@@ -225,7 +225,7 @@ typedef struct {
 //	void (*pFunc)(map_t*, cairo_t*, rendermetrics_t*, GPtrArray*, sublayerstyle_t*, textlabelstyle_t*);
 } draworder_t;
 
-#define MAX_LOCATIONSELETION_URLS	(5)
+#define MAX_LOCATIONSELECTION_URLS	(5)
 
 typedef struct {
 	gint m_nLocationID;
@@ -242,14 +242,14 @@ typedef struct {
 	struct {
 		screenrect_t m_Rect;
 		gchar* m_pszURL;
-	} m_aURLs[MAX_LOCATIONSELETION_URLS];
+	} m_aURLs[MAX_LOCATIONSELECTION_URLS];
 } locationselection_t;
 
 // Draw flags
 #define DRAWFLAG_LABELS 	(1)
 #define DRAWFLAG_GEOMETRY	(2)
-
 // next is 4 :)
+
 #define DRAWFLAG_ALL 		(1|2)
 
 #define NUM_SUBLAYER_TO_DRAW (24)
@@ -257,7 +257,6 @@ extern draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW];	//
 
 void map_init(void);
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget);
-
 
 // Gets and Sets
 guint16 map_get_zoomlevel(map_t* pMap);
@@ -267,7 +266,6 @@ void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel);
 
 void map_set_redraw_needed(map_t* pMap, gboolean bNeeded);
 gboolean map_get_redraw_needed(map_t* pMap);
-
 guint32 map_get_scale(map_t* pMap);
 
 void map_set_centerpoint(map_t* pMap, const mappoint_t* pPoint);
@@ -279,6 +277,9 @@ void map_windowpoint_to_mappoint(map_t* pMap, screenpoint_t* pScreenPoint, mappo
 gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nDistanceUnit);
 double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB);
 double map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel);
+double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
+gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2);
+gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2);
 
 // remove this!
 void map_center_on_windowpoint(map_t* pMap, guint16 uX, guint16 uY);
@@ -288,12 +289,6 @@ void map_release_pixmap(map_t* pMap);
 //void map_draw_thread_begin(map_t* pMap, GtkWidget* pTargetWidget);
 
 void map_draw(map_t* pMap, gint nDrawFlags);
-double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
-
-gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2);
-
-gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2);
-
 void map_add_track(map_t* pMap, gint hTrack);
 
 gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStruct);

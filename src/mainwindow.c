@@ -37,11 +37,9 @@
 #include "map.h"
 #include "layers.h"
 #include "importwindow.h"
-#include "datasetwindow.h"
 #include "welcomewindow.h"
 #include "locationset.h"
 #include "gpsclient.h"
-#include "databasewindow.h"
 #include "mainwindow.h"
 #include "glyph.h"
 #include "animator.h"
@@ -59,6 +57,7 @@
 #define PROGRAM_NAME			"Roadster"
 #define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
 #define PROGRAM_DESCRIPTION		"Mapping for everyone!"
+#define WEBSITE_URL				"http://linuxadvocate.org/projects/roadster"
 
 // how long after stopping various movements should we redraw in high-quality mode
 #define DRAW_PRETTY_SCROLL_TIMEOUT_MS	(110)	// NOTE: should be longer than the SCROLL_TIMEOUT_MS below!!
@@ -71,7 +70,7 @@
 #define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)		// the size of the click target (distance from edge of map view) to begin scrolling
 
 #define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
-#define	SLIDE_TIME_IN_SECONDS		(0.7)	// how long the whole slide should take, in seconds
+#define	SLIDE_TIME_IN_SECONDS		(0.4)	// how long the whole slide should take, in seconds
 #define	SLIDE_TIME_IN_SECONDS_AUTO	(0.8)	// time for sliding to search results, etc.
 
 // Layerlist columns
@@ -690,6 +689,20 @@ static void gui_set_tool(EToolType eTool)
 	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, g_Tools[eTool].m_Cursor.m_pGdkCursor);
 }
 
+void callback_url_clicked(GtkAboutDialog *about, const gchar *link, gpointer data)
+{
+	g_print("opening URL: %s\n", link);
+	util_open_uri(link);
+}
+
+void callback_email_clicked(GtkAboutDialog *about, const gchar *link, gpointer data)
+{
+	gchar* pszURI = g_strdup_printf("mailto:%s", link);
+	util_open_uri(pszURI);
+	g_free(pszURI);
+
+}
+
 void mainwindow_on_aboutmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 #if(GLIB_CHECK_VERSION(2,6,0))
@@ -699,13 +712,39 @@ void mainwindow_on_aboutmenuitem_activate(GtkMenuItem *menuitem, gpointer user_d
                  NULL
          };
 
-         gtk_show_about_dialog(g_MainWindow.m_pWindow,
-			       "authors", ppAuthors,
+         const gchar *ppArtists[] = {
+				"Stephen DesRoches <stephen@silverorange.com>",
+                 NULL
+         };
+
+		 GdkPixbuf* pIconPixbuf;
+		 gchar* pszPath;
+
+		 pszPath = g_strdup_printf(PACKAGE_SOURCE_DIR"/data/%s", "roadster-logo.png");
+		 pIconPixbuf = gdk_pixbuf_new_from_file(pszPath, NULL);
+		 g_free(pszPath);
+
+		 if(pIconPixbuf == NULL) {
+			 pszPath = g_strdup_printf(PACKAGE_DATA_DIR"/data/%s", "roadster-logo.png");
+			 pIconPixbuf = gdk_pixbuf_new_from_file(pszPath, NULL);
+			 g_free(pszPath);
+		 }
+
+         gtk_about_dialog_set_url_hook(callback_url_clicked, NULL, NULL);
+         gtk_about_dialog_set_email_hook(callback_email_clicked, NULL, NULL);
+		 gtk_show_about_dialog(g_MainWindow.m_pWindow,
+				   "authors", ppAuthors,
+			       "artists", ppArtists,
 			       "comments", PROGRAM_DESCRIPTION,
 			       "copyright", PROGRAM_COPYRIGHT,
 			       "name", PROGRAM_NAME,
+				    "website", WEBSITE_URL,
+				   "website-label", "Visit the Roadster Website",
 			       "version", VERSION,
+				   "logo", pIconPixbuf,
 			       NULL);
+
+		 if(pIconPixbuf) g_object_unref(pIconPixbuf);
 #endif
 }
 

@@ -22,7 +22,7 @@
  */
 
 #include <gtk/gtk.h>
-#include <gps.h>	// gpslib
+#include <gps.h>
 #include "main.h"
 #include "gpsclient.h"
 
@@ -40,13 +40,6 @@ void gpsclient_init()
 
 	gpsclient_connect();
 }
-
-// static void gpsclient_callback_raw_data(char* p)
-// {
-//         // g_print("raw: %s\n", p);
-// }
-
-// void gpsclient_debug_print(void);
 
 static void gpsclient_connect(void)
 {
@@ -111,8 +104,8 @@ gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condit
 			if(d->status != STATUS_NO_FIX) {
 				// a GPS device is present and working!
 				l->m_eStatus = GPS_STATUS_LIVE;
-				l->m_ptPosition.m_fLatitude = d->latitude;
-				l->m_ptPosition.m_fLongitude= d->longitude;
+				l->m_ptPosition.m_fLatitude = d->fix.latitude;
+				l->m_ptPosition.m_fLongitude= d->fix.longitude;
 				if(d->pdop < PDOP_EXCELLENT) {
 					l->m_fSignalQuality = GPS_SIGNALQUALITY_5_EXCELLENT;
 				}
@@ -130,8 +123,8 @@ gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condit
 				}
 
 				// Set speed
-				l->m_fSpeedInKilometersPerHour = (d->speed * KNOTS_TO_KPH);
-				l->m_fSpeedInMilesPerHour = (d->speed * KNOTS_TO_MPH);
+				l->m_fSpeedInKilometersPerHour = (d->fix.speed * KNOTS_TO_KPH);
+				l->m_fSpeedInMilesPerHour = (d->fix.speed * KNOTS_TO_MPH);
 
 				// Dampen Noise when not moving fast enough for trustworthy data
 				if(l->m_fSignalQuality <= GPS_SIGNALQUALITY_2_POOR &&

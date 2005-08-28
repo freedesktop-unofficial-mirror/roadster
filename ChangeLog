@@ -1,7 +1,5 @@
 2005-05-26  Keith Packard  <keithp@keithp.com>
 
-	reviewed by: <delete if not using a buddy>
-
 	* data/layers.xml:
 	Label more stuff.
 	* src/map.c: (map_draw):

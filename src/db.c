@@ -292,8 +292,10 @@ gboolean db_insert_road(gint nRoadNameID, gint nLayerType, gint nAddressLeftStar
 		mappoint_t* pPoint = g_ptr_array_index(pPointsArray, i);
 
 		gchar azNewest[40];
-		if(nCount > 0) g_snprintf(azNewest, 40, ",%f %f", pPoint->m_fLatitude, pPoint->m_fLongitude);
-		else g_snprintf(azNewest, 40, "%f %f", pPoint->m_fLatitude, pPoint->m_fLongitude);
+
+		gchar azCoord1[20], azCoord2[20];
+		if(nCount > 0) g_snprintf(azNewest, 40, ",%s %s", g_ascii_dtostr(azCoord1, 20, pPoint->m_fLatitude), g_ascii_dtostr(azCoord2, 20, pPoint->m_fLongitude));
+		else g_snprintf(azNewest, 40, "%s %s", g_ascii_dtostr(azCoord1, 20, pPoint->m_fLatitude), g_ascii_dtostr(azCoord2, 20, pPoint->m_fLongitude));
 
 		g_strlcat(azCoordinateList, azNewest, COORD_LIST_MAX);
 		nCount++;
@@ -503,11 +505,14 @@ void db_parse_wkb_point(const gint8* data, mappoint_t* pPoint)
 	gint nByteOrder = *data++;	// first byte tells us the byte order
 	g_assert(nByteOrder == 1);
 
-	gint nGeometryType = *((gint32*)data)++;
+	gint nGeometryType = *((gint32*)data);
+	data += sizeof(gint32);
 	g_assert(nGeometryType == WKB_POINT);
 
-	pPoint->m_fLatitude = *((double*)data)++;
-	pPoint->m_fLongitude = *((double*)data)++;
+	pPoint->m_fLatitude = *((double*)data);
+	data += sizeof(double);
+	pPoint->m_fLongitude = *((double*)data);
+	data += sizeof(double);
 }
 
 void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolean (*callback_alloc_point)(mappoint_t**))
@@ -517,17 +522,21 @@ void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolea
 	gint nByteOrder = *data++;	// first byte tells us the byte order
 	g_assert(nByteOrder == 1);
 
-	gint nGeometryType = *((gint32*)data)++;
+	gint nGeometryType = *((gint32*)data);
+	data += sizeof(gint32);
 	g_assert(nGeometryType == WKB_LINESTRING);
 
-	gint nNumPoints = *((gint32*)data)++;	// NOTE for later: this field doesn't exist for type POINT
+	gint nNumPoints = *((gint32*)data);	// NOTE for later: this field doesn't exist for type POINT
+	data += sizeof(gint32);
 
 	while(nNumPoints > 0) {
 		mappoint_t* pPoint = NULL;
 		if(!callback_alloc_point(&pPoint)) return;
 
-		pPoint->m_fLatitude = *((double*)data)++;
-		pPoint->m_fLongitude = *((double*)data)++;
+		pPoint->m_fLatitude = *((double*)data);
+		data += sizeof(double);
+		pPoint->m_fLongitude = *((double*)data);
+		data += sizeof(double);
 
 		g_ptr_array_add(pPointsArray, pPoint);
 

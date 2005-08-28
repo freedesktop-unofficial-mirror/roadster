@@ -769,6 +769,27 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 	}
 	g_ptr_array_add(pTempPointsArray, &pRecordRT1->m_PointB);
 
+	//
+	// Change rivers into lakes if they are circular (why doesn't this work here?)
+	//
+//     if(pRecordRT1->m_nRecordType == LAYER_RIVER) {
+//         if(((gint)(pRecordRT1->m_PointA.m_fLongitude * 1000.0)) == ((gint)(pRecordRT1->m_PointB.m_fLongitude * 1000.0)) &&
+//            ((gint)(pRecordRT1->m_PointA.m_fLatitude * 1000.0)) == ((gint)(pRecordRT1->m_PointB.m_fLatitude * 1000.0)))
+//         {
+//             if(pRecordRT1->m_PointA.m_fLongitude != pRecordRT1->m_PointB.m_fLongitude) {
+//                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->m_PointA.m_fLongitude, pRecordRT1->m_PointB.m_fLongitude);
+//             }
+//             if(pRecordRT1->m_PointA.m_fLatitude != pRecordRT1->m_PointB.m_fLatitude) {
+//                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->m_PointA.m_fLatitude, pRecordRT1->m_PointB.m_fLatitude);
+//             }
+//             g_print("converting circular river to lake: %s\n", pRecordRT1->m_achName);
+//             pRecordRT1->m_nRecordType = LAYER_LAKE;
+//         }
+//         else {
+// //          g_print("NOT converting river: %s (%f != %f)(%f != %f)\n", pRecordRT1->m_achName, pRecordRT1->m_PointA.m_fLongitude, pRecordRT1->m_PointB.m_fLongitude, pRecordRT1->m_PointA.m_fLatitude, pRecordRT1->m_PointB.m_fLatitude);
+//         }
+//     }
+
 	// use RT1's FIPS code to lookup related RTc record, which contains a CityID
 	gint nCityLeftID=0;
 	gint nCityRightID=0;

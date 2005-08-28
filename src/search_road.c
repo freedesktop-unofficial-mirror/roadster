@@ -50,25 +50,6 @@ typedef struct {
 #define MAX_QUERY 				(4000)
 #define ROAD_MIN_LENGTH_FOR_WILDCARD_SEARCH	(3)
 
-gchar* g_strjoinv_limit(const gchar* separator, gchar** a, gint iFirst, gint iLast)
-{
-	g_assert(iFirst <= iLast);
-	g_assert(iLast < g_strv_length(a));
-
-	gchar* pszSave;
-
-	// replace first unwanted string with NULL (save old value)
-	pszSave = a[iLast+1];
-	a[iLast+1] = NULL;
-
-	// use built-in function for joining
-	gchar* pszReturn = g_strjoinv(separator, &a[iFirst]);
-
-	// restore old value
-	a[iLast+1] = pszSave;
-	return pszReturn;
-}
-
 gboolean search_address_match_zipcode(const gchar* pszWord)
 {
 	// very US-centric right now
@@ -361,7 +342,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 			// [0] Road.ID
 			// [1] RoadName.Name
 			// [2] RoadName.SuffixID
-			// [3] AsText(Road.Coordinates),
+			// [3] AsBinary(Road.Coordinates),
 			// [4] Road.AddressLeftStart,
 			// [5] Road.AddressLeftEnd
 			// [6] Road.AddressRightStart
@@ -513,7 +494,7 @@ void search_road_filter_result(
 		const gchar* pszCityNameLeft, const gchar* pszCityNameRight,
 		const gchar* pszStateNameLeft, const gchar* pszStateNameRight,
 		const gchar* pszZIPLeft, const gchar* pszZIPRight,
-		
+
 		pointstring_t* pPointString)
 {
 	gint nRoadID = 0;

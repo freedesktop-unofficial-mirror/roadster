@@ -40,13 +40,13 @@ animator_t* animator_new(EAnimationType eAnimationType, gdouble fAnimationTimeIn
 {
 	g_assert(fAnimationTimeInSeconds > 0.0);
 
-        animator_t* pNew = g_new0(animator_t, 1);
-
-        pNew->m_pTimer = g_timer_new();
-        pNew->m_eAnimationType = eAnimationType;
-        pNew->m_fAnimationTimeInSeconds = fAnimationTimeInSeconds;
-
-        return pNew;
+	animator_t* pNew = g_new0(animator_t, 1);
+	
+	pNew->m_pTimer = g_timer_new();
+	pNew->m_eAnimationType = eAnimationType;
+	pNew->m_fAnimationTimeInSeconds = fAnimationTimeInSeconds;
+	
+	return pNew;
 }
 
 void animator_destroy(animator_t* pAnimator)
@@ -60,17 +60,17 @@ void animator_destroy(animator_t* pAnimator)
 
 gboolean animator_is_done(animator_t* pAnimator)
 {
-        g_assert(pAnimator != NULL);
+	g_assert(pAnimator != NULL);
 
-        gdouble fElapsedSeconds = g_timer_elapsed(pAnimator->m_pTimer, NULL);
-        return (fElapsedSeconds >= pAnimator->m_fAnimationTimeInSeconds);
+	gdouble fElapsedSeconds = g_timer_elapsed(pAnimator->m_pTimer, NULL);
+	return (fElapsedSeconds >= pAnimator->m_fAnimationTimeInSeconds);
 }
 
 gdouble animator_get_time_percent(animator_t* pAnimator)
 {
-        g_assert(pAnimator != NULL);
+	g_assert(pAnimator != NULL);
 
-        gdouble fElapsedSeconds = g_timer_elapsed(pAnimator->m_pTimer, NULL);
+	gdouble fElapsedSeconds = g_timer_elapsed(pAnimator->m_pTimer, NULL);
 
 	// Cap at 1.0
 	if(fElapsedSeconds >= pAnimator->m_fAnimationTimeInSeconds) {
@@ -82,7 +82,7 @@ gdouble animator_get_time_percent(animator_t* pAnimator)
 // returns a floating point 0.0 to 1.0
 gdouble animator_get_progress(animator_t* pAnimator)
 {
-        g_assert(pAnimator != NULL);
+	g_assert(pAnimator != NULL);
 
 	gdouble fTimePercent = animator_get_time_percent(pAnimator);
  

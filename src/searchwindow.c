@@ -46,14 +46,8 @@
 #define MAGIC_GTK_NO_SORT_COLUMN (-2)	// why -2?  dunno.  is there a real define for this?  dunno.
 
 struct {
-	// window
-	GtkComboBox* m_pSearchTypeComboBox;		// choose between types of searches
-
-	// search text box (on the toolbar)
-	GtkEntry* m_pSearchEntry;
-
-	// search button (on the toolbar)
-	GtkButton* m_pSearchButton;
+	GtkEntry* m_pSearchEntry;		// search text box (on the toolbar)
+	GtkButton* m_pSearchButton;		// search button (on the toolbar)
 
 	// results list (on the sidebar)
 	GtkTreeView* m_pResultsTreeView;
@@ -147,7 +141,8 @@ void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint, gint nZoo
 
 	gdouble fDistance = map_get_distance_in_meters(&ptCenter, pPoint);
 
-	gchar* pszBuffer = g_strdup_printf("<span size='small'>%s</span>", pszText);
+	gchar* pszBuffer = g_markup_printf_escaped("<span size='small'>%s</span>", pszText);
+	//g_print("Adding: (%f,%f) (%f) %s\n", pPoint->m_fLatitude, pPoint->m_fLongitude, fDistance, pszBuffer);
 	gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
 	gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter,
 		RESULTLIST_COLUMN_NAME, pszBuffer,

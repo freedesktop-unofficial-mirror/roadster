@@ -203,7 +203,7 @@ static void map_draw_gdk_layer_roads(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	}
 
 	// XXX: Don't use round at low zoom levels
-	// gint nCapStyle = pSubLayerStyle->m_nCapStyle;
+//	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
 	gint nCapStyle = GDK_CAP_ROUND;
 	if(fLineWidth < 8) {
 		nCapStyle = GDK_CAP_PROJECTING;

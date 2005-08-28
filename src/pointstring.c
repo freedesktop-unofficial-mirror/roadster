@@ -104,3 +104,12 @@ void pointstring_append_point(pointstring_t* pPointString, const mappoint_t* pPo
 
 	g_ptr_array_add(pPointString->m_pPointsArray, pNewPoint);
 }
+
+void pointstring_debug_print(pointstring_t* pPointString)
+{
+	int i;
+	for(i=0 ; i<pPointString->m_pPointsArray->len ; i++) {
+		mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, i);
+		g_print("(%f, %f)", pPoint->m_fLatitude, pPoint->m_fLongitude);
+	}
+}

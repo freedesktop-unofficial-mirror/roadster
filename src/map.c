@@ -22,7 +22,7 @@
  */
 
 #include <gdk/gdkx.h>
-#include <cairo.h>
+//#include <cairo.h>
 #include <gtk/gtk.h>
 #include <math.h>
 
@@ -62,6 +62,9 @@
 #define MIN_ROAD_HIT_TARGET_WIDTH	(6)	// make super thin roads a bit easier to hover over/click, in pixels
 
 #define MIN_ZOOMLEVEL_FOR_LOCATIONS	(6)
+
+#define ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// change circular rivers to lakes when loading from disk
+//#define ENABLE_SCENEMANAGER_DEBUG_TEST
 
 /* Prototypes */
 
@@ -254,30 +257,30 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	map_data_load_tiles(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
 	TIMER_END(loadtimer, "--- END ALL DB LOAD");
 
-	gint nRenderMode = RENDERMODE_FAST; //RENDERMODE_PRETTY; //;
+	gint nRenderMode = RENDERMODE_FAST; // RENDERMODE_PRETTY
 
-	nRenderMode = RENDERMODE_PRETTY;
-
-#ifdef SCENEMANAGER_DEBUG_TEST
-        GdkRectangle rect = {200,200,100,100};
-        scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
+#ifdef ENABLE_SCENEMANAGER_DEBUG_TEST
+	GdkRectangle rect = {200,200,100,100};
+	scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
 #endif
 
 	if(nRenderMode == RENDERMODE_FAST) {
 		// 
 		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 			map_draw_gdk(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_GEOMETRY);
+			//g_print("geometry\n");
 		}
 		// Always draw labels with Cairo
 		if(nDrawFlags & DRAWFLAG_LABELS) {
 			map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_LABELS);
+			//g_print("text\n");
 		}
 	}
 	else {	// nRenderMode == RENDERMODE_PRETTY
 		map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, nDrawFlags);
 	}
 
-#ifdef SCENEMANAGER_DEBUG_TEST
+#ifdef ENABLE_SCENEMANAGER_DEBUG_TEST
         gdk_draw_rectangle(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
                            FALSE, 200,200, 100, 100);
 #endif
@@ -518,9 +521,14 @@ static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect)
 	gdouble fLatStart = (gdouble)nLatStart / TILE_SHIFT;
 	gdouble fLonStart = (gdouble)nLonStart / TILE_SHIFT;
 
-//	g_print("%f < %f\n", fLatStart, pRect->m_A.m_fLatitude);
-	g_assert(fLatStart <= pRect->m_A.m_fLatitude);
-        g_assert(fLonStart <= pRect->m_A.m_fLongitude);
+	if(fLatStart > pRect->m_A.m_fLatitude) {
+		g_print("fLatStart %f > pRect->m_A.m_fLatitude %f\n", fLatStart, pRect->m_A.m_fLatitude);
+		g_assert(fLatStart <= pRect->m_A.m_fLatitude);
+	}
+	if(fLonStart > pRect->m_A.m_fLongitude) {
+		g_print("fLonStart %f > pRect->m_A.m_fLongitude %f!!\n", fLonStart, pRect->m_A.m_fLongitude);
+		g_assert_not_reached();
+	}
 
 	gint nLat,nLon;
 	for(nLat = 0 ; nLat < nLatNumTiles ; nLat++) {
@@ -551,6 +559,7 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 	TIMER_BEGIN(mytimer, "BEGIN Geometry LOAD");
 
 	// generate SQL
+	gchar azCoord1[20], azCoord2[20], azCoord3[20], azCoord4[20], azCoord5[20], azCoord6[20], azCoord7[20], azCoord8[20];
 	gchar* pszSQL;
 	pszSQL = g_strdup_printf(
 		"SELECT Road.ID, Road.TypeID, AsBinary(Road.Coordinates), RoadName.Name, RoadName.SuffixID, AddressLeftStart, AddressLeftEnd, AddressRightStart, AddressRightEnd"
@@ -559,13 +568,20 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 		" WHERE"
 		//" TypeID IN (%s) AND"
                 //" MBRIntersects(@wkb, Coordinates)"
-		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)"
-		,pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude, 	// upper left
-		pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude, 	// upper right
-		pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude, 	// bottom right
-		pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude, 	// bottom left
-		pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude		// upper left again
-		);
+		" MBRIntersects(GeomFromText('Polygon((%s %s,%s %s,%s %s,%s %s,%s %s))'), Coordinates)"
+		,
+		g_ascii_dtostr(azCoord1, 20, pRect->m_A.m_fLatitude), g_ascii_dtostr(azCoord2, 20, pRect->m_A.m_fLongitude), 
+		g_ascii_dtostr(azCoord3, 20, pRect->m_A.m_fLatitude), g_ascii_dtostr(azCoord4, 20, pRect->m_B.m_fLongitude), 
+		g_ascii_dtostr(azCoord5, 20, pRect->m_B.m_fLatitude), g_ascii_dtostr(azCoord6, 20, pRect->m_B.m_fLongitude), 
+		g_ascii_dtostr(azCoord7, 20, pRect->m_B.m_fLatitude), g_ascii_dtostr(azCoord8, 20, pRect->m_A.m_fLongitude), 
+		azCoord1, azCoord2);
+
+//         pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude,    // upper left
+//         pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude,    // upper right
+//         pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude,    // bottom right
+//         pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude,    // bottom left
+//         pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude     // upper left again
+//         );
 	//g_print("sql: %s\n", pszSQL);
 
 	db_query(pszSQL, &pResultSet);
@@ -624,6 +640,17 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 			pNewRoad->m_nAddressRightEnd = atoi(aRow[8]);
 
 			pNewRoad->m_pszName = g_strdup(azFullName);
+
+#ifdef ENABLE_RIVER_TO_LAKE_LOADTIME_HACK
+			if(nTypeID == LAYER_RIVER) {
+				mappoint_t* pPointA = g_ptr_array_index(pNewRoad->m_pPointsArray, 0);
+				mappoint_t* pPointB = g_ptr_array_index(pNewRoad->m_pPointsArray, pNewRoad->m_pPointsArray->len-1);
+
+				if(pPointA->m_fLatitude == pPointB->m_fLatitude && pPointA->m_fLongitude == pPointB->m_fLongitude) {
+					nTypeID = LAYER_LAKE;
+				}
+			}
+#endif
 
 			// Add this item to layer's list of pointstrings
 			g_ptr_array_add(pMap->m_apLayerData[nTypeID]->m_pRoadsArray, pNewRoad);
@@ -825,7 +852,7 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStr
 	gint i;
 	for(i=NUM_ELEMS(layerdraworder)-1 ; i>=0 ; i--) {
 		if(layerdraworder[i].eSubLayerRenderType != SUBLAYER_RENDERTYPE_LINES) continue;
-		
+
 		gint nLayer = layerdraworder[i].nLayer;
 
 		// use width from whichever layer it's wider in
@@ -835,7 +862,7 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStr
 #define EXTRA_CLICKABLE_ROAD_IN_PIXELS	(3)
 
 		// make thin roads a little easier to hit
-	       // fLineWidth = max(fLineWidth, MIN_ROAD_HIT_TARGET_WIDTH);
+		// fLineWidth = max(fLineWidth, MIN_ROAD_HIT_TARGET_WIDTH);
 
 		// XXX: hack, map_pixels should really take a floating point instead.
 		gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->m_uZoomLevel) * ((fLineWidth/2) + EXTRA_CLICKABLE_ROAD_IN_PIXELS);  // half width on each side
@@ -843,6 +870,7 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStr
 		if(map_hit_test_layer_roads(pMap->m_apLayerData[nLayer]->m_pRoadsArray, fMaxDistance, pMapPoint, ppReturnStruct)) {
 			return TRUE;
 		}
+		// otherwise try next layer...
 	}
 	return FALSE;
 }
@@ -883,7 +911,7 @@ static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDis
 				pHitStruct->m_eHitType = MAP_HITTYPE_ROAD;
 
 				if(pRoad->m_pszName[0] == '\0') {
-					pHitStruct->m_pszText = g_strdup("<i>unnamed road</i>");
+					pHitStruct->m_pszText = g_strdup("<i>unnamed</i>");
 				}
 				else {
 					ESide eSide = map_side_test_line(pPoint1, pPoint2, &pointClosest, pHitPoint);
