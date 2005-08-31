@@ -488,6 +488,8 @@ static gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTa
 
 		// columns 6 to 15 is the TLID -
 		import_tiger_read_int(&pLine[6-1], TIGER_TLID_LENGTH, &pRecord->m_nTLID);
+		
+		// columns 20 to ? is the name
 		import_tiger_read_string(&pLine[20-1], TIGER_CHAIN_NAME_LEN, &pRecord->m_achName[0]);
 
 		// columns 141-145 and 146-150 are FIPS55 codes which link this road to a city
@@ -503,7 +505,6 @@ static gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTa
 if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 	g_print("type '%s' couldn't be looked up\n", achType);
 }
-
 		import_tiger_read_int(&pLine[135-1], 3, &pRecord->m_nCountyIDLeft);
 		import_tiger_read_int(&pLine[138-1], 3, &pRecord->m_nCountyIDRight);
 

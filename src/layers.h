@@ -29,21 +29,24 @@
 
 G_BEGIN_DECLS
 
-#define LAYER_NONE				(0)
+#define LAYER_NONE					(0)
 
 #define LAYER_MINORSTREET			(1)
 #define LAYER_MAJORSTREET			(2)
+
 #define LAYER_MINORHIGHWAY			(3)
-#define LAYER_MINORHIGHWAY_RAMP			(4)
+#define LAYER_MINORHIGHWAY_RAMP		(4)
+
 #define LAYER_MAJORHIGHWAY			(5)	// used?
-#define LAYER_MAJORHIGHWAY_RAMP			(6)	// used?
+#define LAYER_MAJORHIGHWAY_RAMP		(6)	// used?
+
 #define LAYER_RAILROAD				(7)
-#define LAYER_PARK				(8)
-#define LAYER_RIVER				(9)
-#define LAYER_LAKE				(10)
+#define LAYER_PARK					(8)
+#define LAYER_RIVER					(9)
+#define LAYER_LAKE					(10)
 #define LAYER_MISC_AREA				(11)
 
-#define NUM_LAYERS 				(11)
+#define NUM_LAYERS 					(11)
 
 #define LAYER_FIRST				(1)
 #define LAYER_LAST				(11)

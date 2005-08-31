@@ -1,3 +1,12 @@
+2005-08-31  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+        * src/db.c: Remove incorrect 'UNIQUE' attribute on Name index in RoadName table.
+        * src/scenemanager.c: Add 'on screen' as additional (optional) criteria for allowing drawing.
+        * src/map_draw_cairo.c: Update to new scenemanager API.  Add new dual-line smart area labeler.
+        * src/util.c: Function util_split_words_onto_two_lines() is now used.
+        * data/layers.xml: Various style tweaks.  It's fun.
+        * src/map.c: Style tweaks.
+
 2005-08-28  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
         * data/roadster.glade: UI cleanup.  Moved many items into a 'Debug' menu.

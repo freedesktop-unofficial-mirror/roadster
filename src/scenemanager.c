@@ -34,6 +34,7 @@ Goals:
 
 void scenemanager_init(void)
 {
+	
 }
 
 void scenemanager_new(scenemanager_t** ppReturn)
@@ -45,22 +46,63 @@ void scenemanager_new(scenemanager_t** ppReturn)
 	*ppReturn = pNew;
 }
 
-gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* __unused_pScreenLocation)
+// NOTE: must be called before any scenemanager_can_draw_* calls
+void scenemanager_set_screen_dimensions(scenemanager_t* pSceneManager, gint nWindowWidth, gint nWindowHeight)
+{
+	pSceneManager->m_nWindowWidth = nWindowWidth;
+	pSceneManager->m_nWindowHeight = nWindowHeight;
+}
+
+gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* __unused_pScreenLocation, gint nFlags)
 {
 	g_assert(pSceneManager != NULL);
 	g_assert(pszLabel != NULL);
-	
+
 	// g_assert(pScreenLocation != NULL);
 	// NOTE: ignore pScreenLocation for now
-
 	gpointer pKey, pValue;
 
 	// Can draw if it doesn't exist in table
 	return (FALSE == g_hash_table_lookup_extended(pSceneManager->m_pLabelHash, pszLabel, &pKey, &pValue));
 }
 
-gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints)
+gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints, gint nFlags)
 {
+	//
+	// 1) Enforce on-screen rules
+	//
+	if(nFlags & SCENEMANAGER_FLAG_FULLY_ON_SCREEN) {
+		// all points must be within screen box
+		gint i;
+		for(i=0 ; i<nNumPoints ; i++) {
+			GdkPoint* pPoint = &pPoints[i];
+			if(pPoint->x < 0 || pPoint->x > pSceneManager->m_nWindowWidth) return FALSE;
+			if(pPoint->y < 0 || pPoint->y > pSceneManager->m_nWindowHeight) return FALSE;
+		}
+		// else go on to test below
+	}
+	else if(nFlags & SCENEMANAGER_FLAG_PARTLY_ON_SCREEN) {
+		// one point must be withing screen box
+		gint i;
+		gboolean bFound = FALSE;
+		for(i=0 ; i<nNumPoints ; i++) {
+			GdkPoint* pPoint = &pPoints[i];
+			if(pPoint->x > 0 && pPoint->x < pSceneManager->m_nWindowWidth) {
+				bFound = TRUE;
+				break;
+			}
+			if(pPoint->y > 0 && pPoint->y < pSceneManager->m_nWindowHeight) {
+				bFound = TRUE;
+				break;
+			}
+		}
+		if(!bFound) return FALSE;
+		// else go on to test below
+	}
+
+	//
+	// 2) Enforce overlap rules
+	//
 	GdkRegion* pNewRegion = gdk_region_polygon(pPoints, nNumPoints, GDK_WINDING_RULE);
 
 	gdk_region_intersect(pNewRegion, pSceneManager->m_pTakenRegion); // sets pNewRegion to the intersection of itself and the 'taken region'
@@ -70,8 +112,29 @@ gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *
 	return bOK;
 }
 
-gboolean scenemanager_can_draw_rectangle(scenemanager_t* pSceneManager, GdkRectangle* pRect)
+gboolean scenemanager_can_draw_rectangle(scenemanager_t* pSceneManager, GdkRectangle* pRect, gint nFlags)
 {
+	//
+	// 1) Enforce on-screen rules
+	//
+	if(nFlags & SCENEMANAGER_FLAG_FULLY_ON_SCREEN) {
+		// basic rect1 contains rect2 test
+		if((pRect->x) <= 0) return FALSE;
+		if((pRect->y) <= 0) return FALSE;
+		if((pRect->x + pRect->width) > pSceneManager->m_nWindowWidth) return FALSE;
+		if((pRect->y + pRect->height) > pSceneManager->m_nWindowHeight) return FALSE;
+	}
+	else if(nFlags & SCENEMANAGER_FLAG_PARTLY_ON_SCREEN) {
+		// basic rect intersect test
+		if((pRect->x + pRect->width) <= 0) return FALSE;
+		if((pRect->y + pRect->height) <= 0) return FALSE;
+		if((pRect->x) > pSceneManager->m_nWindowWidth) return FALSE;
+		if((pRect->y) > pSceneManager->m_nWindowHeight) return FALSE;
+	}
+
+	//
+	// 2) Enforce overlap rules
+	//
 	GdkRegion* pNewRegion = gdk_region_rectangle(pRect);
 
 	gdk_region_intersect(pNewRegion, pSceneManager->m_pTakenRegion); // sets pNewRegion to the intersection of itself and the 'taken region'

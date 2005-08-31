@@ -252,7 +252,7 @@ typedef struct {
 
 #define DRAWFLAG_ALL 		(1|2)
 
-#define NUM_SUBLAYER_TO_DRAW (24)
+#define NUM_SUBLAYER_TO_DRAW (21) //(24)
 extern draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW];	//
 
 void map_init(void);

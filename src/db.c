@@ -585,7 +585,7 @@ void db_create_tables()
 		" Name VARCHAR(30) NOT NULL,"
 		" SuffixID INT1 UNSIGNED NOT NULL,"
 		" PRIMARY KEY (ID),"			// for joining RoadName to Road 
-		" UNIQUE KEY (Name(7)));", NULL);	// for searching by RoadName. 7 is enough for decent uniqueness(?)
+		" INDEX (Name(7)));", NULL);	// for searching by RoadName. 7 is enough for decent uniqueness(?)
 
 	// City
 	db_query("CREATE TABLE IF NOT EXISTS City("

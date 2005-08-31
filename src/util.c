@@ -78,10 +78,7 @@ gchar* g_strjoinv_limit(const gchar* separator, gchar** a, gint iFirst, gint iLa
 
 gchar** util_split_words_onto_two_lines(const gchar* pszText, gint nMinLineLength, gint nMaxLineLength)
 {
-	g_assert_not_reached();	// untested
-
 #define MAX_WORDS_WE_CAN_HANDLE (6)
-
 	// NOTE: 'nMinLineLength' and 'nMaxLineLength' are loosely enforced
 
 	//

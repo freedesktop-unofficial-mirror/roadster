@@ -39,6 +39,11 @@
 #include "location.h"
 #include "scenemanager.h"
 
+
+#define ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// change circular rivers to lakes when loading from disk
+//#define ENABLE_SCENEMANAGER_DEBUG_TEST
+
+
 #ifdef THREADED_RENDERING
 #define RENDERING_THREAD_YIELD          g_thread_yield()
 #else
@@ -62,9 +67,6 @@
 #define MIN_ROAD_HIT_TARGET_WIDTH	(6)	// make super thin roads a bit easier to hover over/click, in pixels
 
 #define MIN_ZOOMLEVEL_FOR_LOCATIONS	(6)
-
-#define ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// change circular rivers to lakes when loading from disk
-//#define ENABLE_SCENEMANAGER_DEBUG_TEST
 
 /* Prototypes */
 
@@ -92,6 +94,7 @@ zoomlevel_t g_sZoomLevels[NUM_ZOOMLEVELS+1] = {
 	{ 1600000, ""},		// 1
 	{  800000, ""},		// 2
 	{  400000, ""},		// 3
+
 	{  200000, ""},		// 4
 	{  100000, ""},		// 5
 
@@ -106,11 +109,11 @@ draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW] = {
 
 	{LAYER_MISC_AREA, 0, SUBLAYER_RENDERTYPE_POLYGONS}, //map_draw_layer_polygons},
 
-	{LAYER_PARK, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
+//	{LAYER_PARK, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
 	{LAYER_PARK, 1, SUBLAYER_RENDERTYPE_POLYGONS}, //map_draw_layer_polygons},
 
-	{LAYER_LAKE, 0, SUBLAYER_RENDERTYPE_LINES},	// NOTE: drawing lines BELOW polygons (and ~double width) lets us avoid drawing seams on top of multi-polygon lakes
-	{LAYER_RIVER, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},	// single-line rivers
+//	{LAYER_LAKE, 0, SUBLAYER_RENDERTYPE_LINES},	// NOTE: drawing lines BELOW polygons (and ~double width) lets us avoid drawing seams on top of multi-polygon lakes
+//	{LAYER_RIVER, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},	// single-line rivers
 	
 	{LAYER_LAKE, 1, SUBLAYER_RENDERTYPE_POLYGONS},
 	{LAYER_RIVER, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},	// single-line rivers
@@ -240,18 +243,15 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 {
 	g_assert(pMap != NULL);
 
-	scenemanager_clear(pMap->m_pSceneManager);
-
-	// Get render metrics
+	// Get area of world to draw and screen dimensions to draw to, etc.
 	rendermetrics_t renderMetrics = {0};
 	map_get_render_metrics(pMap, &renderMetrics);
 	rendermetrics_t* pRenderMetrics = &renderMetrics;
 
-	//g_print("drawing at %f,%f\n", pMap->m_MapCenter.m_fLatitude, pMap->m_MapCenter.m_fLongitude);
+	scenemanager_clear(pMap->m_pSceneManager);
+	scenemanager_set_screen_dimensions(pMap->m_pSceneManager, pRenderMetrics->m_nWindowWidth, pRenderMetrics->m_nWindowHeight);
 
-	//
 	// Load geometry
-	//
 	TIMER_BEGIN(loadtimer, "--- BEGIN ALL DB LOAD");
 	map_data_clear(pMap);
 	map_data_load_tiles(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
