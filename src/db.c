@@ -48,6 +48,8 @@
 
 #define MYSQL_RESULT_SUCCESS  	(0)		// for clearer code
 
+#define MYSQL_ERROR_DUPLICATE_KEY	(1062)
+
 #define MAX_SQLBUFFER_LEN		(132000)	// must be big for lists of coordinates
 #define COORD_LIST_MAX 			(128000)
 
@@ -128,7 +130,11 @@ gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 
 	gint nResult = mysql_query(g_pDB->m_pMySQLConnection, pszSQL);
 	if(nResult != MYSQL_RESULT_SUCCESS) {
-		g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
+		gint nErrorNumber = mysql_errno(g_pDB->m_pMySQLConnection);
+
+		if(nErrorNumber != MYSQL_ERROR_DUPLICATE_KEY) {
+			g_warning("db_query: %d:%s (SQL: %s)\n", mysql_errno(g_pDB->m_pMySQLConnection), mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
+		}
 		return FALSE;
 	}
 

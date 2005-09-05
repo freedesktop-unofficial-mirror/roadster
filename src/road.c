@@ -227,7 +227,6 @@ struct {
 	{"Rte", ROAD_SUFFIX_ROUTE},
 	
 	{"Arc", ROAD_SUFFIX_ARC},
-
 };
 
 

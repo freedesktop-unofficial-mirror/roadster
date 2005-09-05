@@ -43,17 +43,26 @@
 #include "scenemanager.h"
 
 static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap);
-static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
-static void map_draw_gdk_layer_roads(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle);
+static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, layerstyle_t* pLayerStyle);
+static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, layerstyle_t* pLayerStyle);
 static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
+
+void map_draw_gdk_set_color(GdkGC* pGC, color_t* pColor)
+{
+	GdkColor clr;
+	clr.red = pColor->m_fRed * 65535;
+	clr.green = pColor->m_fGreen * 65535;
+	clr.blue = pColor->m_fBlue * 65535;
+	gdk_gc_set_rgb_fg_color(pGC, &clr);
+}
 
 void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
 {
 	TIMER_BEGIN(maptimer, "BEGIN RENDER MAP (gdk)");
 
-	// 1. Setup (save values so we can restore them)
+	// 1. Save values (so we can restore them)
 	GdkGCValues gcValues;
 	gdk_gc_get_values(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &gcValues);
 
@@ -67,23 +76,20 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 	// 2.2. Render Layers
 	if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 		gint i;
-		for(i=0 ; i<NUM_ELEMS(layerdraworder) ; i++) {
-			gint nLayer = layerdraworder[i].nLayer;
-			gint nSubLayer = layerdraworder[i].nSubLayer;
 
-			if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_LINES) {
-				map_draw_gdk_layer_roads(pMap, pPixmap,
-						pRenderMetrics,
-				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pRoadsArray,
-				/* style */ 	&(g_aLayers[nLayer]->m_Style.m_aSubLayers[nSubLayer]),
-						&(g_aLayers[nLayer]->m_TextLabelStyle));
+		// draw list in reverse order (painter's algorithm: http://en.wikipedia.org/wiki/Painter's_algorithm )
+		for(i=g_pLayersArray->len-1 ; i>=0 ; i--) {
+			layer_t* pLayer = g_ptr_array_index(g_pLayersArray, i);
+
+			if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
+				map_draw_gdk_layer_lines(pMap, pPixmap,	pRenderMetrics,
+										 pMap->m_apLayerData[pLayer->m_nDataSource]->m_pRoadsArray,				// data
+										 pLayer->m_paStylesAtZoomLevels[pRenderMetrics->m_nZoomLevel-1]);		// style
 			}
-			else if(layerdraworder[i].eSubLayerRenderType == SUBLAYER_RENDERTYPE_POLYGONS) {
-				map_draw_gdk_layer_polygons(pMap, pPixmap,
-						pRenderMetrics,
-				/* geometry */ 	pMap->m_apLayerData[nLayer]->m_pRoadsArray,
-				/* style */ 	&(g_aLayers[nLayer]->m_Style.m_aSubLayers[nSubLayer]),
-						&(g_aLayers[nLayer]->m_TextLabelStyle));
+			else if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_POLYGONS) {
+				map_draw_gdk_layer_polygons(pMap, pPixmap, pRenderMetrics,
+											pMap->m_apLayerData[pLayer->m_nDataSource]->m_pRoadsArray,          // data
+											pLayer->m_paStylesAtZoomLevels[pRenderMetrics->m_nZoomLevel-1]); 	// style
 			}
 		}
 
@@ -94,7 +100,7 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 	// 3. Labels
 	// ...GDK just shouldn't attempt text. :)
 
-	// 4. Cleanup
+	// 4. Restore values
 	gdk_gc_set_values(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &gcValues, GDK_GC_FOREGROUND | GDK_GC_BACKGROUND | GDK_GC_LINE_WIDTH | GDK_GC_LINE_STYLE | GDK_GC_CAP_STYLE | GDK_GC_JOIN_STYLE);
 	TIMER_END(maptimer, "END RENDER MAP (gdk)");
 }
@@ -102,40 +108,25 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap)
 {
 	GdkColor clr;
-	clr.red = 239/255.0 * 65535;
-	clr.green = 239/255.0 * 65535;
+	clr.red = 236/255.0 * 65535;
+	clr.green = 230/255.0 * 65535;
 	clr.blue = 230/255.0 * 65535;
 	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
-	
+
 	gdk_draw_rectangle(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
 			TRUE, 0,0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
 }
 
-static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
+static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, layerstyle_t* pLayerStyle)
 {
 	mappoint_t* pPoint;
 	road_t* pRoad;
 	gint iString;
 	gint iPoint;
 
-	gdouble fLineWidth = pSubLayerStyle->m_afLineWidths[pRenderMetrics->m_nZoomLevel-1];
-	if(fLineWidth <= 0.0) return;	// Don't draw invisible lines
-	if(pSubLayerStyle->m_clrColor.m_fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
+	if(pLayerStyle->m_clrPrimary.m_fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
 
-	// Raise the tolerance way up for thin lines
-	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
-
-	gint nLineWidth = (gint)fLineWidth;
-
-	// Set line style
-	gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			   nLineWidth, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_MITER);
-
-	GdkColor clr;
-	clr.red = pSubLayerStyle->m_clrColor.m_fRed * 65535;
-	clr.green = pSubLayerStyle->m_clrColor.m_fGreen * 65535;
-	clr.blue = pSubLayerStyle->m_clrColor.m_fBlue * 65535;
-	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
+	map_draw_gdk_set_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &(pLayerStyle->m_clrPrimary));
 
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
@@ -180,49 +171,52 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	}
 }
 
-static void map_draw_gdk_layer_roads(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, sublayerstyle_t* pSubLayerStyle, textlabelstyle_t* pLabelStyle)
+static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, layerstyle_t* pLayerStyle)
 {
 	road_t* pRoad;
 	mappoint_t* pPoint;
 	gint iString;
 	gint iPoint;
 
-	gdouble fLineWidth = pSubLayerStyle->m_afLineWidths[pRenderMetrics->m_nZoomLevel-1];
-	if(fLineWidth <= 0.0) return;	// Don't draw invisible lines
-	if(pSubLayerStyle->m_clrColor.m_fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
+	if(pLayerStyle->m_fLineWidth <= 0.0) return;			// Don't draw invisible lines
+	if(pLayerStyle->m_clrPrimary.m_fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
 
 	// Use GDK dash style if ANY dash pattern is set
 	gint nDashStyle = GDK_LINE_SOLID;
-	if(g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nDashCount > 1) {
+	if(g_aDashStyles[pLayerStyle->m_nDashStyle].m_nDashCount > 1) {
 		nDashStyle = GDK_LINE_ON_OFF_DASH;
 
 		gdk_gc_set_dashes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-				0, /* offset */
-				g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_panDashList,
-				g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nDashCount);
+				0, /* offset to start at */
+				g_aDashStyles[pLayerStyle->m_nDashStyle].m_panDashList,
+				g_aDashStyles[pLayerStyle->m_nDashStyle].m_nDashCount);
 	}
 
-	// XXX: Don't use round at low zoom levels
-//	gint nCapStyle = pSubLayerStyle->m_nCapStyle;
-	gint nCapStyle = GDK_CAP_ROUND;
-	//if(fLineWidth < 8) {
-	//	nCapStyle = GDK_CAP_PROJECTING;
-	//}
+	// Translate generic cap style into GDK constant
+	gint nCapStyle;
+	if(pLayerStyle->m_nCapStyle == MAP_CAP_STYLE_ROUND) {
+		nCapStyle = GDK_CAP_ROUND;
+	}
+	else {
+		nCapStyle = GDK_CAP_PROJECTING;
+	}
 
-	gint nLineWidth = (gint)fLineWidth;
-	
+	// Convert to integer width.  Ouch!
+	gint nLineWidth = (gint)(pLayerStyle->m_fLineWidth);
+
 	// Set line style
 	gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			   nLineWidth, nDashStyle, nCapStyle, GDK_JOIN_MITER);
+			   nLineWidth, nDashStyle, nCapStyle, GDK_JOIN_ROUND);
 
-	GdkColor clr;
-	clr.red = pSubLayerStyle->m_clrColor.m_fRed * 65535;
-	clr.green = pSubLayerStyle->m_clrColor.m_fGreen * 65535;
-	clr.blue = pSubLayerStyle->m_clrColor.m_fBlue * 65535;
-	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
+	map_draw_gdk_set_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &(pLayerStyle->m_clrPrimary));
 
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
+
+		if(pRoad->m_pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+			//g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
+			continue;
+		}
 
 		gdouble fMaxLat = MIN_LATITUDE;	// init to the worst possible value so first point will override
 		gdouble fMinLat = MAX_LATITUDE;
@@ -230,12 +224,8 @@ static void map_draw_gdk_layer_roads(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		gdouble fMinLon = MAX_LONGITUDE;
 
 		if(pRoad->m_pPointsArray->len >= 2) {
+			// Copy all points into this array.  Yuuup this is slow. :)
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
-
-			if(pRoad->m_pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-				//g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
-				continue;
-			}
 
 			for(iPoint=0 ; iPoint<pRoad->m_pPointsArray->len ; iPoint++) {
 				pPoint = g_ptr_array_index(pRoad->m_pPointsArray, iPoint);
@@ -390,4 +380,3 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 					3, 3);
 	}
 }
-

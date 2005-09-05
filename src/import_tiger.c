@@ -265,23 +265,23 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 	if(chFeatureClass == 'A') {
 		if(chCode == '1') {	// primary road with "Limited access" (few connecting roads)
 			/* A19, A29, A39 are bridges */
-			*pValue = LAYER_MINORHIGHWAY;
+			*pValue = MAP_OBJECT_TYPE_MINORHIGHWAY;
 			return TRUE;
 		}
 		else if(chCode == '2') {	// "Primary Road without Limited Access"
-			*pValue = LAYER_MAJORSTREET;
+			*pValue = MAP_OBJECT_TYPE_MAJORROAD;
 			return TRUE;
 		}
 		else if(chCode == '3') {
-			*pValue = LAYER_MAJORSTREET;
+			*pValue = MAP_OBJECT_TYPE_MAJORROAD;
 			return TRUE;
 		}
 		else if(chCode == '4') {	// "Local, Neighborhood, Rural" Roads
-			*pValue = LAYER_MINORSTREET;
+			*pValue = MAP_OBJECT_TYPE_MINORROAD;
 			return TRUE;
 		}
 		else if(chCode == '5') {	// dirt roads
-			//*pValue = LAYER_TRAIL;
+			//*pValue = MAP_OBJECT_TYPE_TRAIL;
 			return FALSE;
 		}
 		else if(chCode == '6') {
@@ -289,11 +289,11 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 				g_print("found code A61: cul-de-sac!\n");
 			}
 			else if(chSubCode == '3') {
-				*pValue = LAYER_MINORHIGHWAY_RAMP;			
+				*pValue = MAP_OBJECT_TYPE_MINORHIGHWAY_RAMP;			
 				return TRUE;
 			}
 			else if(chSubCode == '5') {
-				//*pValue = LAYER_FERRY_ROUTE;	// where a boat carrying cars goes
+				//*pValue = MAP_OBJECT_TYPE_FERRY_ROUTE;	// where a boat carrying cars goes
 				return FALSE;
 			}
 			else if(chSubCode == '7') {
@@ -302,26 +302,26 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 		}
 		else if(chCode == '7') {	// "other"
 			//~ if(chSubCode == '1') {
-				//~ *pValue = LAYER_PEDESTRIAN_PATH;	// bike/walking path			
+				//~ *pValue = MAP_OBJECT_TYPE_PEDESTRIAN_PATH;	// bike/walking path			
 				//~ return TRUE;
 			//~ }
 			//~ else if(chSubCode == '2') {
-				//~ *pValue = LAYER_PEDESTRIAN_PATH;	// stairway for pedestrians...
+				//~ *pValue = MAP_OBJECT_TYPE_PEDESTRIAN_PATH;	// stairway for pedestrians...
 				//~ return TRUE;
 			//~ }
 			//~ else if(chSubCode == '4') {
-				//~ *pValue = LAYER_DRIVEWAY;			// private access roads
+				//~ *pValue = MAP_OBJECT_TYPE_DRIVEWAY;			// private access roads
 				//~ return TRUE;
 			//~ }
 		}
 	}
 	else if(chFeatureClass == 'B') {		// Railroads
-		*pValue = LAYER_RAILROAD;
+		*pValue = MAP_OBJECT_TYPE_RAILROAD;
 		return TRUE;
 	}
 	else if(chFeatureClass == 'D') {		// Landmarks
 		//~ if(chCode == '5' && chSubCode == '1') {
-			//~ *pValue = LAYER_AIRPORT;
+			//~ *pValue = MAP_OBJECT_TYPE_AIRPORT;
 			//~ return TRUE;
 		//~ }
 		//~ else
@@ -334,11 +334,11 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 		 D85 State or local park or forest
 		*/
 		if(chCode == '8') {
-			*pValue = LAYER_PARK;
+			*pValue = MAP_OBJECT_TYPE_PARK;
 			return TRUE;
 		}
 		else {
-			*pValue = LAYER_MISC_AREA;
+			*pValue = MAP_OBJECT_TYPE_MISC_AREA;
 			return TRUE;
 		}
 
@@ -378,48 +378,48 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 			// generic unknown water ...
 			// this includes charles river (cambridge/boston ma)
 			// but they are badly formed for some reason?
-//			*pValue = LAYER_LAKE;
+//			*pValue = MAP_OBJECT_TYPE_LAKE;
 //			return TRUE;
 //			return FALSE;
 			if(chSubCode == '1') {
 				// these need to be stitched by lat/lon
-				//*pValue = LAYER_LAKE;	// shoreline of perennial water feature
+				//*pValue = MAP_OBJECT_TYPE_LAKE;	// shoreline of perennial water feature
 				//return TRUE;
 			}
 		}
 		else if(chCode == '1') { 	// streams
-			*pValue = LAYER_RIVER;
+			*pValue = MAP_OBJECT_TYPE_RIVER;
 			return TRUE;
 		}
 		else if(chCode == '3') { 	// lakes
-			*pValue = LAYER_LAKE;
+			*pValue = MAP_OBJECT_TYPE_LAKE;
 			return TRUE;
 		}
 		else if(chCode == '4') { 	// reservoirs
-			*pValue = LAYER_LAKE;
+			*pValue = MAP_OBJECT_TYPE_LAKE;
 			return TRUE;
 		}
 		else if(chCode == '5') { 	// ocean
 			if(chSubCode == '1') {
-				*pValue = LAYER_LAKE;	// bay, estuary, gulf or sound
+				*pValue = MAP_OBJECT_TYPE_LAKE;	// bay, estuary, gulf or sound
 				return TRUE;				
 			}
 			else {
-//				*pValue = LAYER_LAKE;
+//				*pValue = MAP_OBJECT_TYPE_LAKE;
 //				return TRUE;
-				//~ *pValue = LAYER_OCEAN;
+				//~ *pValue = MAP_OBJECT_TYPE_OCEAN;
 				//~ return TRUE;
 			}
 		}
 		else if(chCode == '6') { 	// water-filled gravel pit
 			g_print("found code H6: water filled gravel pit!\n");
-			//~ *pValue = LAYER_LAKE;
+			//~ *pValue = MAP_OBJECT_TYPE_LAKE;
 			//~ return TRUE;
 		}
 	}
-	//~ *pValue = LAYER_TRAIL;
+	//~ *pValue = MAP_OBJECT_TYPE_TRAIL;
 	//~ return TRUE;
-	*pValue = LAYER_NONE;
+	*pValue = MAP_OBJECT_TYPE_NONE;
 	return FALSE;
 }
 
@@ -597,7 +597,7 @@ static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTa
 
 		import_tiger_read_string(&pLine[25-1], TIGER_LANDMARK_NAME_LEN, &pRecord->m_achName[0]);
 
-		//if(nRecordType == LAYER_MISC_AREA) {
+		//if(nRecordType == MAP_OBJECT_TYPE_MISC_AREA) {
 			// g_print("misc area: %s\n", pRecord->m_achName);
 		//}
 // g_print("record 7: TypeID=%d LANDID=%d\n", pRecord->m_nRecordType, pRecord->m_nLANDID);
@@ -773,7 +773,7 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 	//
 	// Change rivers into lakes if they are circular (why doesn't this work here?)
 	//
-//     if(pRecordRT1->m_nRecordType == LAYER_RIVER) {
+//     if(pRecordRT1->m_nRecordType == MAP_OBJECT_TYPE_RIVER) {
 //         if(((gint)(pRecordRT1->m_PointA.m_fLongitude * 1000.0)) == ((gint)(pRecordRT1->m_PointB.m_fLongitude * 1000.0)) &&
 //            ((gint)(pRecordRT1->m_PointA.m_fLatitude * 1000.0)) == ((gint)(pRecordRT1->m_PointB.m_fLatitude * 1000.0)))
 //         {
@@ -784,7 +784,7 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 //                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->m_PointA.m_fLatitude, pRecordRT1->m_PointB.m_fLatitude);
 //             }
 //             g_print("converting circular river to lake: %s\n", pRecordRT1->m_achName);
-//             pRecordRT1->m_nRecordType = LAYER_LAKE;
+//             pRecordRT1->m_nRecordType = MAP_OBJECT_TYPE_LAKE;
 //         }
 //         else {
 // //          g_print("NOT converting river: %s (%f != %f)(%f != %f)\n", pRecordRT1->m_achName, pRecordRT1->m_PointA.m_fLongitude, pRecordRT1->m_PointB.m_fLongitude, pRecordRT1->m_PointA.m_fLatitude, pRecordRT1->m_PointB.m_fLatitude);
@@ -820,7 +820,7 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 	}
 
 	// insert, then free temp array
-	if(pRecordRT1->m_nRecordType != LAYER_NONE) {
+	if(pRecordRT1->m_nRecordType != MAP_OBJECT_TYPE_NONE) {
 		gchar azZIPCodeLeft[6];
 		g_snprintf(azZIPCodeLeft, 6, "%05d", pRecordRT1->m_nZIPCodeLeft);
 		gchar azZIPCodeRight[6];
@@ -931,7 +931,7 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 	// create a temp array to hold the points for this polygon (in order)
 	g_assert(pTempPointsArray == NULL);
 	pTempPointsArray = g_ptr_array_new();
-	
+
 	// start with the RT1Link at index 0 (and remove it)
 	tiger_rt1_link_t* pCurrentRT1Link = g_ptr_array_index(pRecordRTi->m_pRT1LinksArray, 0);
 	g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, 0);	// TODO: should maybe choose the last one instead? :)  easier to remove and arbitrary anyway!
@@ -1005,8 +1005,6 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 
 	// save this polygon
 	if(pTempPointsArray->len > 3) {	// takes 3 to make a polygon
-		// g_print("inserting polygon of len %d type %s\n", pTempPointsArray->len, g_aLayers[pRecordRT7->m_nRecordType].m_pszName);
-
 		mappoint_t* p1 = g_ptr_array_index(pTempPointsArray, 0);
 		mappoint_t* p2 = g_ptr_array_index(pTempPointsArray, pTempPointsArray->len-1);
 
@@ -1021,7 +1019,7 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 		gchar* pszZIPCodeRight = "";
 
 		// insert record
-		if(pRecordRT7->m_nRecordType != LAYER_NONE) {
+		if(pRecordRT7->m_nRecordType != MAP_OBJECT_TYPE_NONE) {
 			gint nRoadNameID = 0;
 			if(pRecordRT7->m_achName[0] != '\0') {
 				//g_printf("inserting area name %s\n", pRecordRT7->m_achName);
@@ -1261,10 +1259,10 @@ static gboolean import_tiger_from_buffers(
 	g_print("iterating over RT1 chains...\n");
 	g_hash_table_foreach(importProcess.m_pTableRT1, callback_save_rt1_chains, &importProcess);
 	g_print("done.\n");
-	
+
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
-
+g_print("cleaning up\n");
 	//
 	// free up the importprocess structure
 	//
@@ -1273,7 +1271,9 @@ static gboolean import_tiger_from_buffers(
 	g_hash_table_destroy(importProcess.m_pTableRT7);
 	g_hash_table_destroy(importProcess.m_pTableRT8);
 	g_hash_table_destroy(importProcess.m_pTableRTc);
-	g_hash_table_destroy(importProcess.m_pTableRTi);
+	// XXX: this call sometimes segfaults:
+	g_warning("leaking some memory due to unsolved bug in import.  just restart roadster after/between imports ;)\n");
+	//g_hash_table_destroy(importProcess.m_pTableRTi);
 	g_free(importProcess.m_pszFileDescription);
 
 	return TRUE;

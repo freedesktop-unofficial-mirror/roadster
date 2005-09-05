@@ -1,3 +1,17 @@
+2005-09-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/db.c: Better error handling (silences "duplicate key" warning on startup).
+	* src/import_tiger.c: Comment out some cleanup code that has a crasher bug somewhere (now it's just a memory leak!).
+	* src/mainwindow.c: Updated comments, removed some dead code.
+	* src/importwindow.c: Add a printf showing # of files received from file chooser dialog.
+	* src/layers.c: Implemented new layers XML format.  Draw order is now dictated by the XML file.  Removed concept of "sublayers".  Unlimited layers are now supported.
+	* src/map.c: Removed layer draw order table.  Changed scenemanager test from a rectangle to a diamond.
+	* src/map_draw_cairo.c: Added map scale rendering.  Cairo rendering commented out until it can be updated to new layer style stuff.
+	* src/map_draw_gdk.c: Updated for new layer format.
+	* data/layers.xml: Complete rewrite for new layers format.
+	* configure.ac: Remove old/incorrect tests.
+	* data/roadster.glade: Removed some old/unused dialogs.
+
 2005-08-31  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
         * src/db.c: Remove incorrect 'UNIQUE' attribute on Name index in RoadName table.

@@ -27,6 +27,10 @@
 
 #include <gtk/gtk.h>
 #include <gtk/gtksignal.h>
+#include <gdk/gdk.h>
+#include <gdk/gdkx.h>
+#include <cairo.h>
+#include <cairo-xlib.h>
 
 #include "main.h"
 #include "search_road.h"
@@ -46,14 +50,6 @@
 #include "history.h"
 #include "tooltip.h"
 
-#include <gdk/gdk.h>
-#include <gdk/gdkx.h>
-#include <cairo.h>
-
-#ifdef HAVE_CAIRO_0_2_0
-#  include <cairo-xlib.h>
-#endif
-
 #define PROGRAM_NAME			"Roadster"
 #define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
 #define PROGRAM_DESCRIPTION		"Mapping for everyone!"
@@ -67,7 +63,7 @@
 
 #define SCROLL_TIMEOUT_MS		(80)		// how often (in MS) to move
 #define SCROLL_DISTANCE_IN_PIXELS	(100)		// how far to move every (above) MS
-#define BORDER_SCROLL_CLICK_TARGET_SIZE	(20)		// the size of the click target (distance from edge of map view) to begin scrolling
+#define BORDER_SCROLL_CLICK_TARGET_SIZE	(16)		// the size of the click target (distance from edge of map view) to begin scrolling
 
 #define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
 #define	SLIDE_TIME_IN_SECONDS		(0.4)	// how long the whole slide should take, in seconds
@@ -1037,11 +1033,11 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 	if(g_MainWindow.m_bMouseDragging) {
 		g_MainWindow.m_bMouseDragMovement = TRUE;
 
-		// Set it here and no when first clicking because now we know it's a drag (on click it could be a double-click)
+		// Set cursor here and not when first clicking because now we know it's a drag (on click it could be a double-click)
 		nCursor = GDK_FLEUR;
 
 		gint nDeltaX = g_MainWindow.m_ptClickLocation.m_nX - nX;
-                gint nDeltaY = g_MainWindow.m_ptClickLocation.m_nY - nY;
+		gint nDeltaY = g_MainWindow.m_ptClickLocation.m_nY - nY;
 
 		if(nDeltaX == 0 && nDeltaY == 0) return TRUE;
 
@@ -1072,8 +1068,11 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		}
 	}
 	else {
+		// If not dragging or scrolling, user is just moving mouse around.
+		// Update tooltip and mouse cursor based on what we're pointing at.
+
 		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
-  
+
 		if(eScrollDirection == DIRECTION_NONE) {
 			// get mouse position on screen
 			screenpoint_t screenpoint;
@@ -1132,11 +1131,11 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		else {
 			nCursor = g_aDirectionCursors[eScrollDirection].m_nCursor;
 
-			// using a funky cursor. hide the tooltip
+			// using a funky (non-pointer) cursor so hide the tooltip
 			tooltip_hide(g_MainWindow.m_pTooltip);
 		}
 	}
-	// just set cursor based on what we're hovering over
+	// apply cursor that was chosen above
 	GdkCursor* pCursor = gdk_cursor_new(nCursor);
 	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
 	gdk_cursor_unref(pCursor);
@@ -1152,7 +1151,6 @@ static gboolean mainwindow_on_leave_notify(GtkWidget* w, GdkEventCrossing *event
 {
 	tooltip_hide(g_MainWindow.m_pTooltip);
 }
-
 
 static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 {
@@ -1176,12 +1174,13 @@ static void mainwindow_begin_import_geography_data(void)
 g_print("starting..\n");
 
 	GtkWidget* pDialog = gtk_file_chooser_dialog_new(
-				"Select Map Data for Import",
+						"Select TIGER .ZIP files for Import",
                 		g_MainWindow.m_pWindow,
 		                GTK_FILE_CHOOSER_ACTION_OPEN,
-    				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				"Import", GTK_RESPONSE_ACCEPT,
-				NULL);
+						GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+						"Import", GTK_RESPONSE_ACCEPT,
+						NULL);
+
 g_print("setting..\n");
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(pDialog), TRUE);
 	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pWindow), FALSE);
@@ -1223,9 +1222,10 @@ static void mainwindow_setup_selected_tool(void)
 	}
 }
 
-// Handler for ALL tool buttons
+// One handler for all 'tools' buttons
 void mainwindow_on_toolbutton_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
+	// XXX: current there are no tools!
 	mainwindow_setup_selected_tool();
 }
 
@@ -1573,7 +1573,7 @@ static void mainwindow_on_locationset_visible_checkbox_clicked(GtkCellRendererTo
 	// get an iterator for this item
 	GtkTreePath *pPath = gtk_tree_path_new_from_string(pszPath);
 	GtkTreeIter iter;
-	gtk_tree_model_get_iter(g_MainWindow.m_pLocationSetsListStore, &iter, pPath);
+	gtk_tree_model_get_iter(GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore), &iter, pPath);
 	gtk_tree_path_free (pPath);
 
 	// get locationset ID and whether it's set or not
@@ -1601,19 +1601,6 @@ static void mainwindow_on_locationset_visible_checkbox_clicked(GtkCellRendererTo
 
 #ifdef ROADSTER_DEAD_CODE
 /*
-
-void on_importmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
-{
-	g_print("on_importmenuitem_activate\n");
-	importwindow_show();
-}
-
-
-void mainwindow_on_datasetmenuitem_activate(GtkWidget *pWidget, gpointer* p)
-{
-	datasetwindow_show();
-}
-
 static gboolean on_searchbox_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	// Enter key?
@@ -1624,37 +1611,6 @@ static gboolean on_searchbox_key_press_event(GtkWidget *widget, GdkEventKey *eve
 		g_free(pchSearchString);
 	}
 	return FALSE;
-}
-
-// Show preferences dialog
-static void on_preferencesmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
-{
-//	gui_show_preferences_window();
-}
-
-void mainwindow_load_locationset_list(void)
-{
-	const GPtrArray* pLocationSetArray = locationset_get_set_array();
-
-	// add some data to the layers list
-	GtkTreeIter iter;
-
-	GtkListStore* pListStore = (GtkListStore*)gtk_tree_view_get_model(g_MainWindow.m_pLocationSetsTreeView);
-	g_assert(pListStore != NULL);
-
-	// Add each locationset to treeview
-	int i;
-	for(i=0 ; i<pLocationSetArray->len ; i++) {
-		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetArray, i);
-
-		gboolean bEnabled = TRUE;
-
-		gtk_list_store_append(pListStore, &iter);
-		gtk_list_store_set(pListStore, &iter,
-			LAYERLIST_COLUMN_ENABLED, bEnabled,
-			LAYERLIST_COLUMN_NAME, pLocationSet->m_pszName,
-			-1);
-	}
 }
 */
 #endif /* ROADSTER_DEAD_CODE */

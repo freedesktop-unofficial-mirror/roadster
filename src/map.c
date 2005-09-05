@@ -39,10 +39,9 @@
 #include "location.h"
 #include "scenemanager.h"
 
-
 #define ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// change circular rivers to lakes when loading from disk
 //#define ENABLE_SCENEMANAGER_DEBUG_TEST
-
+#define ENABLE_LABELS_WHILE_DRAGGING
 
 #ifdef THREADED_RENDERING
 #define RENDERING_THREAD_YIELD          g_thread_yield()
@@ -88,61 +87,35 @@ static void map_data_clear(map_t* pMap);
 void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics);
 
 // Each zoomlevel has a scale and an optional name (name isn't used for anything)
-zoomlevel_t g_sZoomLevels[NUM_ZOOMLEVELS+1] = {
-	{1,"undefined"},	// no zoom level 0
+zoomlevel_t g_sZoomLevels[NUM_ZOOM_LEVELS+1] = {
+	{1,0,0,0,0,"undefined"},	// no zoom level 0
 
-	{ 1600000, ""},		// 1
-	{  800000, ""},		// 2
-	{  400000, ""},		// 3
+//     { 1600000, ""},
+//     {  800000, ""},
+//     {  400000, ""},
+//     {  200000, ""},
+//     {  100000, ""},
 
-	{  200000, ""},		// 4
-	{  100000, ""},		// 5
-
-	{   35000, ""},		// 6
-	{   20000, ""}, 	// 7
-	{   10000, ""},		// 8
-	{    4000, ""},		// 9
-	{    1700, ""},		// 10
+	{  100000, UNIT_MILES, 2, 	UNIT_KILOMETERS, 2, "", },     	// 1
+	{   48000, UNIT_MILES, 1, 	UNIT_KILOMETERS, 1, "", },     	// 2
+	{   20000, UNIT_FEET, 2000, UNIT_METERS, 400, "", }, 		// 3
+	{   10000, UNIT_FEET, 1000, UNIT_METERS, 200, "", },		// 4
+	{    5000, UNIT_FEET, 500, 	UNIT_METERS, 100, "", },		// 5
 };
 
-draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW] = {
-
-	{LAYER_MISC_AREA, 0, SUBLAYER_RENDERTYPE_POLYGONS}, //map_draw_layer_polygons},
-
-//	{LAYER_PARK, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-	{LAYER_PARK, 1, SUBLAYER_RENDERTYPE_POLYGONS}, //map_draw_layer_polygons},
-
-//	{LAYER_LAKE, 0, SUBLAYER_RENDERTYPE_LINES},	// NOTE: drawing lines BELOW polygons (and ~double width) lets us avoid drawing seams on top of multi-polygon lakes
-//	{LAYER_RIVER, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},	// single-line rivers
-	
-	{LAYER_LAKE, 1, SUBLAYER_RENDERTYPE_POLYGONS},
-	{LAYER_RIVER, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},	// single-line rivers
-
-	{LAYER_MINORHIGHWAY_RAMP, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-	{LAYER_MINORSTREET, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-	{LAYER_MAJORSTREET, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-
-	{LAYER_MINORHIGHWAY_RAMP, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-	{LAYER_MINORSTREET, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-
-	{LAYER_MAJORSTREET, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-
-	{LAYER_RAILROAD, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-	{LAYER_RAILROAD, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-
-	{LAYER_MINORHIGHWAY, 0, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-	{LAYER_MINORHIGHWAY, 1, SUBLAYER_RENDERTYPE_LINES}, //map_draw_layer_lines},
-
-	// LABELS
-	{LAYER_MINORHIGHWAY, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
-	{LAYER_MAJORSTREET, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},	// important ones first
-	{LAYER_MINORSTREET, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
-	{LAYER_RAILROAD, 0, SUBLAYER_RENDERTYPE_LINE_LABELS},
-///     {LAYER_MAJORHIGHWAY, 0, SUBLAYER_RENDERTYPE_LABELS},
-
-	{LAYER_MISC_AREA, 0, SUBLAYER_RENDERTYPE_POLYGON_LABELS},
-	{LAYER_PARK, 0, SUBLAYER_RENDERTYPE_POLYGON_LABELS},
-	{LAYER_LAKE, 0, SUBLAYER_RENDERTYPE_POLYGON_LABELS},
+gchar* g_apszMapObjectTypeNames[] = {
+	"",
+	"minor-roads",
+	"major-roads",
+	"minor-highways",
+	"minor-highway-ramps",
+	"major-highways",
+	"major-highway-ramps",
+	"railroads",
+	"parks",
+	"rivers",
+	"lakes",
+	"misc-areas"
 };
 
 // ========================================================
@@ -195,7 +168,7 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 	scenemanager_new(&(pMap->m_pSceneManager));
 	g_assert(pMap->m_pSceneManager);
 
-	pMap->m_uZoomLevel = 8;
+	pMap->m_uZoomLevel = 1;		// XXX: better way to init this?  or should we force the GUI to reflect this #?
 
 	// init containers for geometry data
 	gint i;
@@ -248,32 +221,35 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	map_get_render_metrics(pMap, &renderMetrics);
 	rendermetrics_t* pRenderMetrics = &renderMetrics;
 
-	scenemanager_clear(pMap->m_pSceneManager);
-	scenemanager_set_screen_dimensions(pMap->m_pSceneManager, pRenderMetrics->m_nWindowWidth, pRenderMetrics->m_nWindowHeight);
-
 	// Load geometry
 	TIMER_BEGIN(loadtimer, "--- BEGIN ALL DB LOAD");
 	map_data_clear(pMap);
 	map_data_load_tiles(pMap, &(pRenderMetrics->m_rWorldBoundingBox));
 	TIMER_END(loadtimer, "--- END ALL DB LOAD");
 
+	scenemanager_clear(pMap->m_pSceneManager);
+	scenemanager_set_screen_dimensions(pMap->m_pSceneManager, pRenderMetrics->m_nWindowWidth, pRenderMetrics->m_nWindowHeight);
+
 	gint nRenderMode = RENDERMODE_FAST; // RENDERMODE_PRETTY
 
+#ifdef ENABLE_LABELS_WHILE_DRAGGING
+	nDrawFlags |= DRAWFLAG_LABELS;	// always turn on labels
+#endif
+
 #ifdef ENABLE_SCENEMANAGER_DEBUG_TEST
-	GdkRectangle rect = {200,200,100,100};
-	scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
+	GdkPoint aPoints[] = {{200,150},{250,200},{200,250},{150,200}};
+	scenemanager_claim_polygon(pMap->m_pSceneManager, aPoints, 4);
 #endif
 
 	if(nRenderMode == RENDERMODE_FAST) {
 		// 
 		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 			map_draw_gdk(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_GEOMETRY);
-			//g_print("geometry\n");
 		}
+		
 		// Always draw labels with Cairo
 		if(nDrawFlags & DRAWFLAG_LABELS) {
 			map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_LABELS);
-			//g_print("text\n");
 		}
 	}
 	else {	// nRenderMode == RENDERMODE_PRETTY
@@ -281,8 +257,8 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	}
 
 #ifdef ENABLE_SCENEMANAGER_DEBUG_TEST
-        gdk_draw_rectangle(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-                           FALSE, 200,200, 100, 100);
+	gdk_draw_polygon(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+					 FALSE, aPoints, 4);
 #endif
 
 	gtk_widget_queue_draw(pMap->m_pTargetWidget);
@@ -309,8 +285,8 @@ void map_release_pixmap(map_t* pMap)
 
 void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel)
 {
-	if(uZoomLevel > MAX_ZOOMLEVEL) uZoomLevel = MAX_ZOOMLEVEL;
-	else if(uZoomLevel < MIN_ZOOMLEVEL) uZoomLevel = MIN_ZOOMLEVEL;
+	if(uZoomLevel > MAX_ZOOM_LEVEL) uZoomLevel = MAX_ZOOM_LEVEL;
+	else if(uZoomLevel < MIN_ZOOM_LEVEL) uZoomLevel = MIN_ZOOM_LEVEL;
 
 	if(uZoomLevel != pMap->m_uZoomLevel) {
 		pMap->m_uZoomLevel = uZoomLevel;
@@ -320,7 +296,7 @@ void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel)
 
 guint16 map_get_zoomlevel(map_t* pMap)
 {
-	return pMap->m_uZoomLevel;	// between MIN_ZOOMLEVEL and MAX_ZOOMLEVEL
+	return pMap->m_uZoomLevel;	// between MIN_ZOOM_LEVEL and MAX_ZOOM_LEVEL
 }
 
 guint32 map_get_zoomlevel_scale(map_t* pMap)
@@ -608,7 +584,7 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 
 			// Get layer type that this belongs on
 			gint nTypeID = atoi(aRow[1]);
-			if(nTypeID < LAYER_FIRST || nTypeID > LAYER_LAST) {
+			if(nTypeID < MAP_OBJECT_TYPE_FIRST || nTypeID > MAP_OBJECT_TYPE_LAST) {
 				//g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
 				continue;
 			}
@@ -642,12 +618,12 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 			pNewRoad->m_pszName = g_strdup(azFullName);
 
 #ifdef ENABLE_RIVER_TO_LAKE_LOADTIME_HACK
-			if(nTypeID == LAYER_RIVER) {
+			if(nTypeID == MAP_OBJECT_TYPE_RIVER) {
 				mappoint_t* pPointA = g_ptr_array_index(pNewRoad->m_pPointsArray, 0);
 				mappoint_t* pPointB = g_ptr_array_index(pNewRoad->m_pPointsArray, pNewRoad->m_pPointsArray->len-1);
 
 				if(pPointA->m_fLatitude == pPointB->m_fLatitude && pPointA->m_fLongitude == pPointB->m_fLongitude) {
-					nTypeID = LAYER_LAKE;
+					nTypeID = MAP_OBJECT_TYPE_LAKE;
 				}
 			}
 #endif
@@ -675,7 +651,7 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
 	g_return_val_if_fail(pMap != NULL, FALSE);
 	g_return_val_if_fail(pRect != NULL, FALSE);
 
-	if(map_get_zoomlevel(pMap) < MIN_ZOOMLEVEL_FOR_LOCATIONS) {
+	if(map_get_zoomlevel(pMap) < MIN_ZOOM_LEVEL_FOR_LOCATIONS) {
 		return TRUE;
 	}
 
@@ -837,6 +813,7 @@ void map_hitstruct_free(map_t* pMap, maphit_t* pHitStruct)
 // XXX: perhaps make map_hit_test return a more complex structure indicating what type of hit it is?
 gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStruct)
 {
+#if 0	// GGGGGGGGGGGGGGGG
 	rendermetrics_t rendermetrics;
 	map_get_render_metrics(pMap, &rendermetrics);
 
@@ -872,6 +849,7 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStr
 		}
 		// otherwise try next layer...
 	}
+#endif
 	return FALSE;
 }
 
@@ -1206,11 +1184,11 @@ static gboolean map_hit_test_locationselections(map_t* pMap, rendermetrics_t* pR
 gboolean map_can_zoom_in(map_t* pMap)
 {
 	// can we increase zoom level?
-	return (pMap->m_uZoomLevel < MAX_ZOOMLEVEL);
+	return (pMap->m_uZoomLevel < MAX_ZOOM_LEVEL);
 }
 gboolean map_can_zoom_out(map_t* pMap)
 {
-	return (pMap->m_uZoomLevel > MIN_ZOOMLEVEL);
+	return (pMap->m_uZoomLevel > MIN_ZOOM_LEVEL);
 }
 
 
@@ -1234,7 +1212,7 @@ gint map_location_selection_sort_callback(gconstpointer ppA, gconstpointer ppB)
 {
 	locationselection_t* pA = *((locationselection_t**)ppA);
 	locationselection_t* pB = *((locationselection_t**)ppB);
-	
+
 	// we want them ordered from greatest latitude to smallest
 	return ((pA->m_Coordinates.m_fLatitude > pB->m_Coordinates.m_fLatitude) ? -1 : 1);
 }
@@ -1252,7 +1230,7 @@ gboolean map_location_selection_add(map_t* pMap, gint nLocationID)
 
 	pNew->m_nLocationID = nLocationID;
 	pNew->m_pAttributesArray = g_ptr_array_new();
-	
+
 	// load all attributes
 	location_load(nLocationID, &(pNew->m_Coordinates), NULL);
 	location_load_attributes(nLocationID, pNew->m_pAttributesArray);
@@ -1289,4 +1267,30 @@ const gchar* map_location_selection_get_attribute(const map_t* pMap, const locat
 		}
 	}
 	return NULL;
+}
+
+gboolean map_object_type_atoi(const gchar* pszName, gint* pnReturnObjectTypeID)
+{
+	gint i;
+	for(i=0 ; i<MAP_NUM_OBJECT_TYPES ; i++) {
+		if(strcmp(pszName, g_apszMapObjectTypeNames[i]) == 0) {
+			*pnReturnObjectTypeID = i;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTypeID)
+{
+	gchar* g_apszMapRenderTypeNames[] = {"lines", "polygons", "line-labels", "polygon-labels"};
+
+	gint i;
+	for(i=0 ; i<G_N_ELEMENTS(g_apszMapRenderTypeNames) ; i++) {
+		if(strcmp(pszName, g_apszMapRenderTypeNames[i]) == 0) {
+			*pnReturnRenderTypeID = i;
+			return TRUE;
+		}
+	}
+	return FALSE;
 }

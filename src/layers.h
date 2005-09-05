@@ -29,28 +29,6 @@
 
 G_BEGIN_DECLS
 
-#define LAYER_NONE					(0)
-
-#define LAYER_MINORSTREET			(1)
-#define LAYER_MAJORSTREET			(2)
-
-#define LAYER_MINORHIGHWAY			(3)
-#define LAYER_MINORHIGHWAY_RAMP		(4)
-
-#define LAYER_MAJORHIGHWAY			(5)	// used?
-#define LAYER_MAJORHIGHWAY_RAMP		(6)	// used?
-
-#define LAYER_RAILROAD				(7)
-#define LAYER_PARK					(8)
-#define LAYER_RIVER					(9)
-#define LAYER_LAKE					(10)
-#define LAYER_MISC_AREA				(11)
-
-#define NUM_LAYERS 					(11)
-
-#define LAYER_FIRST				(1)
-#define LAYER_LAST				(11)
-
 #include "map.h"
 
 typedef struct color {
@@ -67,37 +45,37 @@ typedef struct dashstyle {
 	gint8* m_panDashList;	// the dashes, as integers (for GDK)
 	gint m_nDashCount;
 } dashstyle_t;
-dashstyle_t g_aDashStyles[NUM_DASH_STYLES];
-
-typedef struct sublayerstyle {
-	gdouble m_afLineWidths[MAX_ZOOM_LEVEL];
-	color_t m_clrColor;
-	gint m_nDashStyle;
-	gint m_nJoinStyle;
-	gint m_nCapStyle;
-} sublayerstyle_t;
-
-typedef struct textlabelstyle {
-	gdouble m_afFontSizeAtZoomLevel[MAX_ZOOM_LEVEL];
-	gint m_abBoldAtZoomLevel[MAX_ZOOM_LEVEL];	// 0s or 1s
-	gint m_afHaloAtZoomLevel[MAX_ZOOM_LEVEL];	// stroke width
-	color_t m_clrColor;
-	// font family...
-} textlabelstyle_t;
 
 // defines the look of a layer
 typedef struct layerstyle {
-	sublayerstyle_t m_aSubLayers[2];
+	color_t m_clrPrimary;	// Color used for polygon fill or line stroke
+	gdouble m_fLineWidth;
+
+	gint m_nJoinStyle;
+	gint m_nCapStyle;
+	gint m_nDashStyle;
+
+	// XXX: switch to this:
+	//dashstyle_t m_pDashStyle;	// can be NULL
+
+	// Used just for text
+	gdouble m_fFontSize;
+	gboolean m_bFontBold;
+	gdouble m_fHaloSize;	// actually a stroke width
+	color_t m_clrHalo;
 } layerstyle_t;
 
 typedef struct layer {
-	gint nLayerIndex;
-	gchar* m_pszName;
-	layerstyle_t m_Style;
-	textlabelstyle_t m_TextLabelStyle;
+	gint m_nDataSource;		// which data to use (lakes, roads...)
+	gint m_nDrawType;		// as lines, polygons, etc.
+
+	// A layer has a style for each zoomlevel
+	layerstyle_t* m_paStylesAtZoomLevels[ NUM_ZOOM_LEVELS ];
 } layer_t;
 
-extern layer_t * g_aLayers[NUM_LAYERS+1];
+//extern layer_t * g_aLayers[NUM_LAYERS+1];
+extern GPtrArray* g_pLayersArray;
+extern dashstyle_t g_aDashStyles[NUM_DASH_STYLES];
 
 void layers_init(void);
 void layers_deinit(void);

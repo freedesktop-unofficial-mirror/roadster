@@ -58,7 +58,6 @@ gboolean search_address_match_zipcode(const gchar* pszWord)
 
 	gint i;
 	for(i=0 ; i<nLen ; i++) {
-		// XXX: is g_ascii_isalnum the right function? we should be testing for numbers only
 		if(!g_ascii_isdigit(pszWord[i])) {
 			return FALSE;
 		}
@@ -480,7 +479,6 @@ static gint max4(gint a, gint b, gint c, gint d)
 	return max(x,y);
 }
 #endif /* ROADSTER_DEAD_CODE */
-
 
 //
 // XXX: the SQL doesn't require all fields be set for THE SAME SIDE

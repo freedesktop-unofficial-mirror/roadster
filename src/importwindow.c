@@ -102,6 +102,8 @@ void importwindow_begin(GSList* pSelectedFileList)
 	g_ImportWindow.m_nTotalFiles = g_slist_length(pSelectedFileList);
 	g_ImportWindow.m_nCurrentFile = 1;
 
+	g_print("Importing %d file(s)\n", g_ImportWindow.m_nTotalFiles);
+
 	gint nTotalSuccess = 0;
 	GSList* pFile = pSelectedFileList;
 	while(pFile != NULL) {

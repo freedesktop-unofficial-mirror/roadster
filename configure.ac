@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(roadster, 0.2.0)
+AC_INIT(roadster, 0.2.8)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 
 dnl make sure we keep ACLOCAL_FLAGS around for maintainer builds to work
@@ -36,20 +36,15 @@ AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Gettext package.])
 
 dnl ========= check for gnome libraries ========================================
-PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 gtk+-2.0 libglade-2.0 libxml-2.0,,exit)
+PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 gtk+-2.0 libglade-2.0 libxml-2.0,,)
 AC_SUBST(GNOME_LIBS)
 AC_SUBST(GNOME_CFLAGS)
 
 dnl ========= check for cairo ==================================================
-PKG_CHECK_MODULES(CAIRO, cairo,,exit)
+PKG_CHECK_MODULES(CAIRO, cairo >= 1.0.0)
 
 AC_SUBST(CAIRO_LIBS)
 AC_SUBST(CAIRO_CFLAGS)
-
-PKG_CHECK_MODULES(, cairo > 0.2.0,
-    [AC_DEFINE([HAVE_CAIRO_0_2_0], [1], [Newer Cairo])],
-    continue
-)
 
 dnl ========= check for libsvg =================================================
 PKG_CHECK_MODULES(LIBSVG, libsvg libsvg-cairo,

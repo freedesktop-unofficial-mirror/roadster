@@ -26,6 +26,8 @@
 #include "main.h"
 #include "scenemanager.h"
 
+#define ENABLE_NO_DUPLICATE_LABELS
+
 /*
 Goals:
  - Keep text labels and other screen objects from overlapping
@@ -55,6 +57,7 @@ void scenemanager_set_screen_dimensions(scenemanager_t* pSceneManager, gint nWin
 
 gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* __unused_pScreenLocation, gint nFlags)
 {
+#ifdef ENABLE_NO_DUPLICATE_LABELS
 	g_assert(pSceneManager != NULL);
 	g_assert(pszLabel != NULL);
 
@@ -64,6 +67,9 @@ gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gch
 
 	// Can draw if it doesn't exist in table
 	return (FALSE == g_hash_table_lookup_extended(pSceneManager->m_pLabelHash, pszLabel, &pKey, &pValue));
+#else
+	return TRUE;
+#endif
 }
 
 gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints, gint nFlags)
@@ -146,10 +152,12 @@ gboolean scenemanager_can_draw_rectangle(scenemanager_t* pSceneManager, GdkRecta
 
 void scenemanager_claim_label(scenemanager_t* pSceneManager, const gchar* pszLabel)
 {
+#ifdef ENABLE_NO_DUPLICATE_LABELS
 	g_assert(pSceneManager != NULL);
 
 	// Just putting the label into the hash is enough
 	g_hash_table_insert(pSceneManager->m_pLabelHash, pszLabel, NULL);
+#endif
 }
 
 void scenemanager_claim_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints)

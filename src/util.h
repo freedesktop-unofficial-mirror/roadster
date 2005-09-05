@@ -25,6 +25,7 @@
 #define _UTIL_H_
 
 #include <gtk/gtk.h>
+#include "layers.h"
 
 #define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
 
@@ -33,7 +34,7 @@
 #define SWAP(x, y)                   { (x) ^= (y) ^= (x) ^= (y); }
 
 void util_random_color(void* pColor);
-
+gboolean util_parse_hex_color(const gchar* pszString, color_t* pReturnColor);
 
 #ifdef ENABLE_TIMING
 #define TIMER_BEGIN(name, str)	GTimer* name = g_timer_new(); g_print("\n%s (%f)\n", str, g_timer_elapsed(name, NULL))

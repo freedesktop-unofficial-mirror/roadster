@@ -47,7 +47,7 @@ void util_open_uri(const char* pszDangerousURI)
 
 	gchar **argv = g_malloc0(sizeof(gchar*) * 3);
 	argv[0] = "gnome-open";
-	argv[1] = pszDangerousURI;
+	argv[1] = (gchar*)pszDangerousURI;
 	argv[2] = NULL;
 
 	if(!g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &pError)) {
@@ -180,6 +180,30 @@ gchar** util_split_words_onto_two_lines(const gchar* pszText, gint nMinLineLengt
 
 	return aLines;
 }
+
+gboolean util_parse_hex_color(const gchar* pszString, color_t* pReturnColor)
+{
+	gchar *p = pszString;
+	if (*p == '#') p++;
+
+	if(strlen(p) != 8) {
+		g_warning("bad color value found: %s\n", pszString);
+		return FALSE;
+	}
+
+	// Read RGBA hex doubles (eg. "H8") into buffer and parse
+	gchar azBuffer[3] = {0,0,0};
+
+	azBuffer[0] = *p++; azBuffer[1] = *p++;
+	pReturnColor->m_fRed = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+	azBuffer[0] = *p++; azBuffer[1] = *p++;
+	pReturnColor->m_fGreen = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+	azBuffer[0] = *p++; azBuffer[1] = *p++;
+	pReturnColor->m_fBlue = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+	azBuffer[0] = *p++; azBuffer[1] = *p++;
+	pReturnColor->m_fAlpha = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+}
+
 
 #if(!GLIB_CHECK_VERSION(2,6,0))
 // if glib < 2.6 we need to provide this function ourselves

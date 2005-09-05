@@ -1,303 +1,240 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE roadster-layers SYSTEM "http://xxx/roadster-1.0.dtd">
 
-<roadster-layers>
+<layers>
 
-<layer name="minor-roads">
-	<sublayer>
-		<property name="width" level="6" value="4.0" />
-		<property name="width" level="7" value="7.0" />
-		<property name="width" level="8" value="12.0" />
-		<property name="width" level="9" value="17.0" />
-		<property name="width" level="10" value="35.0" />
-		<property name="color" value="#a0a0a0ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="round" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="6" value="2.0" />
-		<property name="width" level="7" value="5.0" />
-		<property name="width" level="8" value="10.0" />
-		<property name="width" level="9" value="15.0" />
-		<property name="width" level="10" value="33.0" />
-		<property name="color" value="#fffbffff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="round" />
-	</sublayer>
-	<label>
-		<property name="color" value="#FF000000" />
-		<property name="font-size" level="8" value="11" />
-		<property name="font-size" level="9" value="13" />
-		<property name="font-size" level="10" value="24" />
-	</label>
+# Labels
+
+<layer data-source="railroads" draw-type="line-labels">
+	<property zoom-level="1-2" name="font-size" value="10" />
+	<property zoom-level="3" name="font-size" value="10" />
+	<property zoom-level="4" name="font-size" value="12" />
+	<property zoom-level="5" name="font-size" value="17" />
+	<property zoom-level="1-5" name="color" value="#000000ff" />
+    <property zoom-level="1-5" name="halo-size" value="1" />
+    <property zoom-level="1-5" name="halo-color" value="#FFFFFFFF" />
 </layer>
 
-<layer name="major-roads">
-	<sublayer>
-		<property name="width" level="6" value="9.0" />
-		<property name="width" level="7" value="13.0" />
-		<property name="width" level="8" value="15.0" />
-		<property name="width" level="9" value="24.0" />
-		<property name="width" level="10" value="35.0" />
-		<property name="color" value="#b0b0b0ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="round" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="6" value="7.0" />
-		<property name="width" level="7" value="11.0" />
-		<property name="width" level="8" value="13.0" />
-		<property name="width" level="9" value="21.0" />
-		<property name="width" level="10" value="32.0" />
-		<property name="color" value="#FFFB94ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="round" />
-	</sublayer>
-	<label>
-		<property name="color" value="#00000000" />
-		<property name="font-size" level="6" value="10" />
-		<property name="font-size" level="7" value="12" />
-		<property name="font-size" level="8" value="12" />
-		<property name="font-size" level="9" value="20" />
-		<property name="font-size" level="10" value="34" />
-		<property name="bold" level="8" value="yes" />
-	</label>
+<layer data-source="minor-roads" draw-type="line-labels">
+	<property zoom-level="3" name="font-size" value="9" />
+	<property zoom-level="4" name="font-size" value="11" />
+	<property zoom-level="5" name="font-size" value="20" />
+	<property zoom-level="3-5" name="color" value="#000000ff" />
 </layer>
 
-<layer name="minor-highways">
-	<sublayer>
-		<property name="width" level="3" value="4.0" />
-		<property name="width" level="4" value="5.0" />
-		<property name="width" level="5" value="8.0" />
-		<property name="width" level="6" value="13.0" />
-		<property name="width" level="7" value="15.0" />
-		<property name="width" level="8" value="15.0" />
-		<property name="width" level="9" value="27.0" />
-		<property name="width" level="10" value="35.0" />
-		<property name="color" value="#ad8e21ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="round" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="1" value="1.0" />
-		<property name="width" level="3" value="2.5" />
-		<property name="width" level="4" value="3.1" />
-		<property name="width" level="5" value="6.5" />
-		<property name="width" level="6" value="11.0" />
-		<property name="width" level="7" value="13.0" />
-		<property name="width" level="8" value="13.0" />
-		<property name="width" level="9" value="25.0" />
-		<property name="width" level="10" value="33.0" />
-		<property name="color" value="#f7df4aff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="round" />
-	</sublayer>
-	<label>
-		<property name="color" value="#00000000" />
-		<property name="font-size" level="1" value="8" />
-		<property name="font-size" level="6" value="10" />
-		<property name="font-size" level="7" value="12" />
-		<property name="font-size" level="8" value="16" />
-		<property name="font-size" level="9" value="18" />
-		<property name="font-size" level="10" value="26" />
-		<property name="bold" level="6" value="yes" />
-	</label>
+<layer data-source="parks" draw-type="polygon-labels">
+	<property zoom-level="1" name="font-size" value="10" />
+	<property zoom-level="2" name="font-size" value="10" />
+	<property zoom-level="3" name="font-size" value="11" />
+	<property zoom-level="4" name="font-size" value="12" />
+	<property zoom-level="5" name="font-size" value="22" />
+	<property zoom-level="1-5" name="color" value="#303030FF" />
+    <property zoom-level="1-5" name="halo-size" value="1" />
+    <property zoom-level="1-5" name="halo-color" value="#FFFFFFFF" />
 </layer>
 
-<layer name="minor-highway-ramps">
-	<sublayer>
-		<property name="width" level="6" value="3.0" />
-		<property name="width" level="7" value="3.0" />
-		<property name="width" level="8" value="5.0" />
-		<property name="width" level="9" value="8.0" />
-		<property name="width" level="10" value="10.0" />
-		<property name="color" value="#ad8e21ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="round" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="6" value="1.0" />
-		<property name="width" level="7" value="1.0" />
-		<property name="width" level="8" value="3.0" />
-		<property name="width" level="9" value="6.0" />
-		<property name="width" level="10" value="8.0" />
-		<property name="color" value="#f7df4aff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="round" />
-	</sublayer>
+<layer data-source="lakes" draw-type="polygon-labels">
+	<property zoom-level="1" name="font-size" value="10" />
+	<property zoom-level="2" name="font-size" value="10" />
+	<property zoom-level="3" name="font-size" value="11" />
+	<property zoom-level="4" name="font-size" value="12" />
+	<property zoom-level="5" name="font-size" value="18" />
+	<property zoom-level="1-5" name="color" value="#303030FF" />
+    <property zoom-level="1-5" name="halo-size" value="1" />
+    <property zoom-level="1-5" name="halo-color" value="#FFFFFFFF" />
 </layer>
 
-<layer name="major-highways">
-	<sublayer>
-		<property name="width" level="3" value="4.0" />
-		<property name="width" level="4" value="10.0" />
-		<property name="width" level="5" value="12.0" />
-		<property name="width" level="6" value="16.0" />
-		<property name="width" level="7" value="22.0" />
-		<property name="width" level="8" value="28.0" />
-		<property name="width" level="9" value="34.0" />
-		<property name="width" level="10" value="38.0" />
-		<property name="color" value="#ada28cff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="1" value="1.0" />
-		<property name="width" level="3" value="2.0" />
-		<property name="width" level="4" value="8.5" />
-		<property name="width" level="5" value="10.0" />
-		<property name="width" level="6" value="14.0" />
-		<property name="width" level="7" value="20.0" />
-		<property name="width" level="8" value="26.5" />
-		<property name="width" level="9" value="32.0" />
-		<property name="width" level="10" value="36.0" />
-		<property name="color" value="#efbe21ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<label>
-		<property name="color" value="#00000000" />
-		<property name="font-size" level="1" value="6" />
-		<property name="font-size" level="7" value="8" />
-		<property name="font-size" level="8" value="10" />
-		<property name="font-size" level="9" value="16" />
-		<property name="font-size" level="10" value="26" />
-		<property name="bold" level="7" value="yes" />
-	</label>
+<layer data-source="misc-areas" draw-type="polygon-labels">
+	<property zoom-level="1" name="font-size" value="10" />
+	<property zoom-level="2" name="font-size" value="12" />
+	<property zoom-level="3" name="font-size" value="13" />
+	<property zoom-level="4" name="font-size" value="14" />
+	<property zoom-level="5" name="font-size" value="24" />
+	<property zoom-level="1-5" name="color" value="#303030FF" />
+    <property zoom-level="1-5" name="halo-size" value="1" />
+    <property zoom-level="1-5" name="halo-color" value="#FFFFFFFF" />
 </layer>
 
-<layer name="major-highway-ramps">
-	<sublayer>
-		<property name="width" level="9" value="7.0" />
-		<property name="width" level="10" value="16.0" />
-		<property name="color" value="#ada28cff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="7" value="1.0" />
-		<property name="width" level="9" value="5.5" />
-		<property name="width" level="10" value="14.0" />
-		<property name="color" value="#00be00ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
+<layer data-source="major-roads" draw-type="line-labels">
+	<property zoom-level="1" name="font-size" value="9" />
+	<property zoom-level="2" name="font-size" value="10" />
+	<property zoom-level="3" name="font-size" value="12" />
+	<property zoom-level="4" name="font-size" value="16" />
+	<property zoom-level="5" name="font-size" value="20" />
+	<property zoom-level="1-5" name="bold" value="yes" />
+	<property zoom-level="1-5" name="color" value="#000000ff" />
 </layer>
 
-<layer name="railroads">
-	<sublayer>
-		<property name="width" level="6" value="3.0" />
-		<property name="width" level="7" value="4.0" />
-		<property name="width" level="9" value="6.0" />
-		<property name="color" value="#A0A0A0ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="6" value="1.0" />
-		<property name="width" level="7" value="2.0" />
-		<property name="width" level="9" value="4.0" />
-		<property name="color" value="#ffffffff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-		<property name="dash-style" value="1" />
-	</sublayer>
-	<label>
-		<property name="color" value="#00000000" />
-		<property name="font-size" level="6" value="10" />
-		<property name="font-size" level="7" value="12" />
-		<property name="font-size" level="8" value="12" />
-		<property name="font-size" level="9" value="16" />
-		<property name="halo" value="3" />
-		<property name="bold" value="no" />
-	</label>
+<layer data-source="minor-highways" draw-type="line-labels">
+	<property zoom-level="1" name="font-size" value="10" />
+	<property zoom-level="2" name="font-size" value="12" />
+	<property zoom-level="3" name="font-size" value="12" />
+	<property zoom-level="4" name="font-size" value="14" />
+	<property zoom-level="5" name="font-size" value="20" />
+	<property zoom-level="1-5" name="bold" value="yes" />
+	<property zoom-level="1-5" name="color" value="#000000ff" />
 </layer>
 
-<layer name="parks">
-	<sublayer>
-		<property name="width" level="3" value="2.0" />
-		<property name="color" value="#888888FF" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="3" value="1.0" />
-		<property name="color" value="#afcf94ff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<label>
-		<property name="color" value="#303030FF" />
-		<property name="font-size" level="6" value="11" />
-		<property name="font-size" level="7" value="12" />
-		<property name="font-size" level="8" value="13" />
-		<property name="bold" value="no" />
-		<property name="halo" value="4" />
-	</label>
+# Lines
+
+<!-- double stripe down the center of highways -->
+<!-- <layer data-source="minor-highways" draw-type="lines">           -->
+<!--     <property zoom-level="2" name="line-width" value="1" />      -->
+<!--     <property zoom-level="3" name="line-width" value="3" />      -->
+<!--     <property zoom-level="4" name="line-width" value="3" />      -->
+<!--     <property zoom-level="5" name="line-width" value="15" />     -->
+<!--     <property zoom-level="2-5" name="color" value="#f7df4aff" /> -->
+<!-- </layer>                                                         -->
+<!-- <layer data-source="minor-highways" draw-type="lines">           -->
+<!--     <property zoom-level="2" name="line-width" value="7" />      -->
+<!--     <property zoom-level="3" name="line-width" value="9" />      -->
+<!--     <property zoom-level="4" name="line-width" value="9" />      -->
+<!--     <property zoom-level="5" name="line-width" value="21" />     -->
+<!--     <property zoom-level="2-5" name="color" value="#FFFFFFFF" /> -->
+<!-- </layer>                                                         -->
+
+<layer data-source="minor-highways" draw-type="lines">
+    <!-- center line in minor highways -->
+	<property zoom-level="1" name="line-width" value="1" />
+	<property zoom-level="2" name="line-width" value="1" />
+	<property zoom-level="3" name="line-width" value="1" />
+	<property zoom-level="4" name="line-width" value="1" />
+	<property zoom-level="5" name="line-width" value="1" />
+	<property zoom-level="1-5" name="color" value="#ad8e21ff" />
+</layer>
+<layer data-source="minor-highway-ramps" draw-type="lines">
+	<property zoom-level="1" name="line-width" value="1" />
+	<property zoom-level="2" name="line-width" value="2" />
+	<property zoom-level="3" name="line-width" value="3" />
+	<property zoom-level="4" name="line-width" value="5" />
+	<property zoom-level="5" name="line-width" value="8" />
+	<property zoom-level="1-5" name="color" value="#f7df4aff" />
+</layer>
+<layer data-source="minor-highways" draw-type="lines">
+    <!-- inner color line in minor highways -->
+	<property zoom-level="1" name="line-width" value="5" />
+	<property zoom-level="2" name="line-width" value="7" />
+	<property zoom-level="3" name="line-width" value="10" />
+	<property zoom-level="4" name="line-width" value="13" />
+	<property zoom-level="5" name="line-width" value="25" />
+	<property zoom-level="1-5" name="color" value="#f7df4aff" />
+</layer>
+<layer data-source="minor-highway-ramps" draw-type="lines">
+	<property zoom-level="1" name="line-width" value="3" />
+	<property zoom-level="2" name="line-width" value="4" />
+	<property zoom-level="3" name="line-width" value="5" />
+	<property zoom-level="4" name="line-width" value="7" />
+	<property zoom-level="5" name="line-width" value="10"/>
+	<property zoom-level="1-5" name="color" value="#ad8e21ff" />
+</layer>
+<layer data-source="minor-highways" draw-type="lines">
+    <!-- outer color line in minor highways -->
+	<property zoom-level="1" name="line-width" value="7" />
+	<property zoom-level="2" name="line-width" value="9" />
+	<property zoom-level="3" name="line-width" value="12" />
+	<property zoom-level="4" name="line-width" value="15" />
+	<property zoom-level="5" name="line-width" value="27" />
+	<property zoom-level="1-5" name="color" value="#ad8e21ff" />
 </layer>
 
-<layer name="rivers">
-	<sublayer>
-		<property name="width" level="6" value="4.0" />
-		<property name="width" level="7" value="5.0" />
-		<property name="width" level="8" value="5.0" />
-		<property name="width" level="9" value="8.0" />
-		<property name="width" level="10" value="10.0" />
-		<property name="color" value="#999999FF" />
-		<property name="join-style" value="round" />
-		<property name="cap-style" value="round" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="6" value="2.0" />
-		<property name="width" level="7" value="3.0" />
-		<property name="width" level="8" value="3.0" />
-		<property name="width" level="9" value="6.0" />
-		<property name="width" level="10" value="8.0" />
-		<property name="color" value="#9cb2ceFF" />
-		<property name="join-style" value="round" />
-		<property name="cap-style" value="round" />
-	</sublayer>
+<layer data-source="railroads" draw-type="lines">
+    <!-- dashed inner line -->
+    <property zoom-level="1-5" name="line-width" value="3" />
+	<property zoom-level="1-5" name="color" value="#858585FF" />
+	<property zoom-level="1-5" name="dash-style" value="1" />
+</layer>
+<layer data-source="railroads" draw-type="lines">
+    <!-- solid inner line -->
+	<property zoom-level="1-2" name="line-width" value="2" />
+	<property zoom-level="3-5" name="line-width" value="3" />
+	<property zoom-level="1-5" name="color" value="#CCCCCCFF" />
+</layer>
+<layer data-source="railroads" draw-type="lines">
+    <!-- solid outer line -->
+	<property zoom-level="1-2" name="line-width" value="4" />
+	<property zoom-level="3-5" name="line-width" value="5" />
+	<property zoom-level="1-5" name="color" value="#858585FF" />
 </layer>
 
-<layer name="lakes">
-	<sublayer>
-		<property name="color" value="#999999FF" />
-		<property name="width" level="1" value="1.0" />
-		<property name="width" level="3" value="2.0" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<sublayer>
-		<property name="width" level="3" value="1.0" />
-		<property name="color" value="#9cb2ceFF" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<label>
-		<property name="color" value="#222222FF" />
-		<property name="font-size" level="6" value="11" />
-		<property name="font-size" level="7" value="12" />
-		<property name="font-size" level="8" value="14" />
-		<property name="bold" value="no" />
-		<property name="halo" value="3" />
-	</label>
+<layer data-source="major-roads" draw-type="lines">
+<!-- dashed center lines -->
+	<property zoom-level="5" name="line-width" value="1" />
+	<property zoom-level="5" name="dash-style" value="1" />
+	<property zoom-level="5" name="line-cap" value="square" />
+	<property zoom-level="5" name="color" value="#EDDDDDff" />
+</layer>
+<layer data-source="minor-roads" draw-type="lines">
+<!-- dashed center lines -->
+	<property zoom-level="5" name="line-width" value="1" />
+	<property zoom-level="5" name="dash-style" value="1" />
+	<property zoom-level="5" name="line-cap" value="square" />
+	<property zoom-level="5" name="color" value="#CDCDCDff" />
 </layer>
 
-<layer name="misc-area">
-	<sublayer>
-		<property name="width" level="6" value="1.0" />
-		<property name="color" value="#AAAAAAff" />
-		<property name="join-style" value="miter" />
-		<property name="cap-style" value="butt" />
-	</sublayer>
-	<label>
-		<property name="color" value="#303030FF" />
-		<property name="font-size" level="6" value="11" />
-		<property name="font-size" level="7" value="12" />
-		<property name="font-size" level="8" value="13" />
-		<property name="bold" value="no" />
-		<property name="halo" value="3" />
-	</label>
+<layer data-source="major-roads" draw-type="lines">
+	<property zoom-level="1" name="line-width" value="6" />
+	<property zoom-level="2" name="line-width" value="8" />
+	<property zoom-level="3" name="line-width" value="10" />
+	<property zoom-level="4" name="line-width" value="15" />
+	<property zoom-level="5" name="line-width" value="20" />
+	<property zoom-level="1-5" name="color" value="#FFFB94ff" />
+</layer>
+<layer data-source="minor-roads" draw-type="lines">
+    <property zoom-level="1" name="line-width" value="1" />
+    <property zoom-level="1" name="color" value="#c0c0c0ff" />
+    <property zoom-level="1" name="line-cap" value="square" />
+
+    <property zoom-level="2" name="line-width" value="2" />
+    <property zoom-level="2" name="line-cap" value="square" />
+	<property zoom-level="3" name="line-width" value="7" />
+	<property zoom-level="4" name="line-width" value="12" />
+	<property zoom-level="5" name="line-width" value="24" />
+	<property zoom-level="2-5" name="color" value="#fffbffff" />
 </layer>
 
-</roadster-layers>
+<layer data-source="major-roads" draw-type="lines">
+	<property zoom-level="1" name="line-width" value="8" />
+	<property zoom-level="2" name="line-width" value="10" />
+	<property zoom-level="3" name="line-width" value="12" />
+	<property zoom-level="4" name="line-width" value="17" />
+	<property zoom-level="5" name="line-width" value="22" />
+	<property zoom-level="1-5" name="color" value="#b0b0b0ff" />
+</layer>
+
+<layer data-source="minor-roads" draw-type="lines">
+    <property zoom-level="1" name="line-width" value="2" />
+    <property zoom-level="1" name="color" value="#E0E0E0ff" />
+    <property zoom-level="1" name="line-cap" value="square" />
+
+    <property zoom-level="2" name="line-width" value="4" />
+    <property zoom-level="2" name="line-cap" value="square" />
+	<property zoom-level="3" name="line-width" value="9" />
+	<property zoom-level="4" name="line-width" value="14" />
+	<property zoom-level="5" name="line-width" value="26" />
+	<property zoom-level="2-5" name="color" value="#B0B0B0ff" />
+</layer>
+
+<layer data-source="rivers" draw-type="lines">
+	<property zoom-level="1" name="line-width" value="3" />
+	<property zoom-level="2" name="line-width" value="4" />
+	<property zoom-level="3" name="line-width" value="5" />
+	<property zoom-level="4" name="line-width" value="6" />
+	<property zoom-level="5" name="line-width" value="7" />
+	<property zoom-level="1-5" name="color" value="#9cb2ceFF" />
+</layer>
+
+# Polygons
+
+<layer data-source="lakes" draw-type="polygons">
+	<property zoom-level="1-5" name="color" value="#9cb2ceFF" />
+</layer>
+
+<layer data-source="parks" draw-type="polygons">
+	<property zoom-level="1-5" name="color" value="#afcf94ff" />
+</layer>
+
+<layer data-source="misc-areas" draw-type="polygons">
+	<property zoom-level="1-5" name="color" value="#AAAAAAff" />
+</layer>
+
+</layers>

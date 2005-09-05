@@ -26,6 +26,34 @@
 
 #include "gfreelist.h"
 
+//
+// Map Object Types
+//
+#define MAP_OBJECT_TYPE_NONE					(0)
+#define MAP_OBJECT_TYPE_MINORROAD				(1)
+#define MAP_OBJECT_TYPE_MAJORROAD				(2)
+#define MAP_OBJECT_TYPE_MINORHIGHWAY			(3)
+#define MAP_OBJECT_TYPE_MINORHIGHWAY_RAMP		(4)
+#define MAP_OBJECT_TYPE_MAJORHIGHWAY			(5)	// Unused
+#define MAP_OBJECT_TYPE_MAJORHIGHWAY_RAMP		(6)	// Unused
+#define MAP_OBJECT_TYPE_RAILROAD				(7)
+#define MAP_OBJECT_TYPE_PARK					(8)
+#define MAP_OBJECT_TYPE_RIVER					(9)
+#define MAP_OBJECT_TYPE_LAKE					(10)
+#define MAP_OBJECT_TYPE_MISC_AREA				(11)
+
+#define MAP_NUM_OBJECT_TYPES 					(12)
+
+#define MAP_OBJECT_TYPE_FIRST					(1)
+#define MAP_OBJECT_TYPE_LAST					(11)
+
+//
+// Line CAP styles
+//
+#define MAP_CAP_STYLE_ROUND		(1)
+#define MAP_CAP_STYLE_SQUARE	(2)
+#define MAP_CAP_STYLE_DEFAULT	(MAP_CAP_STYLE_ROUND)	// if not specified by the style
+
 #define MIN_LATITUDE	(-90.0)
 #define MAX_LATITUDE	(90.0)
 #define MIN_LONGITUDE	(-180.0)
@@ -36,7 +64,6 @@ typedef enum {
 	kSublayerTop,
 } ESubLayer;
 
-#define MIN_LINE_LENGTH_FOR_LABEL  	(40)
 #define LABEL_PIXELS_ABOVE_LINE 	(2)
 #define LABEL_PIXEL_RELIEF_INSIDE_LINE	(2)	// when drawing a label inside a line, only do so if we would have at least this much blank space above+below the text
 
@@ -44,21 +71,18 @@ typedef enum {
 
 #define INCHES_PER_METER (39.37007)
 
-#define NUM_ZOOMLEVELS (10)	// the real total # in the array
-#define MIN_ZOOMLEVEL (6)	// the min/max that we allow, for now
-#define MAX_ZOOMLEVEL (9)
-
-#define WORLD_CIRCUMFERENCE_IN_METERS (40076000)
+#define WORLD_CIRCUMFERENCE_IN_METERS (40075452.7)
 #define WORLD_METERS_PER_DEGREE (WORLD_CIRCUMFERENCE_IN_METERS / 360.0)
 #define WORLD_METERS_TO_DEGREES(x)	((x) / WORLD_METERS_PER_DEGREE)
 #define WORLD_DEGREES_TO_METERS(x)	((x) * WORLD_METERS_PER_DEGREE)
-#define KILOMETERS_PER_METER 	(1000)
-#define WORLD_KILOMETERS_TO_DEGREES(x)	((x * KILOMETERS_PER_METER) / WORLD_METERS_PER_DEGREE)
+#define KILOMETERS_PER_METER 	(1000.0)
+#define WORLD_KILOMETERS_TO_DEGREES(x)	(((x) * KILOMETERS_PER_METER) / WORLD_METERS_PER_DEGREE)
 
 #define WORLD_CIRCUMFERENCE_IN_FEET (131482939.8324)
 #define WORLD_FEET_PER_DEGREE 		(WORLD_CIRCUMFERENCE_IN_FEET / 360.0)
 #define WORLD_FEET_TO_DEGREES(X)	((X) / WORLD_FEET_PER_DEGREE)
-#define FEET_PER_MILE				(5280)
+
+#define FEET_PER_MILE				(5280.0)
 #define WORLD_MILES_TO_DEGREES(x)	((x * FEET_PER_MILE) / WORLD_FEET_PER_DEGREE)
 
 // Earth is slightly egg shaped so there are infinite radius measurements:
@@ -74,8 +98,10 @@ typedef enum {
 
 struct GtkWidget;
 
-#define MIN_ZOOM_LEVEL	1
-#define MAX_ZOOM_LEVEL	10
+#define MIN_ZOOM_LEVEL					(1)
+#define MAX_ZOOM_LEVEL					(5)
+#define NUM_ZOOM_LEVELS					(5)
+#define MIN_ZOOM_LEVEL_FOR_LOCATIONS	(6)		// don't show POI above this level
 
 #include "layers.h"
 #include "scenemanager.h"
@@ -107,13 +133,6 @@ typedef struct {
 	guint16 m_uHeight;
 } dimensions_t;
 
-typedef struct {
-	guint32 m_uScale;		// ex. 10000 for 1:10000 scale
-	gchar* m_szName;
-} zoomlevel_t;
-
-extern zoomlevel_t g_sZoomLevels[];
-
 typedef enum {
 	UNIT_FIRST=0,	
 		UNIT_FEET=0,
@@ -122,13 +141,27 @@ typedef enum {
 		UNIT_KILOMETERS=3,
 	UNIT_LAST=3,
 } EDistanceUnits;
+#define DEFAULT_UNIT	(UNIT_MILES)
+
+typedef struct {
+	guint32 m_uScale;		// ex. 10000 for 1:10000 scale
+
+	EDistanceUnits m_eScaleImperialUnit;	// eg. "feet"
+	gint m_nScaleImperialNumber;			// eg. 200
+
+	EDistanceUnits m_eScaleMetricUnit;
+	gint m_nScaleMetricNumber;
+
+	gchar* m_szName;
+} zoomlevel_t;
+
+extern zoomlevel_t g_sZoomLevels[];
+
 
 typedef enum {
 	SIDE_LEFT=1,
 	SIDE_RIGHT=2,
 } ESide;
-
-#define DEFAULT_UNIT	(UNIT_MILES)
 
 extern gchar* g_aDistanceUnitNames[];
 
@@ -161,7 +194,7 @@ typedef struct {
 
 	// data
 	GArray			*m_pTracksArray;
-	maplayer_data_t		*m_apLayerData[ NUM_LAYERS + 1 ];
+	maplayer_data_t		*m_apLayerData[ MAP_NUM_OBJECT_TYPES + 1 ];
 
 	// Locationsets
 	GHashTable		*m_pLocationArrayHashTable;
@@ -211,16 +244,16 @@ typedef struct {
 } maphit_t;
 
 typedef enum {
-	SUBLAYER_RENDERTYPE_LINES,
-	SUBLAYER_RENDERTYPE_POLYGONS,
-	SUBLAYER_RENDERTYPE_LINE_LABELS,
-	SUBLAYER_RENDERTYPE_POLYGON_LABELS
-} ESubLayerRenderType;
+	MAP_LAYER_RENDERTYPE_LINES,
+	MAP_LAYER_RENDERTYPE_POLYGONS,
+	MAP_LAYER_RENDERTYPE_LINE_LABELS,
+	MAP_LAYER_RENDERTYPE_POLYGON_LABELS
+} EMapLayerRenderType;
 
 typedef struct {
 	gint nLayer;
 	gint nSubLayer;
-	ESubLayerRenderType eSubLayerRenderType;
+	EMapLayerRenderType eSubLayerRenderType;
 
 //	void (*pFunc)(map_t*, cairo_t*, rendermetrics_t*, GPtrArray*, sublayerstyle_t*, textlabelstyle_t*);
 } draworder_t;
@@ -286,7 +319,6 @@ void map_center_on_windowpoint(map_t* pMap, guint16 uX, guint16 uY);
 
 GdkPixmap* map_get_pixmap(map_t* pMap);
 void map_release_pixmap(map_t* pMap);
-//void map_draw_thread_begin(map_t* pMap, GtkWidget* pTargetWidget);
 
 void map_draw(map_t* pMap, gint nDrawFlags);
 void map_add_track(map_t* pMap, gint hTrack);
@@ -301,5 +333,8 @@ gboolean map_location_selection_add(map_t* pMap, gint nLocationID);
 gboolean map_location_selection_remove(map_t* pMap, gint nLocationID);
 
 const gchar* map_location_selection_get_attribute(const map_t* pMap, const locationselection_t* pLocationSelection, const gchar* pszAttributeName);
+
+gboolean map_object_type_atoi(const gchar* pszName, gint* pnReturnObjectTypeID);
+gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTypeID);
 
 #endif
