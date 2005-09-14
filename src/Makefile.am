@@ -24,7 +24,9 @@ roadster_SOURCES = \
 	mainwindow.c\
 	gotowindow.c\
 	map.c\
-	layers.c\
+	map_style.c\
+	map_draw_cairo.c\
+	map_draw_gdk.c\
 	import.c\
 	import_tiger.c\
 	importwindow.c\
@@ -33,6 +35,7 @@ roadster_SOURCES = \
 	gpsclient.c\
 	location.c\
 	locationset.c\
+	locationeditwindow.c\
 	searchwindow.c\
 	search_road.c\
 	search_location.c\
@@ -42,10 +45,7 @@ roadster_SOURCES = \
 	pointstring.c\
 	track.c\
 	glyph.c\
-	map_draw_cairo.c\
-	map_draw_gdk.c\
 	road.c\
-	prefs.c\
 	animator.c\
 	gfreelist.c\
 	history.c\

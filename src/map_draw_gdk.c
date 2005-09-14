@@ -23,6 +23,8 @@
 
 #define MAX_GDK_LINE_SEGMENTS (2000)
 
+//#define ENABLE_MAP_GRAYSCALE_HACK
+
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
@@ -36,25 +38,35 @@
 #include "db.h"
 #include "road.h"
 #include "point.h"
-#include "layers.h"
+#include "map_style.h"
 #include "track.h"
 #include "locationset.h"
 #include "location.h"
 #include "scenemanager.h"
 
-static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap);
-static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, layerstyle_t* pLayerStyle);
-static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, layerstyle_t* pLayerStyle);
+//static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap);
+static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
+static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
+
+static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle);
+
 static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
 
+//#define ENABLE_MAP_GRAYSCALE_HACK 	// just a little test.  black and white might be good for something
+
 void map_draw_gdk_set_color(GdkGC* pGC, color_t* pColor)
 {
 	GdkColor clr;
+
+#ifdef ENABLE_MAP_GRAYSCALE_HACK
+	clr.red = clr.green = clr.blue = ((pColor->m_fRed + pColor->m_fGreen + pColor->m_fBlue) / 3.0) * 65535;
+#else
 	clr.red = pColor->m_fRed * 65535;
 	clr.green = pColor->m_fGreen * 65535;
 	clr.blue = pColor->m_fBlue * 65535;
+#endif
 	gdk_gc_set_rgb_fg_color(pGC, &clr);
 }
 
@@ -62,26 +74,28 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 {
 	TIMER_BEGIN(maptimer, "BEGIN RENDER MAP (gdk)");
 
+	GdkGC* pGC = pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)];
+
 	// 1. Save values (so we can restore them)
 	GdkGCValues gcValues;
-	gdk_gc_get_values(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &gcValues);
+	gdk_gc_get_values(pGC, &gcValues);
 
 	// 2. Drawing
-
-	// 2.1. Draw Background
-	if(nDrawFlags & DRAWFLAG_GEOMETRY) {
-		map_draw_gdk_background(pMap, pPixmap);
-	}
-
-	// 2.2. Render Layers
 	if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 		gint i;
 
-		// draw list in reverse order (painter's algorithm: http://en.wikipedia.org/wiki/Painter's_algorithm )
-		for(i=g_pLayersArray->len-1 ; i>=0 ; i--) {
-			layer_t* pLayer = g_ptr_array_index(g_pLayersArray, i);
+		// 2.1. Draw Background
+//		map_draw_gdk_background(pMap, pPixmap);
 
-			if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
+		// 2.2. Draw layer list in reverse order (painter's algorithm: http://en.wikipedia.org/wiki/Painter's_algorithm )
+		for(i=pMap->m_pLayersArray->len-1 ; i>=0 ; i--) {
+			maplayer_t* pLayer = g_ptr_array_index(pMap->m_pLayersArray, i);
+
+			if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_FILL) {
+				map_draw_gdk_layer_fill(pMap, pPixmap,	pRenderMetrics,
+										 pLayer->m_paStylesAtZoomLevels[pRenderMetrics->m_nZoomLevel-1]);		// style
+			}
+			else if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
 				map_draw_gdk_layer_lines(pMap, pPixmap,	pRenderMetrics,
 										 pMap->m_apLayerData[pLayer->m_nDataSource]->m_pRoadsArray,				// data
 										 pLayer->m_paStylesAtZoomLevels[pRenderMetrics->m_nZoomLevel-1]);		// style
@@ -105,19 +119,19 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 	TIMER_END(maptimer, "END RENDER MAP (gdk)");
 }
 
-static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap)
-{
-	GdkColor clr;
-	clr.red = 236/255.0 * 65535;
-	clr.green = 230/255.0 * 65535;
-	clr.blue = 230/255.0 * 65535;
-	gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
+// static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap)
+// {
+//     GdkColor clr;
+//     clr.red = 236/255.0 * 65535;
+//     clr.green = 230/255.0 * 65535;
+//     clr.blue = 230/255.0 * 65535;
+//     gdk_gc_set_rgb_fg_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &clr);
+//
+//     gdk_draw_rectangle(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+//             TRUE, 0,0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
+// }
 
-	gdk_draw_rectangle(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-			TRUE, 0,0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
-}
-
-static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, layerstyle_t* pLayerStyle)
+static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
 {
 	mappoint_t* pPoint;
 	road_t* pRoad;
@@ -153,8 +167,8 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 				fMaxLon = max(pPoint->m_fLongitude,fMaxLon);
 				fMinLon = min(pPoint->m_fLongitude,fMinLon);
 
-				aPoints[iPoint].x = (gint)SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
-				aPoints[iPoint].y = (gint)SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
+				aPoints[iPoint].x = pLayerStyle->m_nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
+				aPoints[iPoint].y = pLayerStyle->m_nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
 			}
 
 			// rectangle overlap test
@@ -171,7 +185,15 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	}
 }
 
-static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, layerstyle_t* pLayerStyle)
+// useful for filling the screen with a color.  not much else.
+static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle)
+{
+	map_draw_gdk_set_color(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)], &(pLayerStyle->m_clrPrimary));
+	gdk_draw_rectangle(pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+			TRUE, 0,0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
+}
+
+static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
 {
 	road_t* pRoad;
 	mappoint_t* pPoint;
@@ -180,17 +202,6 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 
 	if(pLayerStyle->m_fLineWidth <= 0.0) return;			// Don't draw invisible lines
 	if(pLayerStyle->m_clrPrimary.m_fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
-
-	// Use GDK dash style if ANY dash pattern is set
-	gint nDashStyle = GDK_LINE_SOLID;
-	if(g_aDashStyles[pLayerStyle->m_nDashStyle].m_nDashCount > 1) {
-		nDashStyle = GDK_LINE_ON_OFF_DASH;
-
-		gdk_gc_set_dashes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
-				0, /* offset to start at */
-				g_aDashStyles[pLayerStyle->m_nDashStyle].m_panDashList,
-				g_aDashStyles[pLayerStyle->m_nDashStyle].m_nDashCount);
-	}
 
 	// Translate generic cap style into GDK constant
 	gint nCapStyle;
@@ -203,6 +214,18 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 
 	// Convert to integer width.  Ouch!
 	gint nLineWidth = (gint)(pLayerStyle->m_fLineWidth);
+
+	// Use GDK dash style if ANY dash pattern is set
+	gint nDashStyle = GDK_LINE_SOLID;
+	if(pLayerStyle->m_pDashStyle != NULL) {
+		gdk_gc_set_dashes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+				0, /* offset to start at */
+				pLayerStyle->m_pDashStyle->m_panDashList,
+				pLayerStyle->m_pDashStyle->m_nDashCount);
+		
+		nDashStyle = GDK_LINE_ON_OFF_DASH;
+		// further set line attributes below...
+	}
 
 	// Set line style
 	gdk_gc_set_line_attributes(pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
@@ -236,8 +259,8 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 				fMaxLon = max(pPoint->m_fLongitude,fMaxLon);
 				fMinLon = min(pPoint->m_fLongitude,fMinLon);
 
-				aPoints[iPoint].x = (gint)SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
-				aPoints[iPoint].y = (gint)SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
+				aPoints[iPoint].x = pLayerStyle->m_nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->m_fLongitude);
+				aPoints[iPoint].y = pLayerStyle->m_nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->m_fLatitude);
 			}
 
 			// basic rectangle overlap test

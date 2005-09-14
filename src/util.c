@@ -181,8 +181,10 @@ gchar** util_split_words_onto_two_lines(const gchar* pszText, gint nMinLineLengt
 	return aLines;
 }
 
-gboolean util_parse_hex_color(const gchar* pszString, color_t* pReturnColor)
+gboolean util_parse_hex_color(const gchar* pszString, void* pvReturnColor)
 {
+	color_t* pReturnColor = (color_t*)pvReturnColor;
+
 	gchar *p = pszString;
 	if (*p == '#') p++;
 
@@ -219,12 +221,12 @@ gint g_strv_length(const gchar** a)
 }
 #endif
 
-#if ROADSTER_DEAD_CODE
-void util_random_color(color_t* pColor)
+void util_random_color(void* p)
 {
+	color_t* pColor = (color_t*)p;
+
 	pColor->m_fRed = (random()%1000)/1000.0;
 	pColor->m_fGreen = (random()%1000)/1000.0;
 	pColor->m_fBlue = (random()%1000)/1000.0;
 	pColor->m_fAlpha = 1.0;
 }
-#endif /* ROADSTER_DEAD_CODE */

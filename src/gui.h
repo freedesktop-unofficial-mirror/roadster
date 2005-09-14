@@ -27,17 +27,9 @@
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 
+#define GLADE_LINK_WIDGET(glade, ptr, type, name)	ptr = type(glade_xml_get_widget(glade, name)); g_return_if_fail(ptr != NULL)
+
 #define GLADE_FILE_NAME	("roadster.glade")
-
-extern GtkWidget *g_pApplicationWidget;
-extern GtkWidget *g_pDisplaySettingsWidget;
-
-struct gui_state_t {
-	float m_fCenterX;
-	float m_fCenterY;
-
-	guint8 m_nZoomLevel;
-};
 
 //
 // prototypes

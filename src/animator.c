@@ -25,11 +25,9 @@
 #  include <config.h>
 #endif
 
-#include <gtk/gtk.h>
+#include <glib.h>
 
-#include "main.h"
 #include "animator.h"
-#include "util.h"
 
 void animator_init()
 {
@@ -115,7 +113,7 @@ gdouble animator_get_progress(animator_t* pAnimator)
 	}
 
 	// Make 100% sure it's capped to 0.0 -> 1.0
-	fReturn = min(fReturn, 1.0);
-	fReturn = max(fReturn, 0.0);
+	fReturn = MIN(fReturn, 1.0);
+	fReturn = MAX(fReturn, 0.0);
 	return fReturn;
 }

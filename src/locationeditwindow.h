@@ -1,5 +1,5 @@
 /***************************************************************************
- *            prefs.c
+ *            locationeditwindow.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -21,42 +21,16 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "main.h"
+#ifndef _LOCATIONEDITWINDOW_H
+#define _LOCATIONEDITWINDOW_H
 
-void prefs_init() {}
-void pref_deinit() {}
-void prefs_read() {}
+#include <glade/glade.h>
+#include "map.h"
 
-/*
-#include <glib.h>
+G_BEGIN_DECLS
 
-struct {
-	GKeyFile* m_pKeyFile;
-} g_Prefs = {0};
+void locationeditwindow_init(GladeXML* pGladeXML);
 
-#define KEYFILE_GROUP_GUI_STATE  	("state")
-#define KEYFILE_KEY_LATITUDE		("latitude")
+G_END_DECLS
 
-void prefs_load()
-{
-	gchar* pszFilePath = ".roadster/prefs";
-
-	// load existing keyfile
-	g_Prefs.m_pKeyFile = g_key_file_new();
-	if(!g_key_file_load_from_file(g_Prefs.m_pKeyFile, pszFilePath, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL)) {
-		
-	}
-
-	gchar* pszValue;
-	pszValue = g_key_file_get_value(g_Prefs.m_pKeyFile,
-                                             KEYFILE_GROUP_GUI_STATE,
-                                             KEYFILE_KEY_LATITUDE,
-                                             NULL);
-	g_print("value = %s\n", pszValue);
-}
-
-void prefs_save()
-{
-
-}
-*/
+#endif

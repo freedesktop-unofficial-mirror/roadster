@@ -39,7 +39,7 @@
 #include "gotowindow.h"
 #include "db.h"
 #include "map.h"
-#include "layers.h"
+#include "map_style.h"
 #include "importwindow.h"
 #include "welcomewindow.h"
 #include "locationset.h"
@@ -55,17 +55,19 @@
 #define PROGRAM_DESCRIPTION		"Mapping for everyone!"
 #define WEBSITE_URL				"http://linuxadvocate.org/projects/roadster"
 
+#define MAP_STYLE_FILENAME 		("layers.xml")
+
 // how long after stopping various movements should we redraw in high-quality mode
 #define DRAW_PRETTY_SCROLL_TIMEOUT_MS	(110)	// NOTE: should be longer than the SCROLL_TIMEOUT_MS below!!
 #define DRAW_PRETTY_ZOOM_TIMEOUT_MS	(180)
 #define DRAW_PRETTY_DRAG_TIMEOUT_MS	(250)
 #define DRAW_PRETTY_RESIZE_TIMEOUT_MS	(180)
 
-#define SCROLL_TIMEOUT_MS		(80)		// how often (in MS) to move
-#define SCROLL_DISTANCE_IN_PIXELS	(100)		// how far to move every (above) MS
+#define SCROLL_TIMEOUT_MS				(70)		// how often (in MS) to move
+#define SCROLL_DISTANCE_IN_PIXELS		(60)		// how far to move every (above) MS
 #define BORDER_SCROLL_CLICK_TARGET_SIZE	(16)		// the size of the click target (distance from edge of map view) to begin scrolling
 
-#define SLIDE_TIMEOUT_MS		(50)	// time between frames (in MS) for smooth-sliding (on double click?)
+#define SLIDE_TIMEOUT_MS			(50)	// time between frames (in MS) for smooth-sliding on double click
 #define	SLIDE_TIME_IN_SECONDS		(0.4)	// how long the whole slide should take, in seconds
 #define	SLIDE_TIME_IN_SECONDS_AUTO	(0.8)	// time for sliding to search results, etc.
 
@@ -75,21 +77,21 @@
 
 // Locationset columns
 #define	LOCATIONSETLIST_COLUMN_ENABLED  (0)
-#define LOCATIONSETLIST_COLUMN_NAME	(1)
-#define LOCATIONSETLIST_COLUMN_ID	(2)
+#define LOCATIONSETLIST_COLUMN_NAME		(1)
+#define LOCATIONSETLIST_COLUMN_ID		(2)
 
-//
-#define MOUSE_BUTTON_LEFT		(1)
-#define MOUSE_BUTTON_RIGHT		(3)
+// 
+#define MOUSE_BUTTON_LEFT				(1)
+#define MOUSE_BUTTON_RIGHT				(3)
 
 // Limits
-#define MAX_SEARCH_TEXT_LENGTH		(100)
-#define SPEED_LABEL_FORMAT		("<span font_desc='32'>%.0f</span>")
+#define MAX_SEARCH_TEXT_LENGTH			(100)
+#define SPEED_LABEL_FORMAT				("<span font_desc='32'>%.0f</span>")
 
-#define TOOLTIP_FORMAT			("%s")
+#define TOOLTIP_FORMAT					("%s")
 
-#define	ROAD_TOOLTIP_BG_COLOR		65535, 65535, 39000
-#define	LOCATION_TOOLTIP_BG_COLOR	52800, 60395, 65535
+#define	ROAD_TOOLTIP_BG_COLOR			65535, 65535, 39000
+#define	LOCATION_TOOLTIP_BG_COLOR		52800, 60395, 65535
 
 // Settings
 #define TIMER_GPS_REDRAW_INTERVAL_MS	(2500)		// lower this (to 1000?) when it's faster to redraw track
@@ -151,8 +153,8 @@ struct {
 
 	// Toolbar
 	GtkToolbar* m_pToolbar;
-	GtkToolButton* m_pPointerToolButton;
-	GtkToolButton* m_pZoomToolButton;
+//	GtkToolButton* m_pPointerToolButton;
+//	GtkToolButton* m_pZoomToolButton;
 	GtkHScale* m_pZoomScale;
 	GtkEntry* m_pSearchBox;
 	GtkImage* m_pStatusbarGPSIcon;
@@ -201,9 +203,10 @@ struct {
 	gboolean m_bScrolling;
 	EDirection m_eScrollDirection;
 	gboolean m_bScrollMovement;
-	
+
 	gboolean m_bMouseDragging;
 	gboolean m_bMouseDragMovement;
+
 	screenpoint_t m_ptClickLocation;	
 
 	gint m_nCurrentGPSPath;
@@ -234,7 +237,7 @@ toolsettings_t g_Tools[] = {
 void cursor_init()
 {
 	int i;
-	for(i=0 ; i<NUM_ELEMS(g_Tools) ; i++) {
+	for(i=0 ; i<G_N_ELEMENTS(g_Tools) ; i++) {
 		g_Tools[i].m_Cursor.m_pGdkCursor = gdk_cursor_new(g_Tools[i].m_Cursor.m_CursorType);
 	}
 }
@@ -291,8 +294,8 @@ void mainwindow_init(GladeXML* pGladeXML)
 	// Widgets
 	g_MainWindow.m_pWindow			= GTK_WINDOW(glade_xml_get_widget(pGladeXML, "mainwindow"));			g_return_if_fail(g_MainWindow.m_pWindow != NULL);
 	g_MainWindow.m_pMapPopupMenu		= GTK_MENU(glade_xml_get_widget(pGladeXML, "mappopupmenu"));			g_return_if_fail(g_MainWindow.m_pMapPopupMenu != NULL);
-	g_MainWindow.m_pPointerToolButton 	= GTK_TOOL_BUTTON(glade_xml_get_widget(pGladeXML, "pointertoolbutton"));	g_return_if_fail(g_MainWindow.m_pPointerToolButton != NULL);
-	g_MainWindow.m_pZoomToolButton 		= GTK_TOOL_BUTTON(glade_xml_get_widget(pGladeXML, "zoomtoolbutton")); 		g_return_if_fail(g_MainWindow.m_pZoomToolButton != NULL);
+//	g_MainWindow.m_pPointerToolButton 	= GTK_TOOL_BUTTON(glade_xml_get_widget(pGladeXML, "pointertoolbutton"));	g_return_if_fail(g_MainWindow.m_pPointerToolButton != NULL);
+//	g_MainWindow.m_pZoomToolButton 		= GTK_TOOL_BUTTON(glade_xml_get_widget(pGladeXML, "zoomtoolbutton")); 		g_return_if_fail(g_MainWindow.m_pZoomToolButton != NULL);
 
 	g_MainWindow.m_pZoomInButton		= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "zoominbutton")); 			g_return_if_fail(g_MainWindow.m_pZoomInButton != NULL);
 	g_MainWindow.m_pZoomInMenuItem		= GTK_MENU_ITEM(glade_xml_get_widget(pGladeXML, "zoominmenuitem")); 		g_return_if_fail(g_MainWindow.m_pZoomInMenuItem != NULL);
@@ -335,8 +338,9 @@ void mainwindow_init(GladeXML* pGladeXML)
 	g_MainWindow.m_pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());
 	g_MainWindow.m_pTooltip = tooltip_new();
 
-	// create map
+	// create map and load style
 	map_new(&g_MainWindow.m_pMap, GTK_WIDGET(g_MainWindow.m_pDrawingArea));
+	map_style_load(g_MainWindow.m_pMap, MAP_STYLE_FILENAME);
 
 	// add signal handlers to drawing area
 	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
@@ -468,8 +472,13 @@ void mainwindow_set_sensitive(gboolean bSensitive)
 //
 gboolean mainwindow_on_draw_pretty_timeout(gpointer _unused)
 {
-	g_MainWindow.m_nDrawPrettyTimeoutID = 0;
 	mainwindow_draw_map(DRAWFLAG_ALL);
+
+	// We've just drawn a complete frame, so we can consider this a new drag with no movement yet
+	g_MainWindow.m_bMouseDragMovement = FALSE;	// NOTE: may have already been FALSE, for example if we're not dragging... :)
+
+	// Returning FALSE from the timeout callback kills the timer.
+	g_MainWindow.m_nDrawPrettyTimeoutID = 0;
 	return FALSE;
 }
 
@@ -793,7 +802,7 @@ void mainwindow_on_gotomenuitem_activate(GtkMenuItem *menuitem, gpointer user_da
 
 void mainwindow_on_reloadstylesmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-	layers_reload();
+	map_style_load(g_MainWindow.m_pMap, MAP_STYLE_FILENAME);
 	mainwindow_draw_map(DRAWFLAG_ALL);
 }
 
@@ -1013,16 +1022,15 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 
 static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 {
-        gint nX,nY;
+    gint nX,nY;
 
+	// XXX: why do we do this?
 	if (event->is_hint) {
 		gdk_window_get_pointer(w->window, &nX, &nY, NULL);
 	}
-	else
-	{
+	else {
 		nX = event->x;
 		nY = event->y;
-		//nState = event->state;
 	}
 
 	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
@@ -1054,18 +1062,18 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 
 		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
-		if(g_MainWindow.m_eScrollDirection != eScrollDirection) {
-			// update cursor
-			nCursor = g_aDirectionCursors[eScrollDirection].m_nCursor;
+		// update cursor
+		nCursor = g_aDirectionCursors[eScrollDirection].m_nCursor;
 
-			// update direction if actively scrolling
-			g_MainWindow.m_eScrollDirection = eScrollDirection;
+		// update direction if actively scrolling
+		g_MainWindow.m_eScrollDirection = eScrollDirection;
 
+//		if(g_MainWindow.m_eScrollDirection != eScrollDirection) {
 			//GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
 			//gdk_pointer_ungrab(GDK_CURRENT_TIME);
 			//gdk_pointer_grab(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, FALSE, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_RELEASE_MASK, NULL, pCursor, GDK_CURRENT_TIME);
 			//gdk_cursor_unref(pCursor);
-		}
+//		}
 	}
 	else {
 		// If not dragging or scrolling, user is just moving mouse around.
@@ -1214,12 +1222,12 @@ void mainwindow_on_import_maps_activate(GtkWidget *widget, gpointer user_data)
 
 static void mainwindow_setup_selected_tool(void)
 {
-	if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.m_pPointerToolButton))) {
-		gui_set_tool(kToolPointer);
-	}
-	else if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.m_pZoomToolButton))) {
-		gui_set_tool(kToolZoom);
-	}
+//     if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.m_pPointerToolButton))) {
+//         gui_set_tool(kToolPointer);
+//     }
+//     else if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.m_pZoomToolButton))) {
+//         gui_set_tool(kToolZoom);
+//     }
 }
 
 // One handler for all 'tools' buttons
@@ -1231,7 +1239,7 @@ void mainwindow_on_toolbutton_clicked(GtkToolButton *toolbutton, gpointer user_d
 
 void mainwindow_draw_map(gint nDrawFlags)
 {
-	map_draw(g_MainWindow.m_pMap, nDrawFlags);
+	map_draw(g_MainWindow.m_pMap, g_MainWindow.m_pMap->m_pPixmap, nDrawFlags);
 
 	// push it to screen
 	GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.m_pMap);
@@ -1275,8 +1283,7 @@ static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpo
 
 /*
 ** GPS Functions
-*/ 
-
+*/
 gboolean mainwindow_on_gps_show_position_toggled(GtkWidget* _unused, gpointer* __unused)
 {
 
@@ -1341,9 +1348,14 @@ static gboolean mainwindow_callback_on_gps_redraw_timeout(gpointer __unused)
 		// unless we're "LIVE", set signal strength to 0
 		gtk_progress_bar_set_fraction(g_MainWindow.m_pGPSSignalStrengthProgressBar, 0.0);
 
-		if(pData->m_eStatus == GPS_STATUS_NO_SIGNAL) {
+		if(pData->m_eStatus == GPS_STATUS_NO_GPS_COMPILED_IN) {
+			util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_CANCEL, GTK_ICON_SIZE_MENU);
+			
+			gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.m_pTooltips), pWidget,
+					 "GPS support was not enabled at compile time", "");
+		}
+		else if(pData->m_eStatus == GPS_STATUS_NO_SIGNAL) {
 			// do NOT set speed to 0 if we drop the signal temporarily...
-
 			util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_CANCEL, GTK_ICON_SIZE_MENU);
 
 			gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.m_pTooltips), pWidget,
@@ -1404,7 +1416,7 @@ static gboolean mainwindow_callback_on_slide_timeout(gpointer pData)
 		mainwindow_map_center_on_mappoint(&ptNew);
 		if(bDone) {
 			// when done, draw a full frame
-			mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+			//mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 			mainwindow_draw_map(DRAWFLAG_ALL);
 		}
 		else {

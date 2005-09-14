@@ -22,6 +22,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <glib-object.h>
 #include <glade/glade.h>
 
 #ifdef HAVE_CONFIG_H
@@ -33,17 +34,20 @@
 #include "search_location.h"
 #include "mainwindow.h"
 #include "searchwindow.h"
-
-#define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
+#include "util.h"
+#include "gui.h"
 
 #define RESULTLIST_COLUMN_NAME 	0	// visible data
-#define RESULTLIST_LATITUDE	1
+#define RESULTLIST_LATITUDE		1
 #define RESULTLIST_LONGITUDE	2
-#define RESULTLIST_DISTANCE	3
+#define RESULTLIST_DISTANCE		3
 #define RESULTLIST_ZOOMLEVEL	4
 #define RESULTLIST_CLICKABLE	5
 
 #define MAGIC_GTK_NO_SORT_COLUMN (-2)	// why -2?  dunno.  is there a real define for this?  dunno.
+
+#define SEARCHWINDOW_RESULT_FORMAT	("<span size='small'>%s</span>")
+#define SEARCHWINDOW_INFO_FORMAT	("<span size='small'><i>%s</i></span>")
 
 struct {
 	GtkEntry* m_pSearchEntry;		// search text box (on the toolbar)
@@ -60,9 +64,9 @@ static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *tree
 
 void searchwindow_init(GladeXML* pGladeXML)
 {
-	g_SearchWindow.m_pSearchEntry 		= GTK_ENTRY(glade_xml_get_widget(pGladeXML, "searchentry"));			g_return_if_fail(g_SearchWindow.m_pSearchEntry != NULL);	
-	g_SearchWindow.m_pSearchButton		= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "searchbutton"));			g_return_if_fail(g_SearchWindow.m_pSearchButton != NULL);	
-	g_SearchWindow.m_pResultsTreeView	= GTK_TREE_VIEW(glade_xml_get_widget(pGladeXML, "searchresultstreeview"));	g_return_if_fail(g_SearchWindow.m_pResultsTreeView != NULL);	
+	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.m_pSearchEntry, GTK_ENTRY, "searchentry");
+	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.m_pSearchButton, GTK_BUTTON, "searchbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.m_pResultsTreeView, GTK_TREE_VIEW, "searchresultstreeview");
 
 	// create results tree view
 	g_SearchWindow.m_pResultsListStore = gtk_list_store_new(6, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INT, G_TYPE_BOOLEAN);
@@ -76,7 +80,7 @@ void searchwindow_init(GladeXML* pGladeXML)
 	pColumn = gtk_tree_view_column_new_with_attributes("Road", pCellRenderer, "markup", RESULTLIST_COLUMN_NAME, NULL);
 	gtk_tree_view_append_column(g_SearchWindow.m_pResultsTreeView, pColumn);	
 
-	/* attach handler for selection-changed signal */
+	// attach handler for selection-changed signal
 	GtkTreeSelection *pTreeSelection = gtk_tree_view_get_selection(g_SearchWindow.m_pResultsTreeView);
 	g_signal_connect(G_OBJECT(pTreeSelection), "changed", (GtkSignalFunc)searchwindow_on_resultslist_selection_changed, NULL);
 }
@@ -92,22 +96,28 @@ void searchwindow_clear_results(void)
 
 void searchwindow_add_message(gchar* pszMessage)
 {
+	// Add a basic text message to the list, instead of a search result (eg. "no results")
 	GtkTreeIter iter;
 	gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
-	gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter, RESULTLIST_COLUMN_NAME, pszMessage, RESULTLIST_CLICKABLE, FALSE, -1);
+	gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter, 
+					   RESULTLIST_COLUMN_NAME, pszMessage, 
+					   RESULTLIST_CLICKABLE, FALSE,
+					   -1);
 }
 
-// begin a search
 void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 {
-	// make list unsorted (sorting once at the end is much faster than for each insert)
-//	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), MAGIC_GTK_NO_SORT_COLUMN, GTK_SORT_ASCENDING);
+	// Begin a search
+
+	// XXX: make list unsorted (sorting once at the end is much faster than for each insert)
+	//gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), MAGIC_GTK_NO_SORT_COLUMN, GTK_SORT_ASCENDING);
+
 	searchwindow_clear_results();
 
 	const gchar* pszSearch = gtk_entry_get_text(g_SearchWindow.m_pSearchEntry);
 
 	if(pszSearch[0] == '\0') {
-		gchar* pszBuffer = g_strdup_printf("<span size='small'><i>Type search words above.</i></span>");
+		gchar* pszBuffer = g_strdup_printf(SEARCHWINDOW_INFO_FORMAT, "Type search words above.");
 		searchwindow_add_message(pszBuffer);
 		g_free(pszBuffer);
 	}
@@ -119,11 +129,11 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 
 		if(g_SearchWindow.m_nNumResults == 0) {
 			// insert a "no results" message
-			gchar* pszBuffer = g_strdup_printf("<span size='small'><i>No results.</i></span>", pszSearch);
+			gchar* pszBuffer = g_strdup_printf(SEARCHWINDOW_INFO_FORMAT, "No results.");
 			searchwindow_add_message(pszBuffer);
 			g_free(pszBuffer);
 		}
-		// Sort the list by distance from viewer!
+		// Sort the list by distance from viewer
 		gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(g_SearchWindow.m_pResultsListStore), RESULTLIST_DISTANCE, GTK_SORT_ASCENDING);
 	}
 	// ensure the search results are visible
@@ -141,8 +151,17 @@ void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint, gint nZoo
 
 	gdouble fDistance = map_get_distance_in_meters(&ptCenter, pPoint);
 
-	gchar* pszBuffer = g_markup_printf_escaped("<span size='small'>%s</span>", pszText);
-	//g_print("Adding: (%f,%f) (%f) %s\n", pPoint->m_fLatitude, pPoint->m_fLongitude, fDistance, pszBuffer);
+	gchar* pszBuffer = NULL;
+	if(g_utf8_validate(pszText, -1, NULL)) {
+		pszBuffer = g_markup_printf_escaped(SEARCHWINDOW_RESULT_FORMAT, pszText);
+	}
+	else {
+		g_warning("Search result not UTF-8: '%s'\n", pszText);
+		pszBuffer = g_strdup_printf(SEARCHWINDOW_RESULT_FORMAT, "<i>Invalid Name</i>");
+	}
+
+//	g_print("Adding: (%f,%f) (%f) %s\n", pPoint->m_fLatitude, pPoint->m_fLongitude, fDistance, pszBuffer);
+
 	gtk_list_store_append(g_SearchWindow.m_pResultsListStore, &iter);
 	gtk_list_store_set(g_SearchWindow.m_pResultsListStore, &iter,
 		RESULTLIST_COLUMN_NAME, pszBuffer,
@@ -177,8 +196,10 @@ static void searchwindow_go_to_selected_result(void)
 
 		if(!bClickable) return;	// XXX: is this the right way to make a treeview item not clickable?
 
-		mainwindow_map_slide_to_mappoint(&pt);
-		//mainwindow_set_zoomlevel(nZoomLevel);
+		// XXX: Slide or jump?  Should this be a setting?
+//		mainwindow_map_slide_to_mappoint(&pt);
+		mainwindow_set_zoomlevel(nZoomLevel);
+		mainwindow_map_center_on_mappoint(&pt);
 		mainwindow_draw_map(DRAWFLAG_ALL);
 	}
 }

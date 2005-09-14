@@ -1,5 +1,5 @@
 /***************************************************************************
- *            layers.h
+ *            map_style.h
  *
  *  Copyright 2005
  *  Ian McIntosh <ian_mcintosh@linuxadvocate.org>
@@ -22,28 +22,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _LAYERS_H_
-#define _LAYERS_H_
+#ifndef _MAP_STYLE_H_
+#define _MAP_STYLE_H_
 
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
+#include "main.h"
 #include "map.h"
 
-typedef struct color {
-	gfloat m_fRed;
-	gfloat m_fGreen;
-	gfloat m_fBlue;
-	gfloat m_fAlpha;
-} color_t;
-
-#define NUM_DASH_STYLES (2)
-
 typedef struct dashstyle {
-	gdouble* m_pafDashList;	// the dashes, as floating point (for Cairo)
-	gint8* m_panDashList;	// the dashes, as integers (for GDK)
-	gint m_nDashCount;
+	gdouble* m_pafDashList;	// the dashes, as an array of gdouble's (for Cairo)
+	gint8* m_panDashList;	// the dashes, as an array of gint8's (for GDK)
+	gint m_nDashCount;		// how many
 } dashstyle_t;
 
 // defines the look of a layer
@@ -53,7 +45,8 @@ typedef struct layerstyle {
 
 	gint m_nJoinStyle;
 	gint m_nCapStyle;
-	gint m_nDashStyle;
+	
+	dashstyle_t* m_pDashStyle;
 
 	// XXX: switch to this:
 	//dashstyle_t m_pDashStyle;	// can be NULL
@@ -63,24 +56,27 @@ typedef struct layerstyle {
 	gboolean m_bFontBold;
 	gdouble m_fHaloSize;	// actually a stroke width
 	color_t m_clrHalo;
-} layerstyle_t;
+	gint m_nPixelOffsetX;
+	gint m_nPixelOffsetY;
+} maplayerstyle_t;
 
 typedef struct layer {
 	gint m_nDataSource;		// which data to use (lakes, roads...)
 	gint m_nDrawType;		// as lines, polygons, etc.
 
 	// A layer has a style for each zoomlevel
-	layerstyle_t* m_paStylesAtZoomLevels[ NUM_ZOOM_LEVELS ];
-} layer_t;
+	maplayerstyle_t* m_paStylesAtZoomLevels[ NUM_ZOOM_LEVELS ];
+} maplayer_t;
 
 //extern layer_t * g_aLayers[NUM_LAYERS+1];
-extern GPtrArray* g_pLayersArray;
-extern dashstyle_t g_aDashStyles[NUM_DASH_STYLES];
+//extern GPtrArray* g_pLayersArray;
 
-void layers_init(void);
-void layers_deinit(void);
-void layers_reload(void);
+void map_style_init(void);
+void map_style_deinit(void);
+
+void map_style_load(map_t* pMap, const gchar* pszFileName);
+void map_style_reload(map_t* pMap, const gchar* pszFileName);
 
 G_END_DECLS
 
-#endif /* _LAYERS_H_ */
+#endif /* _MAP_STYLE_H_ */

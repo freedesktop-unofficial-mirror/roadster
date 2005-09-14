@@ -26,6 +26,7 @@
 #include "main.h"
 #include "mainwindow.h"
 #include "gotowindow.h"
+#include "gui.h"
 
 struct {
 	GtkWindow* m_pWindow;
@@ -35,9 +36,9 @@ struct {
 
 void gotowindow_init(GladeXML* pGladeXML)
 {
-	g_GotoWindow.m_pWindow					= GTK_WINDOW(glade_xml_get_widget(pGladeXML, "gotowindow")); g_return_if_fail(g_GotoWindow.m_pWindow != NULL);
-	g_GotoWindow.m_pLongitudeEntry				= GTK_ENTRY(glade_xml_get_widget(pGladeXML, "longitudeentry")); g_return_if_fail(g_GotoWindow.m_pLongitudeEntry != NULL);
-	g_GotoWindow.m_pLatitudeEntry				= GTK_ENTRY(glade_xml_get_widget(pGladeXML, "latitudeentry")); g_return_if_fail(g_GotoWindow.m_pLatitudeEntry != NULL);
+	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.m_pWindow, GTK_WINDOW, "gotowindow");
+	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.m_pLongitudeEntry, GTK_ENTRY, "longitudeentry");
+	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.m_pLatitudeEntry, GTK_ENTRY, "latitudeentry");
 
 	// don't delete window on X, just hide it
 	g_signal_connect(G_OBJECT(g_GotoWindow.m_pWindow), "delete_event", G_CALLBACK(gtk_widget_hide), NULL);
@@ -93,13 +94,6 @@ static gboolean gotowindow_go(void)
 //
 // Callbacks
 //
-void gotowindow_on_knownlocationtreeview_row_activated(GtkTreeView *treeview, GtkTreePath *arg1, GtkTreeViewColumn *arg2, gpointer user_data)
-{
-	if(gotowindow_go()) {
-		gotowindow_hide();
-	}
-}
-
 void gotowindow_on_gobutton_clicked(GtkButton *button, gpointer user_data)
 {
 	// hide window when "Go" button clicked (successfully)

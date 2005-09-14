@@ -32,7 +32,6 @@
 #include "map.h"
 #include "gpsclient.h"
 #include "scenemanager.h"
-#include "prefs.h"
 #include "animator.h"
 #include "road.h"
 #include "locationset.h"
@@ -76,8 +75,6 @@ int main (int argc, char *argv[])
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "757 Massachusetts Avenue\nCambridge, MA 02139", NULL);
 */
-	prefs_read();
-
 	g_print("Running %s\n", g_thread_supported() ? "multi-threaded" : "single-threaded");
 
 	gui_run();
@@ -98,9 +95,6 @@ gboolean main_init(void)
 	gnome_vfs_make_directory(pszApplicationDir, 0700);
 	g_free(pszApplicationDir);
 #endif
-	g_print("initializing prefs\n");
-	prefs_init();	// note: doesn't READ prefs yet
-
 	g_print("initializing points\n");
 	point_init();
 	g_print("initializing pointstrings\n");
@@ -111,8 +105,8 @@ gboolean main_init(void)
 
 	g_print("initializing tracks\n");
 	track_init();
-	g_print("initializing layers\n");
-	layers_init();
+	g_print("initializing map styles\n");
+	map_style_init();
 	g_print("initializing glyphs\n");
 	glyph_init();
 	g_print("initializing map\n");

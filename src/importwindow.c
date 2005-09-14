@@ -29,6 +29,7 @@
 #include "mainwindow.h"
 #include "importwindow.h"
 #include "util.h"
+#include "gui.h"
 
 struct {
 	GtkWindow* m_pWindow;
@@ -43,13 +44,11 @@ struct {
 
 void importwindow_init(GladeXML* pGladeXML)
 {
-	g_ImportWindow.m_pWindow						= GTK_WINDOW(glade_xml_get_widget(pGladeXML, "importwindow")); g_return_if_fail(g_ImportWindow.m_pWindow != NULL);
-	g_ImportWindow.m_pProgressBar					= GTK_PROGRESS_BAR(glade_xml_get_widget(pGladeXML, "importprogressbar")); g_return_if_fail(g_ImportWindow.m_pProgressBar != NULL);
-	g_ImportWindow.m_pOKButton						= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "importokbutton")); g_return_if_fail(g_ImportWindow.m_pOKButton != NULL);
-//	g_ImportWindow.m_pCancelButton					= GTK_BUTTON(glade_xml_get_widget(pGladeXML, "importcancelbutton")); g_return_if_fail(g_ImportWindow.m_pCancelButton != NULL);
-	g_ImportWindow.m_pLogTextView					= GTK_TEXT_VIEW(glade_xml_get_widget(pGladeXML, "importlogtextview")); g_return_if_fail(g_ImportWindow.m_pLogTextView != NULL);
+	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.m_pWindow, GTK_WINDOW, "importwindow");
+	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.m_pProgressBar, GTK_PROGRESS_BAR, "importprogressbar");
+	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.m_pOKButton, GTK_BUTTON, "importokbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.m_pLogTextView, GTK_TEXT_VIEW, "importlogtextview");
 }
-
 
 void importwindow_show(void)
 {

@@ -251,7 +251,7 @@ const gchar* road_suffix_itoa(gint nSuffixID, ESuffixLength eSuffixLength)
 gboolean road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID)
 {
 	gint i;
-	for(i=0 ; i<NUM_ELEMS(g_RoadNameSuffixLookup) ; i++) {
+	for(i=0 ; i<G_N_ELEMENTS(g_RoadNameSuffixLookup) ; i++) {
 		if(g_ascii_strcasecmp(pszSuffix, g_RoadNameSuffixLookup[i].m_pszName) == 0) {
 			*pReturnSuffixID = g_RoadNameSuffixLookup[i].m_nID;
 			return TRUE;

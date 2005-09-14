@@ -44,7 +44,7 @@ void search_clean_string(gchar* p)
 	while(*pReader != '\0') {
 		if(g_ascii_isspace(*pReader)) {
 			if(g_ascii_isspace(*(pReader+1)) || *(pReader+1) == '\0') {
-				// don't copy this character (space) if the next one is a space also
+				// don't copy this character (space) if the next one is a space
 				// or if it's the last character
 			}
 			else {
@@ -72,9 +72,7 @@ gboolean search_address_number_atoi(const gchar* pszText, gint* pnReturn)
 
 	gint nNumber = 0;
 
-	// remove double spaces
 	while(*pReader != '\0') {
-		
 		if(g_ascii_isdigit(*pReader)) {
 			nNumber *= 10;
 			nNumber += g_ascii_digit_value(*pReader);

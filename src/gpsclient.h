@@ -29,6 +29,8 @@ G_BEGIN_DECLS
 #include "map.h"
 
 typedef enum {
+	GPS_STATUS_NO_GPS_COMPILED_IN = -1,		// no gpsd present at compile time
+
 	GPS_STATUS_NO_GPSD = 0,		// daemon is absent :(		(0 should be default state)
 	GPS_STATUS_NO_DEVICE = 1,	// no physical GPS device :(
 	GPS_STATUS_NO_SIGNAL = 2,	// can't get a signal :(

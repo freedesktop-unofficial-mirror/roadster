@@ -21,7 +21,22 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#ifndef _MAIN_H_
+#define _MAIN_H_
+
+#include <gtk/gtk.h>
+
 #define USE_GNOME_VFS		// comment this out to get a faster single-threaded compile (can't import, though)
-//#define ENABLE_TIMING
 #define USE_GFREELIST
+
+//#define ENABLE_TIMING
+
+typedef struct color {
+	gfloat m_fRed;
+	gfloat m_fGreen;
+	gfloat m_fBlue;
+	gfloat m_fAlpha;
+} color_t;
+
+#endif
 

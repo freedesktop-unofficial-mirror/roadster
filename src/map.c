@@ -27,6 +27,7 @@
 #include <math.h>
 
 #include "main.h"
+#include "map_style.h"
 #include "gui.h"
 #include "map.h"
 #include "mainwindow.h"
@@ -34,14 +35,13 @@
 #include "db.h"
 #include "road.h"
 #include "point.h"
-#include "layers.h"
 #include "locationset.h"
 #include "location.h"
 #include "scenemanager.h"
 
 #define ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// change circular rivers to lakes when loading from disk
 //#define ENABLE_SCENEMANAGER_DEBUG_TEST
-#define ENABLE_LABELS_WHILE_DRAGGING
+//#define ENABLE_LABELS_WHILE_DRAGGING
 
 #ifdef THREADED_RENDERING
 #define RENDERING_THREAD_YIELD          g_thread_yield()
@@ -96,14 +96,14 @@ zoomlevel_t g_sZoomLevels[NUM_ZOOM_LEVELS+1] = {
 //     {  200000, ""},
 //     {  100000, ""},
 
-	{  100000, UNIT_MILES, 2, 	UNIT_KILOMETERS, 2, "", },     	// 1
-	{   48000, UNIT_MILES, 1, 	UNIT_KILOMETERS, 1, "", },     	// 2
+	{   80000, UNIT_MILES, 2, 	UNIT_KILOMETERS, 2, "", },     	// 1
+	{   40000, UNIT_MILES, 1, 	UNIT_KILOMETERS, 1, "", },     	// 2
 	{   20000, UNIT_FEET, 2000, UNIT_METERS, 400, "", }, 		// 3
 	{   10000, UNIT_FEET, 1000, UNIT_METERS, 200, "", },		// 4
 	{    5000, UNIT_FEET, 500, 	UNIT_METERS, 100, "", },		// 5
 };
 
-gchar* g_apszMapObjectTypeNames[] = {
+gchar* g_apszMapObjectTypeNames[] = {	// XXX: would be nice to remove this. although we *do* need to maintain a link between imported data and styles
 	"",
 	"minor-roads",
 	"major-roads",
@@ -115,7 +115,8 @@ gchar* g_apszMapObjectTypeNames[] = {
 	"parks",
 	"rivers",
 	"lakes",
-	"misc-areas"
+	"misc-areas",
+	"urban-areas",
 };
 
 // ========================================================
@@ -125,27 +126,6 @@ gchar* g_apszMapObjectTypeNames[] = {
 // init the module
 void map_init(void)
 {
-}
-
-void map_callback_free_locations_array(gpointer* p)
-{
-	GPtrArray* pLocationsArray = (GPtrArray*)p;
-	gint i;
-	for(i=(pLocationsArray->len-1) ; i>=0 ;i--) {
-		location_t* pLocation = g_ptr_array_remove_index_fast(pLocationsArray, i);
-		location_free(pLocation);
-	}
-}
-
-static void map_init_location_hash(map_t* pMap)
-{
-	// destroy it if it exists... it will call map_callback_free_locations_array() on all children and g_free on all keys (see below)
-	if(pMap->m_pLocationArrayHashTable != NULL) {
-		g_hash_table_destroy(pMap->m_pLocationArrayHashTable);
-	}
-	pMap->m_pLocationArrayHashTable = g_hash_table_new_full(g_int_hash, g_int_equal, 
-								g_free, 				/* key destroy function */
-								map_callback_free_locations_array);	/* value destroy function */
 }
 
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
@@ -172,7 +152,7 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 
 	// init containers for geometry data
 	gint i;
-	for(i=0 ; i<NUM_ELEMS(pMap->m_apLayerData) ; i++) {
+	for(i=0 ; i<G_N_ELEMENTS(pMap->m_apLayerData) ; i++) {
 		maplayer_data_t* pLayer = g_new0(maplayer_data_t, 1);
 		pLayer->m_pRoadsArray = g_ptr_array_new();
 		pMap->m_apLayerData[i] = pLayer;
@@ -187,32 +167,7 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 	return TRUE;
 }
 
-static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID)
-{
-	GPtrArray* pLocationsArray;
-	pLocationsArray = g_hash_table_lookup(pMap->m_pLocationArrayHashTable, &nLocationSetID);
-	if(pLocationsArray != NULL) {
-		// found existing array
-		//g_print("existing for set %d\n", nLocationSetID);
-	}
-	else {
-		//g_print("new for set %d\n", nLocationSetID);
-
-		// need a new array
-		pLocationsArray = g_ptr_array_new();
-		g_assert(pLocationsArray != NULL);
-
-		gint* pKey = g_malloc(sizeof(gint));
-		*pKey = nLocationSetID;
-		g_hash_table_insert(pMap->m_pLocationArrayHashTable, pKey, pLocationsArray);
-	}
-
-	// add location to the array of locations!
-	g_ptr_array_add(pLocationsArray, pLocation);
-	//g_print("pLocationsArray->len = %d\n", pLocationsArray->len);
-}
-
-void map_draw(map_t* pMap, gint nDrawFlags)
+void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags)
 {
 	g_assert(pMap != NULL);
 
@@ -230,7 +185,7 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	scenemanager_clear(pMap->m_pSceneManager);
 	scenemanager_set_screen_dimensions(pMap->m_pSceneManager, pRenderMetrics->m_nWindowWidth, pRenderMetrics->m_nWindowHeight);
 
-	gint nRenderMode = RENDERMODE_FAST; // RENDERMODE_PRETTY
+	gint nRenderMode = RENDERMODE_FAST; //RENDERMODE_FAST; // RENDERMODE_PRETTY
 
 #ifdef ENABLE_LABELS_WHILE_DRAGGING
 	nDrawFlags |= DRAWFLAG_LABELS;	// always turn on labels
@@ -244,20 +199,19 @@ void map_draw(map_t* pMap, gint nDrawFlags)
 	if(nRenderMode == RENDERMODE_FAST) {
 		// 
 		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
-			map_draw_gdk(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_GEOMETRY);
+			map_draw_gdk(pMap, pRenderMetrics, pTargetPixmap, DRAWFLAG_GEOMETRY);
+			nDrawFlags &= ~DRAWFLAG_GEOMETRY;
 		}
-		
-		// Always draw labels with Cairo
-		if(nDrawFlags & DRAWFLAG_LABELS) {
-			map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, DRAWFLAG_LABELS);
-		}
+
+		// Call cairo for finishing the scene
+		map_draw_cairo(pMap, pRenderMetrics, pTargetPixmap, nDrawFlags);
 	}
 	else {	// nRenderMode == RENDERMODE_PRETTY
-		map_draw_cairo(pMap, pRenderMetrics, pMap->m_pPixmap, nDrawFlags);
+		map_draw_cairo(pMap, pRenderMetrics, pTargetPixmap, nDrawFlags);
 	}
 
 #ifdef ENABLE_SCENEMANAGER_DEBUG_TEST
-	gdk_draw_polygon(pMap->m_pPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
+	gdk_draw_polygon(pTargetPixmap, pMap->m_pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->m_pTargetWidget)],
 					 FALSE, aPoints, 4);
 #endif
 
@@ -278,7 +232,6 @@ void map_release_pixmap(map_t* pMap)
 	// nothing since we're not using mutexes
 }
 
-
 // ========================================================
 //  Get/Set Functions
 // ========================================================
@@ -294,14 +247,24 @@ void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel)
 	}
 }
 
-guint16 map_get_zoomlevel(map_t* pMap)
+guint16 map_get_zoomlevel(const map_t* pMap)
 {
 	return pMap->m_uZoomLevel;	// between MIN_ZOOM_LEVEL and MAX_ZOOM_LEVEL
 }
 
-guint32 map_get_zoomlevel_scale(map_t* pMap)
+guint32 map_get_zoomlevel_scale(const map_t* pMap)
 {
 	return g_sZoomLevels[pMap->m_uZoomLevel].m_uScale;	// returns "5000" for 1:5000 scale
+}
+
+gboolean map_can_zoom_in(const map_t* pMap)
+{
+	// can we increase zoom level?
+	return (pMap->m_uZoomLevel < MAX_ZOOM_LEVEL);
+}
+gboolean map_can_zoom_out(const map_t* pMap)
+{
+	return (pMap->m_uZoomLevel > MIN_ZOOM_LEVEL);
 }
 
 // ========================================================
@@ -335,7 +298,7 @@ gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nD
 // convert pixels to a span of degrees
 double map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel)
 {
-	double fMonitorPixelsPerInch = 85 + 1/3;
+	double fMonitorPixelsPerInch = 85.333;	// XXX: don't hardcode this
 	double fPixelsPerMeter = fMonitorPixelsPerInch * INCHES_PER_METER;
 	double fMetersOfPixels = ((float)nPixels) / fPixelsPerMeter;
 
@@ -348,7 +311,7 @@ double map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel)
 
 double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel)
 {
-	double fMonitorPixelsPerInch = 85 + 1/3;
+	double fMonitorPixelsPerInch = 85.333;	// XXX: don't hardcode this
 
 	double fResultInMeters = WORLD_DEGREES_TO_METERS(fDegrees);
 	double fResultInPixels = (INCHES_PER_METER * fResultInMeters) * fMonitorPixelsPerInch;
@@ -398,7 +361,7 @@ void map_set_centerpoint(map_t* pMap, const mappoint_t* pPoint)
 //	map_set_redraw_needed(TRUE);
 }
 
-void map_get_centerpoint(map_t* pMap, mappoint_t* pReturnPoint)
+void map_get_centerpoint(const map_t* pMap, mappoint_t* pReturnPoint)
 {
 	g_assert(pReturnPoint != NULL);
 
@@ -413,6 +376,9 @@ void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions)
 
 	pMap->m_MapDimensions.m_uWidth = pDimensions->m_uWidth;
 	pMap->m_MapDimensions.m_uHeight = pDimensions->m_uHeight;
+
+	// XXX: free old pixmap?
+	//g_assert(pMap->m_pPixmap == NULL);
 
 	pMap->m_pPixmap = gdk_pixmap_new(
 			pMap->m_pTargetWidget->window,
@@ -585,10 +551,11 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 			// Get layer type that this belongs on
 			gint nTypeID = atoi(aRow[1]);
 			if(nTypeID < MAP_OBJECT_TYPE_FIRST || nTypeID > MAP_OBJECT_TYPE_LAST) {
-				//g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
+				g_warning("geometry record '%s' has bad type '%s'\n", aRow[0], aRow[1]);
 				continue;
 			}
 
+			if(nTypeID == 12) g_warning("(got a 12)");
 			// Extract points
 			road_t* pNewRoad = NULL;
 			road_alloc(&pNewRoad);
@@ -724,7 +691,7 @@ static void map_data_clear(map_t* pMap)
 {
 	// Clear layers
 	gint i,j;
-	for(i=0 ; i<NUM_ELEMS(pMap->m_apLayerData) ; i++) {
+	for(i=0 ; i<G_N_ELEMENTS(pMap->m_apLayerData) ; i++) {
 		maplayer_data_t* pLayerData = pMap->m_apLayerData[i];
 
 		// Free each
@@ -827,7 +794,7 @@ gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStr
 
 	// Test things in the REVERSE order they are drawn (otherwise we'll match things that have been painted-over)
 	gint i;
-	for(i=NUM_ELEMS(layerdraworder)-1 ; i>=0 ; i--) {
+	for(i=G_N_ELEMENTS(layerdraworder)-1 ; i>=0 ; i--) {
 		if(layerdraworder[i].eSubLayerRenderType != SUBLAYER_RENDERTYPE_LINES) continue;
 
 		gint nLayer = layerdraworder[i].nLayer;
@@ -1181,20 +1148,96 @@ static gboolean map_hit_test_locationselections(map_t* pMap, rendermetrics_t* pR
 	return FALSE;
 }
 
-gboolean map_can_zoom_in(map_t* pMap)
+
+// Get an attribute from a selected location
+const gchar* map_location_selection_get_attribute(const map_t* pMap, const locationselection_t* pLocationSelection, const gchar* pszAttributeName)
 {
-	// can we increase zoom level?
-	return (pMap->m_uZoomLevel < MAX_ZOOM_LEVEL);
-}
-gboolean map_can_zoom_out(map_t* pMap)
-{
-	return (pMap->m_uZoomLevel > MIN_ZOOM_LEVEL);
+	// NOTE: always gets the 'first' one.  this is only used for the few hardcoded attributes (name, address, ...)
+	gint i;
+	for(i=0 ; i<pLocationSelection->m_pAttributesArray->len ; i++) {
+		locationattribute_t* pAttribute = g_ptr_array_index(pLocationSelection->m_pAttributesArray, i);
+		if(strcmp(pAttribute->m_pszName, pszAttributeName) == 0) {
+			return pAttribute->m_pszValue;
+		}
+	}
+	return NULL;
 }
 
+gboolean map_object_type_atoi(const gchar* pszName, gint* pnReturnObjectTypeID)
+{
+	gint i;
+	for(i=0 ; i<MAP_NUM_OBJECT_TYPES ; i++) {
+		if(strcmp(pszName, g_apszMapObjectTypeNames[i]) == 0) {
+			*pnReturnObjectTypeID = i;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
 
-//
-// Map selected POI
-//
+gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTypeID)
+{
+	gchar* g_apszMapRenderTypeNames[] = {"lines", "polygons", "line-labels", "polygon-labels", "fill"};
+
+	gint i;
+	for(i=0 ; i<G_N_ELEMENTS(g_apszMapRenderTypeNames) ; i++) {
+		if(strcmp(pszName, g_apszMapRenderTypeNames[i]) == 0) {
+			*pnReturnRenderTypeID = i;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+void map_callback_free_locations_array(gpointer* p)
+{
+	GPtrArray* pLocationsArray = (GPtrArray*)p;
+	gint i;
+	for(i=(pLocationsArray->len-1) ; i>=0 ;i--) {
+		location_t* pLocation = g_ptr_array_remove_index_fast(pLocationsArray, i);
+		location_free(pLocation);
+	}
+}
+
+static void map_init_location_hash(map_t* pMap)
+{
+	// destroy it if it exists... it will call map_callback_free_locations_array() on all children and g_free on all keys (see below)
+	if(pMap->m_pLocationArrayHashTable != NULL) {
+		g_hash_table_destroy(pMap->m_pLocationArrayHashTable);
+	}
+	pMap->m_pLocationArrayHashTable = g_hash_table_new_full(g_int_hash, g_int_equal, 
+								g_free, 				/* key destroy function */
+								map_callback_free_locations_array);	/* value destroy function */
+}
+
+static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID)
+{
+	GPtrArray* pLocationsArray;
+	pLocationsArray = g_hash_table_lookup(pMap->m_pLocationArrayHashTable, &nLocationSetID);
+	if(pLocationsArray != NULL) {
+		// found existing array
+		//g_print("existing for set %d\n", nLocationSetID);
+	}
+	else {
+		//g_print("new for set %d\n", nLocationSetID);
+
+		// need a new array
+		pLocationsArray = g_ptr_array_new();
+		g_assert(pLocationsArray != NULL);
+
+		gint* pKey = g_malloc(sizeof(gint));
+		*pKey = nLocationSetID;
+		g_hash_table_insert(pMap->m_pLocationArrayHashTable, pKey, pLocationsArray);
+	}
+
+	// add location to the array of locations!
+	g_ptr_array_add(pLocationsArray, pLocation);
+	//g_print("pLocationsArray->len = %d\n", pLocationsArray->len);
+}
+
+// ========================================================
+//  Functions to deal with "selected" locations (POI), which are always kept in RAM
+// ========================================================
 
 // lookup a selected location by ID
 locationselection_t* map_location_selection_get(map_t* pMap, gint nLocationID)
@@ -1208,7 +1251,7 @@ locationselection_t* map_location_selection_get(map_t* pMap, gint nLocationID)
 	return NULL;
 }
 
-gint map_location_selection_sort_callback(gconstpointer ppA, gconstpointer ppB)
+gint map_location_selection_latitude_sort_callback(gconstpointer ppA, gconstpointer ppB)
 {
 	locationselection_t* pA = *((locationselection_t**)ppA);
 	locationselection_t* pB = *((locationselection_t**)ppB);
@@ -1237,12 +1280,14 @@ gboolean map_location_selection_add(map_t* pMap, gint nLocationID)
 
 	g_ptr_array_add(pMap->m_pLocationSelectionArray, pNew);
 
-	g_ptr_array_sort(pMap->m_pLocationSelectionArray, map_location_selection_sort_callback);
+	// sort in order of latitude
+	// POI that seem "closer" to the user (lower on the screen) will be drawn last (on top)
+	g_ptr_array_sort(pMap->m_pLocationSelectionArray, map_location_selection_latitude_sort_callback);
 
 	return TRUE;	// added
 }
 
-// add a Location to the selected list
+// remove a Location to the selected list
 gboolean map_location_selection_remove(map_t* pMap, gint nLocationID)
 {
 	gint i;
@@ -1254,43 +1299,4 @@ gboolean map_location_selection_remove(map_t* pMap, gint nLocationID)
 		}
 	}
 	return FALSE;	// removed
-}
-
-// get an attribute from a selected location
-const gchar* map_location_selection_get_attribute(const map_t* pMap, const locationselection_t* pLocationSelection, const gchar* pszAttributeName)
-{
-	gint i;
-	for(i=0 ; i<pLocationSelection->m_pAttributesArray->len ; i++) {
-		locationattribute_t* pAttribute = g_ptr_array_index(pLocationSelection->m_pAttributesArray, i);
-		if(strcmp(pAttribute->m_pszName, pszAttributeName) == 0) {
-			return pAttribute->m_pszValue;
-		}
-	}
-	return NULL;
-}
-
-gboolean map_object_type_atoi(const gchar* pszName, gint* pnReturnObjectTypeID)
-{
-	gint i;
-	for(i=0 ; i<MAP_NUM_OBJECT_TYPES ; i++) {
-		if(strcmp(pszName, g_apszMapObjectTypeNames[i]) == 0) {
-			*pnReturnObjectTypeID = i;
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTypeID)
-{
-	gchar* g_apszMapRenderTypeNames[] = {"lines", "polygons", "line-labels", "polygon-labels"};
-
-	gint i;
-	for(i=0 ; i<G_N_ELEMENTS(g_apszMapRenderTypeNames) ; i++) {
-		if(strcmp(pszName, g_apszMapRenderTypeNames[i]) == 0) {
-			*pnReturnRenderTypeID = i;
-			return TRUE;
-		}
-	}
-	return FALSE;
 }

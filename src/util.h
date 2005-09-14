@@ -25,16 +25,13 @@
 #define _UTIL_H_
 
 #include <gtk/gtk.h>
-#include "layers.h"
 
 #define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
-
-#define NUM_ELEMS(a) (sizeof(a) / sizeof(a[0]))
 
 #define SWAP(x, y)                   { (x) ^= (y) ^= (x) ^= (y); }
 
 void util_random_color(void* pColor);
-gboolean util_parse_hex_color(const gchar* pszString, color_t* pReturnColor);
+gboolean util_parse_hex_color(const gchar* pszString, void* pReturnColor);
 
 #ifdef ENABLE_TIMING
 #define TIMER_BEGIN(name, str)	GTimer* name = g_timer_new(); g_print("\n%s (%f)\n", str, g_timer_elapsed(name, NULL))
@@ -52,11 +49,6 @@ gboolean util_parse_hex_color(const gchar* pszString, color_t* pReturnColor);
 #define is_even(x)		(((x) & 1) == 0)
 #define is_odd(x)		(((x) & 1) == 1)
 
-/* Funky, auto-lookup glade signal handlers.
-
-   XXX: Better would be to hook these up manually, remove these
-   declarations, and make the functions static.
-*/
 void util_close_parent_window(GtkWidget* pWidget, gpointer data);
 void util_open_uri(const char* pszURI);
 

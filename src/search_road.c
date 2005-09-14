@@ -34,7 +34,7 @@
 #include "search_road.h"
 #include "road.h"
 
-#define ROAD_RESULT_SUGGESTED_ZOOMLEVEL		(8)
+#define ROAD_RESULT_SUGGESTED_ZOOMLEVEL		(4)
 
 typedef struct {
 	gint m_nNumber;			// house number	eg. 51

@@ -1123,13 +1123,13 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 	gchar* pszFilePath;
 
 	gchar* apszExtensions[7] = {"MET", "RT1", "RT2", "RT7", "RT8", "RTC", "RTI"};	
-	gint8* apBuffers[NUM_ELEMS(apszExtensions)] = {0};
-	gint nSizes[NUM_ELEMS(apszExtensions)] = {0};
+	gint8* apBuffers[G_N_ELEMENTS(apszExtensions)] = {0};
+	gint nSizes[G_N_ELEMENTS(apszExtensions)] = {0};
 
 	// open, read, and delete (unlink) each file
 	gint i;
 	gboolean bSuccess = TRUE;
-	for(i=0 ; i<NUM_ELEMS(apszExtensions) ; i++) {
+	for(i=0 ; i<G_N_ELEMENTS(apszExtensions) ; i++) {
 		pszFilePath = g_strdup_printf("file://%s/TGR%05d.%s", pszDirectoryPath, nTigerSetNumber, apszExtensions[i]);
 		if(GNOME_VFS_OK != gnome_vfs_read_entire_file(pszFilePath, &nSizes[i], (char**)&apBuffers[i])) {
 			bSuccess = FALSE;
@@ -1141,15 +1141,15 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 	// did we read all files?
 	if(bSuccess) {
 		gint nStateID = (nTigerSetNumber / 1000);	// int division (eg. turn 25017 into 25)
-		if(nStateID < NUM_ELEMS(g_aStates)) {
+		if(nStateID < G_N_ELEMENTS(g_aStates)) {
 			gint nCountryID = 1;	// USA is #1 *gag*
 			db_insert_state(g_aStates[nStateID].m_pszName, g_aStates[nStateID].m_pszCode, nCountryID, &g_nStateID);
 		}
 
-		g_assert(NUM_ELEMS(apszExtensions) == 7);
+		g_assert(G_N_ELEMENTS(apszExtensions) == 7);
 		bSuccess = import_tiger_from_buffers(apBuffers[0], nSizes[0], apBuffers[1], nSizes[1], apBuffers[2], nSizes[2], apBuffers[3], nSizes[3], apBuffers[4], nSizes[4], apBuffers[5], nSizes[5], apBuffers[6], nSizes[6]);
 	}
-	for(i=0 ; i<NUM_ELEMS(apszExtensions) ; i++) {
+	for(i=0 ; i<G_N_ELEMENTS(apszExtensions) ; i++) {
 		g_free(apBuffers[i]); // can be null
 	}
 	return bSuccess;

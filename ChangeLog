@@ -1,3 +1,19 @@
+2005-09-14  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/*.c: Removed many unneeded #includes.  Removed NUM_ELEMS in favor of existing glib G_N_ELEMENTS.
+	* src/*window.c: Use GLADE_LINK_WIDGET to connect widget to Glade XML element.
+	* src/gpsclient.c: Work to make GPSD support optional at compile time.
+	* src/mainwindow.c: Fixed bug: mouse cursor returning to default pointer while scrolling. 
+	* src/searchwindow.c: Change map zoomlevel when going to search results.  Some code refactoring.
+	* src/gotowindow.c: Removed dead code.
+	* src/map_style.c: Added to replace layers.c.  Add support for arbitrary dash patterns.
+	* src/map_draw_gdk.c: Support new arbitrary dash patterns.
+	* src/ma_draw_cairo.c: More work to restore Cairo drawing.
+	* src/prefs.c: 
+	* src/prefs.h:
+	* src/layers.c:
+	* src/layers.h: Removed.
+
 2005-09-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/db.c: Better error handling (silences "duplicate key" warning on startup).

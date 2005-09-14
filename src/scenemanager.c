@@ -88,7 +88,7 @@ gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *
 		// else go on to test below
 	}
 	else if(nFlags & SCENEMANAGER_FLAG_PARTLY_ON_SCREEN) {
-		// one point must be withing screen box
+		// one point must be withing screen box   XXX: handle polygon bigger than window case?
 		gint i;
 		gboolean bFound = FALSE;
 		for(i=0 ; i<nNumPoints ; i++) {

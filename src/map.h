@@ -41,11 +41,12 @@
 #define MAP_OBJECT_TYPE_RIVER					(9)
 #define MAP_OBJECT_TYPE_LAKE					(10)
 #define MAP_OBJECT_TYPE_MISC_AREA				(11)
+#define MAP_OBJECT_TYPE_URBAN_AREA				(12)
 
-#define MAP_NUM_OBJECT_TYPES 					(12)
+#define MAP_NUM_OBJECT_TYPES 					(13)
 
 #define MAP_OBJECT_TYPE_FIRST					(1)
-#define MAP_OBJECT_TYPE_LAST					(11)
+#define MAP_OBJECT_TYPE_LAST					(12)
 
 //
 // Line CAP styles
@@ -103,7 +104,6 @@ struct GtkWidget;
 #define NUM_ZOOM_LEVELS					(5)
 #define MIN_ZOOM_LEVEL_FOR_LOCATIONS	(6)		// don't show POI above this level
 
-#include "layers.h"
 #include "scenemanager.h"
 
 // World space
@@ -202,9 +202,9 @@ typedef struct {
 	GPtrArray		*m_pLocationSelectionArray;
 	GFreeList		*m_pLocationSelectionAllocator;
 
-	// Mutex and the data it controls (always lock before reading/writing)
-	//GMutex* m_pPixmapMutex;
 	GdkPixmap* m_pPixmap;
+
+	GPtrArray* m_pLayersArray;
 } map_t;
 
 typedef enum {
@@ -247,15 +247,14 @@ typedef enum {
 	MAP_LAYER_RENDERTYPE_LINES,
 	MAP_LAYER_RENDERTYPE_POLYGONS,
 	MAP_LAYER_RENDERTYPE_LINE_LABELS,
-	MAP_LAYER_RENDERTYPE_POLYGON_LABELS
+	MAP_LAYER_RENDERTYPE_POLYGON_LABELS,
+	MAP_LAYER_RENDERTYPE_FILL,
 } EMapLayerRenderType;
 
 typedef struct {
 	gint nLayer;
 	gint nSubLayer;
 	EMapLayerRenderType eSubLayerRenderType;
-
-//	void (*pFunc)(map_t*, cairo_t*, rendermetrics_t*, GPtrArray*, sublayerstyle_t*, textlabelstyle_t*);
 } draworder_t;
 
 #define MAX_LOCATIONSELECTION_URLS	(5)
@@ -292,17 +291,21 @@ void map_init(void);
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget);
 
 // Gets and Sets
-guint16 map_get_zoomlevel(map_t* pMap);
-guint32 map_get_zoomlevel_scale(map_t* pMap);
+guint16 map_get_zoomlevel(const map_t* pMap);
+guint32 map_get_zoomlevel_scale(const map_t* pMap);
+
+gboolean map_can_zoom_in(const map_t* pMap);
+gboolean map_can_zoom_out(const map_t* pMap);
+
 void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel);
 //void map_get_render_metrics(rendermetrics_t* pMetrics);
 
 void map_set_redraw_needed(map_t* pMap, gboolean bNeeded);
-gboolean map_get_redraw_needed(map_t* pMap);
-guint32 map_get_scale(map_t* pMap);
+gboolean map_get_redraw_needed(const map_t* pMap);
+guint32 map_get_scale(const map_t* pMap);
 
 void map_set_centerpoint(map_t* pMap, const mappoint_t* pPoint);
-void map_get_centerpoint(map_t* pMap, mappoint_t* pReturnPoint);
+void map_get_centerpoint(const map_t* pMap, mappoint_t* pReturnPoint);
 void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions);
 
 // Conversions
@@ -320,14 +323,11 @@ void map_center_on_windowpoint(map_t* pMap, guint16 uX, guint16 uY);
 GdkPixmap* map_get_pixmap(map_t* pMap);
 void map_release_pixmap(map_t* pMap);
 
-void map_draw(map_t* pMap, gint nDrawFlags);
+void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags);
 void map_add_track(map_t* pMap, gint hTrack);
 
 gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStruct);
 void map_hitstruct_free(map_t* pMap, maphit_t* pHitStruct);
-
-gboolean map_can_zoom_in(map_t* pMap);
-gboolean map_can_zoom_out(map_t* pMap);
 
 gboolean map_location_selection_add(map_t* pMap, gint nLocationID);
 gboolean map_location_selection_remove(map_t* pMap, gint nLocationID);

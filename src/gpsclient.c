@@ -21,14 +21,18 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define HAVE_GPSD		// XXX: this should come from configure.ac
+
 #include <gtk/gtk.h>
 #include <gps.h>
 #include "main.h"
 #include "gpsclient.h"
 
 struct {
-	struct gps_data_t * m_pGPSConnection;
-	gpsdata_t* m_pPublicGPSData;
+#ifdef HAVE_GPSD 
+	struct gps_data_t * m_pGPSConnection;	// gps_data_t is from gpsd.h
+#endif
+	gpsdata_t* m_pPublicGPSData;			// our public struct (annoyingly similar name...)
 } g_GPSClient = {0};
 
 gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condition, gpointer data);
@@ -38,11 +42,16 @@ void gpsclient_init()
 {
 	g_GPSClient.m_pPublicGPSData = g_new0(gpsdata_t, 1);
 
+#ifndef HAVE_GPSD
+	// No libgpsd at compile time
+	g_GPSClient.m_pPublicGPSData->m_eStatus = GPS_STATUS_NO_GPS_COMPILED_IN;
+#endif
 	gpsclient_connect();
 }
 
 static void gpsclient_connect(void)
 {
+#ifdef HAVE_GPSD 
 	// don't do anything if already connected
 	if(g_GPSClient.m_pPublicGPSData->m_eStatus != GPS_STATUS_NO_GPSD) return;	// already connected
 
@@ -69,25 +78,28 @@ static void gpsclient_connect(void)
 	else {
 		g_GPSClient.m_pPublicGPSData->m_eStatus = GPS_STATUS_NO_GPSD;
 	}
+#endif
 }
-
 
 const gpsdata_t* gpsclient_getdata()
 {
 	gpsclient_connect();	// connect if necessary
-	
+
 	return g_GPSClient.m_pPublicGPSData;
 }
 
 // callback for g_io_add_watch on the GPSD file descriptor
-gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condition, gpointer data)
+gboolean gpsclient_callback_data_waiting(GIOChannel *_source_unused, GIOCondition eCondition, gpointer _data_unused)
 {
+#ifdef HAVE_GPSD
 //	g_print("Data from GPSD...\n");
+	g_assert(g_GPSClient.m_pGPSConnection != NULL);
+	g_assert(g_GPSClient.m_pPublicGPSData != NULL);
 
 	gpsdata_t* l = g_GPSClient.m_pPublicGPSData;	// our public data struct, for easy access
 
 	// is there data waiting on the socket?
-	if(condition == G_IO_IN) {
+	if(eCondition == G_IO_IN) {
 		// read new data
 		if(gps_poll(g_GPSClient.m_pGPSConnection) == -1) {
 			l->m_eStatus = GPS_STATUS_NO_GPSD;
@@ -145,9 +157,10 @@ gboolean gpsclient_callback_data_waiting(GIOChannel *source, GIOCondition condit
 		}
 	}
 	else {
-		//g_print("condition: %d\n", condition);
+		//g_print("eCondition: %d\n", eCondition);
 	}
 	return TRUE; // TRUE = keep socket notification coming
+#endif
 }
 
 #ifdef ROADSTER_DEAD_CODE

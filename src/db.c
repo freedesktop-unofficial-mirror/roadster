@@ -38,7 +38,6 @@
 #include "db.h"
 #include "mainwindow.h"
 #include "util.h"
-#include "layers.h"
 #include "location.h"
 #include "locationset.h"
 
@@ -104,7 +103,7 @@ void db_init()
 
 	// Initialize the embedded server
 	// NOTE: if not linked with libmysqld, this call will do nothing (but will succeed)
- 	if(mysql_server_init(NUM_ELEMS(apszServerOptions), apszServerOptions, NULL) != 0) {
+ 	if(mysql_server_init(G_N_ELEMENTS(apszServerOptions), apszServerOptions, NULL) != 0) {
 		return;
 	}
 	g_free(pszDataDir);
@@ -577,12 +576,7 @@ void db_create_tables()
 
 	    // lots of indexes:
 		" PRIMARY KEY (ID),"	// XXX: we'll probably want to keep a unique ID, but we don't use this for anything yet.
-
 		" INDEX(RoadNameID),"	// to get roads when we've matched a RoadName
-//	" INDEX(AddressLeftStart, AddressLeftEnd)," 	// drop these?  they reduce a few seeks on address searches IF the
-//	" INDEX(AddressRightStart, AddressRightEnd),"	// user puts in a street #. they take up 8*roadsegments bytes of 
-							// disk and eat up precious index cache memory
-
 		" SPATIAL KEY (Coordinates));", NULL);
 
 	// RoadName
@@ -612,7 +606,7 @@ void db_create_tables()
 		" Code CHAR(3) NOT NULL,"			// eg. "MA"
 		" CountryID INT2 NOT NULL,"			// NOTE: 2 bytes
 		" PRIMARY KEY (ID),"
-		" INDEX (Name(5)));"				// 4 is enough for decent uniqueness.
+		" INDEX (Name(5)));"				// 5 is enough for decent uniqueness.
 	    ,NULL);
 
 	// Location
@@ -659,120 +653,3 @@ void db_create_tables()
 		" Name VARCHAR(60) NOT NULL,"
 		" PRIMARY KEY (ID));", NULL);
 }
-
-#ifdef ROADSTER_DEAD_CODE
-/*
-static void db_disconnect(void)
-{
-	g_return_if_fail(g_pDB != NULL);
-
-	// close database and free all strings
-	mysql_close(g_pDB->m_pMySQLConnection);
-	g_free(g_pDB->m_pzHost);
-	g_free(g_pDB->m_pzUserName);
-	g_free(g_pDB->m_pzPassword);
-	g_free(g_pDB->m_pzDatabase);
-
-	// free structure itself
-	g_free(g_pDB);
-	g_pDB = NULL;
-}
-
-//
-// WordHash functionality
-//
-#define DB_WORDHASH_TABLENAME 	"WordHash"
-
-gint32 db_wordhash_insert(db_connection_t* pConnection, const gchar* pszWord)
-{
-	gchar azQuery[MAX_SQLBUFFER_LEN];
-	int nResult;
-
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
-		"INSERT INTO %s SET ID=NULL, Value='%s';",
-		DB_WORDHASH_TABLENAME, pszWord);
-
-	if((nResult = mysql_query(pConnection->m_pMySQLConnection, azQuery)) != MYSQL_RESULT_SUCCESS) {
-		g_message("db_word_to_int failed to insert: %s\n", mysql_error(pConnection->m_pMySQLConnection));
-		return 0;
-	}
-	return mysql_insert_id(pConnection->m_pMySQLConnection);
-}
-
-gint32 db_wordhash_lookup(db_connection_t* pConnection, const gchar* pszWord)
-{
-	MYSQL_RES* pResultSet;
-	MYSQL_ROW aRow;
-	gint nWordNumber = 0;
-	int nResult;
-	gchar azQuery[MAX_SQLBUFFER_LEN];
-
-	if(!db_is_connected(pConnection)) return FALSE;
-
-	// generate SQL
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "SELECT ID FROM %s WHERE Value='%s';", DB_WORDHASH_TABLENAME, pszWord);
-
-	// get row
-	if((nResult = mysql_query(pConnection->m_pMySQLConnection, azQuery)) != MYSQL_RESULT_SUCCESS) {
-		g_message("db_word_to_int failed to select: %s\n", mysql_error(pConnection->m_pMySQLConnection));
-		return 0;
-	}
-	if((pResultSet = MYSQL_GET_RESULT(pConnection->m_pMySQLConnection)) != NULL) {
-		if((aRow = mysql_fetch_row(pResultSet)) != NULL) {
-			nWordNumber = atoi(aRow[0]);
-		}
-		mysql_free_result(pResultSet);
-	}
-
-	// Successful?  Return it.
-	if(nWordNumber != 0) return nWordNumber;
-	else return 0;
-}
-
-void db_parse_pointstring(const gchar* pszText, pointstring_t* pPointString, gboolean (*callback_get_point)(mappoint_t**))
-{
-	// parse string and add points to the string
-	const gchar* p = pszText;
-	if(p[0] == 'L') { //g_str_has_prefix(p, "LINESTRING")) {
-		// format is "LINESTRING(1.2345 5.4321, 10 10, 20 20)"
-		mappoint_t* pPoint;
-
-		p += (11); 	// move past "LINESTRING("
-
-		while(TRUE) {
-			// g_print("reading a point...\n");
-			pPoint = NULL;
-			if(!callback_get_point(&pPoint)) return;
-
-			// read in latitude
-			pPoint->m_fLatitude = g_ascii_strtod(p, (gchar**)&p);
-
-			// space between coordinates
-			g_return_if_fail(*p == ' ');
-			p++;
-
-			// read in longitude
-			pPoint->m_fLongitude = g_ascii_strtod(p, (gchar**)&p);
-			
-			// g_print("got (%f,%f)\n", pPoint->m_fLatitude, pPoint->m_fLongitude);
-			
-			// add point to the list
-			g_ptr_array_add(pPointString->m_pPointsArray, pPoint);
-
-			if(*p == ',') {
-				p++;
-
-				// after this, we're ready to read in next point, so loop...
-				// g_print("looping for another!...\n");
-			}
-			else {
-				break;
-			}
-		}
-	}
-	else {
-		g_assert_not_reached();
-	}
-}
-*/
-#endif

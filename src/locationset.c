@@ -54,7 +54,7 @@ void locationset_init()
 // get a new locationset struct from the allocator
 static gboolean locationset_alloc(locationset_t** ppReturn)
 {
-	g_return_val_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL, NULL);
+	g_return_val_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL, FALSE);
 
 	locationset_t* pNew = g_mem_chunk_alloc0(g_LocationSet.m_pLocationSetChunkAllocator);
 

@@ -41,7 +41,7 @@ typedef MYSQL_ROW db_row_t;
 #define DB_FEATURES_TABLENAME	("Feature")
 
 #include "map.h"
-#include "layers.h"
+//#include "layers.h"
 #include "pointstring.h"
 
 void db_create_tables(void);

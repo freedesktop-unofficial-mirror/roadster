@@ -1,10 +1,16 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE roadster-layers SYSTEM "http://xxx/roadster-1.0.dtd">
 
+<mapstyle>
+
+<constants>
+    <constant name="shadow-color" value="#C0C0FF80" />
+</constants>
+
 <layers>
-
+#
 # Labels
-
+#
 <layer data-source="railroads" draw-type="line-labels">
 	<property zoom-level="1-2" name="font-size" value="10" />
 	<property zoom-level="3" name="font-size" value="10" />
@@ -75,24 +81,9 @@
 	<property zoom-level="1-5" name="color" value="#000000ff" />
 </layer>
 
+#
 # Lines
-
-<!-- double stripe down the center of highways -->
-<!-- <layer data-source="minor-highways" draw-type="lines">           -->
-<!--     <property zoom-level="2" name="line-width" value="1" />      -->
-<!--     <property zoom-level="3" name="line-width" value="3" />      -->
-<!--     <property zoom-level="4" name="line-width" value="3" />      -->
-<!--     <property zoom-level="5" name="line-width" value="15" />     -->
-<!--     <property zoom-level="2-5" name="color" value="#f7df4aff" /> -->
-<!-- </layer>                                                         -->
-<!-- <layer data-source="minor-highways" draw-type="lines">           -->
-<!--     <property zoom-level="2" name="line-width" value="7" />      -->
-<!--     <property zoom-level="3" name="line-width" value="9" />      -->
-<!--     <property zoom-level="4" name="line-width" value="9" />      -->
-<!--     <property zoom-level="5" name="line-width" value="21" />     -->
-<!--     <property zoom-level="2-5" name="color" value="#FFFFFFFF" /> -->
-<!-- </layer>                                                         -->
-
+#
 <layer data-source="minor-highways" draw-type="lines">
     <!-- center line in minor highways -->
 	<property zoom-level="1" name="line-width" value="1" />
@@ -101,14 +92,6 @@
 	<property zoom-level="4" name="line-width" value="1" />
 	<property zoom-level="5" name="line-width" value="1" />
 	<property zoom-level="1-5" name="color" value="#ad8e21ff" />
-</layer>
-<layer data-source="minor-highway-ramps" draw-type="lines">
-	<property zoom-level="1" name="line-width" value="1" />
-	<property zoom-level="2" name="line-width" value="2" />
-	<property zoom-level="3" name="line-width" value="3" />
-	<property zoom-level="4" name="line-width" value="5" />
-	<property zoom-level="5" name="line-width" value="8" />
-	<property zoom-level="1-5" name="color" value="#f7df4aff" />
 </layer>
 <layer data-source="minor-highways" draw-type="lines">
     <!-- inner color line in minor highways -->
@@ -119,14 +102,7 @@
 	<property zoom-level="5" name="line-width" value="25" />
 	<property zoom-level="1-5" name="color" value="#f7df4aff" />
 </layer>
-<layer data-source="minor-highway-ramps" draw-type="lines">
-	<property zoom-level="1" name="line-width" value="3" />
-	<property zoom-level="2" name="line-width" value="4" />
-	<property zoom-level="3" name="line-width" value="5" />
-	<property zoom-level="4" name="line-width" value="7" />
-	<property zoom-level="5" name="line-width" value="10"/>
-	<property zoom-level="1-5" name="color" value="#ad8e21ff" />
-</layer>
+
 <layer data-source="minor-highways" draw-type="lines">
     <!-- outer color line in minor highways -->
 	<property zoom-level="1" name="line-width" value="7" />
@@ -138,48 +114,60 @@
 </layer>
 
 <layer data-source="railroads" draw-type="lines">
-    <!-- dashed inner line -->
-    <property zoom-level="1-5" name="line-width" value="3" />
+    <!-- railroad dashed inner line -->
 	<property zoom-level="1-5" name="color" value="#858585FF" />
-	<property zoom-level="1-5" name="dash-style" value="1" />
+    <property zoom-level="1-2" name="line-width" value="2" />
+	<property zoom-level="1-2" name="dash-pattern" value="5 5" />
+
+    <property zoom-level="3" name="line-width" value="6" />
+	<property zoom-level="3" name="dash-pattern" value="4 20" />
+
+    <property zoom-level="4-5" name="line-width" value="3" />
+    <property zoom-level="4-5" name="dash-pattern" value="4 20" />
+	<property zoom-level="1-5" name="line-cap" value="square" />
 </layer>
 <layer data-source="railroads" draw-type="lines">
-    <!-- solid inner line -->
+    <!-- railroad solid inner line -->
 	<property zoom-level="1-2" name="line-width" value="2" />
 	<property zoom-level="3-5" name="line-width" value="3" />
 	<property zoom-level="1-5" name="color" value="#CCCCCCFF" />
 </layer>
 <layer data-source="railroads" draw-type="lines">
-    <!-- solid outer line -->
+    <!-- railroad solid outer line -->
 	<property zoom-level="1-2" name="line-width" value="4" />
 	<property zoom-level="3-5" name="line-width" value="5" />
 	<property zoom-level="1-5" name="color" value="#858585FF" />
 </layer>
 
 <layer data-source="major-roads" draw-type="lines">
-<!-- dashed center lines -->
-	<property zoom-level="5" name="line-width" value="1" />
-	<property zoom-level="5" name="dash-style" value="1" />
-	<property zoom-level="5" name="line-cap" value="square" />
-	<property zoom-level="5" name="color" value="#EDDDDDff" />
-</layer>
-<layer data-source="minor-roads" draw-type="lines">
-<!-- dashed center lines -->
-	<property zoom-level="5" name="line-width" value="1" />
-	<property zoom-level="5" name="dash-style" value="1" />
-	<property zoom-level="5" name="line-cap" value="square" />
-	<property zoom-level="5" name="color" value="#CDCDCDff" />
-</layer>
-
-<layer data-source="major-roads" draw-type="lines">
+    <!-- major road top -->
 	<property zoom-level="1" name="line-width" value="6" />
 	<property zoom-level="2" name="line-width" value="8" />
 	<property zoom-level="3" name="line-width" value="10" />
 	<property zoom-level="4" name="line-width" value="15" />
 	<property zoom-level="5" name="line-width" value="20" />
-	<property zoom-level="1-5" name="color" value="#FFFB94ff" />
+	<property zoom-level="1-5" name="color" value="#FFFB73FF" />
 </layer>
+<layer data-source="minor-highway-ramps" draw-type="lines">
+    <!-- minor highway ramp top -->
+	<property zoom-level="1" name="line-width" value="1" />
+	<property zoom-level="2" name="line-width" value="2" />
+	<property zoom-level="3" name="line-width" value="3" />
+	<property zoom-level="4" name="line-width" value="5" />
+	<property zoom-level="5" name="line-width" value="8" />
+	<property zoom-level="2-5" name="color" value="#fffbffff" />
+</layer>
+
 <layer data-source="minor-roads" draw-type="lines">
+    <!-- minor roads dashed center lines -->
+	<property zoom-level="4-5" name="line-width" value="1" />
+	<property zoom-level="4-5" name="dash-pattern" value="5 10" />
+	<property zoom-level="4-5" name="line-cap" value="square" />
+	<property zoom-level="4-5" name="color" value="#CDCDCDff" />
+</layer>
+
+<layer data-source="minor-roads" draw-type="lines">
+    <!-- minor roads top -->
     <property zoom-level="1" name="line-width" value="1" />
     <property zoom-level="1" name="color" value="#c0c0c0ff" />
     <property zoom-level="1" name="line-cap" value="square" />
@@ -191,17 +179,28 @@
 	<property zoom-level="5" name="line-width" value="24" />
 	<property zoom-level="2-5" name="color" value="#fffbffff" />
 </layer>
+<layer data-source="minor-highway-ramps" draw-type="lines">
+    <!-- minor highway ramps top -->
+	<property zoom-level="1" name="line-width" value="3" />
+	<property zoom-level="2" name="line-width" value="4" />
+	<property zoom-level="3" name="line-width" value="5" />
+	<property zoom-level="4" name="line-width" value="7" />
+	<property zoom-level="5" name="line-width" value="10"/>
+	<property zoom-level="2-5" name="color" value="#c0c0c0ff" />
+</layer>
 
 <layer data-source="major-roads" draw-type="lines">
+    <!-- major roads bottom -->
 	<property zoom-level="1" name="line-width" value="8" />
 	<property zoom-level="2" name="line-width" value="10" />
 	<property zoom-level="3" name="line-width" value="12" />
 	<property zoom-level="4" name="line-width" value="17" />
 	<property zoom-level="5" name="line-width" value="22" />
-	<property zoom-level="1-5" name="color" value="#b0b0b0ff" />
+	<property zoom-level="1-5" name="color" value="#c0c0c0ff" />
 </layer>
 
 <layer data-source="minor-roads" draw-type="lines">
+    <!-- minor roads bottom -->
     <property zoom-level="1" name="line-width" value="2" />
     <property zoom-level="1" name="color" value="#E0E0E0ff" />
     <property zoom-level="1" name="line-cap" value="square" />
@@ -211,10 +210,58 @@
 	<property zoom-level="3" name="line-width" value="9" />
 	<property zoom-level="4" name="line-width" value="14" />
 	<property zoom-level="5" name="line-width" value="26" />
-	<property zoom-level="2-5" name="color" value="#B0B0B0ff" />
+	<property zoom-level="2-5" name="color" value="#c0c0c0ff" />
+</layer>
+
+<layer data-source="minor-highways" draw-type="lines">
+    <!-- minor highways shadow -->
+	<property zoom-level="3" name="line-width" value="12" />
+	<property zoom-level="4" name="line-width" value="15" />
+	<property zoom-level="5" name="line-width" value="27" />
+    <property zoom-level="3-5" name="color" value="shadow-color" />
+    <property zoom-level="3-5" name="line-cap" value="round" />
+    <property zoom-level="3" name="pixel-offset-x" value="2" />
+    <property zoom-level="3" name="pixel-offset-y" value="2" />
+    <property zoom-level="4-5" name="pixel-offset-x" value="3" />
+    <property zoom-level="4-5" name="pixel-offset-y" value="3" />
+</layer>
+
+<layer data-source="major-roads" draw-type="lines">
+    <!-- major roads shadow -->
+    <property zoom-level="3" name="line-width" value="12" />
+    <property zoom-level="4" name="line-width" value="17" />
+    <property zoom-level="5" name="line-width" value="22" />
+    <property zoom-level="3-5" name="color" value="shadow-color" />
+    <property zoom-level="3-5" name="line-cap" value="round" />
+    <property zoom-level="3" name="pixel-offset-x" value="2" />
+    <property zoom-level="3" name="pixel-offset-y" value="2" />
+    <property zoom-level="4-5" name="pixel-offset-x" value="3" />
+    <property zoom-level="4-5" name="pixel-offset-y" value="3" />
+</layer>
+
+<layer data-source="minor-roads" draw-type="lines">
+    <!-- minor roads shadow -->
+    <property zoom-level="3" name="line-width" value="9" />
+    <property zoom-level="4" name="line-width" value="14" />
+    <property zoom-level="5" name="line-width" value="26" />
+    <property zoom-level="3" name="pixel-offset-x" value="2" />
+    <property zoom-level="3" name="pixel-offset-y" value="2" />
+    <property zoom-level="4-5" name="pixel-offset-x" value="3" />
+    <property zoom-level="4-5" name="pixel-offset-y" value="3" />
+    <property zoom-level="3-5" name="color" value="shadow-color" />
+    <property zoom-level="3-5" name="line-cap" value="round" />
 </layer>
 
 <layer data-source="rivers" draw-type="lines">
+    <!-- rivers only layer -->
+	<property zoom-level="3" name="line-width" value="1" />
+	<property zoom-level="4" name="line-width" value="2" />
+	<property zoom-level="5" name="line-width" value="3" />
+	<property zoom-level="3-5" name="color" value="#8ca2beFF" />
+</layer>
+
+<layer data-source="rivers" draw-type="lines">
+    <!-- rivers only layer -->
 	<property zoom-level="1" name="line-width" value="3" />
 	<property zoom-level="2" name="line-width" value="4" />
 	<property zoom-level="3" name="line-width" value="5" />
@@ -223,7 +270,9 @@
 	<property zoom-level="1-5" name="color" value="#9cb2ceFF" />
 </layer>
 
+#
 # Polygons
+#
 
 <layer data-source="lakes" draw-type="polygons">
 	<property zoom-level="1-5" name="color" value="#9cb2ceFF" />
@@ -237,4 +286,14 @@
 	<property zoom-level="1-5" name="color" value="#AAAAAAff" />
 </layer>
 
+<!-- <layer data-source="urban-areas" draw-type="polygons">           -->
+<!--     <property zoom-level="1-5" name="color" value="#FF0000ff" /> -->
+<!-- </layer>                                                         -->
+
+<layer draw-type="fill">
+    <property zoom-level="1-5" name="color" value="#ECE6E6ff" />
+</layer>
+
 </layers>
+
+</mapstyle>
