@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 
 void importwindow_init(GladeXML* pGladeXML);
 void importwindow_show(void);
+void importwindow_hide(void);
 
 void importwindow_begin(GSList* pSelectedFileList);
 void importwindow_log_append(const gchar* pszText, ...);

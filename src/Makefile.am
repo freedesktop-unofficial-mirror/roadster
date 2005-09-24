@@ -24,6 +24,7 @@ roadster_SOURCES = \
 	mainwindow.c\
 	gotowindow.c\
 	map.c\
+	map_tile.c\
 	map_style.c\
 	map_draw_cairo.c\
 	map_draw_gdk.c\
@@ -39,6 +40,7 @@ roadster_SOURCES = \
 	searchwindow.c\
 	search_road.c\
 	search_location.c\
+	search_city.c\
 	search.c\
 	scenemanager.c\
 	point.c\

@@ -33,7 +33,7 @@
 #include "mainwindow.h"
 #include "welcomewindow.h"
 
-#define URL_CENSUS_GOV_TIGER_DATA_WEBSITE ("http://www.census.gov/geo/www/tiger/tiger2004fe/tgr2004fe.html")
+#define URL_CENSUS_GOV_TIGER_DATA_WEBSITE ("http://www.census.gov/geo/www/tiger/tiger2004se/tgr2004se.html")
 
 struct {
 	GtkWindow* m_pWindow;

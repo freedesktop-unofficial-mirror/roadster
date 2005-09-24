@@ -442,7 +442,6 @@ gboolean db_insert_city(const gchar* pszName, gint nStateID, gint* pnReturnCityI
 	return TRUE;
 }
 
-
 //
 // insert / select state
 //
@@ -554,6 +553,11 @@ void db_create_tables()
 	db_query("CREATE DATABASE IF NOT EXISTS roadster;", NULL);
 	db_query("USE roadster;", NULL);
 
+	// For development: run these once to update your tables
+//	db_query("ALTER TABLE RoadName ADD COLUMN NameSoundex CHAR(4) NOT NULL;", NULL);
+//	db_query("UPDATE RoadName SET NameSoundex=SOUNDEX(Name);", NULL);
+//	db_query("ALTER TABLE RoadName ADD INDEX (NameSoundex);", NULL);
+
 	// Road
 	db_query("CREATE TABLE IF NOT EXISTS Road("
 		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"	// XXX: can we get away with INT3 ?
@@ -583,9 +587,12 @@ void db_create_tables()
 	db_query("CREATE TABLE IF NOT EXISTS RoadName("
 		" ID INT3 UNSIGNED NOT NULL auto_increment,"	// NOTE: 3 bytes
 		" Name VARCHAR(30) NOT NULL,"
+		" NameSoundex CHAR(10) NOT NULL,"	// see soundex() function
 		" SuffixID INT1 UNSIGNED NOT NULL,"
-		" PRIMARY KEY (ID),"			// for joining RoadName to Road 
-		" INDEX (Name(7)));", NULL);	// for searching by RoadName. 7 is enough for decent uniqueness(?)
+		" PRIMARY KEY (ID),"				// for joining RoadName to Road 
+		" INDEX (Name(7)));"					// for searching by RoadName. 7 is enough for decent uniqueness(?)
+//		" INDEX (NameSoundex));"			// Nicer way to search by RoadName(?)
+		,NULL);
 
 	// City
 	db_query("CREATE TABLE IF NOT EXISTS City("
@@ -651,5 +658,6 @@ void db_create_tables()
 	db_query("CREATE TABLE IF NOT EXISTS LocationSet("
 		" ID INT3 UNSIGNED NOT NULL AUTO_INCREMENT,"		// NOTE: 3 bytes.	(would 2 be enough?)
 		" Name VARCHAR(60) NOT NULL,"
+		" IconName VARCHAR(60) NOT NULL,"
 		" PRIMARY KEY (ID));", NULL);
 }

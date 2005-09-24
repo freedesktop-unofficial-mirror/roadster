@@ -36,6 +36,6 @@
 //
 void gui_init(void);
 void gui_run(void);
-extern void gui_exit(void);
+void gui_exit(void);
 GladeXML* gui_load_xml(gchar* pszFileName, gchar* pszXMLTreeRoot);
 #endif

@@ -28,19 +28,20 @@ G_BEGIN_DECLS
 
 #include "map.h"
 
-typedef struct locationsetstyle {
-	// icon?
-	// color?
-	int __unused;
-} locationsetstyle_t;
+// typedef struct locationsetstyle {
+//     // icon?
+//     // color?
+//     int __unused;
+// } locationsetstyle_t;
 
 // a set of locations (eg. "Coffee Shops")
 typedef struct locationset {
 	gint m_nID;
 	gchar* m_pszName;
+	gchar* m_pszIconName;
 	gint m_nLocationCount;
-	gboolean m_bVisible;
-	locationsetstyle_t m_Style;
+	gboolean m_bVisible;		// user has chosen to view these
+//	locationsetstyle_t m_Style;
 } locationset_t;
 
 void locationset_init(void);

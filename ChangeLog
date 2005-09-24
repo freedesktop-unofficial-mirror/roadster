@@ -1,3 +1,21 @@
+2005-09-24  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* data/roadster.glade: New "Go" menu with web maps.  General GUI cleanup.
+	* src/glyph.c: Complete rework.  Removes direct usage of librsvg.  Now uses only gdkpixbuf loaders (including the librsvg one!)
+	* src/locationeditwindow.c: 
+	* src/mainwindow.c: Use GLADE_LINK_WIDGET.  Add "web maps" menu options.  Add glyph reload debug menu option.  Possibly fix 'failure to stop scrolling' bug.
+	* src/map.c: Beginning of support for "enhancing" map objects at run-time (adding points, smoothing sharp edges).
+	* src/map.h: Fix a few 'double' which should be 'gdouble'
+	* src/search_city.c: New search type matches city names.
+	* src/search_road.c: Removed common code.  No longer do wildcard "search*" matching.  No longer display house #s in results.
+	* src/search_location.c: Removed common code.
+	* src/search.c: Moved common search code here.
+	* src/searchwindow.c: Add icon.  Lots of small "look & feel" updates.
+	* src/util.c: Add new word-in-sentence matching for treeview searches.  Add some treeview utility functions.  Add util_str_replace_many() for replacing eg "{LAT}" with a number for web map URLs.
+	* src/welcomewindow.c: Update currently unused TIGER Data Web URL.
+	* src/db.c: Playing with soundex() matching for roads and city names.
+	* configure.ac: Bumped version.  Hey why not.
+
 2005-09-14  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/*.c: Removed many unneeded #includes.  Removed NUM_ELEMS in favor of existing glib G_N_ELEMENTS.

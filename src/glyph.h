@@ -24,11 +24,22 @@
 #ifndef _GLYPH_H_
 #define _GLYPH_H_
 
+#include <gdk/gdk.h>
 #include <cairo.h>
 
+typedef struct {
+	GdkPixbuf* m_pPixbuf;
+	gint m_nWidth;
+	gint m_nHeight;
+	gint m_nMaxWidth;
+	gint m_nMaxHeight;
+	gchar* m_pszName;
+} glyph_t;
+
 void glyph_init(void);
-gint glyph_load(const gchar* pszPath);
-void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY);
+glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight);
+GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph);
+//void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY);
 void glyph_deinit(void);
 
 #endif

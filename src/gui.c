@@ -79,12 +79,7 @@ GladeXML* gui_load_xml(gchar* pszFileName, gchar* pszXMLTreeRoot)
 
 void gui_run()
 {
-//	if(db_is_empty()) {
-		welcomewindow_show();
-//	}
-//	else {
-//		mainwindow_show();
-//	}
+	welcomewindow_show();
 	gtk_main();
 }
 
@@ -93,7 +88,8 @@ void gui_exit()
 	// Hide first, then quit (makes the UI feel snappier)
 	mainwindow_hide();
 	gotowindow_hide();
+	importwindow_hide();
+	locationeditwindow_hide();
 
 	gtk_main_quit();
 }
-

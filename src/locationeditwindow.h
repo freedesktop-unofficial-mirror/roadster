@@ -30,6 +30,7 @@
 G_BEGIN_DECLS
 
 void locationeditwindow_init(GladeXML* pGladeXML);
+void locationeditwindow_hide(void);
 
 G_END_DECLS
 

@@ -26,12 +26,15 @@
 
 G_BEGIN_DECLS
 
+#include <gtk/gtk.h>
 #include <glade/glade.h>
-#include "gpsclient.h"
-	
+#include "search.h"
+#include "map.h"
+//#include "gpsclient.h"
+
 void searchwindow_init(GladeXML* pGladeXML);
 
-void searchwindow_add_result(const gchar* pszText, mappoint_t* pPoint, gint nZoomLevel);
+void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText, mappoint_t* pPoint, gint nZoomLevel);
 
 static void searchwindow_go_to_selected_result(void);
 

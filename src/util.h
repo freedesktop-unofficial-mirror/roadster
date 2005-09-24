@@ -52,9 +52,25 @@ gboolean util_parse_hex_color(const gchar* pszString, void* pReturnColor);
 void util_close_parent_window(GtkWidget* pWidget, gpointer data);
 void util_open_uri(const char* pszURI);
 
+void util_gtk_widget_set_visible(GtkWidget* pWidget, gboolean bVisible);
+gboolean util_treeview_match_all_words_callback(GtkTreeModel *pTreeModel, gint nColumn, const gchar *pszSearchText, GtkTreeIter* pIter, gpointer _unused);
+
+gboolean util_gtk_tree_view_select_next(GtkTreeView* pTreeView);
+gboolean util_gtk_tree_view_select_previous(GtkTreeView* pTreeView);
+
 // if glib < 2.6
 #if(!GLIB_CHECK_VERSION(2,6,0))
 gint g_strv_length(const gchar** a);
 #endif
+
+// Pretend it's glib
+gchar* util_g_strjoinv_limit(const gchar* separator, gchar** a, gint iFirst, gint iLast);
+
+typedef struct {
+	gchar* m_pszOld;
+	gchar* m_pszNew;
+} util_str_replace_t;
+
+gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplacements, gint nNumReplacements);
 
 #endif

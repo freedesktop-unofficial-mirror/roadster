@@ -70,6 +70,7 @@ static void locationeditwindow_something_changed_callback(GtkEditable *_unused, 
 void locationeditwindow_show_for_new(gint nDefaultLocationSetID);
 void locationeditwindow_show_for_edit(gint nLocationID);
 
+gboolean locationeditwindow_set_expander_label(gpointer _unused);
 
 // When an 'entry' is created to do in-place editing in a tree, we want to attach this "insert-text" hander to it.
 static void callback_install_insert_text_callback_on_entry(GtkCellRenderer *pCellRenderer, GtkCellEditable *pEditable, const gchar *pszTreePath, gpointer pUserData)
@@ -93,6 +94,10 @@ static void callback_store_attribute_editing(GtkCellRendererText *pCell, const g
 		gtk_list_store_set(g_LocationEditWindow.m_pAttributeListStore, &iter, nColumn, pszNewValue, -1);
 	}
 	gtk_tree_path_free(pPath);
+
+	// data is now modified
+	g_LocationEditWindow.m_bModified = TRUE;
+	locationeditwindow_set_title();
 }
 
 void locationeditwindow_init(GladeXML* pGladeXML)
@@ -106,18 +111,23 @@ void locationeditwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_LocationEditWindow.m_pLocationAddressTextView, GTK_TEXT_VIEW, "locationaddresstextview");
 
 	GLADE_LINK_WIDGET(pGladeXML, g_LocationEditWindow.m_pAttributeExpander, GTK_EXPANDER, "attributeexpander");
+	gtk_expander_set_use_markup(g_LocationEditWindow.m_pAttributeExpander, TRUE);
+
 	GLADE_LINK_WIDGET(pGladeXML, g_LocationEditWindow.m_pAttributeAddButton, GTK_BUTTON, "attributeaddbutton");
 	GLADE_LINK_WIDGET(pGladeXML, g_LocationEditWindow.m_pAttributeRemoveButton, GTK_BUTTON, "attributeremovebutton");
 
 	locationeditwindow_configure_attribute_list();
 
-	// Update window title with changed to 'name'
+	// 
 	g_signal_connect(G_OBJECT(g_LocationEditWindow.m_pLocationNameEntry), "changed", G_CALLBACK(locationeditwindow_something_changed_callback), NULL);
 	g_signal_connect(G_OBJECT(g_LocationEditWindow.m_pLocationSetComboBox), "changed", G_CALLBACK(locationeditwindow_something_changed_callback), NULL);
+	g_signal_connect(G_OBJECT(gtk_text_view_get_buffer(g_LocationEditWindow.m_pLocationAddressTextView)), "changed", G_CALLBACK(locationeditwindow_something_changed_callback), NULL);
 
 //	g_signal_connect(G_OBJECT(g_LocationEditWindow.m_pLocationAddressTextView), "changed", G_CALLBACK(locationeditwindow_something_changed_callback), NULL);
+//	locationeditwindow_show_for_new(1);		// XXX: debug
 
-	locationeditwindow_show_for_new(1);		// XXX: debug
+	// don't delete window on X, just hide it
+	g_signal_connect(G_OBJECT(g_LocationEditWindow.m_pWindow), "delete_event", G_CALLBACK(gtk_widget_hide), NULL);
 }
 
 static void locationeditwindow_configure_attribute_list()
@@ -191,19 +201,29 @@ static void locationeditwindow_configure_attribute_list()
 			   -1);
 }
 
+void locationeditwindow_hide(void)
+{
+	gtk_widget_hide(GTK_WIDGET(g_LocationEditWindow.m_pWindow));
+}
+
 void locationeditwindow_show_for_new(gint nDefaultLocationSetID)
 {
 	// Set controls to default values
 	gtk_entry_set_text(g_LocationEditWindow.m_pLocationNameEntry, "");
 	gtk_text_buffer_set_text(gtk_text_view_get_buffer(g_LocationEditWindow.m_pLocationAddressTextView), "", -1);
 	gtk_combo_box_set_active(g_LocationEditWindow.m_pLocationSetComboBox, nDefaultLocationSetID);
-	gtk_expander_set_expanded(g_LocationEditWindow.m_pAttributeExpander, FALSE);
+	gtk_list_store_clear(g_LocationEditWindow.m_pAttributeListStore);
+
+	// Don't change user's previous setting here
+	//gtk_expander_set_expanded(g_LocationEditWindow.m_pAttributeExpander, FALSE);
 
 	g_LocationEditWindow.m_bModified = FALSE;
 	locationeditwindow_set_title();
+	locationeditwindow_set_expander_label(NULL);
 
 	gtk_widget_grab_focus(GTK_WIDGET(g_LocationEditWindow.m_pLocationNameEntry));
 	gtk_widget_show(GTK_WIDGET(g_LocationEditWindow.m_pWindow));
+	gtk_window_present(g_LocationEditWindow.m_pWindow);
 }
 
 void locationeditwindow_show_for_edit(gint nLocationID)
@@ -211,6 +231,26 @@ void locationeditwindow_show_for_edit(gint nLocationID)
 	// void location_load_attributes(gint nLocationID, GPtrArray* pAttributeArray);
 	g_LocationEditWindow.m_bModified = FALSE;
 	locationeditwindow_set_title();
+
+	locationeditwindow_set_expander_label(NULL);
+}
+
+gboolean locationeditwindow_set_expander_label(gpointer _unused)
+{
+	gint nNumLocationAttributes = 0; //g_LocationEditWindow.m_pAttributeNameListStore;	// XXX: use a real count
+
+	// NOTE: Do not expand/close the expander-- keep the user's old setting
+	gchar* pszExpanderLabel;
+//	if(gtk_expander_get_expanded(g_LocationEditWindow.m_pAttributeExpander)) {
+		pszExpanderLabel = g_strdup_printf("Custom Values <i>(%d)</i>", nNumLocationAttributes);
+//	}
+//	else {
+//		pszExpanderLabel = g_strdup_printf("Show Custom Values <i>(%d)</i>", nNumLocationAttributes);
+//	}
+	gtk_expander_set_label(g_LocationEditWindow.m_pAttributeExpander, pszExpanderLabel);
+	g_free(pszExpanderLabel);
+
+	return FALSE;	// "don't call us again" -- we're unfortunately an idle-time callback
 }
 
 static void locationeditwindow_set_title()
@@ -229,12 +269,19 @@ static void locationeditwindow_set_title()
 	g_free(pszNewName);
 }
 
-
 // Widget Callbacks
+
 static void locationeditwindow_something_changed_callback(GtkEditable *_unused, gpointer __unused)
 {
+	// NOTE: This callback is shared by several widgets
 	g_LocationEditWindow.m_bModified = TRUE;
 	locationeditwindow_set_title();
+}
+
+void locationeditwindow_on_attributeexpander_activate(GtkExpander *_unused, gpointer __unused)
+{
+	// HACK: doesn't work when called directly (gets wrong value from expander?) so call it later
+	g_idle_add(locationeditwindow_set_expander_label, NULL);
 }
 
 // static void locationeditwindow_nameentry_insert_text(GtkEditable *pEditable, gchar *pszNewText, gint nNewTextLen, gint *pPosition, gpointer pUserData)

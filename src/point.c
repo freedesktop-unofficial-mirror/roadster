@@ -30,7 +30,7 @@
 #include "gfreelist.h"
 GFreeList* g_pPointFreeList;
 #else
-GMemChunk* g_pPointChunkAllocator;		// chunk allocators to be shared by all geometrysets
+GMemChunk* g_pPointChunkAllocator;
 #endif
 
 void point_init(void)

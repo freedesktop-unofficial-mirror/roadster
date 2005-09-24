@@ -56,6 +56,11 @@ void importwindow_show(void)
 	gtk_window_present(g_ImportWindow.m_pWindow);
 }
 
+void importwindow_hide(void)
+{
+	gtk_widget_hide(GTK_WIDGET(g_ImportWindow.m_pWindow));
+}
+
 void importwindow_log_append(const gchar* pszFormat, ...)
 {
 	gchar azNewText[5000];

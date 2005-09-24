@@ -311,9 +311,11 @@ void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions);
 // Conversions
 void map_windowpoint_to_mappoint(map_t* pMap, screenpoint_t* pScreenPoint, mappoint_t* pMapPoint);
 gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nDistanceUnit);
-double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB);
-double map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel);
-double map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
+gdouble map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB);
+gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2);
+
+gdouble map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel);
+gdouble map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
 gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2);
 gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2);
 

@@ -87,7 +87,7 @@ gboolean locationset_insert(const gchar* pszName, gint* pnReturnID)
 // Load all locationsets into memory
 void locationset_load_locationsets(void)
 {
-	gchar* pszSQL = g_strdup_printf("SELECT LocationSet.ID, LocationSet.Name, COUNT(Location.ID) FROM LocationSet LEFT JOIN Location ON (LocationSet.ID=Location.LocationSetID) GROUP BY LocationSet.ID;");
+	gchar* pszSQL = g_strdup_printf("SELECT LocationSet.ID, LocationSet.Name, LocationSet.IconName, COUNT(Location.ID) FROM LocationSet LEFT JOIN Location ON (LocationSet.ID=Location.LocationSetID) GROUP BY LocationSet.ID;");
 
 	db_resultset_t* pResultSet = NULL;
 	if(db_query(pszSQL, &pResultSet)) {
@@ -99,7 +99,8 @@ void locationset_load_locationsets(void)
 
 			pNewLocationSet->m_nID = atoi(aRow[0]);
 			pNewLocationSet->m_pszName = g_strdup(aRow[1]);
-			pNewLocationSet->m_nLocationCount = atoi(aRow[2]);
+			pNewLocationSet->m_pszIconName = g_strdup(aRow[2]);
+			pNewLocationSet->m_nLocationCount = atoi(aRow[3]);
 
 			// Add the new set to both data structures
 			g_ptr_array_add(g_LocationSet.m_pLocationSetArray, pNewLocationSet);

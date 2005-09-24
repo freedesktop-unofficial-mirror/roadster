@@ -1,5 +1,5 @@
 /***************************************************************************
- *            main.h
+ *            search_city.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -20,26 +20,14 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+ 
+#ifndef _SEARCH_CITY_H
+#define _SEARCH_CITY_H
 
-#ifndef _MAIN_H_
-#define _MAIN_H_
+G_BEGIN_DECLS
 
-#include <gtk/gtk.h>
+void search_city_execute(const gchar* pszSentence);
 
-#define USE_GNOME_VFS		// comment this out to get a faster single-threaded compile (can't import, though)
-#define USE_GFREELIST
+G_END_DECLS
 
-#define MOUSE_BUTTON_LEFT				(1)		// These are X/GDK/GTK numbers, now with names.
-#define MOUSE_BUTTON_RIGHT				(3)
-
-//#define ENABLE_TIMING
-
-typedef struct color {
-	gfloat m_fRed;
-	gfloat m_fGreen;
-	gfloat m_fBlue;
-	gfloat m_fAlpha;
-} color_t;
-
-#endif
-
+#endif /* _SEARCH_CITY_H */

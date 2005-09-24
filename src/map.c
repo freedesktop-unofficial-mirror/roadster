@@ -42,6 +42,7 @@
 #define ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// change circular rivers to lakes when loading from disk
 //#define ENABLE_SCENEMANAGER_DEBUG_TEST
 //#define ENABLE_LABELS_WHILE_DRAGGING
+//#define ENABLE_RIVER_SMOOTHING	// hacky. rivers are animated when scrolling. :) only good for proof-of-concept screenshots
 
 #ifdef THREADED_RENDERING
 #define RENDERING_THREAD_YIELD          g_thread_yield()
@@ -83,8 +84,12 @@ static gboolean map_hit_test_locationselections(map_t* pMap, rendermetrics_t* pR
 static gboolean map_hit_test_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 static gboolean map_hit_test_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 
+static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID);
+
 static void map_data_clear(map_t* pMap);
 void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics);
+
+gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2);
 
 // Each zoomlevel has a scale and an optional name (name isn't used for anything)
 zoomlevel_t g_sZoomLevels[NUM_ZOOM_LEVELS+1] = {
@@ -488,6 +493,62 @@ static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect)
 	}
 }
 
+static gboolean map_enhance_linestring(GPtrArray* pSourceArray, GPtrArray* pDestArray, gboolean (*callback_alloc_point)(mappoint_t**), gdouble fMaxDistanceBetweenPoints, gdouble fMaxRandomDistance)
+{
+	g_assert(pSourceArray->len >= 2);
+//g_print("pSourceArray->len = %d\n", pSourceArray->len);
+
+	// add first point
+	g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, 0));
+
+	gint i = 0;
+	for(i=0 ; i<(pSourceArray->len-1) ; i++) {
+		mappoint_t* pPoint1 = g_ptr_array_index(pSourceArray, i);
+		mappoint_t* pPoint2 = g_ptr_array_index(pSourceArray, i+1);
+
+		gdouble fRise = (pPoint2->m_fLatitude - pPoint1->m_fLatitude);
+		gdouble fRun = (pPoint2->m_fLongitude - pPoint1->m_fLongitude);
+
+		gdouble fLineLength = sqrt((fRun*fRun) + (fRise*fRise));
+//		g_print("fLineLength = %f\n", fLineLength);
+		gint nNumMiddlePoints = (gint)(fLineLength / fMaxDistanceBetweenPoints);
+//		g_print("(fLineLength / fMaxDistanceBetweenPoints) = nNumNewPoints; %f / %f = %d\n", fLineLength, fMaxDistanceBetweenPoints, nNumNewPoints);
+		if(nNumMiddlePoints == 0) continue;	// nothing to add
+
+//		g_print("fDistanceBetweenPoints = %f\n", fDistanceBetweenPoints);
+
+		gdouble fNormalizedX = fRun / fLineLength;
+		gdouble fNormalizedY = fRise / fLineLength;
+//		g_print("fNormalizedX = %f\n", fNormalizedX);
+//		g_print("fNormalizedY = %f\n", fNormalizedY);
+
+		gdouble fPerpendicularNormalizedX = fRise / fLineLength;
+		gdouble fPerpendicularNormalizedY = -(fRun / fLineLength);
+
+		// add points along the line
+		gdouble fDistanceBetweenPoints = fLineLength / (gdouble)(nNumMiddlePoints + 1);
+
+		gint j;
+		for(j=0 ; j<nNumMiddlePoints ; j++) {
+			mappoint_t* pNewPoint = NULL;
+			callback_alloc_point(&pNewPoint);
+			gdouble fDistanceFromPoint1 = (j+1) * fDistanceBetweenPoints;
+
+			pNewPoint->m_fLongitude = pPoint1->m_fLongitude + (fDistanceFromPoint1 * fNormalizedX);
+			pNewPoint->m_fLatitude = pPoint1->m_fLatitude + (fDistanceFromPoint1 * fNormalizedY);
+
+			gdouble fRandomMovementLength = fMaxRandomDistance * g_random_double_range(-1.0, 1.0);
+			pNewPoint->m_fLongitude += (fPerpendicularNormalizedX * fRandomMovementLength);	// move each component
+			pNewPoint->m_fLatitude += (fPerpendicularNormalizedY * fRandomMovementLength);
+
+			g_ptr_array_add(pDestArray, pNewPoint);
+		}
+	}
+	// add last point
+	g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, pSourceArray->len-1));
+//g_print("pDestArray->len = %d\n", pDestArray->len);
+}
+
 static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 {
 	g_return_val_if_fail(pMap != NULL, FALSE);
@@ -508,22 +569,19 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 		" FROM Road "
 		" LEFT JOIN RoadName ON (Road.RoadNameID=RoadName.ID)"
 		" WHERE"
-		//" TypeID IN (%s) AND"
-                //" MBRIntersects(@wkb, Coordinates)"
 		" MBRIntersects(GeomFromText('Polygon((%s %s,%s %s,%s %s,%s %s,%s %s))'), Coordinates)"
 		,
+		// upper left
 		g_ascii_dtostr(azCoord1, 20, pRect->m_A.m_fLatitude), g_ascii_dtostr(azCoord2, 20, pRect->m_A.m_fLongitude), 
+		// upper right
 		g_ascii_dtostr(azCoord3, 20, pRect->m_A.m_fLatitude), g_ascii_dtostr(azCoord4, 20, pRect->m_B.m_fLongitude), 
+		// bottom right
 		g_ascii_dtostr(azCoord5, 20, pRect->m_B.m_fLatitude), g_ascii_dtostr(azCoord6, 20, pRect->m_B.m_fLongitude), 
+		// bottom left
 		g_ascii_dtostr(azCoord7, 20, pRect->m_B.m_fLatitude), g_ascii_dtostr(azCoord8, 20, pRect->m_A.m_fLongitude), 
+		// upper left again
 		azCoord1, azCoord2);
 
-//         pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude,    // upper left
-//         pRect->m_A.m_fLatitude, pRect->m_B.m_fLongitude,    // upper right
-//         pRect->m_B.m_fLatitude, pRect->m_B.m_fLongitude,    // bottom right
-//         pRect->m_B.m_fLatitude, pRect->m_A.m_fLongitude,    // bottom left
-//         pRect->m_A.m_fLatitude, pRect->m_A.m_fLongitude     // upper left again
-//         );
 	//g_print("sql: %s\n", pszSQL);
 
 	db_query(pszSQL, &pResultSet);
@@ -533,7 +591,6 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 
 	guint32 uRowCount = 0;
 	if(pResultSet) {
-		TIMER_SHOW(mytimer, "after clear layers");
 		while((aRow = db_fetch_row(pResultSet))) {
 			uRowCount++;
 
@@ -556,16 +613,9 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 			}
 
 			if(nTypeID == 12) g_warning("(got a 12)");
-			// Extract points
+
 			road_t* pNewRoad = NULL;
 			road_alloc(&pNewRoad);
-
-			//pointstring_t* pNewPointString = NULL;
-			//if(!pointstring_alloc(&pNewPointString)) {
-			//	g_warning("out of memory loading pointstrings\n");
-			//	continue;
-			//}
-			db_parse_wkb_linestring(aRow[2], pNewRoad->m_pPointsArray, point_alloc);
 
 			// Build name by adding suffix, if one is present
 			gchar azFullName[100] = "";
@@ -584,7 +634,24 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 
 			pNewRoad->m_pszName = g_strdup(azFullName);
 
-#ifdef ENABLE_RIVER_TO_LAKE_LOADTIME_HACK
+#ifdef	ENABLE_RIVER_SMOOTHING
+			if(nTypeID == MAP_OBJECT_TYPE_RIVER) {
+				// XXX: Hacky. Add randomness to river lines
+				GPtrArray* pTempArray = g_ptr_array_new();
+				db_parse_wkb_linestring(aRow[2], pTempArray, point_alloc);
+				map_enhance_linestring(pTempArray, pNewRoad->m_pPointsArray, point_alloc,
+									   0.00025,      // distance between points
+									   0.000060); 	// randomness
+				g_ptr_array_free(pTempArray, TRUE);
+			}
+			else {
+				db_parse_wkb_linestring(aRow[2], pNewRoad->m_pPointsArray, point_alloc);
+             }
+#else
+			db_parse_wkb_linestring(aRow[2], pNewRoad->m_pPointsArray, point_alloc);
+#endif
+
+#ifdef ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// XXX: combine this and above hack and you get lakes with squiggly edges. whoops. :)
 			if(nTypeID == MAP_OBJECT_TYPE_RIVER) {
 				mappoint_t* pPointA = g_ptr_array_index(pNewRoad->m_pPointsArray, 0);
 				mappoint_t* pPointB = g_ptr_array_index(pNewRoad->m_pPointsArray, pNewRoad->m_pPointsArray->len-1);
@@ -708,6 +775,8 @@ static void map_data_clear(map_t* pMap)
 
 double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 {
+	// XXX: this function is broken.
+
 	// This functions calculates the length of the arc of the "greatcircle" that goes through
 	// the two points A and B and whos center is the center of the sphere, O.
 
@@ -730,6 +799,14 @@ double map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 	return fAOB_Rad * RADIUS_OF_WORLD_IN_METERS;
 }
 
+gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2)
+{
+	gdouble fDeltaX = ((p2->m_fLongitude) - (p1->m_fLongitude));
+	gdouble fDeltaY = ((p2->m_fLatitude) - (p1->m_fLatitude));
+
+	return sqrt((fDeltaX*fDeltaX) + (fDeltaY*fDeltaY));
+}
+
 gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2)
 {
 	rendermetrics_t metrics;
@@ -744,9 +821,7 @@ gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2)
 	gdouble fDeltaX = fX2 - fX1;
 	gdouble fDeltaY = fY2 - fY1;
 
-	gdouble d = sqrt((fDeltaX*fDeltaX) + (fDeltaY*fDeltaY));
-//	g_print("%f\n", d);
-	return d;
+	return sqrt((fDeltaX*fDeltaX) + (fDeltaY*fDeltaY));
 }
 
 gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2)

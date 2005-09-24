@@ -24,7 +24,41 @@
 #include <gtk/gtk.h>
 
 #include "main.h"
+#include "util.h"
 #include "search.h"
+#include "search_road.h"
+#include "search_location.h"
+#include "search_city.h"
+#include "glyph.h"
+
+#define SEARCH_RESULT_TYPE_GLYPH_WIDTH		32
+#define SEARCH_RESULT_TYPE_GLYPH_HEIGHT		32
+
+struct {
+	glyph_t* m_apSearchResultTypeGlyphs[ NUM_SEARCH_RESULT_TYPES ];	// don't store pixbufs, store some custom glyph type
+} g_Search = {0};
+
+// functions
+
+void search_init()
+{
+	g_assert(NUM_SEARCH_RESULT_TYPES == 5);		// don't forget to add more here...
+
+	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_ROAD] = glyph_load_at_size("search-result-type-road", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_CITY] = glyph_load_at_size("search-result-type-city", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_STATE] = glyph_load_at_size("search-result-type-state", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_COUNTRY] = glyph_load_at_size("search-result-type-country", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_LOCATION] = glyph_load_at_size("search-result-type-location", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+}
+
+glyph_t* search_glyph_for_search_result_type(ESearchResultType eType)
+{
+	g_assert(eType >= 0);
+	g_assert(eType < NUM_SEARCH_RESULT_TYPES);
+	g_assert(g_Search.m_apSearchResultTypeGlyphs[eType] != NULL);
+
+	return g_Search.m_apSearchResultTypeGlyphs[eType];
+}
 
 // functions common to all searches
 
@@ -84,4 +118,25 @@ gboolean search_address_number_atoi(const gchar* pszText, gint* pnReturn)
 	}
 	*pnReturn = nNumber;
 	return TRUE;
+}
+
+void search_all(const gchar* pszSentence)
+{
+	if(pszSentence[0] == 0) {
+		return;	// no results...
+	}
+
+	TIMER_BEGIN(search, "BEGIN SearchAll");
+	
+	gchar* pszCleanedSentence = g_strdup(pszSentence);
+	search_clean_string(pszCleanedSentence);
+
+	// Search each object type
+	search_city_execute(pszCleanedSentence);
+	search_location_execute(pszCleanedSentence);
+	search_road_execute(pszCleanedSentence);
+	
+	TIMER_END(search, "END SearchAll");
+
+	g_free(pszCleanedSentence);
 }

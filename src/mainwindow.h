@@ -80,9 +80,9 @@ typedef enum {
 
 void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels);
 
-#define SIDEBAR_TAB_SEARCH_RESULTS	0
-#define SIDEBAR_TAB_GPS			1
-#define SIDEBAR_TAB_LOCATIONSETS	2
+#define SIDEBAR_TAB_LOCATIONSETS	0
+#define SIDEBAR_TAB_TRACKS			1
+#define SIDEBAR_TAB_SEARCH_RESULTS	2
 
 void mainwindow_sidebar_set_tab(gint nTab);
 

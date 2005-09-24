@@ -44,32 +44,16 @@
 //	gint m_nWordCount;
 //} locationsearch_t;
 
-void search_location_on_cleaned_sentence(const gchar* pszCleanedSentence);
 void search_location_on_words(gchar** aWords, gint nWordCount);
 void search_location_filter_result(gint nLocationID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates);
 
 void search_location_execute(const gchar* pszSentence)
 {
-//	g_print("search_location_execute\n");
-	TIMER_BEGIN(search, "BEGIN LocationSearch");
-
-	// copy sentence and clean it
-	gchar* pszCleanedSentence = g_strdup(pszSentence);
-	search_clean_string(pszCleanedSentence);
-	search_location_on_cleaned_sentence(pszCleanedSentence);
-	g_free(pszCleanedSentence);
-
-	TIMER_END(search, "END LocationSearch");
-}
-
-
-void search_location_on_cleaned_sentence(const gchar* pszCleanedSentence)
-{
 	// Create an array of the words
-        gchar** aaWords = g_strsplit(pszCleanedSentence, " ", 0);        // " " = delimeters, 0 = no max #
-        gint nWords = g_strv_length(aaWords);
-        search_location_on_words(aaWords, nWords);
-        g_strfreev(aaWords);    // free entire array of strings
+	gchar** aaWords = g_strsplit(pszSentence, " ", 0);        // " " = delimeters, 0 = no max #
+	gint nWords = g_strv_length(aaWords);
+	search_location_on_words(aaWords, nWords);
+	g_strfreev(aaWords);    // free entire array of strings
 }
 
 /*
@@ -192,7 +176,7 @@ void search_location_filter_result(gint nLocationID, const gchar* pszName, const
 					       (pszAddress == NULL || pszAddress[0] == '\0') ? "" : "\n",
 					       (pszAddress == NULL || pszAddress[0] == '\0') ? "" : pszAddress);
 
-	searchwindow_add_result(pszResultText, pCoordinates, LOCATION_RESULT_SUGGESTED_ZOOMLEVEL);
+	searchwindow_add_result(SEARCH_RESULT_TYPE_LOCATION, pszResultText, pCoordinates, LOCATION_RESULT_SUGGESTED_ZOOMLEVEL);
 
 	g_free(pszResultText);
 }
@@ -293,7 +277,7 @@ void search_location_filter_result(gint nLocationID)
 	g_print("result: %d\n", nLocationID);
 	gchar* p = g_strdup_printf("<span size='larger'><b>Happy Garden</b></span>\n145 Main St.\nCambridge, MA 02141\n617-555-1021");
 	mappoint_t pt = {0,0};
-	searchwindow_add_result(0, p, &pt);
+	searchwindow_add_result(SEARCH_RESULT_TYPE_LOCATION, 0, p, &pt);
 	g_free(p);
 }
 */

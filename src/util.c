@@ -24,11 +24,19 @@
 #include "main.h"
 #include "util.h"
 
+//
+// Generic multi-purpose callbacks
+//
+
 void util_close_parent_window(GtkWidget* pWidget, gpointer data)
 {
+	// Good for close buttons of dialogs.
 	gtk_widget_hide(gtk_widget_get_toplevel(pWidget));
 }
 
+//
+// GNOME / environment related
+//
 gboolean util_running_gnome(void)
 {
 	return((g_getenv("GNOME_DESKTOP_SESSION_ID") != NULL) && (g_find_program_in_path("gnome-open") != NULL));
@@ -57,25 +65,9 @@ void util_open_uri(const char* pszDangerousURI)
 	g_free(argv);
 }
 
-gchar* g_strjoinv_limit(const gchar* separator, gchar** a, gint iFirst, gint iLast)
-{
-	g_assert(iFirst <= iLast);
-	g_assert(iLast < g_strv_length(a));
-
-	gchar* pszSave;
-
-	// replace first unwanted string with NULL (save old value)
-	pszSave = a[iLast+1];
-	a[iLast+1] = NULL;
-
-	// use built-in function for joining (returns a newly allocated string)
-	gchar* pszReturn = g_strjoinv(separator, &a[iFirst]);
-
-	// restore old value
-	a[iLast+1] = pszSave;
-	return pszReturn;
-}
-
+//
+// Misc
+//
 gchar** util_split_words_onto_two_lines(const gchar* pszText, gint nMinLineLength, gint nMaxLineLength)
 {
 #define MAX_WORDS_WE_CAN_HANDLE (6)
@@ -128,46 +120,46 @@ gchar** util_split_words_onto_two_lines(const gchar* pszText, gint nMinLineLengt
 			if(aWordLengths[0] > aWordLengths[2]) {
 				// 1 word on first line, 2 on second
 				aLines[0] = g_strdup(aWords[0]);
-				aLines[1] = g_strjoinv_limit(" ", aWords, 1, 2);
+				aLines[1] = util_g_strjoinv_limit(" ", aWords, 1, 2);
 			}
 			else {
 				// 2 words on first line, 1 on second
-				aLines[0] = g_strjoinv_limit(" ", aWords, 0, 1);
+				aLines[0] = util_g_strjoinv_limit(" ", aWords, 0, 1);
 				aLines[1] = g_strdup(aWords[2]);
 			}
 			break;
 		case 4:
 			if((aWordLengths[0] + aWordLengths[1] + aWordLengths[2]) < aWordLengths[3]) {
 				// 3 and 1
-				aLines[0] = g_strjoinv_limit(" ", aWords, 0, 2);
+				aLines[0] = util_g_strjoinv_limit(" ", aWords, 0, 2);
 				aLines[1] = g_strdup(aWords[3]);
 			}
 			else if(aWordLengths[0] > (aWordLengths[1] + aWordLengths[2] + aWordLengths[3])) {
 				// 1 and 3
 				aLines[0] = g_strdup(aWords[0]);
-				aLines[1] = g_strjoinv_limit(" ", aWords, 1, 3);
+				aLines[1] = util_g_strjoinv_limit(" ", aWords, 1, 3);
 			}
 			else {
 				// 2 and 2
-				aLines[0] = g_strjoinv_limit(" ", aWords, 0, 1);
-				aLines[1] = g_strjoinv_limit(" ", aWords, 2, 3);
+				aLines[0] = util_g_strjoinv_limit(" ", aWords, 0, 1);
+				aLines[1] = util_g_strjoinv_limit(" ", aWords, 2, 3);
 			}
 			break;
 		case 5:
 			if((aWordLengths[0]+aWordLengths[1]) > (aWordLengths[3]+aWordLengths[4])) {
 				// 2 and 3
-				aLines[0] = g_strjoinv_limit(" ", aWords, 0, 1);
-				aLines[1] = g_strjoinv_limit(" ", aWords, 2, 4);
+				aLines[0] = util_g_strjoinv_limit(" ", aWords, 0, 1);
+				aLines[1] = util_g_strjoinv_limit(" ", aWords, 2, 4);
 			}
 			else {
 				// 3 and 2
-				aLines[0] = g_strjoinv_limit(" ", aWords, 0, 2);
-				aLines[1] = g_strjoinv_limit(" ", aWords, 3, 4);
+				aLines[0] = util_g_strjoinv_limit(" ", aWords, 0, 2);
+				aLines[1] = util_g_strjoinv_limit(" ", aWords, 3, 4);
 			}
 			break;
 		case 6:
-			aLines[0] = g_strjoinv_limit(" ", aWords, 0, 2);
-			aLines[1] = g_strjoinv_limit(" ", aWords, 3, 5);
+			aLines[0] = util_g_strjoinv_limit(" ", aWords, 0, 2);
+			aLines[1] = util_g_strjoinv_limit(" ", aWords, 3, 5);
 			break;
 		default:
 			g_assert_not_reached();
@@ -206,8 +198,53 @@ gboolean util_parse_hex_color(const gchar* pszString, void* pvReturnColor)
 	pReturnColor->m_fAlpha = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
 }
 
+void util_random_color(void* p)
+{
+	color_t* pColor = (color_t*)p;
+
+	pColor->m_fRed = (random()%1000)/1000.0;
+	pColor->m_fGreen = (random()%1000)/1000.0;
+	pColor->m_fBlue = (random()%1000)/1000.0;
+	pColor->m_fAlpha = 1.0;
+}
+
+//
+// GLib/GTK fill-ins
+//
+
+// Same as g_strjoinv but doesn't necessarily go to end of strings
+gchar* util_g_strjoinv_limit(const gchar* separator, gchar** a, gint iFirst, gint iLast)
+{
+	g_assert(iFirst <= iLast);
+	g_assert(iLast < g_strv_length(a));
+
+	gchar* pszSave;
+
+	// replace first unwanted string with NULL (save old value)
+	pszSave = a[iLast+1];
+	a[iLast+1] = NULL;
+
+	// use built-in function for joining (returns a newly allocated string)
+	gchar* pszReturn = g_strjoinv(separator, &a[iFirst]);
+
+	// restore old value
+	a[iLast+1] = pszSave;
+	return pszReturn;
+}
+
+void util_gtk_widget_set_visible(GtkWidget* pWidget, gboolean bVisible)
+{
+	if(bVisible) {
+		gtk_widget_show(pWidget);
+	}
+	else {
+		gtk_widget_hide(pWidget);
+	}
+}
 
 #if(!GLIB_CHECK_VERSION(2,6,0))
+
+// This one 
 // if glib < 2.6 we need to provide this function ourselves
 gint g_strv_length(const gchar** a)
 {
@@ -221,12 +258,148 @@ gint g_strv_length(const gchar** a)
 }
 #endif
 
-void util_random_color(void* p)
+gboolean util_match_word_in_sentence(gchar* pszWord, gchar* pszSentence)
 {
-	color_t* pColor = (color_t*)p;
+	// First see if the search string is a prefix of the text...
+	gint nWordLength = strlen(pszWord);
+	if(strncmp(pszSentence, pszWord, nWordLength) == 0) return TRUE;
 
-	pColor->m_fRed = (random()%1000)/1000.0;
-	pColor->m_fGreen = (random()%1000)/1000.0;
-	pColor->m_fBlue = (random()%1000)/1000.0;
-	pColor->m_fAlpha = 1.0;
+	// ...otherwise search inside the text, but only match to beginnings of words.
+	// A little hack here: just search for " butter"	XXX: what about eg. "-butter"?
+	gchar* pszWordWithSpace = g_strdup_printf(" %s", pszWord);
+	gboolean bMatch = (strstr(pszSentence, pszWordWithSpace) != NULL);	// if it returns a pointer, we have a match
+	g_free(pszWordWithSpace);
+
+	return bMatch;
+}
+
+gboolean util_match_all_words_in_sentence(gchar* pszWords, gchar* pszSentence)
+{
+	// Split up search string into an array of word strings
+	gchar** aWords = g_strsplit(pszWords, " ", 0);	// " " = delimeters, 0 = no max #
+
+	// Make sure all words are in the sentence (order doesn't matter)
+	gboolean bAllFound = TRUE;
+	gint i;
+	for(i = 0 ; aWords[i] != NULL ; i++) {
+		if(!util_match_word_in_sentence(aWords[i], pszSentence)) {
+			bAllFound = FALSE;
+			break;
+		}
+	}
+	g_strfreev(aWords);
+	return bAllFound;
+}
+
+// This is a fairly slow function... perhaps too slow for huge lists?
+gboolean util_treeview_match_all_words_callback(GtkTreeModel *pTreeModel, gint nColumn, const gchar *pszSearchText, GtkTreeIter* pIter, gpointer _unused)
+{
+	gboolean bMatch = FALSE;
+
+	// Get the row text from the treeview
+	gchar* pszRowText = NULL;
+	gtk_tree_model_get(pTreeModel, pIter, nColumn, &pszRowText, -1);	// -1 because it's NULL terminated
+
+	// Strip markup from tree view row
+	gchar* pszRowTextClean = NULL;
+	if(pango_parse_markup(pszRowText, -1, 0, NULL, &pszRowTextClean, NULL, NULL)) {
+		// put both strings into lowercase
+		gchar* pszRowTextCleanDown = g_utf8_casefold(pszRowTextClean, -1);	// -1 because it's NULL terminated
+		gchar* pszSearchTextDown = g_utf8_casefold(pszSearchText, -1);
+
+		bMatch = util_match_all_words_in_sentence(pszSearchTextDown, pszRowTextCleanDown);
+
+		g_free(pszRowTextClean);
+		g_free(pszRowTextCleanDown);
+		g_free(pszSearchTextDown);
+	}
+	else {
+		g_warning("pango_parse_markup failed on '%s'", pszRowText);
+		// bMatch remains FALSE...
+	}
+	g_free(pszRowText);
+
+	return (bMatch == FALSE);	// NOTE: we must return FALSE for matches... yeah, believe it.
+}
+
+gboolean util_gtk_tree_view_select_next(GtkTreeView* pTreeView)
+{
+	gboolean bReturn = FALSE;
+
+	GtkTreeSelection* pSelection = gtk_tree_view_get_selection(pTreeView);
+	GtkTreeModel* pModel = gtk_tree_view_get_model(pTreeView);
+	GtkTreeIter iter;
+	if(gtk_tree_selection_get_selected(pSelection, NULL, &iter)) {
+		GtkTreePath* pPath = gtk_tree_model_get_path(pModel, &iter);
+
+		gtk_tree_path_next(pPath);	// NOTE: this returns void for some reason...
+		gtk_tree_selection_select_path(pSelection, pPath);
+		bReturn = TRUE;
+
+		// Make the new cell visible
+		gtk_tree_view_scroll_to_cell(pTreeView, pPath, NULL, FALSE, 0.0, 0.0);
+		gtk_tree_path_free(pPath);
+	}
+	// if none selected, select the first one
+	else if(gtk_tree_model_get_iter_first(pModel, &iter)) {
+		gtk_tree_selection_select_iter(pSelection, &iter);
+		bReturn = TRUE;
+	}
+	return bReturn;
+}
+
+gboolean util_gtk_tree_view_select_previous(GtkTreeView* pTreeView)
+{
+	gboolean bReturn = FALSE;
+
+	GtkTreeSelection* pSelection = gtk_tree_view_get_selection(pTreeView);
+	GtkTreeModel* pModel = gtk_tree_view_get_model(pTreeView);
+	GtkTreeIter iter;
+	if(gtk_tree_selection_get_selected(pSelection, &pModel, &iter)) {
+		
+		GtkTreePath* pPath = gtk_tree_model_get_path(pModel, &iter);
+
+		if(gtk_tree_path_prev(pPath)) {
+			gtk_tree_selection_select_path(pSelection, pPath);
+			bReturn = TRUE;
+		}
+		// XXX: should we wrap to first?
+
+		// Make the new cell visible
+		gtk_tree_view_scroll_to_cell(pTreeView, pPath, NULL, FALSE, 0.0, 0.0);
+		gtk_tree_path_free(pPath);
+	}
+
+	// XXX: we currently don't support starting at the end
+	return bReturn;
+}
+
+gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplacements, gint nNumReplacements)
+{
+	GString* pStringBuffer = g_string_sized_new(250);	// initial length... just a guess.
+
+	const gchar* pszSourceWalker = pszSource;
+	while(*pszSourceWalker != '\0') {
+		gboolean bFound = FALSE;
+		gint i;
+		for(i=0 ; i<nNumReplacements ; i++) {
+			//g_print("comparing %s and %s\n", pszSourceWalker, aReplacements[i].m_pszOld);
+			if(strncmp(pszSourceWalker, aReplacements[i].m_pszOld, strlen(aReplacements[i].m_pszOld)) == 0) {
+				pStringBuffer = g_string_append(pStringBuffer, aReplacements[i].m_pszNew);
+				pszSourceWalker += strlen(aReplacements[i].m_pszOld);
+				bFound = TRUE;
+				break;
+			}
+		}
+
+		if(bFound == FALSE) {
+			pStringBuffer = g_string_append_c(pStringBuffer, *pszSourceWalker);
+			pszSourceWalker++;
+		}
+		//g_print("pStringBuffer = %s (%d)\n", pStringBuffer->str, pStringBuffer->len);
+	}
+
+	gchar* pszReturn = pStringBuffer->str;
+	g_string_free(pStringBuffer, FALSE);	// do NOT free the 'str' memory
+	return pszReturn;
 }

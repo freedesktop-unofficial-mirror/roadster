@@ -36,9 +36,14 @@
 #include "road.h"
 #include "locationset.h"
 #include "location.h"
+#include "search.h"
 
 static gboolean main_init(void);
 static void main_deinit(void);
+
+
+#include <libgnomevfs/gnome-vfs.h>
+#include <gnome.h>
 
 int main (int argc, char *argv[])
 {
@@ -53,7 +58,7 @@ int main (int argc, char *argv[])
 	if(!main_init())
 		return 1;
 
-	// Insert some POI for testing...
+// Insert some POI for testing...
 /*
 	gint nNewLocationSetID = 0;
 	locationset_insert("Coffee Shops", &nNewLocationSetID);
@@ -111,6 +116,9 @@ gboolean main_init(void)
 	glyph_init();
 	g_print("initializing map\n");
 	map_init();
+
+	g_print("initializing search\n");
+	search_init();
 
 	g_print("initializing scenemanager\n");
 	scenemanager_init();
