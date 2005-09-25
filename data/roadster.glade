@@ -2203,7 +2203,7 @@ Banks</property>
 		      <property name="visible">True</property>
 		      <property name="show_tabs">True</property>
 		      <property name="show_border">True</property>
-		      <property name="tab_pos">GTK_POS_LEFT</property>
+		      <property name="tab_pos">GTK_POS_BOTTOM</property>
 		      <property name="scrollable">False</property>
 		      <property name="enable_popup">False</property>
 
@@ -2348,7 +2348,7 @@ Banks</property>
 			  <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
-			  <property name="angle">90</property>
+			  <property name="angle">0</property>
 			</widget>
 			<packing>
 			  <property name="type">tab</property>
@@ -2401,7 +2401,7 @@ Banks</property>
 			  <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
-			  <property name="angle">90</property>
+			  <property name="angle">0</property>
 			</widget>
 			<packing>
 			  <property name="type">tab</property>
@@ -2468,7 +2468,7 @@ Banks</property>
 			  <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
-			  <property name="angle">90</property>
+			  <property name="angle">0</property>
 			</widget>
 			<packing>
 			  <property name="type">tab</property>

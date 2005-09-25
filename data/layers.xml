@@ -254,7 +254,6 @@
 </layer>
 
 <layer data-source="rivers" draw-type="lines">
-    <!-- rivers only layer -->
 	<property zoom-level="1" name="line-width" value="2" />
 	<property zoom-level="2" name="line-width" value="3" />
 	<property zoom-level="3" name="line-width" value="4" />
@@ -262,6 +261,11 @@
 	<property zoom-level="5" name="line-width" value="8" />
 	<property zoom-level="1-5" name="color" value="#9cb2ceFF" />
 </layer>
+
+<layer data-source="lakes" draw-type="polygons">
+	<property zoom-level="1-5" name="color" value="#9cb2ceFF" />
+</layer>
+
 <layer data-source="rivers" draw-type="lines">
      # gives a fuzzy border to lakes in non-AA render mode
      <property zoom-level="1" name="line-width" value="4" />
@@ -272,12 +276,6 @@
 	<property zoom-level="1-5" name="color" value="#C0C8D5FF" />
 </layer>
 
-#
-# Polygons
-#
-<layer data-source="lakes" draw-type="polygons">
-	<property zoom-level="1-5" name="color" value="#9cb2ceFF" />
-</layer>
 <layer data-source="lakes" draw-type="lines">
      # gives a fuzzy border to lakes in non-AA render mode
 	<property zoom-level="1-5" name="line-width" value="3" />

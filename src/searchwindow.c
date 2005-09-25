@@ -65,7 +65,7 @@ struct {
 	GtkListStore* pResultsListStore;
 
 	GHashTable* pResultsHashTable;
-	
+
 	GtkMenuItem* pNextSearchResultMenuItem;
 	GtkMenuItem* pPreviousSearchResultMenuItem;
 
@@ -74,6 +74,7 @@ struct {
 
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data);
 static void searchwindow_set_message(gchar* pszMessage);
+static void searchwindow_update_next_and_prev_buttons();
 
 void searchwindow_init(GladeXML* pGladeXML)
 {
@@ -108,6 +109,8 @@ void searchwindow_init(GladeXML* pGladeXML)
 	// Attach handler for selection-changed signal
 	GtkTreeSelection *pTreeSelection = gtk_tree_view_get_selection(g_SearchWindow.pResultsTreeView);
 	g_signal_connect(G_OBJECT(pTreeSelection), "changed", (GtkSignalFunc)searchwindow_on_resultslist_selection_changed, NULL);
+
+	searchwindow_update_next_and_prev_buttons();
 }
 
 void searchwindow_clear_results(void)
@@ -120,6 +123,14 @@ void searchwindow_clear_results(void)
 
 	// Scroll window all the way left.  (Vertical scroll is reset by emptying the list.)
     gtk_adjustment_set_value(gtk_tree_view_get_hadjustment(g_SearchWindow.pResultsTreeView), 0.0);
+	
+	searchwindow_update_next_and_prev_buttons();
+}
+
+static void searchwindow_update_next_and_prev_buttons()
+{
+	gtk_widget_set_sensitive(g_SearchWindow.pNextSearchResultMenuItem, g_SearchWindow.nNumResults > 0);
+	gtk_widget_set_sensitive(g_SearchWindow.pPreviousSearchResultMenuItem, g_SearchWindow.nNumResults > 0);
 }
 
 void searchwindow_set_message(gchar* pszMessage)
@@ -200,6 +211,7 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 	g_hash_table_destroy(g_SearchWindow.pResultsHashTable);
 	
 	//gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.pSearchButton), TRUE);
+	searchwindow_update_next_and_prev_buttons();
 }
 
 // add a result row to the list
@@ -297,16 +309,19 @@ void searchwindow_on_resultslist_row_activated(GtkWidget *pWidget, gpointer* p)
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data)
 {
 	searchwindow_go_to_selected_result();
+	searchwindow_update_next_and_prev_buttons();
 }
 
 void searchwindow_on_nextresultbutton_clicked(GtkWidget *pWidget, gpointer* p)
 {
 	util_gtk_tree_view_select_next(g_SearchWindow.pResultsTreeView);
+	searchwindow_update_next_and_prev_buttons();
 }
 
 void searchwindow_on_previousresultbutton_clicked(GtkWidget *pWidget, gpointer* p)
 {
 	util_gtk_tree_view_select_previous(g_SearchWindow.pResultsTreeView);
+	searchwindow_update_next_and_prev_buttons();
 }
 
 void searchwindow_on_searchentry_changed(GtkWidget *pWidget, gpointer* p)
