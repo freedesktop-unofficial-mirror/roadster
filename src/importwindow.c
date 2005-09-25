@@ -32,33 +32,33 @@
 #include "gui.h"
 
 struct {
-	GtkWindow* m_pWindow;
-	GtkProgressBar* m_pProgressBar;
-	GtkButton* m_pOKButton;
-//	GtkButton* m_pCancelButton;
-	GtkTextView* m_pLogTextView;
+	GtkWindow* pWindow;
+	GtkProgressBar* pProgressBar;
+	GtkButton* pOKButton;
+//	GtkButton* pCancelButton;
+	GtkTextView* pLogTextView;
 	
-	gint m_nCurrentFile;
-	gint m_nTotalFiles;
+	gint nCurrentFile;
+	gint nTotalFiles;
 } g_ImportWindow;
 
 void importwindow_init(GladeXML* pGladeXML)
 {
-	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.m_pWindow, GTK_WINDOW, "importwindow");
-	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.m_pProgressBar, GTK_PROGRESS_BAR, "importprogressbar");
-	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.m_pOKButton, GTK_BUTTON, "importokbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.m_pLogTextView, GTK_TEXT_VIEW, "importlogtextview");
+	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.pWindow, GTK_WINDOW, "importwindow");
+	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.pProgressBar, GTK_PROGRESS_BAR, "importprogressbar");
+	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.pOKButton, GTK_BUTTON, "importokbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_ImportWindow.pLogTextView, GTK_TEXT_VIEW, "importlogtextview");
 }
 
 void importwindow_show(void)
 {
-	gtk_widget_show(GTK_WIDGET(g_ImportWindow.m_pWindow));
-	gtk_window_present(g_ImportWindow.m_pWindow);
+	gtk_widget_show(GTK_WIDGET(g_ImportWindow.pWindow));
+	gtk_window_present(g_ImportWindow.pWindow);
 }
 
 void importwindow_hide(void)
 {
-	gtk_widget_hide(GTK_WIDGET(g_ImportWindow.m_pWindow));
+	gtk_widget_hide(GTK_WIDGET(g_ImportWindow.pWindow));
 }
 
 void importwindow_log_append(const gchar* pszFormat, ...)
@@ -70,22 +70,22 @@ void importwindow_log_append(const gchar* pszFormat, ...)
 	g_vsnprintf(azNewText, 5000, pszFormat, args);
 	va_end(args);
 
-	GtkTextBuffer* pBuffer = gtk_text_view_get_buffer(g_ImportWindow.m_pLogTextView);
+	GtkTextBuffer* pBuffer = gtk_text_view_get_buffer(g_ImportWindow.pLogTextView);
 	gtk_text_buffer_insert_at_cursor(pBuffer, azNewText, -1);
 
 	// Scroll to end of text
 	GtkTextIter iter;
 	gtk_text_buffer_get_end_iter(pBuffer, &iter);
-	gtk_text_view_scroll_to_iter(g_ImportWindow.m_pLogTextView, &iter, 0.0, FALSE,0,0);
+	gtk_text_view_scroll_to_iter(g_ImportWindow.pLogTextView, &iter, 0.0, FALSE,0,0);
 	
 	GTK_PROCESS_MAINLOOP;
 }
 
 void importwindow_progress_pulse(void)
 {
-//	gtk_progress_bar_set_text(g_ImportWindow.m_pProgressBar, azBuffer);
+//	gtk_progress_bar_set_text(g_ImportWindow.pProgressBar, azBuffer);
 	
-	gtk_progress_bar_pulse(g_ImportWindow.m_pProgressBar);
+	gtk_progress_bar_pulse(g_ImportWindow.pProgressBar);
 
 	// ensure the UI gets updated
 	GTK_PROCESS_MAINLOOP;
@@ -94,19 +94,19 @@ void importwindow_progress_pulse(void)
 void importwindow_begin(GSList* pSelectedFileList)
 {
 	// empty progress buffer
-	GtkTextBuffer* pBuffer = gtk_text_view_get_buffer(g_ImportWindow.m_pLogTextView);
+	GtkTextBuffer* pBuffer = gtk_text_view_get_buffer(g_ImportWindow.pLogTextView);
 	gtk_text_buffer_set_text(pBuffer, "", -1);
 	
-	gtk_widget_show(GTK_WIDGET(g_ImportWindow.m_pWindow));
-	gtk_window_present(g_ImportWindow.m_pWindow);
-	gtk_widget_set_sensitive(GTK_WIDGET(g_ImportWindow.m_pOKButton), FALSE);
+	gtk_widget_show(GTK_WIDGET(g_ImportWindow.pWindow));
+	gtk_window_present(g_ImportWindow.pWindow);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_ImportWindow.pOKButton), FALSE);
 
 	GTK_PROCESS_MAINLOOP;
 
-	g_ImportWindow.m_nTotalFiles = g_slist_length(pSelectedFileList);
-	g_ImportWindow.m_nCurrentFile = 1;
+	g_ImportWindow.nTotalFiles = g_slist_length(pSelectedFileList);
+	g_ImportWindow.nCurrentFile = 1;
 
-	g_print("Importing %d file(s)\n", g_ImportWindow.m_nTotalFiles);
+	g_print("Importing %d file(s)\n", g_ImportWindow.nTotalFiles);
 
 	gint nTotalSuccess = 0;
 	GSList* pFile = pSelectedFileList;
@@ -118,18 +118,18 @@ void importwindow_begin(GSList* pSelectedFileList)
 
 		// Move to next file
 		pFile = pFile->next;
-		g_ImportWindow.m_nCurrentFile++;
+		g_ImportWindow.nCurrentFile++;
 	}
-	// nTotalSuccess / g_ImportWindow.m_nTotalFiles
+	// nTotalSuccess / g_ImportWindow.nTotalFiles
 
-	gtk_progress_bar_set_fraction(g_ImportWindow.m_pProgressBar, 1.0);
-	gtk_widget_set_sensitive(GTK_WIDGET(g_ImportWindow.m_pOKButton), TRUE);
+	gtk_progress_bar_set_fraction(g_ImportWindow.pProgressBar, 1.0);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_ImportWindow.pOKButton), TRUE);
 
-	if(nTotalSuccess == g_ImportWindow.m_nTotalFiles) {
-		gtk_progress_bar_set_text(g_ImportWindow.m_pProgressBar, "Completed Successfully");
+	if(nTotalSuccess == g_ImportWindow.nTotalFiles) {
+		gtk_progress_bar_set_text(g_ImportWindow.pProgressBar, "Completed Successfully");
 	}
 	else {
-		gtk_progress_bar_set_text(g_ImportWindow.m_pProgressBar, "Completed with Errors");
+		gtk_progress_bar_set_text(g_ImportWindow.pProgressBar, "Completed with Errors");
 	}
 	GTK_PROCESS_MAINLOOP;
 
@@ -142,8 +142,8 @@ void importwindow_begin(GSList* pSelectedFileList)
 //~ void importwindow_on_okbutton_clicked(GtkWidget* pWidget, gpointer pdata)
 //~ {
 	//~ // set button insensitive
-	//~ gtk_widget_set_sensitive(GTK_WIDGET(g_ImportWindow.m_pOKButton), FALSE);
+	//~ gtk_widget_set_sensitive(GTK_WIDGET(g_ImportWindow.pOKButton), FALSE);
 
 	//~ // hide dialog
-	//~ gtk_widget_hide(GTK_WIDGET(g_ImportWindow.m_pWindow));
+	//~ gtk_widget_hide(GTK_WIDGET(g_ImportWindow.pWindow));
 //~ }

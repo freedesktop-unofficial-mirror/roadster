@@ -27,8 +27,8 @@
 #include "map.h"
 
 typedef struct {
-	mappoint_t m_MapPoint;
-	gint m_nZoomLevel;
+	mappoint_t MapPoint;
+	gint nZoomLevel;
 } mapview_t;
 
 void history_init(void)
@@ -39,8 +39,8 @@ void history_init(void)
 history_t* history_new()
 {
 	history_t* pNew = g_new0(history_t, 1);
-	pNew->m_MapViewArray = g_array_new(FALSE, FALSE, sizeof(mapview_t));
-	pNew->m_nCurrentIndex = -1;
+	pNew->MapViewArray = g_array_new(FALSE, FALSE, sizeof(mapview_t));
+	pNew->nCurrentIndex = -1;
 	return pNew;
 }
 
@@ -50,49 +50,49 @@ void history_add(history_t* pHistory, mappoint_t* pPoint, gint nZoomLevel)
 	g_assert(pPoint != NULL);
 
 	// If user has clicked BACK a few times, we won't be at the last index in the array...
-	if(pHistory->m_nCurrentIndex < (pHistory->m_MapViewArray->len - 1)) {
+	if(pHistory->nCurrentIndex < (pHistory->MapViewArray->len - 1)) {
 		// ...so clear out everything after where we are
-		g_array_remove_range(pHistory->m_MapViewArray, pHistory->m_nCurrentIndex + 1, (pHistory->m_MapViewArray->len - pHistory->m_nCurrentIndex) - 1);
+		g_array_remove_range(pHistory->MapViewArray, pHistory->nCurrentIndex + 1, (pHistory->MapViewArray->len - pHistory->nCurrentIndex) - 1);
 
-		pHistory->m_nTotalItems = (pHistory->m_nCurrentIndex + 1);	// +1 to change it from an index to a count, it's NOT for the new item we're adding
+		pHistory->nTotalItems = (pHistory->nCurrentIndex + 1);	// +1 to change it from an index to a count, it's NOT for the new item we're adding
 	}
 
 	// Move to next one
-	pHistory->m_nCurrentIndex++;
+	pHistory->nCurrentIndex++;
 
 	// Grow array if necessary
-	if(pHistory->m_nCurrentIndex >= pHistory->m_MapViewArray->len) {
+	if(pHistory->nCurrentIndex >= pHistory->MapViewArray->len) {
 		// XXX: is this doing a realloc every time?  ouch. :)
-		g_array_set_size(pHistory->m_MapViewArray, pHistory->m_MapViewArray->len + 1);
+		g_array_set_size(pHistory->MapViewArray, pHistory->MapViewArray->len + 1);
 	}
 
 	// Get pointer to new current index
-	mapview_t* pNew = &g_array_index(pHistory->m_MapViewArray, mapview_t, pHistory->m_nCurrentIndex);
+	mapview_t* pNew = &g_array_index(pHistory->MapViewArray, mapview_t, pHistory->nCurrentIndex);
 	g_return_if_fail(pNew != NULL);
 
 	// Save details
-	memcpy(&(pNew->m_MapPoint), pPoint, sizeof(mappoint_t));
-	pNew->m_nZoomLevel = nZoomLevel;
+	memcpy(&(pNew->MapPoint), pPoint, sizeof(mappoint_t));
+	pNew->nZoomLevel = nZoomLevel;
 
-	pHistory->m_nTotalItems++;
+	pHistory->nTotalItems++;
 
-	g_assert(pHistory->m_nCurrentIndex < pHistory->m_nTotalItems);
+	g_assert(pHistory->nCurrentIndex < pHistory->nTotalItems);
 }
 
 gboolean history_can_go_forward(history_t* pHistory)
 {
-	return(pHistory->m_nCurrentIndex < (pHistory->m_nTotalItems - 1));
+	return(pHistory->nCurrentIndex < (pHistory->nTotalItems - 1));
 }
 
 gboolean history_can_go_back(history_t* pHistory)
 {
-	return(pHistory->m_nCurrentIndex > 0);
+	return(pHistory->nCurrentIndex > 0);
 }
 
 gboolean history_go_forward(history_t* pHistory)
 {
 	if(history_can_go_forward(pHistory)) {
-		pHistory->m_nCurrentIndex++;
+		pHistory->nCurrentIndex++;
 		return TRUE;
 	}
 }
@@ -100,7 +100,7 @@ gboolean history_go_forward(history_t* pHistory)
 gboolean history_go_back(history_t* pHistory)
 {
 	if(history_can_go_back(pHistory)) {
-		pHistory->m_nCurrentIndex--;
+		pHistory->nCurrentIndex--;
 		return TRUE;
 	}
 }
@@ -110,11 +110,11 @@ void history_get_current(history_t* pHistory, mappoint_t* pReturnPoint, gint* pn
 	g_assert(pHistory != NULL);
 	g_assert(pReturnPoint != NULL);
 	g_assert(pnReturnZoomLevel != NULL);
-	g_assert(pHistory->m_nCurrentIndex >= 0);
-	g_assert(pHistory->m_nCurrentIndex < pHistory->m_nTotalItems);
+	g_assert(pHistory->nCurrentIndex >= 0);
+	g_assert(pHistory->nCurrentIndex < pHistory->nTotalItems);
 
-	mapview_t* pCurrent = &g_array_index(pHistory->m_MapViewArray, mapview_t, pHistory->m_nCurrentIndex);
+	mapview_t* pCurrent = &g_array_index(pHistory->MapViewArray, mapview_t, pHistory->nCurrentIndex);
 
-	memcpy(pReturnPoint, &(pCurrent->m_MapPoint), sizeof(mappoint_t));
-	*pnReturnZoomLevel  = pCurrent->m_nZoomLevel;
+	memcpy(pReturnPoint, &(pCurrent->MapPoint), sizeof(mappoint_t));
+	*pnReturnZoomLevel  = pCurrent->nZoomLevel;
 }

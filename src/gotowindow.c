@@ -29,33 +29,33 @@
 #include "gui.h"
 
 struct {
-	GtkWindow* m_pWindow;
-	GtkEntry* m_pLongitudeEntry;
-	GtkEntry* m_pLatitudeEntry;
+	GtkWindow* pWindow;
+	GtkEntry* pLongitudeEntry;
+	GtkEntry* pLatitudeEntry;
 } g_GotoWindow;
 
 void gotowindow_init(GladeXML* pGladeXML)
 {
-	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.m_pWindow, GTK_WINDOW, "gotowindow");
-	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.m_pLongitudeEntry, GTK_ENTRY, "longitudeentry");
-	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.m_pLatitudeEntry, GTK_ENTRY, "latitudeentry");
+	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.pWindow, GTK_WINDOW, "gotowindow");
+	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.pLongitudeEntry, GTK_ENTRY, "longitudeentry");
+	GLADE_LINK_WIDGET(pGladeXML, g_GotoWindow.pLatitudeEntry, GTK_ENTRY, "latitudeentry");
 
 	// don't delete window on X, just hide it
-	g_signal_connect(G_OBJECT(g_GotoWindow.m_pWindow), "delete_event", G_CALLBACK(gtk_widget_hide), NULL);
+	g_signal_connect(G_OBJECT(g_GotoWindow.pWindow), "delete_event", G_CALLBACK(gtk_widget_hide), NULL);
 }
 
 void gotowindow_show(void)
 {
-	if(!GTK_WIDGET_VISIBLE(g_GotoWindow.m_pWindow)) {
-		gtk_widget_grab_focus(GTK_WIDGET(g_GotoWindow.m_pLatitudeEntry));
-		gtk_widget_show(GTK_WIDGET(g_GotoWindow.m_pWindow));
+	if(!GTK_WIDGET_VISIBLE(g_GotoWindow.pWindow)) {
+		gtk_widget_grab_focus(GTK_WIDGET(g_GotoWindow.pLatitudeEntry));
+		gtk_widget_show(GTK_WIDGET(g_GotoWindow.pWindow));
 	}
-	gtk_window_present(g_GotoWindow.m_pWindow);
+	gtk_window_present(g_GotoWindow.pWindow);
 }
 
 void gotowindow_hide(void)
 {
-	gtk_widget_hide(GTK_WIDGET(g_GotoWindow.m_pWindow));
+	gtk_widget_hide(GTK_WIDGET(g_GotoWindow.pWindow));
 }
 
 static gboolean util_string_to_double(const gchar* psz, gdouble* pReturn)
@@ -78,12 +78,12 @@ static gboolean util_string_to_double(const gchar* psz, gdouble* pReturn)
 
 static gboolean gotowindow_go(void)
 {
-	const gchar* pszLatitude = gtk_entry_get_text(g_GotoWindow.m_pLatitudeEntry);
-	const gchar* pszLongitude = gtk_entry_get_text(g_GotoWindow.m_pLongitudeEntry);
+	const gchar* pszLatitude = gtk_entry_get_text(g_GotoWindow.pLatitudeEntry);
+	const gchar* pszLongitude = gtk_entry_get_text(g_GotoWindow.pLongitudeEntry);
 
 	mappoint_t pt;
-	if(!util_string_to_double(pszLatitude, &(pt.m_fLatitude))) return FALSE;
-	if(!util_string_to_double(pszLongitude, &(pt.m_fLongitude))) return FALSE;
+	if(!util_string_to_double(pszLatitude, &(pt.fLatitude))) return FALSE;
+	if(!util_string_to_double(pszLongitude, &(pt.fLongitude))) return FALSE;
 
 	mainwindow_map_center_on_mappoint(&pt);
 	mainwindow_draw_map(DRAWFLAG_ALL);

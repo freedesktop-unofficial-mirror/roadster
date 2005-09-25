@@ -43,7 +43,7 @@ gboolean road_alloc(road_t** ppReturnRoad)
 	road_t* pNew = g_free_list_alloc(g_pRoadFreeList);
 	memset(pNew, 0, sizeof(road_t));
 
-	pNew->m_pPointsArray = g_ptr_array_new();
+	pNew->pPointsArray = g_ptr_array_new();
 
 	// return it
 	*ppReturnRoad = pNew;
@@ -55,21 +55,21 @@ void road_free(road_t* pRoad)
 	g_return_if_fail(pRoad != NULL);
 
 	int i;
-	for(i = (pRoad->m_pPointsArray->len - 1) ; i>=0 ; i--) {
-		mappoint_t* pPoint = g_ptr_array_remove_index_fast(pRoad->m_pPointsArray, i);
+	for(i = (pRoad->pPointsArray->len - 1) ; i>=0 ; i--) {
+		mappoint_t* pPoint = g_ptr_array_remove_index_fast(pRoad->pPointsArray, i);
 		point_free(pPoint);
 	}
-	g_assert(pRoad->m_pPointsArray->len == 0);
+	g_assert(pRoad->pPointsArray->len == 0);
 
-	g_ptr_array_free(pRoad->m_pPointsArray, TRUE);
+	g_ptr_array_free(pRoad->pPointsArray, TRUE);
 
 	// give back to allocator
 	g_free_list_free(g_pRoadFreeList, pRoad);
 }
 
 struct {
-	gchar* m_pszLong;
-	gchar* m_pszShort;
+	gchar* pszLong;
+	gchar* pszShort;
 } g_RoadNameSuffix[] = {
 	{"",""},
 	{"Road", "Rd"},
@@ -116,8 +116,8 @@ struct {
 };
 
 struct {
-	gchar* m_pszName;
-	gint m_nID;
+	gchar* pszName;
+	gint nID;
 } g_RoadNameSuffixLookup[] = {
 	{"Rd", ROAD_SUFFIX_ROAD},
 	{"Road", ROAD_SUFFIX_ROAD},
@@ -238,10 +238,10 @@ const gchar* road_suffix_itoa(gint nSuffixID, ESuffixLength eSuffixLength)
 {
 	if(nSuffixID >= ROAD_SUFFIX_FIRST && nSuffixID <= ROAD_SUFFIX_LAST) {
 		if(eSuffixLength == ROAD_SUFFIX_LENGTH_SHORT) {
-			return g_RoadNameSuffix[nSuffixID].m_pszShort;
+			return g_RoadNameSuffix[nSuffixID].pszShort;
 		}
 		else {
-			return g_RoadNameSuffix[nSuffixID].m_pszLong;			
+			return g_RoadNameSuffix[nSuffixID].pszLong;			
 		}
 	}
 	if(nSuffixID != ROAD_SUFFIX_NONE) return "???";
@@ -252,8 +252,8 @@ gboolean road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID)
 {
 	gint i;
 	for(i=0 ; i<G_N_ELEMENTS(g_RoadNameSuffixLookup) ; i++) {
-		if(g_ascii_strcasecmp(pszSuffix, g_RoadNameSuffixLookup[i].m_pszName) == 0) {
-			*pReturnSuffixID = g_RoadNameSuffixLookup[i].m_nID;
+		if(g_ascii_strcasecmp(pszSuffix, g_RoadNameSuffixLookup[i].pszName) == 0) {
+			*pReturnSuffixID = g_RoadNameSuffixLookup[i].nID;
 			return TRUE;
 		}
 	}

@@ -28,14 +28,14 @@
 #include "db.h"
 
 struct {
-	GMemChunk* m_pLocationChunkAllocator;
+	GMemChunk* pLocationChunkAllocator;
 } g_Location;
 
 void location_init()
 {
-	g_Location.m_pLocationChunkAllocator = g_mem_chunk_new("ROADSTER locations",
+	g_Location.pLocationChunkAllocator = g_mem_chunk_new("ROADSTER locations",
 			sizeof(location_t), 1000, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_Location.m_pLocationChunkAllocator != NULL);
+	g_return_if_fail(g_Location.pLocationChunkAllocator != NULL);
 }
 
 // get a new point struct from the allocator
@@ -43,9 +43,9 @@ gboolean location_alloc(location_t** ppLocation)
 {
 	g_return_val_if_fail(ppLocation != NULL, FALSE);
 	g_return_val_if_fail(*ppLocation == NULL, FALSE);	// must be a pointer to a NULL pointer
-	g_return_val_if_fail(g_Location.m_pLocationChunkAllocator != NULL, FALSE);
+	g_return_val_if_fail(g_Location.pLocationChunkAllocator != NULL, FALSE);
 
-	location_t* pNew = g_mem_chunk_alloc0(g_Location.m_pLocationChunkAllocator);
+	location_t* pNew = g_mem_chunk_alloc0(g_Location.pLocationChunkAllocator);
 	if(pNew) {
 		*ppLocation = pNew;
 		return TRUE;
@@ -57,12 +57,12 @@ gboolean location_alloc(location_t** ppLocation)
 void location_free(location_t* pLocation)
 {
 	g_return_if_fail(pLocation != NULL);
-	g_return_if_fail(g_Location.m_pLocationChunkAllocator != NULL);
+	g_return_if_fail(g_Location.pLocationChunkAllocator != NULL);
 
-	g_free(pLocation->m_pszName);
+	g_free(pLocation->pszName);
 
 	// give back to allocator
-	g_mem_chunk_free(g_Location.m_pLocationChunkAllocator, pLocation);
+	g_mem_chunk_free(g_Location.pLocationChunkAllocator, pLocation);
 }
 
 gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturnID)
@@ -76,7 +76,7 @@ gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturn
 	// create query SQL
 	gchar* pszSQL = g_strdup_printf(
 		"INSERT INTO Location SET ID=NULL, LocationSetID=%d, Coordinates=GeometryFromText('POINT(%f %f)');",
-		nLocationSetID, pPoint->m_fLatitude, pPoint->m_fLongitude);
+		nLocationSetID, pPoint->fLatitude, pPoint->fLongitude);
 
 	db_query(pszSQL, NULL);
 	g_free(pszSQL);
@@ -161,9 +161,9 @@ void location_load_attributes(gint nLocationID, GPtrArray* pAttributeArray)
 		while((aRow = db_fetch_row(pResultSet))) {
 			locationattribute_t* pNew = g_new0(locationattribute_t, 1);
 
-			pNew->m_nValueID = atoi(aRow[0]);
-			pNew->m_pszName = g_strdup((aRow[1] == NULL) ? "" : aRow[1]);
-			pNew->m_pszValue = g_strdup((aRow[2] == NULL) ? "" : aRow[2]);
+			pNew->nValueID = atoi(aRow[0]);
+			pNew->pszName = g_strdup((aRow[1] == NULL) ? "" : aRow[1]);
+			pNew->pszValue = g_strdup((aRow[2] == NULL) ? "" : aRow[2]);
 
 			g_ptr_array_add(pAttributeArray, pNew);
 		}
@@ -176,8 +176,8 @@ void location_free_attributes(GPtrArray* pAttributeArray)
 	gint i;
 	for(i=(pAttributeArray->len-1) ; i>=0 ; i--) {
 		locationattribute_t* pAttribute = g_ptr_array_remove_index_fast(pAttributeArray, i);
-		g_free(pAttribute->m_pszName);
-		g_free(pAttribute->m_pszValue);
+		g_free(pAttribute->pszName);
+		g_free(pAttribute->pszValue);
 		g_free(pAttribute);
 	}
 	g_assert(pAttributeArray->len == 0);

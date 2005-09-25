@@ -40,12 +40,12 @@
 #define FORMAT_ROAD_RESULT_WITH_NUMBER 		("%d %s %s\n%s")
 
 typedef struct {
-	gint m_nNumber;			// house number	eg. 51
-	gchar* m_pszRoadName;	// road name eg. "Washington"
-	gint m_nCityID;			//
-	gint m_nStateID;
-	gchar* m_pszZIPCode;
-	gint m_nSuffixID;		// a number representing eg. Ave
+	gint nNumber;			// house number	eg. 51
+	gchar* pszRoadName;	// road name eg. "Washington"
+	gint nCityID;			//
+	gint nStateID;
+	gchar* pszZIPCode;
+	gint nSuffixID;		// a number representing eg. Ave
 } roadsearch_t;
 
 #define ROADSEARCH_NUMBER_NONE			(-1)
@@ -104,9 +104,9 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 	gint nRemainingWordCount = nWordCount;
 
 	// Claim house number if present
-	roadsearch.m_nNumber = ROADSEARCH_NUMBER_NONE;
+	roadsearch.nNumber = ROADSEARCH_NUMBER_NONE;
 	if(nRemainingWordCount >= 2) {
-		if(search_address_number_atoi(aWords[iFirst], &roadsearch.m_nNumber)) {
+		if(search_address_number_atoi(aWords[iFirst], &roadsearch.nNumber)) {
 			iFirst++;	// first word is TAKEN :)
 			nRemainingWordCount--;
 		}
@@ -115,7 +115,7 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 	// Claim zip code, if present
 	if(search_address_match_zipcode(aWords[iLast])) {
 		//g_print("matched ZIP %s\n", aWords[iLast]);
-		roadsearch.m_pszZIPCode = aWords[iLast];
+		roadsearch.pszZIPCode = aWords[iLast];
 
 		iLast--;	// last word taken
 		nRemainingWordCount--;
@@ -134,7 +134,7 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 		gchar* pszStateName = util_g_strjoinv_limit(" ", aWords, iLast-1, iLast);
 		//g_print("trying two-word state name '%s'\n", pszStateName);
 
-		if(db_state_get_id(pszStateName, &roadsearch.m_nStateID)) {
+		if(db_state_get_id(pszStateName, &roadsearch.nStateID)) {
 			//g_print("matched state name!\n");
 			iLast -= 2;	// last TWO words taken
 			nRemainingWordCount -= 2;
@@ -144,7 +144,7 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 	// try a one-word state name
 	if(bGotStateName == FALSE && nRemainingWordCount >= 2) {
 		//g_print("trying one-word state name '%s'\n", aWords[iLast]);
-		if(db_state_get_id(aWords[iLast], &roadsearch.m_nStateID)) {
+		if(db_state_get_id(aWords[iLast], &roadsearch.nStateID)) {
 			//g_print("matched state name!\n");
 			iLast--;	// last word taken
 			nRemainingWordCount--;
@@ -157,7 +157,7 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 		if(nRemainingWordCount > nCityNameLength) {
 			gchar* pszCityName = util_g_strjoinv_limit(" ", aWords, iLast - (nCityNameLength-1), iLast);
 
-			if(db_city_get_id(pszCityName, roadsearch.m_nStateID, &roadsearch.m_nCityID)) {
+			if(db_city_get_id(pszCityName, roadsearch.nStateID, &roadsearch.nCityID)) {
 				iLast -= nCityNameLength;	// several words taken :)
 				nRemainingWordCount -= nCityNameLength;
 
@@ -179,21 +179,21 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 
 		if(road_suffix_atoi(aWords[iLast], &nSuffixID)) {
 			// matched
-			roadsearch.m_nSuffixID = nSuffixID;
+			roadsearch.nSuffixID = nSuffixID;
 			iLast--;
 			nRemainingWordCount--;
 		}
 	}
 
 	if(nRemainingWordCount > 0) {
-		roadsearch.m_pszRoadName = util_g_strjoinv_limit(" ", aWords, iFirst, iLast);
+		roadsearch.pszRoadName = util_g_strjoinv_limit(" ", aWords, iFirst, iLast);
 		search_road_on_roadsearch_struct(&roadsearch);
 	}
 	else {
 		// oops, no street name
 		//g_print("no street name found in search\n");
 	}
-	g_free(roadsearch.m_pszRoadName);
+	g_free(roadsearch.pszRoadName);
 }
 
 void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
@@ -202,33 +202,33 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 	// Assemble the various optional clauses for the SQL statement
 	//
 	gchar* pszAddressClause;
-	if(pRoadSearch->m_nNumber != ROADSEARCH_NUMBER_NONE) {
+	if(pRoadSearch->nNumber != ROADSEARCH_NUMBER_NONE) {
 		pszAddressClause = g_strdup_printf(
 			" AND ("
 			"(%d BETWEEN Road.AddressLeftStart AND Road.AddressLeftEnd)"
 			" OR (%d BETWEEN Road.AddressLeftEnd AND Road.AddressLeftStart)"
 			" OR (%d BETWEEN Road.AddressRightStart AND Road.AddressRightEnd)"
 			" OR (%d BETWEEN Road.AddressRightEnd AND Road.AddressRightStart)"
-			")", pRoadSearch->m_nNumber, pRoadSearch->m_nNumber,
-				 pRoadSearch->m_nNumber, pRoadSearch->m_nNumber);
+			")", pRoadSearch->nNumber, pRoadSearch->nNumber,
+				 pRoadSearch->nNumber, pRoadSearch->nNumber);
 	}
 	else {
 		pszAddressClause = g_strdup("");
 	}
 
 	gchar* pszSuffixClause;
-	if(pRoadSearch->m_nSuffixID != ROAD_SUFFIX_NONE) {
+	if(pRoadSearch->nSuffixID != ROAD_SUFFIX_NONE) {
 		pszSuffixClause = g_strdup_printf(
 			" AND (RoadName.SuffixID = %d)",
-			pRoadSearch->m_nSuffixID);
+			pRoadSearch->nSuffixID);
 	}
 	else {
 		pszSuffixClause = g_strdup("");
 	}
 
 	gchar* pszZIPClause;
-	if(pRoadSearch->m_pszZIPCode != NULL) {
-		gchar* pszSafeZIP = db_make_escaped_string(pRoadSearch->m_pszZIPCode);
+	if(pRoadSearch->pszZIPCode != NULL) {
+		gchar* pszSafeZIP = db_make_escaped_string(pRoadSearch->pszZIPCode);
 		pszZIPClause = g_strdup_printf(" AND (Road.ZIPCodeLeft='%s' OR Road.ZIPCodeRight='%s')", pszSafeZIP, pszSafeZIP);
 		db_free_escaped_string(pszSafeZIP);
 	}
@@ -237,16 +237,16 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 	}
 
 	gchar* pszCityClause;
-	if(pRoadSearch->m_nCityID != 0) {
-		pszCityClause = g_strdup_printf(" AND (Road.CityLeftID=%d OR Road.CityRightID=%d)", pRoadSearch->m_nCityID, pRoadSearch->m_nCityID);
+	if(pRoadSearch->nCityID != 0) {
+		pszCityClause = g_strdup_printf(" AND (Road.CityLeftID=%d OR Road.CityRightID=%d)", pRoadSearch->nCityID, pRoadSearch->nCityID);
 	}
 	else {
 		pszCityClause = g_strdup("");
 	}
 
 	gchar* pszStateClause;
-	if(pRoadSearch->m_nStateID != 0) {
-		pszStateClause = g_strdup_printf(" AND (CityLeft.StateID=%d OR CityRight.StateID=%d)", pRoadSearch->m_nStateID, pRoadSearch->m_nStateID);
+	if(pRoadSearch->nStateID != 0) {
+		pszStateClause = g_strdup_printf(" AND (CityLeft.StateID=%d OR CityRight.StateID=%d)", pRoadSearch->nStateID, pRoadSearch->nStateID);
 	}
 	else {
 		pszStateClause = g_strdup("");
@@ -254,15 +254,15 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 
 	// if doing a road search, only show 1 hit per road?
 	//~ gchar* pszGroupClause;
-	//~ if(pRoadSearch->m_nSuffixID == ROAD_SUFFIX_NONE) {
+	//~ if(pRoadSearch->nSuffixID == ROAD_SUFFIX_NONE) {
 		//~ pszGroupClause = g_strdup("GROUP BY (RoadName.ID, RoadName.SuffixID)");
 	//~ }
 	//~ else {
 		//~ pszGroupClause = g_strdup("");
 	//~ }
 
-	gchar* pszSafeRoadName = db_make_escaped_string(pRoadSearch->m_pszRoadName);
-	//g_print("pRoadSearch->m_pszRoadName = %s, pszSafeRoadName = %s\n", pRoadSearch->m_pszRoadName, pszSafeRoadName);
+	gchar* pszSafeRoadName = db_make_escaped_string(pRoadSearch->pszRoadName);
+	//g_print("pRoadSearch->pszRoadName = %s, pszSafeRoadName = %s\n", pRoadSearch->pszRoadName, pszSafeRoadName);
 
 	// XXX: Should we use soundex()? (http://en.wikipedia.org/wiki/Soundex)
 	gchar* pszRoadNameCondition = g_strdup_printf("RoadName.Name='%s'", pszSafeRoadName);
@@ -341,9 +341,9 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 				pointstring_t* pPointString = NULL;
 				pointstring_alloc(&pPointString);
 
-				db_parse_wkb_linestring(aRow[3], pPointString->m_pPointsArray, point_alloc);
+				db_parse_wkb_linestring(aRow[3], pPointString->pPointsArray, point_alloc);
 
-				search_road_filter_result(aRow[1], pRoadSearch->m_nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pPointString);
+				search_road_filter_result(aRow[1], pRoadSearch->nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pPointString);
 				//g_print("%03d: Road.ID='%s' RoadName.Name='%s', Suffix=%s, L:%s-%s, R:%s-%s\n", nCount, aRow[0], aRow[1], aRow[3], aRow[4], aRow[5], aRow[6], aRow[7]);
 				pointstring_free(pPointString);
 			}
@@ -359,8 +359,8 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 
 static gfloat point_calc_distance(mappoint_t* pA, mappoint_t* pB)
 {
-	gdouble fRise = pB->m_fLatitude - pA->m_fLatitude;
-	gdouble fRun = pB->m_fLongitude - pA->m_fLongitude;
+	gdouble fRise = pB->fLatitude - pA->fLatitude;
+	gdouble fRun = pB->fLongitude - pA->fLongitude;
 	return sqrt((fRun*fRun) + (fRise*fRise));
 }
 
@@ -375,7 +375,7 @@ typedef enum {
 static void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPercent, ERoadSide eRoadSide, mappoint_t* pReturnPoint)
 {
 	gint i;
-	if(pPointString->m_pPointsArray->len < 2) {
+	if(pPointString->pPointsArray->len < 2) {
 		g_assert_not_reached();
 	}
 
@@ -383,10 +383,10 @@ static void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPe
 	// count total distance
 	//
 	gfloat fTotalDistance = 0.0;
-	mappoint_t* pPointA = g_ptr_array_index(pPointString->m_pPointsArray, 0);
+	mappoint_t* pPointA = g_ptr_array_index(pPointString->pPointsArray, 0);
 	mappoint_t* pPointB;
-	for(i=1 ; i<pPointString->m_pPointsArray->len ; i++) {
-		pPointB = g_ptr_array_index(pPointString->m_pPointsArray, 1);
+	for(i=1 ; i<pPointString->pPointsArray->len ; i++) {
+		pPointB = g_ptr_array_index(pPointString->pPointsArray, 1);
 
 		fTotalDistance += point_calc_distance(pPointA, pPointB);
 		
@@ -396,24 +396,24 @@ static void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPe
 	gfloat fTargetDistance = (fTotalDistance * fPercent);
 	gfloat fRemainingDistance = fTargetDistance;
 
-	pPointA = g_ptr_array_index(pPointString->m_pPointsArray, 0);
-	for(i=1 ; i<pPointString->m_pPointsArray->len ; i++) {
-		pPointB = g_ptr_array_index(pPointString->m_pPointsArray, 1);
+	pPointA = g_ptr_array_index(pPointString->pPointsArray, 0);
+	for(i=1 ; i<pPointString->pPointsArray->len ; i++) {
+		pPointB = g_ptr_array_index(pPointString->pPointsArray, 1);
 
 		gfloat fLineSegmentDistance = point_calc_distance(pPointA, pPointB);
-		if(fRemainingDistance <= fLineSegmentDistance || (i == pPointString->m_pPointsArray->len-1)) {
+		if(fRemainingDistance <= fLineSegmentDistance || (i == pPointString->pPointsArray->len-1)) {
 			// this is the line segment we are looking for.
 
 			gfloat fPercentOfLine = (fRemainingDistance / fLineSegmentDistance);
 			if(fPercentOfLine > 1.0) fPercentOfLine = 1.0;
 
-			gfloat fRise = (pPointB->m_fLatitude - pPointA->m_fLatitude);
-			gfloat fRun = (pPointB->m_fLongitude - pPointA->m_fLongitude);
+			gfloat fRise = (pPointB->fLatitude - pPointA->fLatitude);
+			gfloat fRun = (pPointB->fLongitude - pPointA->fLongitude);
 
 			// Calculate the a point on the center of the line segment
 			// the right percent along the road
-			pReturnPoint->m_fLongitude = pPointA->m_fLongitude + (fRun * fPercentOfLine);
-			pReturnPoint->m_fLatitude = pPointA->m_fLatitude + (fRise * fPercentOfLine);
+			pReturnPoint->fLongitude = pPointA->fLongitude + (fRun * fPercentOfLine);
+			pReturnPoint->fLatitude = pPointA->fLatitude + (fRise * fPercentOfLine);
 
 			gdouble fPerpendicularNormalizedX = -fRise / fLineSegmentDistance;
 			gdouble fPerpendicularNormalizedY = fRun / fLineSegmentDistance;
@@ -423,13 +423,13 @@ static void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPe
 			}
 			else if(eRoadSide == ROADSIDE_LEFT) {
 // g_print("MOVING LEFT\n");
-				pReturnPoint->m_fLongitude += fPerpendicularNormalizedX * HIGHLIGHT_DISTANCE_FROM_ROAD;
-				pReturnPoint->m_fLatitude += fPerpendicularNormalizedY * HIGHLIGHT_DISTANCE_FROM_ROAD;
+				pReturnPoint->fLongitude += fPerpendicularNormalizedX * HIGHLIGHT_DISTANCE_FROM_ROAD;
+				pReturnPoint->fLatitude += fPerpendicularNormalizedY * HIGHLIGHT_DISTANCE_FROM_ROAD;
 			}
 			else {
 // g_print("MOVING RIGHT\n");
-				pReturnPoint->m_fLongitude -= fPerpendicularNormalizedX * HIGHLIGHT_DISTANCE_FROM_ROAD;
-				pReturnPoint->m_fLatitude -= fPerpendicularNormalizedY * HIGHLIGHT_DISTANCE_FROM_ROAD;
+				pReturnPoint->fLongitude -= fPerpendicularNormalizedX * HIGHLIGHT_DISTANCE_FROM_ROAD;
+				pReturnPoint->fLatitude -= fPerpendicularNormalizedY * HIGHLIGHT_DISTANCE_FROM_ROAD;
 			}
 			return;
 		}

@@ -127,19 +127,19 @@ gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 	g_assert(pszSQL != NULL);
 	if(g_pDB == NULL) return FALSE;
 
-	gint nResult = mysql_query(g_pDB->m_pMySQLConnection, pszSQL);
+	gint nResult = mysql_query(g_pDB->pMySQLConnection, pszSQL);
 	if(nResult != MYSQL_RESULT_SUCCESS) {
-		gint nErrorNumber = mysql_errno(g_pDB->m_pMySQLConnection);
+		gint nErrorNumber = mysql_errno(g_pDB->pMySQLConnection);
 
 		if(nErrorNumber != MYSQL_ERROR_DUPLICATE_KEY) {
-			g_warning("db_query: %d:%s (SQL: %s)\n", mysql_errno(g_pDB->m_pMySQLConnection), mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
+			g_warning("db_query: %d:%s (SQL: %s)\n", mysql_errno(g_pDB->pMySQLConnection), mysql_error(g_pDB->pMySQLConnection), pszSQL);
 		}
 		return FALSE;
 	}
 
 	// get result?
 	if(ppResultSet != NULL) {
-		*ppResultSet = (db_resultset_t*)MYSQL_GET_RESULT(g_pDB->m_pMySQLConnection);
+		*ppResultSet = (db_resultset_t*)MYSQL_GET_RESULT(g_pDB->pMySQLConnection);
 	}
 	return TRUE;
 }
@@ -157,7 +157,7 @@ void db_free_result(db_resultset_t* pResultSet)
 gint db_get_last_insert_id()
 {
 	if(g_pDB == NULL) return 0;
-	return mysql_insert_id(g_pDB->m_pMySQLConnection);
+	return mysql_insert_id(g_pDB->pMySQLConnection);
 }
 
 /******************************************************
@@ -179,11 +179,11 @@ gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* p
 
 	// on success, alloc our connection struct and fill it
 	db_connection_t* pNewConnection = g_new0(db_connection_t, 1);
-	pNewConnection->m_pMySQLConnection = pMySQLConnection;
-	pNewConnection->m_pzHost = g_strdup(pzHost);
-	pNewConnection->m_pzUserName = g_strdup(pzUserName);
-	pNewConnection->m_pzPassword = g_strdup(pzPassword);
-	pNewConnection->m_pzDatabase = g_strdup(pzDatabase);
+	pNewConnection->pMySQLConnection = pMySQLConnection;
+	pNewConnection->pzHost = g_strdup(pzHost);
+	pNewConnection->pzUserName = g_strdup(pzUserName);
+	pNewConnection->pzPassword = g_strdup(pzPassword);
+	pNewConnection->pzDatabase = g_strdup(pzDatabase);
 
 	g_assert(g_pDB == NULL);
 	g_pDB = pNewConnection;
@@ -195,17 +195,17 @@ gboolean db_connect(const gchar* pzHost, const gchar* pzUserName, const gchar* p
 static gboolean db_is_connected(void)
 {
 	// 'mysql_ping' will also attempt a re-connect if necessary
-	return (g_pDB != NULL && mysql_ping(g_pDB->m_pMySQLConnection) == MYSQL_RESULT_SUCCESS);
+	return (g_pDB != NULL && mysql_ping(g_pDB->pMySQLConnection) == MYSQL_RESULT_SUCCESS);
 }
 
 // gets a descriptive string about the connection.  (do not free it.)
 const gchar* db_get_connection_info()
 {
-	if(g_pDB == NULL || g_pDB->m_pMySQLConnection == NULL) {
+	if(g_pDB == NULL || g_pDB->pMySQLConnection == NULL) {
 		return "Not connected";
 	}
 
-	return mysql_get_host_info(g_pDB->m_pMySQLConnection);
+	return mysql_get_host_info(g_pDB->pMySQLConnection);
 }
 
 
@@ -221,7 +221,7 @@ gchar* db_make_escaped_string(const gchar* pszString)
 
 	gint nLength = (strlen(pszString)*2) + 1;
 	gchar* pszNew = g_malloc(nLength);
-	mysql_real_escape_string(g_pDB->m_pMySQLConnection, pszNew, pszString, strlen(pszString));
+	mysql_real_escape_string(g_pDB->pMySQLConnection, pszNew, pszString, strlen(pszString));
 
 	return pszNew; 		
 }
@@ -242,11 +242,11 @@ static guint db_count_table_rows(const gchar* pszTable)
 
 	// count rows
 	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "SELECT COUNT(*) FROM %s;", pszTable);
-	if(mysql_query(g_pDB->m_pMySQLConnection, azQuery) != MYSQL_RESULT_SUCCESS) {
-		g_message("db_count_table_rows query failed: %s\n", mysql_error(g_pDB->m_pMySQLConnection));
+	if(mysql_query(g_pDB->pMySQLConnection, azQuery) != MYSQL_RESULT_SUCCESS) {
+		g_message("db_count_table_rows query failed: %s\n", mysql_error(g_pDB->pMySQLConnection));
 		return 0;
 	}
-	if((pResultSet = MYSQL_GET_RESULT(g_pDB->m_pMySQLConnection)) != NULL) {
+	if((pResultSet = MYSQL_GET_RESULT(g_pDB->pMySQLConnection)) != NULL) {
 		if((aRow = mysql_fetch_row(pResultSet)) != NULL) {
 			uRows = atoi(aRow[0]);
 		}
@@ -269,12 +269,12 @@ static gboolean db_insert(const gchar* pszSQL, gint* pnReturnRowsInserted)
 	g_assert(pszSQL != NULL);
 	if(g_pDB == NULL) return FALSE;
 
-	if(mysql_query(g_pDB->m_pMySQLConnection, pszSQL) != MYSQL_RESULT_SUCCESS) {
-		//g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), pszSQL);
+	if(mysql_query(g_pDB->pMySQLConnection, pszSQL) != MYSQL_RESULT_SUCCESS) {
+		//g_warning("db_query: %s (SQL: %s)\n", mysql_error(g_pDB->pMySQLConnection), pszSQL);
 		return FALSE;
 	}
 
-	my_ulonglong uCount = mysql_affected_rows(g_pDB->m_pMySQLConnection);
+	my_ulonglong uCount = mysql_affected_rows(g_pDB->pMySQLConnection);
 	if(uCount > 0) {
 		if(pnReturnRowsInserted != NULL) {
 			*pnReturnRowsInserted = uCount;
@@ -299,8 +299,8 @@ gboolean db_insert_road(gint nRoadNameID, gint nLayerType, gint nAddressLeftStar
 		gchar azNewest[40];
 
 		gchar azCoord1[20], azCoord2[20];
-		if(nCount > 0) g_snprintf(azNewest, 40, ",%s %s", g_ascii_dtostr(azCoord1, 20, pPoint->m_fLatitude), g_ascii_dtostr(azCoord2, 20, pPoint->m_fLongitude));
-		else g_snprintf(azNewest, 40, "%s %s", g_ascii_dtostr(azCoord1, 20, pPoint->m_fLatitude), g_ascii_dtostr(azCoord2, 20, pPoint->m_fLongitude));
+		if(nCount > 0) g_snprintf(azNewest, 40, ",%s %s", g_ascii_dtostr(azCoord1, 20, pPoint->fLatitude), g_ascii_dtostr(azCoord2, 20, pPoint->fLongitude));
+		else g_snprintf(azNewest, 40, "%s %s", g_ascii_dtostr(azCoord1, 20, pPoint->fLatitude), g_ascii_dtostr(azCoord2, 20, pPoint->fLongitude));
 
 		g_strlcat(azCoordinateList, azNewest, COORD_LIST_MAX);
 		nCount++;
@@ -317,12 +317,12 @@ gboolean db_insert_road(gint nRoadNameID, gint nLayerType, gint nAddressLeftStar
 		nCityLeftID, nCityRightID,
 		pszZIPCodeLeft, pszZIPCodeRight);
 
-	if(MYSQL_RESULT_SUCCESS != mysql_query(g_pDB->m_pMySQLConnection, azQuery)) {
-		g_warning("db_insert_road failed: %s (SQL: %s)\n", mysql_error(g_pDB->m_pMySQLConnection), azQuery);
+	if(MYSQL_RESULT_SUCCESS != mysql_query(g_pDB->pMySQLConnection, azQuery)) {
+		g_warning("db_insert_road failed: %s (SQL: %s)\n", mysql_error(g_pDB->pMySQLConnection), azQuery);
 		return FALSE;
 	}
 	// return the new ID
-	*pReturnID = mysql_insert_id(g_pDB->m_pMySQLConnection);
+	*pReturnID = mysql_insert_id(g_pDB->pMySQLConnection);
 	return TRUE;
 }
 
@@ -513,9 +513,9 @@ void db_parse_wkb_point(const gint8* data, mappoint_t* pPoint)
 	data += sizeof(gint32);
 	g_assert(nGeometryType == WKB_POINT);
 
-	pPoint->m_fLatitude = *((double*)data);
+	pPoint->fLatitude = *((double*)data);
 	data += sizeof(double);
-	pPoint->m_fLongitude = *((double*)data);
+	pPoint->fLongitude = *((double*)data);
 	data += sizeof(double);
 }
 
@@ -537,9 +537,9 @@ void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolea
 		mappoint_t* pPoint = NULL;
 		if(!callback_alloc_point(&pPoint)) return;
 
-		pPoint->m_fLatitude = *((double*)data);
+		pPoint->fLatitude = *((double*)data);
 		data += sizeof(double);
-		pPoint->m_fLongitude = *((double*)data);
+		pPoint->fLongitude = *((double*)data);
 		data += sizeof(double);
 
 		g_ptr_array_add(pPointsArray, pPoint);

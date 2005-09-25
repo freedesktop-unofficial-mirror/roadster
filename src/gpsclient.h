@@ -55,11 +55,11 @@ typedef enum {
 
 // public gpsdata
 typedef struct gpsdata {
-	EGPSClientStatus m_eStatus;
-	mappoint_t m_ptPosition;
-	gdouble m_fSignalQuality;
-	gdouble m_fSpeedInKilometersPerHour;
-	gdouble m_fSpeedInMilesPerHour;
+	EGPSClientStatus eStatus;
+	mappoint_t ptPosition;
+	gdouble fSignalQuality;
+	gdouble fSpeedInKilometersPerHour;
+	gdouble fSpeedInMilesPerHour;
 } gpsdata_t;
 
 void gpsclient_init(void);

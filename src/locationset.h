@@ -36,12 +36,12 @@ G_BEGIN_DECLS
 
 // a set of locations (eg. "Coffee Shops")
 typedef struct locationset {
-	gint m_nID;
-	gchar* m_pszName;
-	gchar* m_pszIconName;
-	gint m_nLocationCount;
-	gboolean m_bVisible;		// user has chosen to view these
-//	locationsetstyle_t m_Style;
+	gint nID;
+	gchar* pszName;
+	gchar* pszIconName;
+	gint nLocationCount;
+	gboolean bVisible;		// user has chosen to view these
+//	locationsetstyle_t Style;
 } locationset_t;
 
 void locationset_init(void);

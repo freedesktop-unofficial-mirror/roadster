@@ -34,15 +34,15 @@ G_BEGIN_DECLS
 
 // a single location (eg. "Someday Cafe").  this is all that's needed for drawing lots of points (with mouse-over name).
 typedef struct {
-	gint m_nID;
-	gchar* m_pszName;
-	mappoint_t m_Coordinates;
+	gint nID;
+	gchar* pszName;
+	mappoint_t Coordinates;
 } location_t;
 
 typedef struct {
-	gchar* m_pszName;
-	gchar* m_pszValue;
-	gint m_nValueID;
+	gchar* pszName;
+	gchar* pszValue;
+	gint nValueID;
 } locationattribute_t;
 
 void location_init();

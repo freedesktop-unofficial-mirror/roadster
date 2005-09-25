@@ -96,7 +96,7 @@ void map_draw_text_underline(cairo_t* pCairo, gdouble fLabelWidth)
 
 void map_draw_cairo_set_rgba(cairo_t* pCairo, color_t* pColor)
 {
-	cairo_set_source_rgba(pCairo, pColor->m_fRed, pColor->m_fGreen, pColor->m_fBlue, pColor->m_fAlpha);
+	cairo_set_source_rgba(pCairo, pColor->fRed, pColor->fGreen, pColor->fBlue, pColor->fAlpha);
 }
 
 void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
@@ -119,7 +119,7 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 #	define MAP_SCALE_HEIGHT 	(35)
 
 	GdkRectangle rect = {0,height-MAP_SCALE_HEIGHT, MAP_SCALE_WIDTH,height};
-	scenemanager_claim_rectangle(pMap->m_pSceneManager, &rect);
+	scenemanager_claim_rectangle(pMap->pSceneManager, &rect);
 #endif
 
 	// 2. Rendering
@@ -135,40 +135,40 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 	}
 
 	// 2.3. Render Layers
-	if(pMap->m_pLayersArray->len == 0) {
+	if(pMap->pLayersArray->len == 0) {
 		map_draw_cairo_message(pMap, pCairo, "The style XML file couldn't be loaded");
 	}
 	else {
 		gint i;
-		for(i=pMap->m_pLayersArray->len-1 ; i>=0 ; i--) {
-			maplayer_t* pLayer = g_ptr_array_index(pMap->m_pLayersArray, i);
+		for(i=pMap->pLayersArray->len-1 ; i>=0 ; i--) {
+			maplayer_t* pLayer = g_ptr_array_index(pMap->pLayersArray, i);
 	
-			if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
+			if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
 				if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 					map_draw_cairo_layer_roads(pMap, pCairo, pRenderMetrics,
-											   pMap->m_apLayerData[pLayer->m_nDataSource]->m_pRoadsArray,
-											   pLayer->m_paStylesAtZoomLevels[pRenderMetrics->m_nZoomLevel-1]);
+											   pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
+											   pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);
 				}
 			}
-			else if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_POLYGONS) {
+			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGONS) {
 				if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 					map_draw_cairo_layer_polygons(pMap, pCairo, pRenderMetrics,
-												  pMap->m_apLayerData[pLayer->m_nDataSource]->m_pRoadsArray,
-												  pLayer->m_paStylesAtZoomLevels[pRenderMetrics->m_nZoomLevel-1]);
+												  pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
+												  pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);
 				}
 			}
-			else if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_LINE_LABELS) {
+			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINE_LABELS) {
 				if(nDrawFlags & DRAWFLAG_LABELS) {
 					map_draw_cairo_layer_road_labels(pMap, pCairo, pRenderMetrics,
-													 pMap->m_apLayerData[pLayer->m_nDataSource]->m_pRoadsArray,
-													 pLayer->m_paStylesAtZoomLevels[pRenderMetrics->m_nZoomLevel-1]);
+													 pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
+													 pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);
 				}
 			}
-			else if(pLayer->m_nDrawType == MAP_LAYER_RENDERTYPE_POLYGON_LABELS) {
+			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGON_LABELS) {
 				if(nDrawFlags & DRAWFLAG_LABELS) {
 					map_draw_cairo_layer_polygon_labels(pMap, pCairo, pRenderMetrics,
-														pMap->m_apLayerData[pLayer->m_nDataSource]->m_pRoadsArray,
-														pLayer->m_paStylesAtZoomLevels[pRenderMetrics->m_nZoomLevel-1]);
+														pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
+														pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);
 				}
 			}
 		}
@@ -177,13 +177,13 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 #ifdef ENABLE_MAP_DROP_SHADOW
 #	define SHADOW_WIDTH	(6)
 	cairo_set_source_rgba(pCairo, 0,0,0,0.1);
-	cairo_rectangle(pCairo, 0, 0, pMap->m_MapDimensions.m_uWidth, SHADOW_WIDTH);
-	cairo_rectangle(pCairo, 0, SHADOW_WIDTH, SHADOW_WIDTH, pMap->m_MapDimensions.m_uHeight-SHADOW_WIDTH);
+	cairo_rectangle(pCairo, 0, 0, pMap->MapDimensions.uWidth, SHADOW_WIDTH);
+	cairo_rectangle(pCairo, 0, SHADOW_WIDTH, SHADOW_WIDTH, pMap->MapDimensions.uHeight-SHADOW_WIDTH);
 	cairo_fill(pCairo);
 #endif
 
 	//map_draw_cairo_locations(pMap, pCairo, pRenderMetrics);	done with GDK
-	//map_draw_cairo_locationselection(pMap, pCairo, pRenderMetrics, pMap->m_pLocationSelectionArray);
+	//map_draw_cairo_locationselection(pMap, pCairo, pRenderMetrics, pMap->pLocationSelectionArray);
 #ifdef ENABLE_DRAW_MAP_SCALE
 	map_draw_cairo_map_scale(pMap, pCairo, pRenderMetrics);
 #endif
@@ -192,14 +192,14 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 	cairo_restore(pCairo);
 	TIMER_END(maptimer, "END RENDER MAP (cairo)");
 }
-	
+
 // When there are no layers defined, we call this to show an error message in-window
 void map_draw_cairo_message(map_t* pMap, cairo_t *pCairo, gchar* pszMessage)
 {
 	cairo_save(pCairo);
 		// background color
 		cairo_set_source_rgb(pCairo, 0.9, 0.9, 0.9);
-		cairo_rectangle(pCairo, 0, 0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
+		cairo_rectangle(pCairo, 0, 0, pMap->MapDimensions.uWidth, pMap->MapDimensions.uHeight);
 		cairo_fill(pCairo);
 		
 		cairo_set_source_rgb(pCairo, 0.1, 0.1, 0.1);
@@ -208,7 +208,7 @@ void map_draw_cairo_message(map_t* pMap, cairo_t *pCairo, gchar* pszMessage)
 		cairo_text_extents(pCairo, pszMessage, &extents);
 
 		// Draw centered
-		cairo_move_to(pCairo, (pMap->m_MapDimensions.m_uWidth/2) - (extents.width/2), (pMap->m_MapDimensions.m_uHeight/2) + (extents.height/2));
+		cairo_move_to(pCairo, (pMap->MapDimensions.uWidth/2) - (extents.width/2), (pMap->MapDimensions.uHeight/2) + (extents.height/2));
 		cairo_show_text(pCairo, pszMessage);
 	cairo_restore(pCairo);
 }
@@ -223,7 +223,7 @@ static void map_draw_cairo_background(map_t* pMap, cairo_t *pCairo)
 	// XXX: Don't hardcode background color
 	cairo_save(pCairo);
 		cairo_set_source_rgb (pCairo, 239/255.0, 239/255.0, 230/255.0);
-		cairo_rectangle(pCairo, 0, 0, pMap->m_MapDimensions.m_uWidth, pMap->m_MapDimensions.m_uHeight);
+		cairo_rectangle(pCairo, 0, 0, pMap->MapDimensions.uWidth, pMap->MapDimensions.uHeight);
 		cairo_fill(pCairo);
 	cairo_restore(pCairo);
 }
@@ -235,19 +235,19 @@ void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 {
 	gint i;
 
-	if(pLayerStyle->m_fFontSize == 0) return;
+	if(pLayerStyle->fFontSize == 0) return;
 
 	gchar* pszFontFamily = ROAD_FONT;	// XXX: remove hardcoded font
 
 	// set font for whole layer
 	cairo_save(pCairo);
-	cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLayerStyle->m_bFontBold ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size(pCairo, pLayerStyle->m_fFontSize);
+	cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLayerStyle->bFontBold ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(pCairo, pLayerStyle->fFontSize);
 
 	for(i=0 ; i<pRoadsArray->len ; i++) {
 		road_t* pRoad = g_ptr_array_index(pRoadsArray, i);
-		if(pRoad->m_pszName[0] != '\0') {
-			map_draw_cairo_road_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->m_pPointsArray, pRoad->m_pszName);
+		if(pRoad->pszName[0] != '\0') {
+			map_draw_cairo_road_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->pPointsArray, pRoad->pszName);
 		}
 	}
 	cairo_restore(pCairo);
@@ -258,22 +258,22 @@ void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 //
 void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
 {
-	if(pLayerStyle->m_fFontSize == 0) return;
+	if(pLayerStyle->fFontSize == 0) return;
 
 	gchar* pszFontFamily = AREA_FONT;	// XXX: remove hardcoded font
 
 	// set font for whole layer
 	cairo_save(pCairo);
-	cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLayerStyle->m_bFontBold ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size(pCairo, pLayerStyle->m_fFontSize);
+	cairo_select_font_face(pCairo, pszFontFamily, CAIRO_FONT_SLANT_NORMAL, pLayerStyle->bFontBold ? CAIRO_FONT_WEIGHT_BOLD : CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size(pCairo, pLayerStyle->fFontSize);
 
-	map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->m_clrPrimary));
+	map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->clrPrimary));
 
 	gint i;
 	for(i=0 ; i<pRoadsArray->len ; i++) {
 		road_t* pRoad = g_ptr_array_index(pRoadsArray, i);
-		if(pRoad->m_pszName[0] != '\0') {
-			map_draw_cairo_polygon_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->m_pPointsArray, pRoad->m_pszName);
+		if(pRoad->pszName[0] != '\0') {
+			map_draw_cairo_polygon_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->pPointsArray, pRoad->pszName);
 		}
 	}
 	cairo_restore(pCairo);
@@ -289,19 +289,19 @@ void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* p
 	gint iString;
 	gint iPoint;
 
-	if(pLayerStyle->m_fLineWidth <= 0.0) return;	// Don't draw invisible lines
-	if(pLayerStyle->m_clrPrimary.m_fAlpha == 0.0) return;
+	if(pLayerStyle->fLineWidth <= 0.0) return;	// Don't draw invisible lines
+	if(pLayerStyle->clrPrimary.fAlpha == 0.0) return;
 
 	cairo_save(pCairo);
 
 	// Raise the tolerance way up for thin lines
-	gint nCapStyle = pLayerStyle->m_nCapStyle;
+	gint nCapStyle = pLayerStyle->nCapStyle;
 
 	gdouble fTolerance;
-	if(pLayerStyle->m_fLineWidth >= 12.0) {	// huge line, low tolerance
+	if(pLayerStyle->fLineWidth >= 12.0) {	// huge line, low tolerance
 		fTolerance = 0.40;
 	}
-	else if(pLayerStyle->m_fLineWidth >= 6.0) {	// medium line, medium tolerance
+	else if(pLayerStyle->fLineWidth >= 6.0) {	// medium line, medium tolerance
 		fTolerance = 0.8;
 	}
 	else {
@@ -310,7 +310,7 @@ void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* p
 			//nCapStyle = CAIRO_LINE_CAP_SQUARE;
 		}
 
-		if(pLayerStyle->m_fLineWidth >= 3.0) {
+		if(pLayerStyle->fLineWidth >= 3.0) {
 			fTolerance = 1.2;
 		}
 		else {  // smaller...
@@ -318,33 +318,33 @@ void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* p
 		}
 	}
 	cairo_set_tolerance(pCairo, fTolerance);
-	cairo_set_line_join(pCairo, pLayerStyle->m_nJoinStyle);
+	cairo_set_line_join(pCairo, pLayerStyle->nJoinStyle);
 	cairo_set_line_cap(pCairo, nCapStyle);
-	if(pLayerStyle->m_pDashStyle != NULL) {
-		cairo_set_dash(pCairo, pLayerStyle->m_pDashStyle->m_pafDashList, pLayerStyle->m_pDashStyle->m_nDashCount, 0.0);
+	if(pLayerStyle->pDashStyle != NULL) {
+		cairo_set_dash(pCairo, pLayerStyle->pDashStyle->pafDashList, pLayerStyle->pDashStyle->nDashCount, 0.0);
 	}
 
 	// Set layer attributes	
-	map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->m_clrPrimary));
-	cairo_set_line_width(pCairo, pLayerStyle->m_fLineWidth);
+	map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->clrPrimary));
+	cairo_set_line_width(pCairo, pLayerStyle->fLineWidth);
 
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
-		if(pRoad->m_pPointsArray->len >= 2) {
-			pPoint = g_ptr_array_index(pRoad->m_pPointsArray, 0);
+		if(pRoad->pPointsArray->len >= 2) {
+			pPoint = g_ptr_array_index(pRoad->pPointsArray, 0);
 
 			// go to index 0
 			cairo_move_to(pCairo, 
-						  pLayerStyle->m_nPixelOffsetX + SCALE_X(pRenderMetrics, pPoint->m_fLongitude), 
-						  pLayerStyle->m_nPixelOffsetY + SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
+						  pLayerStyle->nPixelOffsetX + SCALE_X(pRenderMetrics, pPoint->fLongitude), 
+						  pLayerStyle->nPixelOffsetY + SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 
 			// start at index 1 (0 was used above)
-			for(iPoint=1 ; iPoint<pRoad->m_pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pRoad->m_pPointsArray, iPoint);//~ g_print("  point (%.05f,%.05f)\n", ScaleX(pPoint->m_fLongitude), ScaleY(pPoint->m_fLatitude));
+			for(iPoint=1 ; iPoint<pRoad->pPointsArray->len ; iPoint++) {
+				pPoint = g_ptr_array_index(pRoad->pPointsArray, iPoint);//~ g_print("  point (%.05f,%.05f)\n", ScaleX(pPoint->fLongitude), ScaleY(pPoint->fLatitude));
 				cairo_line_to(pCairo, 
-							  pLayerStyle->m_nPixelOffsetX + SCALE_X(pRenderMetrics, pPoint->m_fLongitude), 
-							  pLayerStyle->m_nPixelOffsetY + SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
+							  pLayerStyle->nPixelOffsetX + SCALE_X(pRenderMetrics, pPoint->fLongitude), 
+							  pLayerStyle->nPixelOffsetY + SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 			}
 #ifdef ENABLE_HACK_AROUND_CAIRO_LINE_CAP_BUG
 			cairo_stroke(pCairo);	// this is wrong place for it (see below)
@@ -367,38 +367,38 @@ void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t
 	road_t* pRoad;
 	mappoint_t* pPoint;
 
-	gdouble fLineWidth = pSubLayerStyle->m_afLineWidths[pRenderMetrics->m_nZoomLevel-1];
+	gdouble fLineWidth = pSubLayerStyle->afLineWidths[pRenderMetrics->nZoomLevel-1];
 	if(fLineWidth == 0.0) return;	// Don't both drawing with line width 0
-	if(pSubLayerStyle->m_clrColor.m_fAlpha == 0.0) return;	// invisible?
+	if(pSubLayerStyle->clrColor.fAlpha == 0.0) return;	// invisible?
 
 	// Set layer attributes	
-	map_draw_cairo_set_rgba(pCairo, &(pSubLayerStyle->m_clrColor));
+	map_draw_cairo_set_rgba(pCairo, &(pSubLayerStyle->clrColor));
 	cairo_set_line_width(pCairo, fLineWidth);
 	cairo_set_fill_rule(pCairo, CAIRO_FILL_RULE_EVEN_ODD);
 
-	cairo_set_line_join(pCairo, pSubLayerStyle->m_nJoinStyle);
-	cairo_set_line_cap(pCairo, pSubLayerStyle->m_nCapStyle);	/* CAIRO_LINE_CAP_BUTT, CAIRO_LINE_CAP_ROUND, CAIRO_LINE_CAP_CAP */
-//	cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_pfList, g_aDashStyles[pSubLayerStyle->m_nDashStyle].m_nCount, 0.0);
+	cairo_set_line_join(pCairo, pSubLayerStyle->nJoinStyle);
+	cairo_set_line_cap(pCairo, pSubLayerStyle->nCapStyle);	/* CAIRO_LINE_CAP_BUTT, CAIRO_LINE_CAP_ROUND, CAIRO_LINE_CAP_CAP */
+//	cairo_set_dash(pCairo, g_aDashStyles[pSubLayerStyle->nDashStyle].pfList, g_aDashStyles[pSubLayerStyle->nDashStyle].nCount, 0.0);
 
 	gint iString;
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
-		if(pRoad->m_pPointsArray->len >= 3) {
-			pPoint = g_ptr_array_index(pRoad->m_pPointsArray, 0);
+		if(pRoad->pPointsArray->len >= 3) {
+			pPoint = g_ptr_array_index(pRoad->pPointsArray, 0);
 
 			// move to index 0
-			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
+			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pPoint->fLongitude), SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 
 			// start at index 1 (0 was used above)
 			gint iPoint;
-			for(iPoint=1 ; iPoint<pRoad->m_pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pRoad->m_pPointsArray, iPoint);				
-				cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
+			for(iPoint=1 ; iPoint<pRoad->pPointsArray->len ; iPoint++) {
+				pPoint = g_ptr_array_index(pRoad->pPointsArray, iPoint);				
+				cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->fLongitude), SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 			}
 		}
 		else {
-//			g_print("OOPS!  A linestring with <3 points (%d)\n", pPointString->m_pPointsArray->len);
+//			g_print("OOPS!  A linestring with <3 points (%d)\n", pPointString->pPointsArray->len);
 		}
 	}
 	cairo_fill(pCairo);
@@ -419,8 +419,8 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 		for(iLocation=0 ; iLocation<pLocationsArray->len ; iLocation++) {
 			location_t* pLocation = g_ptr_array_index(pLocationsArray, iLocation);
 
-			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pLocation->m_Coordinates.m_fLongitude), SCALE_Y(pRenderMetrics, pLocation->m_Coordinates.m_fLatitude));
-			cairo_arc(pCairo, SCALE_X(pRenderMetrics, pLocation->m_Coordinates.m_fLongitude), SCALE_Y(pRenderMetrics, pLocation->m_Coordinates.m_fLatitude), fRadius, 0, 2*M_PI);
+			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pLocation->Coordinates.fLongitude), SCALE_Y(pRenderMetrics, pLocation->Coordinates.fLatitude));
+			cairo_arc(pCairo, SCALE_X(pRenderMetrics, pLocation->Coordinates.fLongitude), SCALE_Y(pRenderMetrics, pLocation->Coordinates.fLatitude), fRadius, 0, 2*M_PI);
 	
 			if(bAddition) {
 				// fill each circle as we create them so they double-up on coverage
@@ -437,8 +437,8 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 		for(iLocation=0 ; iLocation<pLocationsArray->len ; iLocation++) {
 			location_t* pLocation = g_ptr_array_index(pLocationsArray, iLocation);
 
-			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pLocation->m_Coordinates.m_fLongitude), SCALE_Y(pRenderMetrics, pLocation->m_Coordinates.m_fLatitude));
-			cairo_arc(pCairo, SCALE_X(pRenderMetrics, pLocation->m_Coordinates.m_fLongitude), SCALE_Y(pRenderMetrics, pLocation->m_Coordinates.m_fLatitude), fRadius, 0, 2*M_PI);
+			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pLocation->Coordinates.fLongitude), SCALE_Y(pRenderMetrics, pLocation->Coordinates.fLatitude));
+			cairo_arc(pCairo, SCALE_X(pRenderMetrics, pLocation->Coordinates.fLongitude), SCALE_Y(pRenderMetrics, pLocation->Coordinates.fLatitude), fRadius, 0, 2*M_PI);
 
 			cairo_fill(pCairo);
 		}
@@ -453,13 +453,13 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 #define DRAW_LABEL_BUFFER_LEN	(200)
 
 typedef struct labelposition {
-	guint m_nSegments;
-	guint m_iIndex;
-	gdouble m_fLength;
-	gdouble m_fRunTotal;
-	gdouble m_fMeanSlope;
-	gdouble m_fMeanAbsSlope;
-	gdouble m_fScore;
+	guint nSegments;
+	guint iIndex;
+	gdouble fLength;
+	gdouble fRunTotal;
+	gdouble fMeanSlope;
+	gdouble fMeanAbsSlope;
+	gdouble fScore;
 } labelposition_t;
 
 //
@@ -468,7 +468,7 @@ typedef struct labelposition {
 static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GPtrArray* pPointsArray, const gchar* pszLabel)
 {
 	// get permission to draw this label
-	if(FALSE == scenemanager_can_draw_label_at(pMap->m_pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
+	if(FALSE == scenemanager_can_draw_label_at(pMap->pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
 		return;
 	}
 
@@ -476,26 +476,26 @@ static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 	mappoint_t* pMapPoint2 = g_ptr_array_index(pPointsArray, 1);
 
 	// swap first and second points such that the line goes left-to-right
-	if(pMapPoint2->m_fLongitude < pMapPoint1->m_fLongitude) {
+	if(pMapPoint2->fLongitude < pMapPoint1->fLongitude) {
 		mappoint_t* pTmp = pMapPoint1; pMapPoint1 = pMapPoint2; pMapPoint2 = pTmp;
 	}
 
 	// find extents
-	gdouble fMaxLat = max(pMapPoint1->m_fLatitude, pMapPoint2->m_fLatitude);
-	gdouble fMinLat = min(pMapPoint1->m_fLatitude, pMapPoint2->m_fLatitude);
-	gdouble fMaxLon = max(pMapPoint1->m_fLongitude, pMapPoint2->m_fLongitude);
-	gdouble fMinLon = min(pMapPoint1->m_fLongitude, pMapPoint2->m_fLongitude);
+	gdouble fMaxLat = max(pMapPoint1->fLatitude, pMapPoint2->fLatitude);
+	gdouble fMinLat = min(pMapPoint1->fLatitude, pMapPoint2->fLatitude);
+	gdouble fMaxLon = max(pMapPoint1->fLongitude, pMapPoint2->fLongitude);
+	gdouble fMinLon = min(pMapPoint1->fLongitude, pMapPoint2->fLongitude);
 
-	gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->m_fLongitude);
-	gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->m_fLatitude);
-	gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->m_fLongitude);
-	gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->m_fLatitude);
+	gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->fLongitude);
+	gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->fLatitude);
+	gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->fLongitude);
+	gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->fLatitude);
 
 	// rectangle overlap test
-	if(fMaxLat < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLatitude
-	   || fMaxLon < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLongitude
-	   || fMinLat > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLatitude
-	   || fMinLon > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLongitude)
+	if(fMaxLat < pRenderMetrics->rWorldBoundingBox.A.fLatitude
+	   || fMaxLon < pRenderMetrics->rWorldBoundingBox.A.fLongitude
+	   || fMinLat > pRenderMetrics->rWorldBoundingBox.B.fLatitude
+	   || fMinLon > pRenderMetrics->rWorldBoundingBox.B.fLongitude)
 	{
 		return;
 	}
@@ -556,24 +556,24 @@ static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 		//
 		// Build a rectangle that surrounds the text to tell the scenemanager where we want to draw
 		//
-		#define B (3)	// claim an extra border around the text to keep things readable (in pixels)
+		#define BRDR (3)	// claim an extra border around the text to keep things readable (in pixels)
 
 		GdkPoint aBoundingPolygon[4];
 		// 0 is bottom left point
-		aBoundingPolygon[0].x = fDrawX - (fPerpendicularNormalizedX * B) - (fNormalizedX * B);
-		aBoundingPolygon[0].y = fDrawY - (fPerpendicularNormalizedY * B) - (fNormalizedX * B);
+		aBoundingPolygon[0].x = fDrawX - (fPerpendicularNormalizedX * BRDR) - (fNormalizedX * BRDR);
+		aBoundingPolygon[0].y = fDrawY - (fPerpendicularNormalizedY * BRDR) - (fNormalizedX * BRDR);
 		// 1 is upper left point
-		aBoundingPolygon[1].x = fDrawX + (fPerpendicularNormalizedX * (fFontHeight+B)) - (fNormalizedX * B);
-		aBoundingPolygon[1].y = fDrawY + (fPerpendicularNormalizedY * (fFontHeight+B)) - (fNormalizedY * B);
+		aBoundingPolygon[1].x = fDrawX + (fPerpendicularNormalizedX * (fFontHeight+BRDR)) - (fNormalizedX * BRDR);
+		aBoundingPolygon[1].y = fDrawY + (fPerpendicularNormalizedY * (fFontHeight+BRDR)) - (fNormalizedY * BRDR);
 		// 2 is upper right point
-		aBoundingPolygon[2].x = aBoundingPolygon[1].x + (fNormalizedX * (fLabelWidth+B+B));
-		aBoundingPolygon[2].y = aBoundingPolygon[1].y + (fNormalizedY * (fLabelWidth+B+B));
+		aBoundingPolygon[2].x = aBoundingPolygon[1].x + (fNormalizedX * (fLabelWidth+BRDR+BRDR));
+		aBoundingPolygon[2].y = aBoundingPolygon[1].y + (fNormalizedY * (fLabelWidth+BRDR+BRDR));
 		// 3 is lower right point
-		aBoundingPolygon[3].x = fDrawX + (fNormalizedX * (fLabelWidth+B)) - (fPerpendicularNormalizedX * B);
-		aBoundingPolygon[3].y = fDrawY + (fNormalizedY * (fLabelWidth+B)) - (fPerpendicularNormalizedY * B);
+		aBoundingPolygon[3].x = fDrawX + (fNormalizedX * (fLabelWidth+BRDR)) - (fPerpendicularNormalizedX * BRDR);
+		aBoundingPolygon[3].y = fDrawY + (fNormalizedY * (fLabelWidth+BRDR)) - (fPerpendicularNormalizedY * BRDR);
 		
 		// Ask whether we can draw here
-		if(FALSE == scenemanager_can_draw_polygon(pMap->m_pSceneManager, aBoundingPolygon, 4, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
+		if(FALSE == scenemanager_can_draw_polygon(pMap->pSceneManager, aBoundingPolygon, 4, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
 			continue;
 		}
 		
@@ -589,9 +589,9 @@ static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 
 
 		// Draw a "halo" around text if the style calls for it
-		if(pLayerStyle->m_fHaloSize >= 0) {
+		if(pLayerStyle->fHaloSize >= 0) {
 			// Halo = stroking the text path with a fat white line
-			map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->m_clrHalo));
+			map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->clrHalo));
 
 			gint iHaloOffsets;
 
@@ -603,15 +603,15 @@ static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 				cairo_restore(pCairo);
 			}
 		}
-		map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->m_clrPrimary));
+		map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->clrPrimary));
 		cairo_move_to(pCairo, fDrawX, fDrawY);
 		cairo_rotate(pCairo, fAngleInRadians);
 		cairo_show_text(pCairo, pszLabel);
 		cairo_restore(pCairo);
 
 		// claim the space this took up and the label (so it won't be drawn twice)
-		scenemanager_claim_polygon(pMap->m_pSceneManager, aBoundingPolygon, 4);
-		scenemanager_claim_label(pMap->m_pSceneManager, pszLabel);
+		scenemanager_claim_polygon(pMap->pSceneManager, aBoundingPolygon, 4);
+		scenemanager_claim_label(pMap->pSceneManager, pszLabel);
 
 		// success
 		break;
@@ -628,7 +628,7 @@ static gint map_draw_cairo_road_label_position_sort(gconstpointer pA, gconstpoin
 	labelposition_t *pPosA = *(labelposition_t **)pA;
 	labelposition_t *pPosB = *(labelposition_t **)pB;
 
-	if(pPosA->m_fScore > pPosB->m_fScore) return -1;
+	if(pPosA->fScore > pPosB->fScore) return -1;
 	return 1;
 }
 
@@ -649,7 +649,7 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 
 	// Request permission to draw this label.  This prevents multiple labels too close together.
 	// NOTE: Currently no location is used, only allows one of each text string per draw
-	if(!scenemanager_can_draw_label_at(pMap->m_pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
+	if(!scenemanager_can_draw_label_at(pMap->pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
 		return;
 	}
 
@@ -688,10 +688,10 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 		pMapPoint1 = apPoints[iPoint-1];
 		pMapPoint2 = apPoints[iPoint];
 
-		gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->m_fLongitude);
-		gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->m_fLatitude);
-		gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->m_fLongitude);
-		gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->m_fLatitude);
+		gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->fLongitude);
+		gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->fLatitude);
+		gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->fLongitude);
+		gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->fLatitude);
 
 		// determine slope of the line
 		gdouble fRise = fY2 - fY1;
@@ -700,21 +700,21 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 		gdouble fLineLength = sqrt((fRun*fRun) + (fRise*fRise));
 
 		aSlopes[iPoint] = fSlope;
-		aPositions[iPoint].m_nSegments = 0;
-		aPositions[iPoint].m_iIndex = iPoint;
-		aPositions[iPoint].m_fLength = 0.0;
-		aPositions[iPoint].m_fRunTotal = 0.0;
-		aPositions[iPoint].m_fMeanSlope = 0.0;
-		aPositions[iPoint].m_fMeanAbsSlope = 0.0;
+		aPositions[iPoint].nSegments = 0;
+		aPositions[iPoint].iIndex = iPoint;
+		aPositions[iPoint].fLength = 0.0;
+		aPositions[iPoint].fRunTotal = 0.0;
+		aPositions[iPoint].fMeanSlope = 0.0;
+		aPositions[iPoint].fMeanAbsSlope = 0.0;
 
 		for(iPosition = nPositions ; iPosition <= iPoint ; iPosition++) {
-			aPositions[iPosition].m_fLength += fLineLength;
-			aPositions[iPosition].m_fRunTotal += fRun;
-			aPositions[iPosition].m_nSegments++;
-			aPositions[iPosition].m_fMeanSlope += fSlope;
-			aPositions[iPosition].m_fMeanAbsSlope += (fSlope<0) ? -fSlope : fSlope;
+			aPositions[iPosition].fLength += fLineLength;
+			aPositions[iPosition].fRunTotal += fRun;
+			aPositions[iPosition].nSegments++;
+			aPositions[iPosition].fMeanSlope += fSlope;
+			aPositions[iPosition].fMeanAbsSlope += (fSlope<0) ? -fSlope : fSlope;
 
-			if(aPositions[iPosition].m_fLength >= extents.width) nPositions++;
+			if(aPositions[iPosition].fLength >= extents.width) nPositions++;
 		}
 
 		fTotalLineLength += fLineLength;
@@ -732,26 +732,26 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 
 	for(iPosition = 1 ; iPosition < nPositions ; iPosition++) {
 		// finish calculating mean slope
-		aPositions[iPosition].m_fMeanSlope /= aPositions[iPosition].m_nSegments;
-		aPositions[iPosition].m_fMeanAbsSlope /= aPositions[iPosition].m_nSegments;
+		aPositions[iPosition].fMeanSlope /= aPositions[iPosition].nSegments;
+		aPositions[iPosition].fMeanAbsSlope /= aPositions[iPosition].nSegments;
 		
 		// calculating std dev of slope
-		gint iEndPoint = iPosition + aPositions[iPosition].m_nSegments;
+		gint iEndPoint = iPosition + aPositions[iPosition].nSegments;
 		gdouble fDiffSquaredSum = 0.0;
 
 		for(iPoint = iPosition ; iPoint < iEndPoint ; iPoint++) {
-			gdouble fDiff = aSlopes[iPoint] - aPositions[iPosition].m_fMeanSlope;
+			gdouble fDiff = aSlopes[iPoint] - aPositions[iPosition].fMeanSlope;
 			fDiffSquaredSum += (fDiff*fDiff);
 		}
 
-		gdouble fStdDevSlope = sqrt(fDiffSquaredSum / aPositions[iPosition].m_nSegments);
+		gdouble fStdDevSlope = sqrt(fDiffSquaredSum / aPositions[iPosition].nSegments);
 
 		// calculate a score between 0 (worst) and 1 (best), we want to minimize both the mean and std dev of slope
-		aPositions[iPosition].m_fScore = 1.0/((aPositions[iPosition].m_fMeanAbsSlope+1.0)*(fStdDevSlope+1.0));
+		aPositions[iPosition].fScore = 1.0/((aPositions[iPosition].fMeanAbsSlope+1.0)*(fStdDevSlope+1.0));
 
 		// find max only
-		if(aPositions[iPosition].m_fScore > fMaxScore) {
-			fMaxScore = aPositions[iPosition].m_fScore;
+		if(aPositions[iPosition].fScore > fMaxScore) {
+			fMaxScore = aPositions[iPosition].fScore;
 			iBestPosition = iPosition;
 		}
 
@@ -759,10 +759,10 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 		//g_ptr_array_add(pPositionsPtrArray, &(aPositions[iPosition]));
 
 //         g_print("%s: [%d] segments = %d, slope = %2.2f, stddev = %2.2f, score = %2.2f\n", pszLabel, iPosition,
-//             aPositions[iPosition].m_nSegments,
-//             aPositions[iPosition].m_fMeanAbsSlope,
+//             aPositions[iPosition].nSegments,
+//             aPositions[iPosition].fMeanAbsSlope,
 //             fStdDevSlope,
-//             aPositions[iPosition].m_fScore);
+//             aPositions[iPosition].fScore);
 	}
 	
 	// sort postions by score
@@ -772,11 +772,11 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 //     for(iPosition = 1 ; iPosition < nPositions ; iPosition++) {
 //         labelposition_t *pPos = g_ptr_array_index(pPositionsPtrArray, iPosition - 1);
 //
-//         if(pPos->m_nSegments > 1)
+//         if(pPos->nSegments > 1)
 //             g_print("%s: [%d] segments = %d, slope = %2.2f, score = %2.2f\n", pszLabel, iPosition,
-//                 pPos->m_nSegments,
-//                 pPos->m_fMeanAbsSlope,
-//                 pPos->m_fScore);
+//                 pPos->nSegments,
+//                 pPos->fMeanAbsSlope,
+//                 pPos->fScore);
 //     }
 
 	cairo_font_extents_t font_extents;
@@ -786,20 +786,20 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 
 //     for(iPosition = 1 ; iPosition < nPositions ; iPosition++) {
 //         labelposition_t *pPos = g_ptr_array_index(pPositionsPtrArray, iPosition - 1);
-//         gint iBestPosition = pPos->m_iIndex;
-		//g_print("trying position %d with score %2.2f\n", iBestPosition, pPos->m_fScore);
+//         gint iBestPosition = pPos->iIndex;
+		//g_print("trying position %d with score %2.2f\n", iBestPosition, pPos->fScore);
 
 		gdouble fFrontPadding = 0.0;
-		gdouble fFrontPaddingNext = (aPositions[iBestPosition].m_fLength - extents.width) / 2;
+		gdouble fFrontPaddingNext = (aPositions[iBestPosition].fLength - extents.width) / 2;
 		gint iStartPoint;
 
 		iStartPoint = iBestPosition;
-		if(aPositions[iBestPosition].m_fRunTotal > 0) {
+		if(aPositions[iBestPosition].fRunTotal > 0) {
 			iStartPoint = iBestPosition;
 		}
 		else {
 			// road runs backwards, reverse everything
-			iStartPoint = nNumPoints - iBestPosition - aPositions[iBestPosition].m_nSegments + 1;
+			iStartPoint = nNumPoints - iBestPosition - aPositions[iBestPosition].nSegments + 1;
 			// reverse the array
 			gint iRead,iWrite;
 			for(iWrite=0, iRead=nNumPoints-1 ; iRead>= 0 ; iWrite++, iRead--) {
@@ -807,7 +807,7 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 			}
 		}
 
-		gint iEndPoint = iStartPoint + aPositions[iBestPosition].m_nSegments;
+		gint iEndPoint = iStartPoint + aPositions[iBestPosition].nSegments;
 
 		gint nStringStartIndex = 0;
 
@@ -822,10 +822,10 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 			pMapPoint1 = apPoints[iPoint-1];
 			pMapPoint2 = apPoints[iPoint];
 
-			gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->m_fLongitude);
-			gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->m_fLatitude);
-			gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->m_fLongitude);
-			gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->m_fLatitude);
+			gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->fLongitude);
+			gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->fLatitude);
+			gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->fLongitude);
+			gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->fLatitude);
 
 			// determine slope of the line
 			gdouble fRise = fY2 - fY1;
@@ -844,13 +844,13 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 
 			// do this after the padding calculation to possibly save some CPU cycles
 			gdouble fAngleInRadians = atan(fRise / fRun);
-			if(fRun < 0.0) fAngleInRadians += M_PI;
+			if(fRun < 0.0) fAngleInRadians += PI;
 #ifdef ENABLE_ROUND_DOWN_TEXT_ANGLES
         fAngleInRadians = floor((fAngleInRadians * ROUND_DOWN_TEXT_ANGLE) + 0.5) / ROUND_DOWN_TEXT_ANGLE;
 #endif
 
 			//g_print("(fRise(%f) / fRun(%f)) = %f, atan(fRise / fRun) = %f: ", fRise, fRun, fRise / fRun, fAngleInRadians);
-			//g_print("=== NEW SEGMENT, pixel (deltaY=%f, deltaX=%f), line len=%f, (%f,%f)->(%f,%f)\n",fRise, fRun, fLineLength, pMapPoint1->m_fLatitude,pMapPoint1->m_fLongitude,pMapPoint2->m_fLatitude,pMapPoint2->m_fLongitude);
+			//g_print("=== NEW SEGMENT, pixel (deltaY=%f, deltaX=%f), line len=%f, (%f,%f)->(%f,%f)\n",fRise, fRun, fLineLength, pMapPoint1->fLatitude,pMapPoint1->fLongitude,pMapPoint2->fLatitude,pMapPoint2->fLongitude);
 			//g_print("  has screen coords (%f,%f)->(%f,%f)\n", fX1,fY1,fX2,fY2);
 
 			gchar azLabelSegment[DRAW_LABEL_BUFFER_LEN];
@@ -947,7 +947,7 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 			aBoundingPolygon[3].x = fDrawX + (fNormalizedX * extents.width);
 			aBoundingPolygon[3].y = fDrawY + (fNormalizedY * extents.width);
 
-			if(FALSE == scenemanager_can_draw_polygon(pMap->m_pSceneManager, aBoundingPolygon, 4, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
+			if(FALSE == scenemanager_can_draw_polygon(pMap->pSceneManager, aBoundingPolygon, 4, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
 				bGood = FALSE;
 				break;
 			}
@@ -960,7 +960,7 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 		
 		// reset these
 		fFrontPadding = 0.0;
-		fFrontPaddingNext = (aPositions[iBestPosition].m_fLength - extents.width) / 2;
+		fFrontPaddingNext = (aPositions[iBestPosition].fLength - extents.width) / 2;
 		nStringStartIndex = 0;
 */
 #endif
@@ -972,10 +972,10 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 			pMapPoint1 = apPoints[iPoint-1];
 			pMapPoint2 = apPoints[iPoint];
 
-			gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->m_fLongitude);
-			gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->m_fLatitude);
-			gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->m_fLongitude);
-			gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->m_fLatitude);
+			gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->fLongitude);
+			gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->fLatitude);
+			gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->fLongitude);
+			gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->fLatitude);
 
 			// determine slope of the line
 			gdouble fRise = fY2 - fY1;
@@ -994,7 +994,7 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 #endif
 
 			//g_print("(fRise(%f) / fRun(%f)) = %f, atan(fRise / fRun) = %f: ", fRise, fRun, fRise / fRun, fAngleInRadians);
-			//g_print("=== NEW SEGMENT, pixel (deltaY=%f, deltaX=%f), line len=%f, (%f,%f)->(%f,%f)\n",fRise, fRun, fLineLength, pMapPoint1->m_fLatitude,pMapPoint1->m_fLongitude,pMapPoint2->m_fLatitude,pMapPoint2->m_fLongitude);
+			//g_print("=== NEW SEGMENT, pixel (deltaY=%f, deltaX=%f), line len=%f, (%f,%f)->(%f,%f)\n",fRise, fRun, fLineLength, pMapPoint1->fLatitude,pMapPoint1->fLongitude,pMapPoint2->fLatitude,pMapPoint2->fLongitude);
 			//g_print("  has screen coords (%f,%f)->(%f,%f)\n", fX1,fY1,fX2,fY2);
 
 			gchar azLabelSegment[DRAW_LABEL_BUFFER_LEN];
@@ -1096,9 +1096,9 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 
 			// Draw a "halo" around text if the style calls for it
 			// XXX: This is WRONG, we need to draw halos for all segments FIRST, then draw all text
-			if(pLayerStyle->m_fHaloSize >= 0) {
+			if(pLayerStyle->fHaloSize >= 0) {
 				// Halo = stroking the text path with a fat white line
-				map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->m_clrHalo));
+				map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->clrHalo));
 
 				gint iHaloOffsets;
 
@@ -1110,19 +1110,19 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 					cairo_restore(pCairo);
 				}
 			}
-			map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->m_clrPrimary));
+			map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->clrPrimary));
 			cairo_move_to(pCairo, fDrawX, fDrawY);
 			cairo_rotate(pCairo, fAngleInRadians);
 			cairo_show_text(pCairo, azLabelSegment);
 			cairo_restore(pCairo);
 
 			// claim the space this took up
-			scenemanager_claim_polygon(pMap->m_pSceneManager, aBoundingPolygon, 4);
+			scenemanager_claim_polygon(pMap->pSceneManager, aBoundingPolygon, 4);
 		}
 		cairo_restore(pCairo);
 
 		// claim the label (so it won't be drawn twice)
-		scenemanager_claim_label(pMap->m_pSceneManager, pszLabel);
+		scenemanager_claim_label(pMap->pSceneManager, pszLabel);
 
 //         // success
 //         break;
@@ -1139,7 +1139,7 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t*
 {
 	if(pPointsArray->len < 3) return;
 
-	if(FALSE == scenemanager_can_draw_label_at(pMap->m_pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
+	if(FALSE == scenemanager_can_draw_label_at(pMap->pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
 		return;
 	}
 
@@ -1147,23 +1147,23 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t*
 	gdouble fMinLat = MAX_LATITUDE;
 	gdouble fMaxLon = MIN_LONGITUDE;
 	gdouble fMinLon = MAX_LONGITUDE;
-
+	
 	gint i;
 	for(i=0 ; i<pPointsArray->len ; i++) {
 		mappoint_t* pMapPoint = g_ptr_array_index(pPointsArray, i);
 
 		// find polygon bounding box for visibility test below
-		fMaxLat = max(pMapPoint->m_fLatitude,fMaxLat);
-		fMinLat = min(pMapPoint->m_fLatitude,fMinLat);
-		fMaxLon = max(pMapPoint->m_fLongitude,fMaxLon);
-		fMinLon = min(pMapPoint->m_fLongitude,fMinLon);
+		fMaxLat = max(pMapPoint->fLatitude,fMaxLat);
+		fMinLat = min(pMapPoint->fLatitude,fMinLat);
+		fMaxLon = max(pMapPoint->fLongitude,fMaxLon);
+		fMinLon = min(pMapPoint->fLongitude,fMinLon);
 	}
 
 	// rectangle overlap test
-	if(fMaxLat < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLatitude
-	   || fMaxLon < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLongitude
-	   || fMinLat > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLatitude
-	   || fMinLon > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLongitude)
+	if((fMaxLat < pRenderMetrics->rWorldBoundingBox.A.fLatitude)
+	   || (fMaxLon < pRenderMetrics->rWorldBoundingBox.A.fLongitude)
+	   || (fMinLat > pRenderMetrics->rWorldBoundingBox.B.fLatitude)
+	   || (fMinLon > pRenderMetrics->rWorldBoundingBox.B.fLongitude))
 	{
 	    return;	// not visible
 	}
@@ -1225,21 +1225,21 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t*
 		rcLabelOutline.width = (gint)(fLabelBoxWidth);
 		rcLabelOutline.y = (gint)(fDrawBoxCornerY);
 		rcLabelOutline.height = (gint)(fLabelBoxHeight);
-		if(FALSE == scenemanager_can_draw_rectangle(pMap->m_pSceneManager, &rcLabelOutline, SCENEMANAGER_FLAG_FULLY_ON_SCREEN)) {
+		if(FALSE == scenemanager_can_draw_rectangle(pMap->pSceneManager, &rcLabelOutline, SCENEMANAGER_FLAG_FULLY_ON_SCREEN)) {
 			continue;
 		}
 
 		// passed test!  claim this label and rectangle area
-		scenemanager_claim_label(pMap->m_pSceneManager, pszLabel);
-		scenemanager_claim_rectangle(pMap->m_pSceneManager, &rcLabelOutline);
+		scenemanager_claim_label(pMap->pSceneManager, pszLabel);
+		scenemanager_claim_rectangle(pMap->pSceneManager, &rcLabelOutline);
 
 		//
 		// Draw Halo for all lines, if style dictates.
 		//
-		if(pLayerStyle->m_fHaloSize >= 0) {
+		if(pLayerStyle->fHaloSize >= 0) {
 			cairo_save(pCairo);
 
-			map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->m_clrHalo));
+			map_draw_cairo_set_rgba(pCairo, &(pLayerStyle->clrHalo));
 
 			for(i=0 ; i<nLineCount ; i++) {
 				gint iHaloOffsets;
@@ -1276,37 +1276,37 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t*
 
 static void map_draw_cairo_map_scale(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics)
 {
-	zoomlevel_t* pZoomLevel = &g_sZoomLevels[pRenderMetrics->m_nZoomLevel];
+	zoomlevel_t* pZoomLevel = &g_sZoomLevels[pRenderMetrics->nZoomLevel];
 
 	// Imperial
 	gdouble fImperialLength = 0;
 	gchar* pszImperialLabel = NULL;
-	if(pZoomLevel->m_eScaleImperialUnit == UNIT_FEET) {
-		fImperialLength = (WORLD_FEET_TO_DEGREES(pZoomLevel->m_nScaleImperialNumber) / pRenderMetrics->m_fScreenLongitude) * (gdouble)pRenderMetrics->m_nWindowWidth;
-		pszImperialLabel = g_strdup_printf("%d ft", pZoomLevel->m_nScaleImperialNumber);
+	if(pZoomLevel->eScaleImperialUnit == UNIT_FEET) {
+		fImperialLength = (WORLD_FEET_TO_DEGREES(pZoomLevel->nScaleImperialNumber) / pRenderMetrics->fScreenLongitude) * (gdouble)pRenderMetrics->nWindowWidth;
+		pszImperialLabel = g_strdup_printf("%d ft", pZoomLevel->nScaleImperialNumber);
 	}
 	else {
-		fImperialLength = (WORLD_MILES_TO_DEGREES(pZoomLevel->m_nScaleImperialNumber) / pRenderMetrics->m_fScreenLongitude) * (gdouble)pRenderMetrics->m_nWindowWidth;
-		pszImperialLabel = g_strdup_printf("%d mi", pZoomLevel->m_nScaleImperialNumber);
+		fImperialLength = (WORLD_MILES_TO_DEGREES(pZoomLevel->nScaleImperialNumber) / pRenderMetrics->fScreenLongitude) * (gdouble)pRenderMetrics->nWindowWidth;
+		pszImperialLabel = g_strdup_printf("%d mi", pZoomLevel->nScaleImperialNumber);
 	}
 	fImperialLength = floor(fImperialLength);
 
 	// Metric
 	gdouble fMetricLength = 0;
 	gchar* pszMetricLabel = NULL;
-	if(pZoomLevel->m_eScaleMetricUnit == UNIT_METERS) {
-		fMetricLength = (WORLD_METERS_TO_DEGREES(pZoomLevel->m_nScaleMetricNumber) / pRenderMetrics->m_fScreenLongitude) * (gdouble)pRenderMetrics->m_nWindowWidth;
-		pszMetricLabel = g_strdup_printf("%d m", pZoomLevel->m_nScaleMetricNumber);
+	if(pZoomLevel->eScaleMetricUnit == UNIT_METERS) {
+		fMetricLength = (WORLD_METERS_TO_DEGREES(pZoomLevel->nScaleMetricNumber) / pRenderMetrics->fScreenLongitude) * (gdouble)pRenderMetrics->nWindowWidth;
+		pszMetricLabel = g_strdup_printf("%d m", pZoomLevel->nScaleMetricNumber);
 	}
 	else {
-		fMetricLength = (WORLD_KILOMETERS_TO_DEGREES(pZoomLevel->m_nScaleMetricNumber) * (gdouble)pRenderMetrics->m_nWindowWidth) / pRenderMetrics->m_fScreenLongitude;
-		pszMetricLabel = g_strdup_printf("%d km", pZoomLevel->m_nScaleMetricNumber);
+		fMetricLength = (WORLD_KILOMETERS_TO_DEGREES(pZoomLevel->nScaleMetricNumber) * (gdouble)pRenderMetrics->nWindowWidth) / pRenderMetrics->fScreenLongitude;
+		pszMetricLabel = g_strdup_printf("%d km", pZoomLevel->nScaleMetricNumber);
 	}
 	fMetricLength = floor(fMetricLength);
 
 	// XXX: Choose this based on where the scale should be on screen
 	gdouble fLeftCenterPointX = 10;
-	gdouble fLeftCenterPointY = ((gdouble)pRenderMetrics->m_nWindowHeight) - 20;
+	gdouble fLeftCenterPointY = ((gdouble)pRenderMetrics->nWindowHeight) - 20;
 
 #define MAP_SCALE_TICK_SIZE (10)		// size of tick mark extending up from the length line
 #define MAP_SCALE_FONT_NAME ("Bitstream Vera Sans")
@@ -1372,7 +1372,7 @@ static void map_draw_cairo_locations(map_t* pMap, cairo_t *pCairo, rendermetrics
 
 		// 2. Get array of Locations from the hash table using LocationSetID
 		GPtrArray* pLocationsArray;
-		pLocationsArray = g_hash_table_lookup(pMap->m_pLocationArrayHashTable, &(pLocationSet->m_nID));
+		pLocationsArray = g_hash_table_lookup(pMap->pLocationArrayHashTable, &(pLocationSet->nID));
 		if(pLocationsArray != NULL) {
 			// found existing array
 			map_draw_cairo_locationset(pMap, pCairo, pRenderMetrics, pLocationSet, pLocationsArray);
@@ -1393,10 +1393,10 @@ static void map_draw_cairo_locationselection_outline(cairo_t *pCairo, gdouble fP
 	gdouble fCorner = 30.0;
 	gdouble fArrowWidth = 30.0; 
 
-	gdouble fBoxX = pRect->m_A.m_nX + 0.5;
-	gdouble fBoxY = pRect->m_A.m_nY + 0.5;
-	gdouble fBoxWidth = pRect->m_B.m_nX - pRect->m_A.m_nX;
-	gdouble fBoxHeight = pRect->m_B.m_nY - pRect->m_A.m_nY;
+	gdouble fBoxX = pRect->A.nX + 0.5;
+	gdouble fBoxY = pRect->A.nY + 0.5;
+	gdouble fBoxWidth = pRect->B.nX - pRect->A.nX;
+	gdouble fBoxHeight = pRect->B.nY - pRect->A.nY;
 
 	typedef enum {
 		SIDE_BOTTOM = 1,
@@ -1488,10 +1488,10 @@ static void map_draw_cairo_locationselection_outline(cairo_t *pCairo, gdouble fP
 	cairo_rel_line_to(pCairo, fCloseRectWidth, 0.0);
 	cairo_stroke(pCairo);
 
-	pCloseRect->m_A.m_nX = (gint)((fBoxX + fBoxWidth) - fCloseRectRelief) - fCloseRectWidth;
-	pCloseRect->m_A.m_nY = (gint)fBoxY + fCloseRectRelief;
-	pCloseRect->m_B.m_nX = (gint)((fBoxX + fBoxWidth) - fCloseRectRelief);
-	pCloseRect->m_B.m_nY = (gint)fBoxY + fCloseRectRelief + fCloseRectWidth;
+	pCloseRect->A.nX = (gint)((fBoxX + fBoxWidth) - fCloseRectRelief) - fCloseRectWidth;
+	pCloseRect->A.nY = (gint)fBoxY + fCloseRectRelief;
+	pCloseRect->B.nX = (gint)((fBoxX + fBoxWidth) - fCloseRectRelief);
+	pCloseRect->B.nY = (gint)fBoxY + fCloseRectRelief + fCloseRectWidth;
 
 	// draw the X itself
 	cairo_set_line_width(pCairo, 2.0);
@@ -1518,22 +1518,22 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 	for(i=0 ; i<pLocationSelectionArray->len ; i++) {
 		locationselection_t* pLocationSelection = g_ptr_array_index(pLocationSelectionArray, i);
 
-		pLocationSelection->m_nNumURLs=0;
+		pLocationSelection->nNumURLs=0;
 
 		// bounding box test
-		if(pLocationSelection->m_Coordinates.m_fLatitude < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLatitude
-		   || pLocationSelection->m_Coordinates.m_fLongitude < pRenderMetrics->m_rWorldBoundingBox.m_A.m_fLongitude
-		   || pLocationSelection->m_Coordinates.m_fLatitude > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLatitude
-		   || pLocationSelection->m_Coordinates.m_fLongitude > pRenderMetrics->m_rWorldBoundingBox.m_B.m_fLongitude)
+		if(pLocationSelection->Coordinates.fLatitude < pRenderMetrics->rWorldBoundingBox.A.fLatitude
+		   || pLocationSelection->Coordinates.fLongitude < pRenderMetrics->rWorldBoundingBox.A.fLongitude
+		   || pLocationSelection->Coordinates.fLatitude > pRenderMetrics->rWorldBoundingBox.B.fLatitude
+		   || pLocationSelection->Coordinates.fLongitude > pRenderMetrics->rWorldBoundingBox.B.fLongitude)
 		{
-			pLocationSelection->m_bVisible = FALSE;
+			pLocationSelection->bVisible = FALSE;
 			continue;   // not visible
 		}
-		pLocationSelection->m_bVisible = TRUE;
+		pLocationSelection->bVisible = TRUE;
 
-		gdouble fX = SCALE_X(pRenderMetrics, pLocationSelection->m_Coordinates.m_fLongitude);
+		gdouble fX = SCALE_X(pRenderMetrics, pLocationSelection->Coordinates.fLongitude);
 		fX = floor(fX) + 0.5;
-		gdouble fY = SCALE_Y(pRenderMetrics, pLocationSelection->m_Coordinates.m_fLatitude);
+		gdouble fY = SCALE_Y(pRenderMetrics, pLocationSelection->Coordinates.fLatitude);
 		fY = floor(fY) + 0.5;
 
 		gdouble fBoxHeight = 105.0;
@@ -1546,12 +1546,12 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 		gdouble fBoxX = fX + fOffsetX;
 		gdouble fBoxY = (fY - fBoxHeight) + fOffsetY;
 
-		pLocationSelection->m_InfoBoxRect.m_A.m_nX = (gint)fBoxX;
-		pLocationSelection->m_InfoBoxRect.m_A.m_nY = (gint)fBoxY;
-		pLocationSelection->m_InfoBoxRect.m_B.m_nX = (gint)(fBoxX + fBoxWidth);
-		pLocationSelection->m_InfoBoxRect.m_B.m_nY = (gint)(fBoxY + fBoxHeight);
+		pLocationSelection->InfoBoxRect.A.nX = (gint)fBoxX;
+		pLocationSelection->InfoBoxRect.A.nY = (gint)fBoxY;
+		pLocationSelection->InfoBoxRect.B.nX = (gint)(fBoxX + fBoxWidth);
+		pLocationSelection->InfoBoxRect.B.nY = (gint)(fBoxY + fBoxHeight);
 
-		map_draw_cairo_locationselection_outline(pCairo, fX, fY, &(pLocationSelection->m_InfoBoxRect), &(pLocationSelection->m_InfoBoxCloseRect));
+		map_draw_cairo_locationselection_outline(pCairo, fX, fY, &(pLocationSelection->InfoBoxRect), &(pLocationSelection->InfoBoxCloseRect));
 
 //         gchar* pszFontFamily = ROAD_FONT;   // XXX: remove hardcoded font
 //         gint fTitleFontSize = 15.0;
@@ -1646,13 +1646,13 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 //         map_draw_text_underline(pCairo, fLabelWidth);
 //         cairo_show_text(pCairo, pszString);
 //
-//         screenrect_t* pRect = &(pLocationSelection->m_aURLs[pLocationSelection->m_nNumURLs].m_Rect);
-//         pRect->m_A.m_nX = fTextOffsetX;
-//         pRect->m_A.m_nY = fTextOffsetY - fFontHeight;
-//         pRect->m_B.m_nX = fTextOffsetX + fLabelWidth;
-//         pRect->m_B.m_nY = fTextOffsetY;
-//         pLocationSelection->m_aURLs[pLocationSelection->m_nNumURLs].m_pszURL = g_strdup(pszString);
-//         pLocationSelection->m_nNumURLs++;
+//         screenrect_t* pRect = &(pLocationSelection->aURLs[pLocationSelection->nNumURLs].Rect);
+//         pRect->A.nX = fTextOffsetX;
+//         pRect->A.nY = fTextOffsetY - fFontHeight;
+//         pRect->B.nX = fTextOffsetX + fLabelWidth;
+//         pRect->B.nY = fTextOffsetY;
+//         pLocationSelection->aURLs[pLocationSelection->nNumURLs].pszURL = g_strdup(pszString);
+//         pLocationSelection->nNumURLs++;
 //
 //         // draw 'edit' link
 //         pszString = "edit";
@@ -1671,11 +1671,11 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 //         cairo_show_text(pCairo, pszString);
 //         map_draw_text_underline(pCairo, fLabelWidth);
 //
-//         pRect = &(pLocationSelection->m_EditRect);
-//         pRect->m_A.m_nX = fTextOffsetX;
-//         pRect->m_A.m_nY = fTextOffsetY - fFontHeight;
-//         pRect->m_B.m_nX = fTextOffsetX + fLabelWidth;
-//         pRect->m_B.m_nY = fTextOffsetY;
+//         pRect = &(pLocationSelection->EditRect);
+//         pRect->A.nX = fTextOffsetX;
+//         pRect->A.nY = fTextOffsetY - fFontHeight;
+//         pRect->B.nX = fTextOffsetX + fLabelWidth;
+//         pRect->B.nY = fTextOffsetY;
 	}
 	cairo_restore(pCairo);
 }
@@ -1701,20 +1701,20 @@ static void map_draw_cairo_crosshair(map_t* pMap, cairo_t* pCairo, rendermetrics
 		cairo_set_alpha(pCairo, 1.0);
 		
 		// left line
-		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2) - (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH), (pRenderMetrics->m_nWindowHeight/2));
-		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2) - (CROSSHAIR_LINE_RELIEF), (pRenderMetrics->m_nWindowHeight/2));
+		cairo_move_to(pCairo, (pRenderMetrics->nWindowWidth/2) - (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH), (pRenderMetrics->nWindowHeight/2));
+		cairo_line_to(pCairo, (pRenderMetrics->nWindowWidth/2) - (CROSSHAIR_LINE_RELIEF), (pRenderMetrics->nWindowHeight/2));
 		// right line
-		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2) + (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH), (pRenderMetrics->m_nWindowHeight/2));
-		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2) + (CROSSHAIR_LINE_RELIEF), (pRenderMetrics->m_nWindowHeight/2));
+		cairo_move_to(pCairo, (pRenderMetrics->nWindowWidth/2) + (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH), (pRenderMetrics->nWindowHeight/2));
+		cairo_line_to(pCairo, (pRenderMetrics->nWindowWidth/2) + (CROSSHAIR_LINE_RELIEF), (pRenderMetrics->nWindowHeight/2));
 		// top line
-		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) - (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH));
-		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) - (CROSSHAIR_LINE_RELIEF));
+		cairo_move_to(pCairo, (pRenderMetrics->nWindowWidth/2), (pRenderMetrics->nWindowHeight/2) - (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH));
+		cairo_line_to(pCairo, (pRenderMetrics->nWindowWidth/2), (pRenderMetrics->nWindowHeight/2) - (CROSSHAIR_LINE_RELIEF));
 		// bottom line
-		cairo_move_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) + (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH));
-		cairo_line_to(pCairo, (pRenderMetrics->m_nWindowWidth/2), (pRenderMetrics->m_nWindowHeight/2) + (CROSSHAIR_LINE_RELIEF));
+		cairo_move_to(pCairo, (pRenderMetrics->nWindowWidth/2), (pRenderMetrics->nWindowHeight/2) + (CROSSHAIR_LINE_RELIEF + CROSSHAIR_LINE_LENGTH));
+		cairo_line_to(pCairo, (pRenderMetrics->nWindowWidth/2), (pRenderMetrics->nWindowHeight/2) + (CROSSHAIR_LINE_RELIEF));
 		cairo_stroke(pCairo);
 		
-		cairo_arc(pCairo, pRenderMetrics->m_nWindowWidth/2, pRenderMetrics->m_nWindowHeight/2, CROSSHAIR_CIRCLE_RADIUS, 0, 2*M_PI);
+		cairo_arc(pCairo, pRenderMetrics->nWindowWidth/2, pRenderMetrics->nWindowHeight/2, CROSSHAIR_CIRCLE_RADIUS, 0, 2*M_PI);
 		cairo_stroke(pCairo);
 	cairo_restore(pCairo);
 }
@@ -1725,9 +1725,9 @@ void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRe
 	location_t* pLoc = &loc;
 
 	// XXX:	debug
-	pLoc->m_pszName = "some address., Cambridge, MA, 02140";
-	pLoc->m_Coordinates.m_fLongitude = 0;
-	pLoc->m_Coordinates.m_fLatitude = 0;
+	pLoc->pszName = "some address., Cambridge, MA, 02140";
+	pLoc->Coordinates.fLongitude = 0;
+	pLoc->Coordinates.fLatitude = 0;
 
 	gchar* pszFontFamily = ROAD_FONT;
 	gdouble fFontSize = 14.0;
@@ -1742,12 +1742,12 @@ void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRe
 
 	// measure the label
 	cairo_text_extents_t extents;
-	cairo_text_extents(pCairo, pLoc->m_pszName, &extents);
+	cairo_text_extents(pCairo, pLoc->pszName, &extents);
 	gdouble fLabelWidth = extents.width;
 	gdouble fLabelHeight = extents.height;
 
-	gdouble fX = SCALE_X(pRenderMetrics, pLoc->m_Coordinates.m_fLongitude);
-	gdouble fY = SCALE_Y(pRenderMetrics, pLoc->m_Coordinates.m_fLatitude);
+	gdouble fX = SCALE_X(pRenderMetrics, pLoc->Coordinates.fLongitude);
+	gdouble fY = SCALE_Y(pRenderMetrics, pLoc->Coordinates.fLatitude);
 
 #define LOCATION_LABEL_CELL_PADDING	(4)
 
@@ -1766,7 +1766,7 @@ void map_draw_cairo_locations(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRe
 	
 	cairo_set_source_rgb(pCairo, 0/255.0, 0/255.0, 0/255.0);
 	cairo_move_to(pCairo, fX, fY+(fLabelHeight/2));
-	cairo_show_text(pCairo, pLoc->m_pszName);
+	cairo_show_text(pCairo, pLoc->pszName);
 
 	cairo_restore(pCairo);
 }
@@ -1777,16 +1777,16 @@ void map_draw_cairo_gps_trail(map_t* pMap, cairo_t* pCairo, pointstring_t* pPoin
 	map_get_render_metrics(pMap, &renderMetrics);
 	rendermetrics_t* pRenderMetrics = &renderMetrics;
 
-	if(pPointString->m_pPointsArray->len > 2) {
-		mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, 0);
+	if(pPointString->pPointsArray->len > 2) {
+		mappoint_t* pPoint = g_ptr_array_index(pPointString->pPointsArray, 0);
 		
 		// move to index 0
-		cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
+		cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pPoint->fLongitude), SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 
 		gint i;
-		for(i=1 ; i<pPointString->m_pPointsArray->len ; i++) {
-			pPoint = g_ptr_array_index(pPointString->m_pPointsArray, i);
-			cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->m_fLongitude), SCALE_Y(pRenderMetrics, pPoint->m_fLatitude));
+		for(i=1 ; i<pPointString->pPointsArray->len ; i++) {
+			pPoint = g_ptr_array_index(pPointString->pPointsArray, i);
+			cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->fLongitude), SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 		}
 
 		cairo_set_source_rgb(pCairo, 0.0, 0.0, 0.7);

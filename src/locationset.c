@@ -34,32 +34,32 @@
 #include "util.h"
 
 struct {
-	GPtrArray* m_pLocationSetArray;	// an array of locationsets
-	GHashTable* m_pLocationSetHash;	// stores pointers to locationsets, indexed by ID
+	GPtrArray* pLocationSetArray;	// an array of locationsets
+	GHashTable* pLocationSetHash;	// stores pointers to locationsets, indexed by ID
 
-	GMemChunk* m_pLocationSetChunkAllocator;	// allocs locationset_t objects
+	GMemChunk* pLocationSetChunkAllocator;	// allocs locationset_t objects
 } g_LocationSet;
 
 void locationset_init()
 {
-	g_LocationSet.m_pLocationSetArray = g_ptr_array_new();
-	g_LocationSet.m_pLocationSetHash = g_hash_table_new(g_int_hash, g_int_equal);
+	g_LocationSet.pLocationSetArray = g_ptr_array_new();
+	g_LocationSet.pLocationSetHash = g_hash_table_new(g_int_hash, g_int_equal);
 
 	// create memory allocator
-	g_LocationSet.m_pLocationSetChunkAllocator = g_mem_chunk_new("ROADSTER locationsets",
+	g_LocationSet.pLocationSetChunkAllocator = g_mem_chunk_new("ROADSTER locationsets",
 			sizeof(locationset_t), 20, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL);
+	g_return_if_fail(g_LocationSet.pLocationSetChunkAllocator != NULL);
 }
 
 // get a new locationset struct from the allocator
 static gboolean locationset_alloc(locationset_t** ppReturn)
 {
-	g_return_val_if_fail(g_LocationSet.m_pLocationSetChunkAllocator != NULL, FALSE);
+	g_return_val_if_fail(g_LocationSet.pLocationSetChunkAllocator != NULL, FALSE);
 
-	locationset_t* pNew = g_mem_chunk_alloc0(g_LocationSet.m_pLocationSetChunkAllocator);
+	locationset_t* pNew = g_mem_chunk_alloc0(g_LocationSet.pLocationSetChunkAllocator);
 
 	// set defaults
-	pNew->m_bVisible = TRUE;
+	pNew->bVisible = TRUE;
 
 	// return it
 	*ppReturn = pNew;
@@ -97,14 +97,14 @@ void locationset_load_locationsets(void)
 			locationset_t* pNewLocationSet = NULL;
 			locationset_alloc(&pNewLocationSet);
 
-			pNewLocationSet->m_nID = atoi(aRow[0]);
-			pNewLocationSet->m_pszName = g_strdup(aRow[1]);
-			pNewLocationSet->m_pszIconName = g_strdup(aRow[2]);
-			pNewLocationSet->m_nLocationCount = atoi(aRow[3]);
+			pNewLocationSet->nID = atoi(aRow[0]);
+			pNewLocationSet->pszName = g_strdup(aRow[1]);
+			pNewLocationSet->pszIconName = g_strdup(aRow[2]);
+			pNewLocationSet->nLocationCount = atoi(aRow[3]);
 
 			// Add the new set to both data structures
-			g_ptr_array_add(g_LocationSet.m_pLocationSetArray, pNewLocationSet);
-			g_hash_table_insert(g_LocationSet.m_pLocationSetHash, &pNewLocationSet->m_nID, pNewLocationSet);
+			g_ptr_array_add(g_LocationSet.pLocationSetArray, pNewLocationSet);
+			g_hash_table_insert(g_LocationSet.pLocationSetHash, &pNewLocationSet->nID, pNewLocationSet);
 		}
 		db_free_result(pResultSet);	
 	}
@@ -114,12 +114,12 @@ void locationset_load_locationsets(void)
 
 const GPtrArray* locationset_get_array(void)
 {
-	return g_LocationSet.m_pLocationSetArray;
+	return g_LocationSet.pLocationSetArray;
 }
 
 gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationSet)
 {
-	locationset_t* pLocationSet = g_hash_table_lookup(g_LocationSet.m_pLocationSetHash, &nLocationSetID);
+	locationset_t* pLocationSet = g_hash_table_lookup(g_LocationSet.pLocationSetHash, &nLocationSetID);
 	if(pLocationSet) {
 		*ppLocationSet = pLocationSet;
 		return TRUE;
@@ -129,12 +129,12 @@ gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationS
 
 gboolean locationset_is_visible(locationset_t* pLocationSet)
 {
-	return pLocationSet->m_bVisible;
+	return pLocationSet->bVisible;
 }
 
 void locationset_set_visible(locationset_t* pLocationSet, gboolean bVisible)
 {
-	pLocationSet->m_bVisible = bVisible;
+	pLocationSet->bVisible = bVisible;
 }
 
 #ifdef ROADSTER_DEAD_CODE
@@ -145,19 +145,19 @@ static void locationset_free(locationset_t* pLocationSet)
 	locationset_clear(pLocationSet);
 
 	// give back to allocator
-	g_mem_chunk_free(g_LocationSet.m_pLocationSetChunkAllocator, pLocationSet);
+	g_mem_chunk_free(g_LocationSet.pLocationSetChunkAllocator, pLocationSet);
 }
 
 static void locationset_clear_all_locations(void)
 {
 	// delete all sets but don't delete array of sets
 	gint i;
-	for(i=(g_LocationSet.m_pLocationSetArray->len)-1 ; i>=0 ; i--) {
-		locationset_t* pLocationSet = g_ptr_array_index(g_LocationSet.m_pLocationSetArray, i);
+	for(i=(g_LocationSet.pLocationSetArray->len)-1 ; i>=0 ; i--) {
+		locationset_t* pLocationSet = g_ptr_array_index(g_LocationSet.pLocationSetArray, i);
 		locationset_clear(pLocationSet);
 	}
-//	g_hash_table_foreach_steal(g_LocationSet.m_pLocationSets, callback_delete_pointset, NULL);
-//	g_assert(g_hash_table_size(g_LocationSet.m_pLocationSets) == 0);
+//	g_hash_table_foreach_steal(g_LocationSet.pLocationSets, callback_delete_pointset, NULL);
+//	g_assert(g_hash_table_size(g_LocationSet.pLocationSets) == 0);
 }
 */
 #endif

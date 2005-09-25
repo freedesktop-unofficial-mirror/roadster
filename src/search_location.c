@@ -36,12 +36,12 @@
 #define SEARCH_RESULT_COUNT_LIMIT	(100)
 
 //typedef struct {
-//	mappoint_t m_ptCenter;
-//	gdouble m_fRadiusInDegrees;
-//	gint m_nLocationSetID;
-//	gchar* m_pszCleanedSentence;
-//	gchar** m_aWords;
-//	gint m_nWordCount;
+//	mappoint_t ptCenter;
+//	gdouble fRadiusInDegrees;
+//	gint nLocationSetID;
+//	gchar* pszCleanedSentence;
+//	gchar** aWords;
+//	gint nWordCount;
 //} locationsearch_t;
 
 void search_location_on_words(gchar** aWords, gint nWordCount);
@@ -192,22 +192,22 @@ void search_location_on_locationsearch_struct(locationsearch_t* pLocationSearch)
 		mappoint_t ptCenter;
 		map_get_centerpoint(&ptCenter);
 
-		gdouble fDegrees = pLocationSearch->m_fRadiusInDegrees;
+		gdouble fDegrees = pLocationSearch->fRadiusInDegrees;
 		pszCoordinatesMatch = g_strdup_printf(
 			" AND MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
-			ptCenter.m_fLatitude + fDegrees, ptCenter.m_fLongitude - fDegrees, 	// upper left
-			ptCenter.m_fLatitude + fDegrees, ptCenter.m_fLongitude + fDegrees, 	// upper right
-			ptCenter.m_fLatitude - fDegrees, ptCenter.m_fLongitude + fDegrees, 	// bottom right
-			ptCenter.m_fLatitude - fDegrees, ptCenter.m_fLongitude - fDegrees,	// bottom left
-			ptCenter.m_fLatitude + fDegrees, ptCenter.m_fLongitude - fDegrees);	// upper left again
+			ptCenter.fLatitude + fDegrees, ptCenter.fLongitude - fDegrees, 	// upper left
+			ptCenter.fLatitude + fDegrees, ptCenter.fLongitude + fDegrees, 	// upper right
+			ptCenter.fLatitude - fDegrees, ptCenter.fLongitude + fDegrees, 	// bottom right
+			ptCenter.fLatitude - fDegrees, ptCenter.fLongitude - fDegrees,	// bottom left
+			ptCenter.fLatitude + fDegrees, ptCenter.fLongitude - fDegrees);	// upper left again
 	} else {
 		pszCoordinatesMatch = g_strdup("");
 	}
 
 	// location set matching
 	gchar* pszLocationSetMatch = NULL;
-	if(pLocationSearch->m_nLocationSetID != 0) {
-		pszLocationSetMatch = g_strdup_printf(" AND LocationSetID=%d", pLocationSearch->m_nLocationSetID);		
+	if(pLocationSearch->nLocationSetID != 0) {
+		pszLocationSetMatch = g_strdup_printf(" AND LocationSetID=%d", pLocationSearch->nLocationSetID);		
 	}
 	else {
 		pszLocationSetMatch = g_strdup("");
@@ -216,8 +216,8 @@ void search_location_on_locationsearch_struct(locationsearch_t* pLocationSearch)
 	// attribute value matching
 	gchar* pszAttributeNameJoin = NULL;
 	gchar* pszAttributeNameMatch = NULL;
-	if(pLocationSearch->m_pszCleanedSentence[0] != '\0') {
-		pszAttributeNameJoin = g_strdup_printf("LEFT JOIN LocationAttributeValue ON (LocationAttributeValue.LocationID=Location.ID AND MATCH(LocationAttributeValue.Value) AGAINST ('%s' IN BOOLEAN MODE))", pLocationSearch->m_pszCleanedSentence);		
+	if(pLocationSearch->pszCleanedSentence[0] != '\0') {
+		pszAttributeNameJoin = g_strdup_printf("LEFT JOIN LocationAttributeValue ON (LocationAttributeValue.LocationID=Location.ID AND MATCH(LocationAttributeValue.Value) AGAINST ('%s' IN BOOLEAN MODE))", pLocationSearch->pszCleanedSentence);		
 		pszAttributeNameMatch = g_strdup_printf("AND LocationAttributeValue.ID IS NOT NULL");
 	}
 	else {

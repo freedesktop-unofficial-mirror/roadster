@@ -26,8 +26,8 @@
 
 // holds points that form a road or polygon (park, etc.)
 typedef struct {
-	gchar* m_pszName;
-	GPtrArray* m_pPointsArray;
+	gchar* pszName;
+	GPtrArray* pPointsArray;
 } pointstring_t;
 
 void pointstring_init(void);

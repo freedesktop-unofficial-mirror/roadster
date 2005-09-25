@@ -65,7 +65,7 @@ gboolean pointstring_alloc(pointstring_t** ppPointString)
 #endif
 	if(pNew) {
 		// configure it
-		pNew->m_pPointsArray = g_ptr_array_sized_new(2);
+		pNew->pPointsArray = g_ptr_array_sized_new(2);
 		*ppPointString = pNew;
 		return TRUE;
 	}
@@ -78,14 +78,14 @@ void pointstring_free(pointstring_t* pPointString)
 	g_return_if_fail(pPointString != NULL);
 
 	int i;
-	for(i = (pPointString->m_pPointsArray->len - 1) ; i>=0 ; i--) {
-		mappoint_t* pPoint = g_ptr_array_remove_index_fast(pPointString->m_pPointsArray, i);
+	for(i = (pPointString->pPointsArray->len - 1) ; i>=0 ; i--) {
+		mappoint_t* pPoint = g_ptr_array_remove_index_fast(pPointString->pPointsArray, i);
 		point_free(pPoint);
 	}
-	g_assert(pPointString->m_pPointsArray->len == 0);
+	g_assert(pPointString->pPointsArray->len == 0);
 
-	g_ptr_array_free(pPointString->m_pPointsArray, TRUE);
-	g_free(pPointString->m_pszName);
+	g_ptr_array_free(pPointString->pPointsArray, TRUE);
+	g_free(pPointString->pszName);
 
 #ifdef USE_GFREELIST
 	g_free_list_free(g_pPointStringFreeList, pPointString);
@@ -102,14 +102,14 @@ void pointstring_append_point(pointstring_t* pPointString, const mappoint_t* pPo
 
 	memcpy(pNewPoint, pPoint, sizeof(mappoint_t));
 
-	g_ptr_array_add(pPointString->m_pPointsArray, pNewPoint);
+	g_ptr_array_add(pPointString->pPointsArray, pNewPoint);
 }
 
 void pointstring_debug_print(pointstring_t* pPointString)
 {
 	int i;
-	for(i=0 ; i<pPointString->m_pPointsArray->len ; i++) {
-		mappoint_t* pPoint = g_ptr_array_index(pPointString->m_pPointsArray, i);
-		g_print("(%f, %f)", pPoint->m_fLatitude, pPoint->m_fLongitude);
+	for(i=0 ; i<pPointString->pPointsArray->len ; i++) {
+		mappoint_t* pPoint = g_ptr_array_index(pPointString->pPointsArray, i);
+		g_print("(%f, %f)", pPoint->fLatitude, pPoint->fLongitude);
 	}
 }

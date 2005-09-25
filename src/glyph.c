@@ -27,12 +27,12 @@
 #include "glyph.h"
 
 struct {
-	GPtrArray* m_pGlyphArray;	// to store all glyphs we hand out
+	GPtrArray* pGlyphArray;	// to store all glyphs we hand out
 } g_Glyph;
 
 void glyph_init(void)
 {
-	g_Glyph.m_pGlyphArray = g_ptr_array_new();
+	g_Glyph.pGlyphArray = g_ptr_array_new();
 }
 
 #define MAX_GLYPH_FILE_NAME_LEN		(30)
@@ -99,9 +99,9 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 		pNewPixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, nMaxWidth, nMaxHeight);
 		gdk_pixbuf_fill(pNewPixbuf, 0xFF000080);
 	}
-	pNewGlyph->m_pPixbuf = pNewPixbuf;
-	pNewGlyph->m_nWidth = gdk_pixbuf_get_width(pNewPixbuf);
-	pNewGlyph->m_nHeight = gdk_pixbuf_get_height(pNewPixbuf);
+	pNewGlyph->pPixbuf = pNewPixbuf;
+	pNewGlyph->nWidth = gdk_pixbuf_get_width(pNewPixbuf);
+	pNewGlyph->nHeight = gdk_pixbuf_get_height(pNewPixbuf);
 }
 
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
@@ -109,14 +109,14 @@ glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeigh
 	// NOTE: We always return something!
 	glyph_t* pNewGlyph = g_new0(glyph_t, 1);
 
-	pNewGlyph->m_pszName = g_strdup(pszName);
-	pNewGlyph->m_nMaxWidth = nMaxWidth;
-	pNewGlyph->m_nMaxHeight = nMaxHeight;
+	pNewGlyph->pszName = g_strdup(pszName);
+	pNewGlyph->nMaxWidth = nMaxWidth;
+	pNewGlyph->nMaxHeight = nMaxHeight;
 
 	// call internal function to fill the struct
 	_glyph_load_at_size_into_struct(pNewGlyph, pszName, nMaxWidth, nMaxHeight);
 
-	g_ptr_array_add(g_Glyph.m_pGlyphArray, pNewGlyph);
+	g_ptr_array_add(g_Glyph.pGlyphArray, pNewGlyph);
 
 	return pNewGlyph;
 }
@@ -124,16 +124,16 @@ glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeigh
 GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph)
 {
 	g_assert(pGlyph != NULL);
-	g_assert(pGlyph->m_pPixbuf != NULL);
+	g_assert(pGlyph->pPixbuf != NULL);
 
-	return pGlyph->m_pPixbuf;
+	return pGlyph->pPixbuf;
 }
 
 void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY)
 {
 //     GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file_at_size("/home/yella/Desktop/interstate-sign.svg", 32, 32, NULL);
-//     gdk_draw_pixbuf(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window,
-//                     GTK_WIDGET(g_MainWindow.m_pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.m_pDrawingArea)],
+//     gdk_draw_pixbuf(GTK_WIDGET(g_MainWindow.pDrawingArea)->window,
+//                     GTK_WIDGET(g_MainWindow.pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.pDrawingArea)],
 //                     pixbuf,
 //                     0,0,                        // src
 //                     100,100,                    // x/y to draw to
@@ -144,30 +144,30 @@ void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble
 void glyph_free(glyph_t* pGlyph)
 {
 	g_assert(pGlyph);
-	gdk_pixbuf_unref(pGlyph->m_pPixbuf);
-	g_free(pGlyph->m_pszName);
+	gdk_pixbuf_unref(pGlyph->pPixbuf);
+	g_free(pGlyph->pszName);
 	g_free(pGlyph);
 }
 
 void glyph_deinit(void)
 {
 	gint i;
-	for(i=0 ; i<g_Glyph.m_pGlyphArray->len ; i++) {
-		glyph_free(g_ptr_array_index(g_Glyph.m_pGlyphArray, i));
+	for(i=0 ; i<g_Glyph.pGlyphArray->len ; i++) {
+		glyph_free(g_ptr_array_index(g_Glyph.pGlyphArray, i));
 	}
-	g_ptr_array_free(g_Glyph.m_pGlyphArray, TRUE);
+	g_ptr_array_free(g_Glyph.pGlyphArray, TRUE);
 }
 
 void glyph_reload_all(void)
 {
 	gint i;
-	for(i=0 ; i<g_Glyph.m_pGlyphArray->len ; i++) {
-		glyph_t* pGlyph = g_ptr_array_index(g_Glyph.m_pGlyphArray, i);
+	for(i=0 ; i<g_Glyph.pGlyphArray->len ; i++) {
+		glyph_t* pGlyph = g_ptr_array_index(g_Glyph.pGlyphArray, i);
 
-		gdk_pixbuf_unref(pGlyph->m_pPixbuf);	pGlyph->m_pPixbuf = NULL;
+		gdk_pixbuf_unref(pGlyph->pPixbuf);	pGlyph->pPixbuf = NULL;
 		// the rest of the fields remain.
 
-		_glyph_load_at_size_into_struct(pGlyph, pGlyph->m_pszName, pGlyph->m_nMaxWidth, pGlyph->m_nMaxHeight);
+		_glyph_load_at_size_into_struct(pGlyph, pGlyph->pszName, pGlyph->nMaxWidth, pGlyph->nMaxHeight);
 	}
 }
 
@@ -187,13 +187,13 @@ void glyph_reload_all(void)
 		return 0;
 	}
 	glyph_t* pNewGlyph = g_new0(glyph_t, 1);
-	pNewGlyph->m_pCairoSVG = pCairoSVG;
+	pNewGlyph->pCairoSVG = pCairoSVG;
 
-	svg_cairo_get_size(pNewGlyph->m_pCairoSVG, &(pNewGlyph->m_nWidth), &(pNewGlyph->m_nHeight));
+	svg_cairo_get_size(pNewGlyph->pCairoSVG, &(pNewGlyph->nWidth), &(pNewGlyph->nHeight));
 
 	// add it to array
-	gint nGlyphHandle = g_Glyph.m_pGlyphArray->len;  // next available slot
-	g_ptr_array_add(g_Glyph.m_pGlyphArray, pNewGlyph);
+	gint nGlyphHandle = g_Glyph.pGlyphArray->len;  // next available slot
+	g_ptr_array_add(g_Glyph.pGlyphArray, pNewGlyph);
 
 	return nGlyphHandle;
 
@@ -208,8 +208,8 @@ void glyph_reload_all(void)
 
 	cairo_save(pCairo);
 		cairo_set_alpha(pCairo, 0.5);
-		cairo_translate(pCairo, (fX - (pGlyph->m_nWidth/2)), (fY - (pGlyph->m_nHeight/2)));
-		svg_cairo_render(pGlyph->m_pCairoSVG, pCairo);
+		cairo_translate(pCairo, (fX - (pGlyph->nWidth/2)), (fY - (pGlyph->nHeight/2)));
+		svg_cairo_render(pGlyph->pCairoSVG, pCairo);
 	cairo_restore(pCairo);
 */
 #endif

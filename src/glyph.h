@@ -28,12 +28,12 @@
 #include <cairo.h>
 
 typedef struct {
-	GdkPixbuf* m_pPixbuf;
-	gint m_nWidth;
-	gint m_nHeight;
-	gint m_nMaxWidth;
-	gint m_nMaxHeight;
-	gchar* m_pszName;
+	GdkPixbuf* pPixbuf;
+	gint nWidth;
+	gint nHeight;
+	gint nMaxWidth;
+	gint nMaxHeight;
+	gchar* pszName;
 } glyph_t;
 
 void glyph_init(void);

@@ -27,11 +27,11 @@
 #include <mysql.h>
 
 typedef struct db_connection {
-	MYSQL *m_pMySQLConnection;
-	gchar* m_pzHost;
-	gchar* m_pzUserName;
-	gchar* m_pzPassword;
-	gchar* m_pzDatabase;
+	MYSQL* pMySQLConnection;
+	gchar* pzHost;
+	gchar* pzUserName;
+	gchar* pzPassword;
+	gchar* pzDatabase;
 } db_connection_t;
 
 typedef MYSQL_RES db_resultset_t;

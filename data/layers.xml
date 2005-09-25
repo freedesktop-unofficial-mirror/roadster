@@ -230,7 +230,7 @@
 <layer data-source="railroads" draw-type="lines">
     <!-- railroad dashed inner line -->
     <property zoom-level="1-2" name="line-width" value="2" />
-	<property zoom-level="1-2" name="dash-pattern" value="5 5" />
+	<property zoom-level="1-2" name="dash-pattern" value="8 8" />
 
     <property zoom-level="3" name="line-width" value="6" />
 	<property zoom-level="3" name="dash-pattern" value="4 20" />
@@ -238,19 +238,19 @@
     <property zoom-level="4-5" name="line-width" value="3" />
     <property zoom-level="4-5" name="dash-pattern" value="4 20" />
 	<property zoom-level="1-5" name="line-cap" value="square" />
-	<property zoom-level="1-5" name="color" value="#858585FF" />
+	<property zoom-level="1-5" name="color" value="#B5B5B5FF" />
 </layer>
 <layer data-source="railroads" draw-type="lines">
     <!-- railroad solid inner line -->
 	<property zoom-level="1-2" name="line-width" value="1" />
 	<property zoom-level="3-5" name="line-width" value="3" />
-	<property zoom-level="1-5" name="color" value="#CCCCCCFF" />
+	<property zoom-level="1-5" name="color" value="#FCFCFCFF" />
 </layer>
 <layer data-source="railroads" draw-type="lines">
     <!-- railroad solid outer line -->
 	<property zoom-level="1-2" name="line-width" value="4" />
 	<property zoom-level="3-5" name="line-width" value="5" />
-	<property zoom-level="1-5" name="color" value="#858585FF" />
+	<property zoom-level="1-5" name="color" value="#A5A5A5FF" />
 </layer>
 
 <layer data-source="rivers" draw-type="lines">
@@ -261,6 +261,15 @@
 	<property zoom-level="4" name="line-width" value="5" />
 	<property zoom-level="5" name="line-width" value="8" />
 	<property zoom-level="1-5" name="color" value="#9cb2ceFF" />
+</layer>
+<layer data-source="rivers" draw-type="lines">
+     # gives a fuzzy border to lakes in non-AA render mode
+     <property zoom-level="1" name="line-width" value="4" />
+     <property zoom-level="2" name="line-width" value="5" />
+     <property zoom-level="3" name="line-width" value="6" />
+     <property zoom-level="4" name="line-width" value="7" />
+     <property zoom-level="5" name="line-width" value="10" />
+	<property zoom-level="1-5" name="color" value="#C0C8D5FF" />
 </layer>
 
 #
@@ -280,7 +289,7 @@
 </layer>
 
 <layer data-source="misc-areas" draw-type="polygons">
-	<property zoom-level="1-5" name="color" value="#B0B0B0ff" />
+	<property zoom-level="1-5" name="color" value="#D0D0D0ff" />
 </layer>
 
 <!-- <layer data-source="urban-areas" draw-type="polygons">           -->

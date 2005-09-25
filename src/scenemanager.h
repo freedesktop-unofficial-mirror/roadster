@@ -30,12 +30,12 @@
 #define SCENEMANAGER_FLAG_PARTLY_ON_SCREEN	(2)
 
 typedef struct scenemanager {
-	GdkRegion* m_pTakenRegion;
+	GdkRegion* pTakenRegion;
 
-	gint m_nWindowWidth;
-	gint m_nWindowHeight;
+	gint nWindowWidth;
+	gint nWindowHeight;
 
-	GHashTable* m_pLabelHash;
+	GHashTable* pLabelHash;
 } scenemanager_t;
 
 void scenemanager_init(void);

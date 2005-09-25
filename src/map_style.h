@@ -33,39 +33,39 @@ G_BEGIN_DECLS
 #include "map.h"
 
 typedef struct dashstyle {
-	gdouble* m_pafDashList;	// the dashes, as an array of gdouble's (for Cairo)
-	gint8* m_panDashList;	// the dashes, as an array of gint8's (for GDK)
-	gint m_nDashCount;		// how many
+	gdouble* pafDashList;	// the dashes, as an array of gdouble's (for Cairo)
+	gint8* panDashList;	// the dashes, as an array of gint8's (for GDK)
+	gint nDashCount;		// how many
 } dashstyle_t;
 
 // defines the look of a layer
 typedef struct layerstyle {
-	color_t m_clrPrimary;	// Color used for polygon fill or line stroke
-	gdouble m_fLineWidth;
+	color_t clrPrimary;	// Color used for polygon fill or line stroke
+	gdouble fLineWidth;
 
-	gint m_nJoinStyle;
-	gint m_nCapStyle;
+	gint nJoinStyle;
+	gint nCapStyle;
 	
-	dashstyle_t* m_pDashStyle;
+	dashstyle_t* pDashStyle;
 
 	// XXX: switch to this:
-	//dashstyle_t m_pDashStyle;	// can be NULL
+	//dashstyle_t pDashStyle;	// can be NULL
 
 	// Used just for text
-	gdouble m_fFontSize;
-	gboolean m_bFontBold;
-	gdouble m_fHaloSize;	// actually a stroke width
-	color_t m_clrHalo;
-	gint m_nPixelOffsetX;
-	gint m_nPixelOffsetY;
+	gdouble fFontSize;
+	gboolean bFontBold;
+	gdouble fHaloSize;	// actually a stroke width
+	color_t clrHalo;
+	gint nPixelOffsetX;
+	gint nPixelOffsetY;
 } maplayerstyle_t;
 
 typedef struct layer {
-	gint m_nDataSource;		// which data to use (lakes, roads...)
-	gint m_nDrawType;		// as lines, polygons, etc.
+	gint nDataSource;		// which data to use (lakes, roads...)
+	gint nDrawType;		// as lines, polygons, etc.
 
 	// A layer has a style for each zoomlevel
-	maplayerstyle_t* m_paStylesAtZoomLevels[ NUM_ZOOM_LEVELS ];
+	maplayerstyle_t* paStylesAtZoomLevels[ NUM_ZOOM_LEVELS ];
 } maplayer_t;
 
 //extern layer_t * g_aLayers[NUM_LAYERS+1];

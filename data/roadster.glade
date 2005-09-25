@@ -1314,7 +1314,7 @@ Banks</property>
 		      <property name="use_underline">True</property>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10171">
+			<widget class="GtkImage" id="image10221">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -1347,7 +1347,7 @@ Banks</property>
 		      <property name="use_underline">True</property>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10172">
+			<widget class="GtkImage" id="image10222">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-save-as</property>
 			  <property name="icon_size">1</property>
@@ -1373,7 +1373,7 @@ Banks</property>
 		      <signal name="activate" handler="mainwindow_on_quitmenuitem_activate" last_modification_time="Sat, 12 Mar 2005 06:47:26 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10173">
+			<widget class="GtkImage" id="image10223">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-quit</property>
 			  <property name="icon_size">1</property>
@@ -1424,7 +1424,7 @@ Banks</property>
 		  <child>
 		    <widget class="GtkCheckMenuItem" id="statusbarmenuitem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Statusbar</property>
+		      <property name="label" translatable="yes">Status_bar</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">True</property>
 		      <signal name="activate" handler="mainwindow_on_statusbarmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
@@ -1461,12 +1461,14 @@ Banks</property>
 
 		  <child>
 		    <widget class="GtkSeparatorMenuItem" id="separator12">
+		      <property name="visible">True</property>
 		    </widget>
 		  </child>
 
 		  <child>
 		    <widget class="GtkMenuItem" id="map_style">
-		      <property name="label" translatable="yes">Map Style</property>
+		      <property name="visible">True</property>
+		      <property name="label" translatable="yes">_Map Style</property>
 		      <property name="use_underline">True</property>
 
 		      <child>
@@ -1476,7 +1478,7 @@ Banks</property>
 			    <widget class="GtkRadioMenuItem" id="auto1">
 			      <property name="visible">True</property>
 			      <property name="sensitive">False</property>
-			      <property name="label" translatable="yes">Auto</property>
+			      <property name="label" translatable="yes">_Auto</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">False</property>
 			    </widget>
@@ -1485,7 +1487,7 @@ Banks</property>
 			  <child>
 			    <widget class="GtkRadioMenuItem" id="map_style_daytime">
 			      <property name="visible">True</property>
-			      <property name="label" translatable="yes">Day Colors</property>
+			      <property name="label" translatable="yes">_Day Colors</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">False</property>
 			      <property name="group">auto1</property>
@@ -1495,7 +1497,7 @@ Banks</property>
 			  <child>
 			    <widget class="GtkRadioMenuItem" id="nighttime1">
 			      <property name="visible">True</property>
-			      <property name="label" translatable="yes">Night Colors</property>
+			      <property name="label" translatable="yes">_Night Colors</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">True</property>
 			      <property name="group">auto1</property>
@@ -1515,7 +1517,7 @@ Banks</property>
 		  <child>
 		    <widget class="GtkCheckMenuItem" id="fullscreenmenuitem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Full Screen</property>
+		      <property name="label" translatable="yes">_Full Screen</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
 		      <signal name="activate" handler="mainwindow_on_fullscreenmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:20:46 GMT"/>
@@ -1540,13 +1542,13 @@ Banks</property>
 		    <widget class="GtkImageMenuItem" id="backmenuitem">
 		      <property name="visible">True</property>
 		      <property name="sensitive">False</property>
-		      <property name="label" translatable="yes">Back</property>
+		      <property name="label" translatable="yes">_Back</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="mainwindow_on_backbutton_clicked" last_modification_time="Wed, 14 Sep 2005 21:36:14 GMT"/>
 		      <accelerator key="Left" modifiers="GDK_MOD1_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10174">
+			<widget class="GtkImage" id="image10224">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-go-back</property>
 			  <property name="icon_size">1</property>
@@ -1563,13 +1565,13 @@ Banks</property>
 		    <widget class="GtkImageMenuItem" id="forwardmenuitem">
 		      <property name="visible">True</property>
 		      <property name="sensitive">False</property>
-		      <property name="label" translatable="yes">Forward</property>
+		      <property name="label" translatable="yes">_Forward</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="mainwindow_on_forwardbutton_clicked" last_modification_time="Wed, 14 Sep 2005 21:36:14 GMT"/>
 		      <accelerator key="Right" modifiers="GDK_MOD1_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10175">
+			<widget class="GtkImage" id="image10225">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-media-forward</property>
 			  <property name="icon_size">1</property>
@@ -1591,7 +1593,7 @@ Banks</property>
 		  <child>
 		    <widget class="GtkMenuItem" id="nextresultmenuitem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Next Search Result</property>
+		      <property name="label" translatable="yes">_Next Search Result</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="searchwindow_on_nextresultbutton_clicked" last_modification_time="Thu, 22 Sep 2005 21:16:04 GMT"/>
 		      <accelerator key="N" modifiers="GDK_CONTROL_MASK" signal="activate"/>
@@ -1601,7 +1603,7 @@ Banks</property>
 		  <child>
 		    <widget class="GtkMenuItem" id="previousresultmenuitem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Previous Search Result</property>
+		      <property name="label" translatable="yes">_Previous Search Result</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="searchwindow_on_previousresultbutton_clicked" last_modification_time="Thu, 22 Sep 2005 21:30:26 GMT"/>
 		      <accelerator key="N" modifiers="GDK_CONTROL_MASK | GDK_SHIFT_MASK" signal="activate"/>
@@ -1625,12 +1627,12 @@ Banks</property>
 		    <widget class="GtkImageMenuItem" id="send_and_receive_places1">
 		      <property name="visible">True</property>
 		      <property name="sensitive">False</property>
-		      <property name="label" translatable="yes">Send / Receive</property>
+		      <property name="label" translatable="yes">_Send / Receive</property>
 		      <property name="use_underline">True</property>
 		      <accelerator key="F9" modifiers="0" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10176">
+			<widget class="GtkImage" id="image10226">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-refresh</property>
 			  <property name="icon_size">1</property>
@@ -1653,7 +1655,7 @@ Banks</property>
 		    <widget class="GtkMenuItem" id="webmapsmenuitem">
 		      <property name="visible">True</property>
 		      <property name="tooltip" translatable="yes">View this map location using an online mapping service</property>
-		      <property name="label" translatable="yes">Open Web Map</property>
+		      <property name="label" translatable="yes">Open _Web Map</property>
 		      <property name="use_underline">True</property>
 		    </widget>
 		  </child>
@@ -1679,7 +1681,7 @@ Banks</property>
 		      <signal name="activate" handler="mainwindow_on_aboutmenuitem_activate" last_modification_time="Sat, 12 Mar 2005 06:48:18 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10177">
+			<widget class="GtkImage" id="image10227">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-about</property>
 			  <property name="icon_size">1</property>
@@ -1731,7 +1733,7 @@ Banks</property>
 		      <signal name="activate" handler="mainwindow_on_import_maps_activate" last_modification_time="Fri, 04 Mar 2005 04:28:20 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10178">
+			<widget class="GtkImage" id="image10228">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -1753,13 +1755,13 @@ Banks</property>
 		  <child>
 		    <widget class="GtkImageMenuItem" id="reloadstylesmenuitem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Reload Styles</property>
+		      <property name="label" translatable="yes">Reload _Styles</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="mainwindow_on_reloadstylesmenuitem_activate" last_modification_time="Fri, 04 Mar 2005 04:30:08 GMT"/>
 		      <accelerator key="F5" modifiers="0" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10179">
+			<widget class="GtkImage" id="image10229">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-refresh</property>
 			  <property name="icon_size">1</property>
@@ -1775,13 +1777,13 @@ Banks</property>
 		  <child>
 		    <widget class="GtkImageMenuItem" id="reloadglyphsmenuitem">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Reload Images</property>
+		      <property name="label" translatable="yes">Reload _Images</property>
 		      <property name="use_underline">True</property>
 		      <signal name="activate" handler="mainwindow_on_reloadglyphsmenuitem_activate" last_modification_time="Fri, 23 Sep 2005 05:59:47 GMT"/>
 		      <accelerator key="F6" modifiers="0" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10180">
+			<widget class="GtkImage" id="image10230">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-refresh</property>
 			  <property name="icon_size">1</property>
@@ -1809,7 +1811,7 @@ Banks</property>
 		      <accelerator key="g" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10181">
+			<widget class="GtkImage" id="image10231">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-jump-to</property>
 			  <property name="icon_size">1</property>
@@ -1903,14 +1905,22 @@ Banks</property>
 	      <signal name="clicked" handler="searchwindow_on_findbutton_clicked" last_modification_time="Mon, 07 Feb 2005 09:47:42 GMT"/>
 
 	      <child>
-		<widget class="GtkImage" id="image9783">
+		<widget class="GtkLabel" id="label92349">
 		  <property name="visible">True</property>
-		  <property name="stock">gtk-find</property>
-		  <property name="icon_size">4</property>
+		  <property name="label" translatable="yes">_Find</property>
+		  <property name="use_underline">True</property>
+		  <property name="use_markup">False</property>
+		  <property name="justify">GTK_JUSTIFY_LEFT</property>
+		  <property name="wrap">False</property>
+		  <property name="selectable">False</property>
 		  <property name="xalign">0.5</property>
 		  <property name="yalign">0.5</property>
 		  <property name="xpad">0</property>
 		  <property name="ypad">0</property>
+		  <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+		  <property name="width_chars">-1</property>
+		  <property name="single_line_mode">False</property>
+		  <property name="angle">0</property>
 		</widget>
 	      </child>
 	    </widget>
@@ -1936,6 +1946,7 @@ Banks</property>
 	      <property name="invisible_char">*</property>
 	      <property name="activates_default">True</property>
 	      <property name="width_chars">17</property>
+	      <signal name="changed" handler="searchwindow_on_searchentry_changed" last_modification_time="Sun, 25 Sep 2005 01:23:34 GMT"/>
 	    </widget>
 	    <packing>
 	      <property name="padding">0</property>
@@ -1948,9 +1959,9 @@ Banks</property>
 	  <child>
 	    <widget class="GtkLabel" id="label92337">
 	      <property name="visible">True</property>
-	      <property name="label" translatable="yes">_Search:</property>
+	      <property name="label" translatable="yes">&lt;span size=&quot;small&quot;&gt;_Search:&lt;/span&gt;</property>
 	      <property name="use_underline">True</property>
-	      <property name="use_markup">False</property>
+	      <property name="use_markup">True</property>
 	      <property name="justify">GTK_JUSTIFY_LEFT</property>
 	      <property name="wrap">False</property>
 	      <property name="selectable">False</property>

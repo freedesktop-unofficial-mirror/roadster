@@ -56,8 +56,8 @@
 #define CALLBACKS_PER_PULSE					(30)		// call " after this many iterations over hash tables (writing to DB)
 
 typedef struct {
-	gchar* m_pszCode;
-	gchar* m_pszName;
+	gchar* pszCode;
+	gchar* pszName;
 } state_t;
 
 extern state_t g_aStates[79];
@@ -73,76 +73,76 @@ typedef enum {
 #define TIGER_CHAIN_NAME_LEN	(30)
 typedef struct tiger_record_rt1
 {
-	gint m_nTLID;		// index- TLID links a complete chain together
-	gint m_nRecordType;
-	mappoint_t m_PointA;
-	mappoint_t m_PointB;
-	gint m_nAddressLeftStart;
-	gint m_nAddressLeftEnd;
-	gint m_nAddressRightStart;
-	gint m_nAddressRightEnd;
+	gint nTLID;		// index- TLID links a complete chain together
+	gint nRecordType;
+	mappoint_t PointA;
+	mappoint_t PointB;
+	gint nAddressLeftStart;
+	gint nAddressLeftEnd;
+	gint nAddressRightStart;
+	gint nAddressRightEnd;
 
-	gint m_nZIPCodeLeft;
-	gint m_nZIPCodeRight;
+	gint nZIPCodeLeft;
+	gint nZIPCodeRight;
 
-	char m_achName[TIGER_CHAIN_NAME_LEN + 1];
-	gint m_nRoadNameSuffixID;
+	char achName[TIGER_CHAIN_NAME_LEN + 1];
+	gint nRoadNameSuffixID;
 
-	gint m_nFIPS55Left;
-	gint m_nFIPS55Right;
+	gint nFIPS55Left;
+	gint nFIPS55Right;
 
-	gint m_nCountyIDLeft;	// if left and right are in diff counties, we've found a boundary line!
-	gint m_nCountyIDRight;
+	gint nCountyIDLeft;	// if left and right are in diff counties, we've found a boundary line!
+	gint nCountyIDRight;
 } tiger_record_rt1_t;
 
 #define TIGER_RT2_MAX_POINTS (10)
 typedef struct tiger_record_rt2
 {
-	gint m_nTLID;		// index- TLID links a complete chain together
+	gint nTLID;		// index- TLID links a complete chain together
 
-	GPtrArray* m_pPointsArray;
+	GPtrArray* pPointsArray;
 } tiger_record_rt2_t;
 
 #define TIGER_LANDMARK_NAME_LEN (30)
 typedef struct tiger_record_rt7
 {
-	gint m_nLANDID;		// index- a unique landmark ID #
-	gint m_nRecordType;
-	char m_achName[TIGER_LANDMARK_NAME_LEN + 1];	// note the +1!!
-	mappoint_t m_Point;
+	gint nLANDID;		// index- a unique landmark ID #
+	gint nRecordType;
+	char achName[TIGER_LANDMARK_NAME_LEN + 1];	// note the +1!!
+	mappoint_t Point;
 } tiger_record_rt7_t;
 
 typedef struct tiger_record_rt8
 {
-	gint m_nPOLYID;		// index (for each polygon, we'll get the
-	gint m_nLANDID;		// FK to table 7
+	gint nPOLYID;		// index (for each polygon, we'll get the
+	gint nLANDID;		// FK to table 7
 } tiger_record_rt8_t;
 
 typedef struct tiger_rt1_link
 {
-	gint m_nTLID;
-	gint m_nPointATZID;	// the unique # for the rt1's PointA, usefull for stiching chains together
-	gint m_nPointBTZID;	// the unique # for the rt1's PointB
+	gint nTLID;
+	gint nPointATZID;	// the unique # for the rt1's PointA, usefull for stiching chains together
+	gint nPointBTZID;	// the unique # for the rt1's PointB
 } tiger_rt1_link_t;
 
 typedef struct tiger_import_process {
-	gchar* m_pszFileDescription;
+	gchar* pszFileDescription;
 
-	GHashTable* m_pTableRT1;
-	GHashTable* m_pTableRT2;
-	GHashTable* m_pTableRT7;
-	GHashTable* m_pTableRT8;
-	GHashTable* m_pTableRTi;
-	GHashTable* m_pTableRTc;
+	GHashTable* pTableRT1;
+	GHashTable* pTableRT2;
+	GHashTable* pTableRT7;
+	GHashTable* pTableRT8;
+	GHashTable* pTableRTi;
+	GHashTable* pTableRTc;
 
-	GPtrArray* m_pBoundaryRT1s;
+	GPtrArray* pBoundaryRT1s;
 } tiger_import_process_t;
 
 typedef struct tiger_record_rti
 {
 	// store a list of TLIDs for a polygonID
-	gint m_nPOLYID;	// index
-	GPtrArray* m_pRT1LinksArray;
+	gint nPOLYID;	// index
+	GPtrArray* pRT1LinksArray;
 } tiger_record_rti_t;
 
 #define TIGER_CITY_NAME_LEN 	(60)
@@ -150,9 +150,9 @@ typedef struct tiger_record_rti
 typedef struct tiger_record_rtc
 {
 	// store a list of city names
-	gint m_nFIPS55;	// index
-	char m_achName[TIGER_CITY_NAME_LEN + 1];	// note the +1!!
-	gint m_nCityID;					// a database ID, stored here after it is inserted
+	gint nFIPS55;	// index
+	char achName[TIGER_CITY_NAME_LEN + 1];	// note the +1!!
+	gint nCityID;					// a database ID, stored here after it is inserted
 } tiger_record_rtc_t;
 
 
@@ -449,7 +449,7 @@ static gboolean import_tiger_parse_MET(const gchar* pszMET, tiger_import_process
 		if(g_str_has_prefix(p, "Title: ")) {
 			// found title line
 			p += 7;	// move past "Title: "
-			pImportProcess->m_pszFileDescription = import_tiger_copy_line(p);
+			pImportProcess->pszFileDescription = import_tiger_copy_line(p);
 			bSuccess = TRUE;
 		}
 		// move to end of line
@@ -474,60 +474,60 @@ static gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTa
 
 		tiger_record_rt1_t* pRecord = g_new0(tiger_record_rt1_t, 1);
 
-		pRecord->m_nRecordType = nRecordType;
+		pRecord->nRecordType = nRecordType;
 
 		// addresses (these are really not numeric, they are alpha... how to handle this?)
-		import_tiger_read_address(&pLine[59-1], 11, &pRecord->m_nAddressLeftStart);
-		import_tiger_read_address(&pLine[70-1], 11, &pRecord->m_nAddressLeftEnd);
-		import_tiger_read_address(&pLine[81-1], 11, &pRecord->m_nAddressRightStart);
-		import_tiger_read_address(&pLine[92-1], 11, &pRecord->m_nAddressRightEnd);
+		import_tiger_read_address(&pLine[59-1], 11, &pRecord->nAddressLeftStart);
+		import_tiger_read_address(&pLine[70-1], 11, &pRecord->nAddressLeftEnd);
+		import_tiger_read_address(&pLine[81-1], 11, &pRecord->nAddressRightStart);
+		import_tiger_read_address(&pLine[92-1], 11, &pRecord->nAddressRightEnd);
 
 		// columns 107-111 and 112-116 are zip codes
-		import_tiger_read_int(&pLine[107-1], 5, &pRecord->m_nZIPCodeLeft);
-		import_tiger_read_int(&pLine[112-1], 5, &pRecord->m_nZIPCodeRight);
+		import_tiger_read_int(&pLine[107-1], 5, &pRecord->nZIPCodeLeft);
+		import_tiger_read_int(&pLine[112-1], 5, &pRecord->nZIPCodeRight);
 
 		// columns 6 to 15 is the TLID -
-		import_tiger_read_int(&pLine[6-1], TIGER_TLID_LENGTH, &pRecord->m_nTLID);
+		import_tiger_read_int(&pLine[6-1], TIGER_TLID_LENGTH, &pRecord->nTLID);
 		
 		// columns 20 to ? is the name
-		import_tiger_read_string(&pLine[20-1], TIGER_CHAIN_NAME_LEN, &pRecord->m_achName[0]);
+		import_tiger_read_string(&pLine[20-1], TIGER_CHAIN_NAME_LEN, &pRecord->achName[0]);
 
 		// columns 141-145 and 146-150 are FIPS55 codes which link this road to a city
-		import_tiger_read_int(&pLine[141-1], TIGER_FIPS55_LEN, &pRecord->m_nFIPS55Left);
-		import_tiger_read_int(&pLine[146-1], TIGER_FIPS55_LEN, &pRecord->m_nFIPS55Right);
+		import_tiger_read_int(&pLine[141-1], TIGER_FIPS55_LEN, &pRecord->nFIPS55Left);
+		import_tiger_read_int(&pLine[146-1], TIGER_FIPS55_LEN, &pRecord->nFIPS55Right);
 
 		// Read suffix name and convert it to an integer
 		gchar achType[5];
 		import_tiger_read_string(&pLine[50-1], 4, &achType[0]);
-//		g_print("%30s is type %s\n", pRecord->m_achName, achType);	
-		road_suffix_atoi(achType, &pRecord->m_nRoadNameSuffixID);
+//		g_print("%30s is type %s\n", pRecord->achName, achType);	
+		road_suffix_atoi(achType, &pRecord->nRoadNameSuffixID);
 
-if(achType[0] != '\0' && pRecord->m_nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
+if(achType[0] != '\0' && pRecord->nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 	g_print("type '%s' couldn't be looked up\n", achType);
 }
-		import_tiger_read_int(&pLine[135-1], 3, &pRecord->m_nCountyIDLeft);
-		import_tiger_read_int(&pLine[138-1], 3, &pRecord->m_nCountyIDRight);
+		import_tiger_read_int(&pLine[135-1], 3, &pRecord->nCountyIDLeft);
+		import_tiger_read_int(&pLine[138-1], 3, &pRecord->nCountyIDRight);
 
-		if(pRecord->m_nCountyIDLeft != pRecord->m_nCountyIDRight) {
+		if(pRecord->nCountyIDLeft != pRecord->nCountyIDRight) {
 			g_ptr_array_add(pBoundaryRT1s, pRecord);
 	//		g_print("county boundary\n");
 		}
 		//~ gint nFeatureType;
 		//~ import_tiger_read_int(&pLine[50-1], 4, &nFeatureType);
-		//~ g_print("name: '%s' (%d)\n", pRecord->m_achName, nFeatureType);
+		//~ g_print("name: '%s' (%d)\n", pRecord->achName, nFeatureType);
 
-//g_print("for name %s\n", pRecord->m_achName);
+//g_print("for name %s\n", pRecord->achName);
 
  		// lat/lon coordinates...
-		import_tiger_read_lon(&pLine[191-1], &pRecord->m_PointA.m_fLongitude);
-		import_tiger_read_lat(&pLine[201-1], &pRecord->m_PointA.m_fLatitude);
-		import_tiger_read_lon(&pLine[210-1], &pRecord->m_PointB.m_fLongitude);
-		import_tiger_read_lat(&pLine[220-1], &pRecord->m_PointB.m_fLatitude);
+		import_tiger_read_lon(&pLine[191-1], &pRecord->PointA.fLongitude);
+		import_tiger_read_lat(&pLine[201-1], &pRecord->PointA.fLatitude);
+		import_tiger_read_lon(&pLine[210-1], &pRecord->PointB.fLongitude);
+		import_tiger_read_lat(&pLine[220-1], &pRecord->PointB.fLatitude);
 
-//g_print("name: %s, (%f,%f) (%f,%f)\n", pRecord->m_achName, pRecord->m_PointA.m_fLongitude, pRecord->m_PointA.m_fLatitude, pRecord->m_PointB.m_fLongitude, pRecord->m_PointB.m_fLatitude);
+//g_print("name: %s, (%f,%f) (%f,%f)\n", pRecord->achName, pRecord->PointA.fLongitude, pRecord->PointA.fLatitude, pRecord->PointB.fLongitude, pRecord->PointB.fLatitude);
 
 		// add to table
-		g_hash_table_insert(pTable, &pRecord->m_nTLID, pRecord);
+		g_hash_table_insert(pTable, &pRecord->nTLID, pRecord);
 	}
 	return TRUE;
 }
@@ -547,29 +547,29 @@ static gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTa
 		if(pRecord == NULL) {
 			// create new one and add it
 			pRecord = g_new0(tiger_record_rt2_t, 1);
-			pRecord->m_nTLID = nTLID;
-			pRecord->m_pPointsArray = g_ptr_array_new();
+			pRecord->nTLID = nTLID;
+			pRecord->pPointsArray = g_ptr_array_new();
 
 			// add to table
-			g_hash_table_insert(pTable, &pRecord->m_nTLID, pRecord);
+			g_hash_table_insert(pTable, &pRecord->nTLID, pRecord);
 		}
 		else {
-			// g_print("****** updating existing record %d\n", pRecord->m_nTLID);
+			// g_print("****** updating existing record %d\n", pRecord->nTLID);
 		}
 
 		mappoint_t point;
 		gint iPoint;
 		for(iPoint=0 ; iPoint< TIGER_RT2_MAX_POINTS ; iPoint++) {
-			import_tiger_read_lon(&pLine[19-1 + (iPoint * 19)], &point.m_fLongitude);
-			import_tiger_read_lat(&pLine[29-1 + (iPoint * 19)], &point.m_fLatitude);
-			if(point.m_fLatitude == 0.0 && point.m_fLongitude == 0.0) {
+			import_tiger_read_lon(&pLine[19-1 + (iPoint * 19)], &point.fLongitude);
+			import_tiger_read_lat(&pLine[29-1 + (iPoint * 19)], &point.fLatitude);
+			if(point.fLatitude == 0.0 && point.fLongitude == 0.0) {
 				break;
 			}
 			mappoint_t* pNewPoint = g_new0(mappoint_t, 1);
-			pNewPoint->m_fLatitude = point.m_fLatitude;
-			pNewPoint->m_fLongitude = point.m_fLongitude;
+			pNewPoint->fLatitude = point.fLatitude;
+			pNewPoint->fLongitude = point.fLongitude;
 
-			g_ptr_array_add(pRecord->m_pPointsArray, pNewPoint);
+			g_ptr_array_add(pRecord->pPointsArray, pNewPoint);
 		}
 	}
 	return TRUE;
@@ -590,21 +590,21 @@ static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTa
 
 		import_tiger_read_layer_type(&pLine[22-1], &nRecordType);
 		pRecord = g_new0(tiger_record_rt7_t, 1);
-		pRecord->m_nRecordType = nRecordType;
+		pRecord->nRecordType = nRecordType;
 
 		// columns 11 to 20 is the TLID -
-		import_tiger_read_int(&pLine[11-1], TIGER_LANDID_LENGTH, &pRecord->m_nLANDID);
+		import_tiger_read_int(&pLine[11-1], TIGER_LANDID_LENGTH, &pRecord->nLANDID);
 
-		import_tiger_read_string(&pLine[25-1], TIGER_LANDMARK_NAME_LEN, &pRecord->m_achName[0]);
+		import_tiger_read_string(&pLine[25-1], TIGER_LANDMARK_NAME_LEN, &pRecord->achName[0]);
 
 		//if(nRecordType == MAP_OBJECT_TYPE_MISC_AREA) {
-			// g_print("misc area: %s\n", pRecord->m_achName);
+			// g_print("misc area: %s\n", pRecord->achName);
 		//}
-// g_print("record 7: TypeID=%d LANDID=%d\n", pRecord->m_nRecordType, pRecord->m_nLANDID);
-//g_print("name: '%s'\n", pRecord->m_achName);
+// g_print("record 7: TypeID=%d LANDID=%d\n", pRecord->nRecordType, pRecord->nLANDID);
+//g_print("name: '%s'\n", pRecord->achName);
 
 		// add to table
-		g_hash_table_insert(pTable, &pRecord->m_nLANDID, pRecord);
+		g_hash_table_insert(pTable, &pRecord->nLANDID, pRecord);
 	}
 	return TRUE;
 }
@@ -621,15 +621,15 @@ static gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTa
 		pRecord = g_new0(tiger_record_rt8_t, 1);
 
 		// columns 16 to 25 is the POLYGON ID -
-		import_tiger_read_int(&pLine[16-1], TIGER_POLYID_LENGTH, &pRecord->m_nPOLYID);
+		import_tiger_read_int(&pLine[16-1], TIGER_POLYID_LENGTH, &pRecord->nPOLYID);
 
 		// columns 26 to 35 is the LANDMARK ID -
-		import_tiger_read_int(&pLine[26-1], TIGER_LANDID_LENGTH, &pRecord->m_nLANDID);
+		import_tiger_read_int(&pLine[26-1], TIGER_LANDID_LENGTH, &pRecord->nLANDID);
 
-// g_print("record 8: POLYID=%d LANDID=%d\n", pRecord->m_nPOLYID, pRecord->m_nLANDID);
+// g_print("record 8: POLYID=%d LANDID=%d\n", pRecord->nPOLYID, pRecord->nLANDID);
 
 		// add to table
-		g_hash_table_insert(pTable, &pRecord->m_nPOLYID, pRecord);
+		g_hash_table_insert(pTable, &pRecord->nPOLYID, pRecord);
 	}
 	return TRUE;
 }
@@ -650,13 +650,13 @@ static gboolean import_tiger_parse_table_c(gint8* pBuffer, gint nLength, GHashTa
 		pRecord = g_new0(tiger_record_rtc_t, 1);
 
 		// columns 15 to 19 is the FIPS number (links roads to cities)
-		import_tiger_read_int(&pLine[15-1], TIGER_FIPS55_LEN, &pRecord->m_nFIPS55);
-		import_tiger_read_string(&pLine[63-1], TIGER_CITY_NAME_LEN, &pRecord->m_achName[0]);
+		import_tiger_read_int(&pLine[15-1], TIGER_FIPS55_LEN, &pRecord->nFIPS55);
+		import_tiger_read_string(&pLine[63-1], TIGER_CITY_NAME_LEN, &pRecord->achName[0]);
 		
-g_print("record c: FIPS55=%d NAME=%s\n", pRecord->m_nFIPS55, pRecord->m_achName);
+g_print("record c: FIPS55=%d NAME=%s\n", pRecord->nFIPS55, pRecord->achName);
 
 		// add to table
-		g_hash_table_insert(pTable, &pRecord->m_nFIPS55, pRecord);
+		g_hash_table_insert(pTable, &pRecord->nFIPS55, pRecord);
 	}
 	return TRUE;
 }
@@ -703,43 +703,43 @@ static gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTa
 			if(pRecord == NULL) {
 				// create new RTi record and add the link to it
 				pRecord = g_new0(tiger_record_rti_t, 1);
-				pRecord->m_nPOLYID = nLeftPolygonID;
-				pRecord->m_pRT1LinksArray = g_ptr_array_new();
+				pRecord->nPOLYID = nLeftPolygonID;
+				pRecord->pRT1LinksArray = g_ptr_array_new();
 
 				// add new RTi record to the RTi hash table (indexed by POLYID)
-				g_hash_table_insert(pTable, &pRecord->m_nPOLYID, pRecord);
+				g_hash_table_insert(pTable, &pRecord->nPOLYID, pRecord);
 
-				//g_print("(L)added TLID %d to new polygon %d ", nTLID, pRecord->m_nPOLYID);
+				//g_print("(L)added TLID %d to new polygon %d ", nTLID, pRecord->nPOLYID);
 			}
 			else {
-				//g_print("(L)added TLID %d to existing polygon %d ", nTLID, pRecord->m_nPOLYID);
+				//g_print("(L)added TLID %d to existing polygon %d ", nTLID, pRecord->nPOLYID);
 			}
 			tiger_rt1_link_t* pNewRT1Link = g_new0(tiger_rt1_link_t, 1);
-			pNewRT1Link->m_nTLID = nTLID;
-			pNewRT1Link->m_nPointATZID = nZeroCellA;
-			pNewRT1Link->m_nPointBTZID = nZeroCellB;
-			g_ptr_array_add(pRecord->m_pRT1LinksArray, pNewRT1Link);
+			pNewRT1Link->nTLID = nTLID;
+			pNewRT1Link->nPointATZID = nZeroCellA;
+			pNewRT1Link->nPointBTZID = nZeroCellB;
+			g_ptr_array_add(pRecord->pRT1LinksArray, pNewRT1Link);
 		}
 		if(nRightPolygonID != 0) {
 			pRecord = g_hash_table_lookup(pTable, &nRightPolygonID);
 			if(pRecord == NULL) {
 				// create new one and add it
 				pRecord = g_new0(tiger_record_rti_t, 1);
-				pRecord->m_nPOLYID = nRightPolygonID;
-				pRecord->m_pRT1LinksArray = g_ptr_array_new();
+				pRecord->nPOLYID = nRightPolygonID;
+				pRecord->pRT1LinksArray = g_ptr_array_new();
 				
 				// add new RTi record to the RTi hash table (indexed by POLYID)
-				g_hash_table_insert(pTable, &pRecord->m_nPOLYID, pRecord);
-				//g_print("(R)adding TLID %d to new polygon %d ", nTLID, pRecord->m_nPOLYID);
+				g_hash_table_insert(pTable, &pRecord->nPOLYID, pRecord);
+				//g_print("(R)adding TLID %d to new polygon %d ", nTLID, pRecord->nPOLYID);
 			}
 			else {
-				//g_print("(R)adding TLID %d to existing polygon %d ", nTLID, pRecord->m_nPOLYID);
+				//g_print("(R)adding TLID %d to existing polygon %d ", nTLID, pRecord->nPOLYID);
 			}
 			tiger_rt1_link_t* pNewRT1Link = g_new0(tiger_rt1_link_t, 1);
-			pNewRT1Link->m_nTLID = nTLID;
-			pNewRT1Link->m_nPointATZID = nZeroCellA;
-			pNewRT1Link->m_nPointBTZID = nZeroCellB;
-			g_ptr_array_add(pRecord->m_pRT1LinksArray, pNewRT1Link);
+			pNewRT1Link->nTLID = nTLID;
+			pNewRT1Link->nPointATZID = nZeroCellA;
+			pNewRT1Link->nPointBTZID = nZeroCellB;
+			g_ptr_array_add(pRecord->pRT1LinksArray, pNewRT1Link);
 		}
 	}
 	return TRUE;
@@ -757,37 +757,37 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 	tiger_import_process_t* pImportProcess = (tiger_import_process_t*)user_data;
 	tiger_record_rt1_t* pRecordRT1 = (tiger_record_rt1_t*)value;
 	// lookup table2 record by TLID
-	tiger_record_rt2_t* pRecordRT2 = g_hash_table_lookup(pImportProcess->m_pTableRT2, &pRecordRT1->m_nTLID);
+	tiger_record_rt2_t* pRecordRT2 = g_hash_table_lookup(pImportProcess->pTableRT2, &pRecordRT1->nTLID);
 
 	// add RT1's point A, (optionally) add all points from RT2, then add RT1's point B
-	g_ptr_array_add(pTempPointsArray, &pRecordRT1->m_PointA);
+	g_ptr_array_add(pTempPointsArray, &pRecordRT1->PointA);
 	if(pRecordRT2 != NULL) {
-		// append all points from pRecordRT2->m_pPointsArray to pTempPointsArray
+		// append all points from pRecordRT2->pPointsArray to pTempPointsArray
 		gint i;
-		for(i=0 ; i<pRecordRT2->m_pPointsArray->len ; i++) {
-			g_ptr_array_add(pTempPointsArray, g_ptr_array_index(pRecordRT2->m_pPointsArray, i));		
+		for(i=0 ; i<pRecordRT2->pPointsArray->len ; i++) {
+			g_ptr_array_add(pTempPointsArray, g_ptr_array_index(pRecordRT2->pPointsArray, i));		
 		}
 	}
-	g_ptr_array_add(pTempPointsArray, &pRecordRT1->m_PointB);
+	g_ptr_array_add(pTempPointsArray, &pRecordRT1->PointB);
 
 	//
 	// Change rivers into lakes if they are circular (why doesn't this work here?)
 	//
-//     if(pRecordRT1->m_nRecordType == MAP_OBJECT_TYPE_RIVER) {
-//         if(((gint)(pRecordRT1->m_PointA.m_fLongitude * 1000.0)) == ((gint)(pRecordRT1->m_PointB.m_fLongitude * 1000.0)) &&
-//            ((gint)(pRecordRT1->m_PointA.m_fLatitude * 1000.0)) == ((gint)(pRecordRT1->m_PointB.m_fLatitude * 1000.0)))
+//     if(pRecordRT1->nRecordType == MAP_OBJECT_TYPE_RIVER) {
+//         if(((gint)(pRecordRT1->PointA.fLongitude * 1000.0)) == ((gint)(pRecordRT1->PointB.fLongitude * 1000.0)) &&
+//            ((gint)(pRecordRT1->PointA.fLatitude * 1000.0)) == ((gint)(pRecordRT1->PointB.fLatitude * 1000.0)))
 //         {
-//             if(pRecordRT1->m_PointA.m_fLongitude != pRecordRT1->m_PointB.m_fLongitude) {
-//                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->m_PointA.m_fLongitude, pRecordRT1->m_PointB.m_fLongitude);
+//             if(pRecordRT1->PointA.fLongitude != pRecordRT1->PointB.fLongitude) {
+//                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->PointA.fLongitude, pRecordRT1->PointB.fLongitude);
 //             }
-//             if(pRecordRT1->m_PointA.m_fLatitude != pRecordRT1->m_PointB.m_fLatitude) {
-//                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->m_PointA.m_fLatitude, pRecordRT1->m_PointB.m_fLatitude);
+//             if(pRecordRT1->PointA.fLatitude != pRecordRT1->PointB.fLatitude) {
+//                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->PointA.fLatitude, pRecordRT1->PointB.fLatitude);
 //             }
-//             g_print("converting circular river to lake: %s\n", pRecordRT1->m_achName);
-//             pRecordRT1->m_nRecordType = MAP_OBJECT_TYPE_LAKE;
+//             g_print("converting circular river to lake: %s\n", pRecordRT1->achName);
+//             pRecordRT1->nRecordType = MAP_OBJECT_TYPE_LAKE;
 //         }
 //         else {
-// //          g_print("NOT converting river: %s (%f != %f)(%f != %f)\n", pRecordRT1->m_achName, pRecordRT1->m_PointA.m_fLongitude, pRecordRT1->m_PointB.m_fLongitude, pRecordRT1->m_PointA.m_fLatitude, pRecordRT1->m_PointB.m_fLatitude);
+// //          g_print("NOT converting river: %s (%f != %f)(%f != %f)\n", pRecordRT1->achName, pRecordRT1->PointA.fLongitude, pRecordRT1->PointB.fLongitude, pRecordRT1->PointA.fLatitude, pRecordRT1->PointB.fLatitude);
 //         }
 //     }
 
@@ -798,47 +798,47 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 	tiger_record_rtc_t* pRecordRTc;
 
 	// lookup left CityID, if the FIPS is valid
-	if(pRecordRT1->m_nFIPS55Left != 0) {
-		pRecordRTc = g_hash_table_lookup(pImportProcess->m_pTableRTc, &pRecordRT1->m_nFIPS55Left);
+	if(pRecordRT1->nFIPS55Left != 0) {
+		pRecordRTc = g_hash_table_lookup(pImportProcess->pTableRTc, &pRecordRT1->nFIPS55Left);
 		if(pRecordRTc) {
-			nCityLeftID = pRecordRTc->m_nCityID;
+			nCityLeftID = pRecordRTc->nCityID;
 		}
 		else {
-			g_warning("couldn't lookup CityID by FIPS %d for road %s\n", pRecordRT1->m_nFIPS55Left, pRecordRT1->m_achName);
+			g_warning("couldn't lookup CityID by FIPS %d for road %s\n", pRecordRT1->nFIPS55Left, pRecordRT1->achName);
 		}
 	}
 
 	// lookup right CityID, if the FIPS is valid
-	if(pRecordRT1->m_nFIPS55Right != 0) {
-		pRecordRTc = g_hash_table_lookup(pImportProcess->m_pTableRTc, &pRecordRT1->m_nFIPS55Right);
+	if(pRecordRT1->nFIPS55Right != 0) {
+		pRecordRTc = g_hash_table_lookup(pImportProcess->pTableRTc, &pRecordRT1->nFIPS55Right);
 		if(pRecordRTc) {
-			nCityRightID = pRecordRTc->m_nCityID;
+			nCityRightID = pRecordRTc->nCityID;
 		}
 		else {
-			g_warning("couldn't lookup city ID by FIPS %d for road %s\n", pRecordRT1->m_nFIPS55Right, pRecordRT1->m_achName);
+			g_warning("couldn't lookup city ID by FIPS %d for road %s\n", pRecordRT1->nFIPS55Right, pRecordRT1->achName);
 		}
 	}
 
 	// insert, then free temp array
-	if(pRecordRT1->m_nRecordType != MAP_OBJECT_TYPE_NONE) {
+	if(pRecordRT1->nRecordType != MAP_OBJECT_TYPE_NONE) {
 		gchar azZIPCodeLeft[6];
-		g_snprintf(azZIPCodeLeft, 6, "%05d", pRecordRT1->m_nZIPCodeLeft);
+		g_snprintf(azZIPCodeLeft, 6, "%05d", pRecordRT1->nZIPCodeLeft);
 		gchar azZIPCodeRight[6];
-		g_snprintf(azZIPCodeRight, 6, "%05d", pRecordRT1->m_nZIPCodeRight);
+		g_snprintf(azZIPCodeRight, 6, "%05d", pRecordRT1->nZIPCodeRight);
 
 		gint nRoadNameID = 0;
-		if(pRecordRT1->m_achName[0] != '\0') {
-			//printf("inserting road name %s\n", pRecordRT1->m_achName);
-			db_insert_roadname(pRecordRT1->m_achName, pRecordRT1->m_nRoadNameSuffixID, &nRoadNameID);
+		if(pRecordRT1->achName[0] != '\0') {
+			//printf("inserting road name %s\n", pRecordRT1->achName);
+			db_insert_roadname(pRecordRT1->achName, pRecordRT1->nRoadNameSuffixID, &nRoadNameID);
 		}
 
 		gint nRoadID;
 		db_insert_road(nRoadNameID,
-			pRecordRT1->m_nRecordType,
-			pRecordRT1->m_nAddressLeftStart,
-			pRecordRT1->m_nAddressLeftEnd,
-			pRecordRT1->m_nAddressRightStart,
-			pRecordRT1->m_nAddressRightEnd,
+			pRecordRT1->nRecordType,
+			pRecordRT1->nAddressLeftStart,
+			pRecordRT1->nAddressLeftEnd,
+			pRecordRT1->nAddressRightStart,
+			pRecordRT1->nAddressRightEnd,
 			nCityLeftID, nCityRightID,
 			azZIPCodeLeft, azZIPCodeRight,
 			pTempPointsArray, &nRoadID);
@@ -854,36 +854,36 @@ typedef enum {
 static void tiger_util_add_RT1_points_to_array(tiger_import_process_t* pImportProcess, gint nTLID, GPtrArray* pPointsArray, EOrder eOrder)
 {
 	g_assert(pImportProcess != NULL);
-	g_assert(pImportProcess->m_pTableRT1 != NULL);
-	g_assert(pImportProcess->m_pTableRT2 != NULL);
+	g_assert(pImportProcess->pTableRT1 != NULL);
+	g_assert(pImportProcess->pTableRT2 != NULL);
 
 	// lookup table1 record by TLID
-	tiger_record_rt1_t* pRecordRT1 = g_hash_table_lookup(pImportProcess->m_pTableRT1, &nTLID);
+	tiger_record_rt1_t* pRecordRT1 = g_hash_table_lookup(pImportProcess->pTableRT1, &nTLID);
 	if(pRecordRT1 == NULL) return;
 
 	// lookup table2 record by TLID
-	tiger_record_rt2_t* pRecordRT2 = g_hash_table_lookup(pImportProcess->m_pTableRT2, &pRecordRT1->m_nTLID);
+	tiger_record_rt2_t* pRecordRT2 = g_hash_table_lookup(pImportProcess->pTableRT2, &pRecordRT1->nTLID);
 
 	if(eOrder == ORDER_FORWARD) {
-		g_ptr_array_add(pPointsArray, &pRecordRT1->m_PointA);
+		g_ptr_array_add(pPointsArray, &pRecordRT1->PointA);
 		if(pRecordRT2 != NULL) {
-			// append all points from pRecordRT2->m_pPointsArray
+			// append all points from pRecordRT2->pPointsArray
 			gint i;
-			for(i=0 ; i<pRecordRT2->m_pPointsArray->len ; i++) {
-				g_ptr_array_add(pPointsArray, g_ptr_array_index(pRecordRT2->m_pPointsArray, i));
+			for(i=0 ; i<pRecordRT2->pPointsArray->len ; i++) {
+				g_ptr_array_add(pPointsArray, g_ptr_array_index(pRecordRT2->pPointsArray, i));
 			}
 		}
-		g_ptr_array_add(pPointsArray, &pRecordRT1->m_PointB);
+		g_ptr_array_add(pPointsArray, &pRecordRT1->PointB);
 	} else {
-		g_ptr_array_add(pPointsArray, &pRecordRT1->m_PointB);
+		g_ptr_array_add(pPointsArray, &pRecordRT1->PointB);
 		if(pRecordRT2 != NULL) {
-			// append all points from pRecordRT2->m_pPointsArray in REVERSE order
+			// append all points from pRecordRT2->pPointsArray in REVERSE order
 			gint i;
-			for(i=pRecordRT2->m_pPointsArray->len-1 ; i>=0 ; i--) {
-				g_ptr_array_add(pPointsArray, g_ptr_array_index(pRecordRT2->m_pPointsArray, i));		
+			for(i=pRecordRT2->pPointsArray->len-1 ; i>=0 ; i--) {
+				g_ptr_array_add(pPointsArray, g_ptr_array_index(pRecordRT2->pPointsArray, i));		
 			}
 		}
-		g_ptr_array_add(pPointsArray, &pRecordRT1->m_PointA);
+		g_ptr_array_add(pPointsArray, &pRecordRT1->PointA);
 	}
 }
 
@@ -893,10 +893,10 @@ static void callback_save_rtc_cities(gpointer key, gpointer value, gpointer user
 	g_assert(pRecordRTc != NULL);
 
 	gint nCityID = 0;
-	if(!db_insert_city(pRecordRTc->m_achName, g_nStateID, &nCityID)) {
-		g_warning("insert city %s failed\n", pRecordRTc->m_achName);
+	if(!db_insert_city(pRecordRTc->achName, g_nStateID, &nCityID)) {
+		g_warning("insert city %s failed\n", pRecordRTc->achName);
 	}
-	pRecordRTc->m_nCityID = nCityID;
+	pRecordRTc->nCityID = nCityID;
 }
 
 static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer user_data)
@@ -915,17 +915,17 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 	g_assert(pRecordRTi != NULL);
 
 	// lookup table8 (polygon-landmark link) record by POLYID
-	tiger_record_rt8_t* pRecordRT8 = g_hash_table_lookup(pImportProcess->m_pTableRT8, &pRecordRTi->m_nPOLYID);
+	tiger_record_rt8_t* pRecordRT8 = g_hash_table_lookup(pImportProcess->pTableRT8, &pRecordRTi->nPOLYID);
 	if(pRecordRT8 == NULL) return;	// allowed to be null(?)
 
 	// lookup table7 (landmark) record by LANDID
-	tiger_record_rt7_t* pRecordRT7 = g_hash_table_lookup(pImportProcess->m_pTableRT7, &pRecordRT8->m_nLANDID);
+	tiger_record_rt7_t* pRecordRT7 = g_hash_table_lookup(pImportProcess->pTableRT7, &pRecordRT8->nLANDID);
 	if(pRecordRT7 == NULL) return;	// allowed to be null(?)
 
 	// now we have landmark data (name, type)
 
-	g_assert(pRecordRTi->m_pRT1LinksArray != NULL);
-	g_assert(pRecordRTi->m_pRT1LinksArray->len >= 1);
+	g_assert(pRecordRTi->pRT1LinksArray != NULL);
+	g_assert(pRecordRTi->pRT1LinksArray->len >= 1);
 
 	GPtrArray* pTempPointsArray = NULL;
 	// create a temp array to hold the points for this polygon (in order)
@@ -933,17 +933,17 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 	pTempPointsArray = g_ptr_array_new();
 
 	// start with the RT1Link at index 0 (and remove it)
-	tiger_rt1_link_t* pCurrentRT1Link = g_ptr_array_index(pRecordRTi->m_pRT1LinksArray, 0);
-	g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, 0);	// TODO: should maybe choose the last one instead? :)  easier to remove and arbitrary anyway!
+	tiger_rt1_link_t* pCurrentRT1Link = g_ptr_array_index(pRecordRTi->pRT1LinksArray, 0);
+	g_ptr_array_remove_index(pRecordRTi->pRT1LinksArray, 0);	// TODO: should maybe choose the last one instead? :)  easier to remove and arbitrary anyway!
 
 	// we'll use the first RT1 in forward order, that is A->B...
-	tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID,
+	tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->nTLID,
 		pTempPointsArray, ORDER_FORWARD);
 	// ...so B is the last TZID for now.
-	gint nLastTZID = pCurrentRT1Link->m_nPointBTZID;
+	gint nLastTZID = pCurrentRT1Link->nPointBTZID;
 
 	while(TRUE) {
-		if(pRecordRTi->m_pRT1LinksArray->len == 0) break;
+		if(pRecordRTi->pRT1LinksArray->len == 0) break;
 
 		// Loop through the RT1Links and try to find the next RT1 by matching TZID fields.
 		// NOTE: This is just like dominos!  Only instead of matching white dots we're
@@ -952,14 +952,14 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 
 		gboolean bFound = FALSE;
 		gint iRT1Link;
-		for(iRT1Link=0 ; iRT1Link < pRecordRTi->m_pRT1LinksArray->len ; iRT1Link++) {
-			tiger_rt1_link_t* pNextRT1Link = g_ptr_array_index(pRecordRTi->m_pRT1LinksArray, iRT1Link);
+		for(iRT1Link=0 ; iRT1Link < pRecordRTi->pRT1LinksArray->len ; iRT1Link++) {
+			tiger_rt1_link_t* pNextRT1Link = g_ptr_array_index(pRecordRTi->pRT1LinksArray, iRT1Link);
 			
-			if(nLastTZID == pNextRT1Link->m_nPointATZID) {
+			if(nLastTZID == pNextRT1Link->nPointATZID) {
 				// add pNextRT1Link's points in order (A->B)
 				// this (pNextRT1Link) RT1Link becomes the new "current"
 				// remove it from the array!
-				g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, iRT1Link);
+				g_ptr_array_remove_index(pRecordRTi->pRT1LinksArray, iRT1Link);
 				iRT1Link--;	// undo the next ++ in the for loop
 
 				// we're done forever with the old 'current'
@@ -968,28 +968,28 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 				pCurrentRT1Link = pNextRT1Link;
 
 				// add this new RT1's points
-				tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID,
+				tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->nTLID,
 					pTempPointsArray, ORDER_FORWARD);
 
-				nLastTZID = pCurrentRT1Link->m_nPointBTZID;	// Note: point *B* of this RT1Link
+				nLastTZID = pCurrentRT1Link->nPointBTZID;	// Note: point *B* of this RT1Link
 				bFound = TRUE;
 				break;
 			}
-			else if(nLastTZID == pNextRT1Link->m_nPointBTZID) {
+			else if(nLastTZID == pNextRT1Link->nPointBTZID) {
 				// add pNextRT1Link's points in REVERSE order (B->A)
 				// (otherwise same as above)
 
-				g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, iRT1Link);
+				g_ptr_array_remove_index(pRecordRTi->pRT1LinksArray, iRT1Link);
 				iRT1Link--;	// undo the next ++ in the for loop
 
 				g_free(pCurrentRT1Link);
 				pCurrentRT1Link = pNextRT1Link;
 
 				// add this new RT1's points
-				tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->m_nTLID,
+				tiger_util_add_RT1_points_to_array(pImportProcess, pCurrentRT1Link->nTLID,
 					pTempPointsArray, ORDER_BACKWARD);
 
-				nLastTZID = pCurrentRT1Link->m_nPointATZID;	// Note: point *A* of this RT1Link
+				nLastTZID = pCurrentRT1Link->nPointATZID;	// Note: point *A* of this RT1Link
 				bFound = TRUE;
 				break;
 			}
@@ -1008,8 +1008,8 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 		mappoint_t* p1 = g_ptr_array_index(pTempPointsArray, 0);
 		mappoint_t* p2 = g_ptr_array_index(pTempPointsArray, pTempPointsArray->len-1);
 
-		if(p1->m_fLatitude != p2->m_fLatitude || p1->m_fLongitude != p2->m_fLongitude) {
-			g_print("Found a polygon that doesn't loop %s\n", pRecordRT7->m_achName);
+		if(p1->fLatitude != p2->fLatitude || p1->fLongitude != p2->fLongitude) {
+			g_print("Found a polygon that doesn't loop %s\n", pRecordRT7->achName);
 		}
 
 		// XXX: looking up a city for a polygon?  unimplemented.
@@ -1019,17 +1019,17 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 		gchar* pszZIPCodeRight = "";
 
 		// insert record
-		if(pRecordRT7->m_nRecordType != MAP_OBJECT_TYPE_NONE) {
+		if(pRecordRT7->nRecordType != MAP_OBJECT_TYPE_NONE) {
 			gint nRoadNameID = 0;
-			if(pRecordRT7->m_achName[0] != '\0') {
-				//g_printf("inserting area name %s\n", pRecordRT7->m_achName);
-				db_insert_roadname(pRecordRT7->m_achName, 0, &nRoadNameID);
+			if(pRecordRT7->achName[0] != '\0') {
+				//g_printf("inserting area name %s\n", pRecordRT7->achName);
+				db_insert_roadname(pRecordRT7->achName, 0, &nRoadNameID);
 			}
 
 			gint nRoadID;
 			db_insert_road(
 				nRoadNameID,
-				pRecordRT7->m_nRecordType,
+				pRecordRT7->nRecordType,
 				0,0,0,0,
 				nCityLeftID, nCityRightID,
 				pszZIPCodeLeft, pszZIPCodeRight,
@@ -1040,11 +1040,11 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 	g_ptr_array_free(pTempPointsArray, TRUE);
 
 	// we SHOULD have used all RT1 links up!
-	if(pRecordRTi->m_pRT1LinksArray->len > 0) {
+	if(pRecordRTi->pRT1LinksArray->len > 0) {
 		//g_warning("RT1 Links remain:\n");
-		while(pRecordRTi->m_pRT1LinksArray->len > 0) {
-			tiger_rt1_link_t* pTemp = g_ptr_array_remove_index(pRecordRTi->m_pRT1LinksArray, 0);
-			//g_print("  (A-TZID:%d B-TZID:%d)\n", pTemp->m_nPointATZID, pTemp->m_nPointBTZID);
+		while(pRecordRTi->pRT1LinksArray->len > 0) {
+			tiger_rt1_link_t* pTemp = g_ptr_array_remove_index(pRecordRTi->pRT1LinksArray, 0);
+			//g_print("  (A-TZID:%d B-TZID:%d)\n", pTemp->nPointATZID, pTemp->nPointBTZID);
 			g_free( pTemp );
 		}
 	}
@@ -1143,7 +1143,7 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 		gint nStateID = (nTigerSetNumber / 1000);	// int division (eg. turn 25017 into 25)
 		if(nStateID < G_N_ELEMENTS(g_aStates)) {
 			gint nCountryID = 1;	// USA is #1 *gag*
-			db_insert_state(g_aStates[nStateID].m_pszName, g_aStates[nStateID].m_pszCode, nCountryID, &g_nStateID);
+			db_insert_state(g_aStates[nStateID].pszName, g_aStates[nStateID].pszCode, nCountryID, &g_nStateID);
 		}
 
 		g_assert(G_N_ELEMENTS(apszExtensions) == 7);
@@ -1180,55 +1180,55 @@ static gboolean import_tiger_from_buffers(
 	pszZeroTerminatedBufferMET[nLengthMET] = '\0';
 		import_tiger_parse_MET(pszZeroTerminatedBufferMET, &importProcess);
 	g_free(pszZeroTerminatedBufferMET);
-	g_print("MET Title: %s\n", importProcess.m_pszFileDescription );
+	g_print("MET Title: %s\n", importProcess.pszFileDescription );
 
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
 
 	// a list of RT1 records that make up the boundary of this county
-	importProcess.m_pBoundaryRT1s = g_ptr_array_new();
+	importProcess.pBoundaryRT1s = g_ptr_array_new();
 
 	g_print("parsing RT1\n");
-	importProcess.m_pTableRT1 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
-	import_tiger_parse_table_1(pBufferRT1, nLengthRT1, importProcess.m_pTableRT1, importProcess.m_pBoundaryRT1s);
-	g_print("RT1: %d records\n", g_hash_table_size(importProcess.m_pTableRT1));
+	importProcess.pTableRT1 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	import_tiger_parse_table_1(pBufferRT1, nLengthRT1, importProcess.pTableRT1, importProcess.pBoundaryRT1s);
+	g_print("RT1: %d records\n", g_hash_table_size(importProcess.pTableRT1));
 
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
 
 	g_print("parsing RT2\n");
-	importProcess.m_pTableRT2 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
-	import_tiger_parse_table_2(pBufferRT2, nLengthRT2, importProcess.m_pTableRT2);
-	g_print("RT2: %d records\n", g_hash_table_size(importProcess.m_pTableRT2));
+	importProcess.pTableRT2 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	import_tiger_parse_table_2(pBufferRT2, nLengthRT2, importProcess.pTableRT2);
+	g_print("RT2: %d records\n", g_hash_table_size(importProcess.pTableRT2));
 
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
 
 	g_print("parsing RT7\n");
-	importProcess.m_pTableRT7 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
-	import_tiger_parse_table_7(pBufferRT7, nLengthRT7, importProcess.m_pTableRT7);
-	g_print("RT7: %d records\n", g_hash_table_size(importProcess.m_pTableRT7));
+	importProcess.pTableRT7 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	import_tiger_parse_table_7(pBufferRT7, nLengthRT7, importProcess.pTableRT7);
+	g_print("RT7: %d records\n", g_hash_table_size(importProcess.pTableRT7));
 
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
 
 	g_print("parsing RT8\n");
-	importProcess.m_pTableRT8 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
-	import_tiger_parse_table_8(pBufferRT8, nLengthRT8, importProcess.m_pTableRT8);
-	g_print("RT8: %d records\n", g_hash_table_size(importProcess.m_pTableRT8));
+	importProcess.pTableRT8 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	import_tiger_parse_table_8(pBufferRT8, nLengthRT8, importProcess.pTableRT8);
+	g_print("RT8: %d records\n", g_hash_table_size(importProcess.pTableRT8));
 
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
 
 	g_print("parsing RTc\n");
-	importProcess.m_pTableRTc = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
-	import_tiger_parse_table_c(pBufferRTc, nLengthRTc, importProcess.m_pTableRTc);
-	g_print("RTc: %d records\n", g_hash_table_size(importProcess.m_pTableRTc));
+	importProcess.pTableRTc = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	import_tiger_parse_table_c(pBufferRTc, nLengthRTc, importProcess.pTableRTc);
+	g_print("RTc: %d records\n", g_hash_table_size(importProcess.pTableRTc));
 
 	g_print("parsing RTi\n");
-	importProcess.m_pTableRTi = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
-	import_tiger_parse_table_i(pBufferRTi, nLengthRTi, importProcess.m_pTableRTi);
-	g_print("RTi: %d records\n", g_hash_table_size(importProcess.m_pTableRTi));
+	importProcess.pTableRTi = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	import_tiger_parse_table_i(pBufferRTi, nLengthRTi, importProcess.pTableRTi);
+	g_print("RTi: %d records\n", g_hash_table_size(importProcess.pTableRTi));
 
 	importwindow_log_append(".");
 	importwindow_progress_pulse();
@@ -1237,7 +1237,7 @@ static gboolean import_tiger_from_buffers(
 	// Insert cities first
 	//
 	g_print("iterating over RTc cities...\n");
-	g_hash_table_foreach(importProcess.m_pTableRTc, callback_save_rtc_cities, &importProcess);
+	g_hash_table_foreach(importProcess.pTableRTc, callback_save_rtc_cities, &importProcess);
 	g_print("done.\n");
 	
 	importwindow_log_append(".");
@@ -1247,7 +1247,7 @@ static gboolean import_tiger_from_buffers(
 	// Stitch and insert polygons
 	//
 	g_print("iterating over RTi polygons...\n");
-	g_hash_table_foreach(importProcess.m_pTableRTi, callback_save_rti_polygons, &importProcess);
+	g_hash_table_foreach(importProcess.pTableRTi, callback_save_rti_polygons, &importProcess);
 	g_print("done.\n");
 
 	importwindow_log_append(".");
@@ -1257,7 +1257,7 @@ static gboolean import_tiger_from_buffers(
 	// Roads
 	//
 	g_print("iterating over RT1 chains...\n");
-	g_hash_table_foreach(importProcess.m_pTableRT1, callback_save_rt1_chains, &importProcess);
+	g_hash_table_foreach(importProcess.pTableRT1, callback_save_rt1_chains, &importProcess);
 	g_print("done.\n");
 
 	importwindow_log_append(".");
@@ -1266,15 +1266,15 @@ g_print("cleaning up\n");
 	//
 	// free up the importprocess structure
 	//
-	g_hash_table_destroy(importProcess.m_pTableRT1);
-	g_hash_table_destroy(importProcess.m_pTableRT2);
-	g_hash_table_destroy(importProcess.m_pTableRT7);
-	g_hash_table_destroy(importProcess.m_pTableRT8);
-	g_hash_table_destroy(importProcess.m_pTableRTc);
+	g_hash_table_destroy(importProcess.pTableRT1);
+	g_hash_table_destroy(importProcess.pTableRT2);
+	g_hash_table_destroy(importProcess.pTableRT7);
+	g_hash_table_destroy(importProcess.pTableRT8);
+	g_hash_table_destroy(importProcess.pTableRTc);
 	// XXX: this call sometimes segfaults:
 	g_warning("leaking some memory due to unsolved bug in import.  just restart roadster after/between imports ;)\n");
-	//g_hash_table_destroy(importProcess.m_pTableRTi);
-	g_free(importProcess.m_pszFileDescription);
+	//g_hash_table_destroy(importProcess.pTableRTi);
+	g_free(importProcess.pszFileDescription);
 
 	return TRUE;
 }

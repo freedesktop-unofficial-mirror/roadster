@@ -108,29 +108,29 @@ struct GtkWidget;
 
 // World space
 typedef struct {
-	gdouble m_fLatitude;
-	gdouble m_fLongitude;
+	gdouble fLatitude;
+	gdouble fLongitude;
 } mappoint_t;
 
 typedef struct {
-	mappoint_t m_A;
-	mappoint_t m_B;
+	mappoint_t A;
+	mappoint_t B;
 } maprect_t;
 
 // Screen space
 typedef struct {
-	gint16 m_nX;
-	gint16 m_nY;
+	gint16 nX;
+	gint16 nY;
 } screenpoint_t;
 
 typedef struct {
-	screenpoint_t m_A;
-	screenpoint_t m_B;
+	screenpoint_t A;
+	screenpoint_t B;
 } screenrect_t;
 
 typedef struct {
-	guint16 m_uWidth;
-	guint16 m_uHeight;
+	guint16 uWidth;
+	guint16 uHeight;
 } dimensions_t;
 
 typedef enum {
@@ -144,15 +144,15 @@ typedef enum {
 #define DEFAULT_UNIT	(UNIT_MILES)
 
 typedef struct {
-	guint32 m_uScale;		// ex. 10000 for 1:10000 scale
+	guint32 uScale;		// ex. 10000 for 1:10000 scale
 
-	EDistanceUnits m_eScaleImperialUnit;	// eg. "feet"
-	gint m_nScaleImperialNumber;			// eg. 200
+	EDistanceUnits eScaleImperialUnit;	// eg. "feet"
+	gint nScaleImperialNumber;			// eg. 200
 
-	EDistanceUnits m_eScaleMetricUnit;
-	gint m_nScaleMetricNumber;
+	EDistanceUnits eScaleMetricUnit;
+	gint nScaleMetricNumber;
 
-	gchar* m_szName;
+	gchar* szName;
 } zoomlevel_t;
 
 extern zoomlevel_t g_sZoomLevels[];
@@ -166,52 +166,52 @@ typedef enum {
 extern gchar* g_aDistanceUnitNames[];
 
 typedef struct {
-	gint m_nZoomLevel;
-	gdouble m_fScreenLatitude;
-	gdouble m_fScreenLongitude;
-	maprect_t m_rWorldBoundingBox;
-	gint m_nWindowWidth;
-	gint m_nWindowHeight;
+	gint nZoomLevel;
+	gdouble fScreenLatitude;
+	gdouble fScreenLongitude;
+	maprect_t rWorldBoundingBox;
+	gint nWindowWidth;
+	gint nWindowHeight;
 } rendermetrics_t;
 
-#define SCALE_X(p, x)  ((((x) - (p)->m_rWorldBoundingBox.m_A.m_fLongitude) / (p)->m_fScreenLongitude) * (p)->m_nWindowWidth)
-#define SCALE_Y(p, y)  ((p)->m_nWindowHeight - ((((y) - (p)->m_rWorldBoundingBox.m_A.m_fLatitude) / (p)->m_fScreenLatitude) * (p)->m_nWindowHeight))
+#define SCALE_X(p, x)  ((((x) - (p)->rWorldBoundingBox.A.fLongitude) / (p)->fScreenLongitude) * (p)->nWindowWidth)
+#define SCALE_Y(p, y)  ((p)->nWindowHeight - ((((y) - (p)->rWorldBoundingBox.A.fLatitude) / (p)->fScreenLatitude) * (p)->nWindowHeight))
 
 typedef struct {
-	GPtrArray* m_pRoadsArray;
+	GPtrArray* pRoadsArray;
 } maplayer_data_t;
 
 typedef struct {
-	GPtrArray* m_pLocationsArray;
+	GPtrArray* pLocationsArray;
 } maplayer_locations_t;
 
 typedef struct {
-	mappoint_t 		m_MapCenter;
-	dimensions_t 		m_MapDimensions;
-	guint16 		m_uZoomLevel;
-	GtkWidget		*m_pTargetWidget;
-	scenemanager_t		*m_pSceneManager;
+	mappoint_t 		MapCenter;
+	dimensions_t 	MapDimensions;
+	guint16 		uZoomLevel;
+	GtkWidget*		pTargetWidget;
+	scenemanager_t* pSceneManager;
 
 	// data
-	GArray			*m_pTracksArray;
-	maplayer_data_t		*m_apLayerData[ MAP_NUM_OBJECT_TYPES + 1 ];
+	GArray			*pTracksArray;
+	maplayer_data_t	*apLayerData[ MAP_NUM_OBJECT_TYPES + 1 ];
 
 	// Locationsets
-	GHashTable		*m_pLocationArrayHashTable;
+	GHashTable		*pLocationArrayHashTable;
 
-	GPtrArray		*m_pLocationSelectionArray;
-	GFreeList		*m_pLocationSelectionAllocator;
+	GPtrArray		*pLocationSelectionArray;
+	GFreeList		*pLocationSelectionAllocator;
 
-	GdkPixmap* m_pPixmap;
+	GdkPixmap* pPixmap;
 
-	GPtrArray* m_pLayersArray;
+	GPtrArray* pLayersArray;
 } map_t;
 
 typedef enum {
 	MAP_HITTYPE_LOCATION,
 	MAP_HITTYPE_ROAD,
 	
-	// the following all use m_LocationSelectionHit in the union below
+	// the following all use LocationSelectionHit in the union below
 	MAP_HITTYPE_LOCATIONSELECTION,	// hit somewhere on a locationselection graphic (info balloon)
 	MAP_HITTYPE_LOCATIONSELECTION_CLOSE,	// hit locationselection graphic close graphic (info balloon [X])
 	MAP_HITTYPE_LOCATIONSELECTION_EDIT,	// hit locationselection graphic edit graphic (info balloon "edit")
@@ -220,26 +220,26 @@ typedef enum {
 } EMapHitType;
 
 typedef struct {
-	EMapHitType m_eHitType;
-	gchar* m_pszText;
+	EMapHitType eHitType;
+	gchar* pszText;
 	union {
 		struct {
-			gint m_nLocationID;
-			mappoint_t m_Coordinates;
-		} m_LocationHit;
+			gint nLocationID;
+			mappoint_t Coordinates;
+		} LocationHit;
 
 		struct {
-			gint m_nRoadID;
-			mappoint_t m_ClosestPoint;
-		} m_RoadHit;
+			gint nRoadID;
+			mappoint_t ClosestPoint;
+		} RoadHit;
 
 		struct {
-			gint m_nLocationID;
-		} m_LocationSelectionHit;
+			gint nLocationID;
+		} LocationSelectionHit;
 
 		struct {
-			gchar* m_pszURL;
-		} m_URLHit;
+			gchar* pszURL;
+		} URLHit;
 	};
 } maphit_t;
 
@@ -260,21 +260,21 @@ typedef struct {
 #define MAX_LOCATIONSELECTION_URLS	(5)
 
 typedef struct {
-	gint m_nLocationID;
-	gboolean m_bVisible;
+	gint nLocationID;
+	gboolean bVisible;
 
-	mappoint_t m_Coordinates;
-	GPtrArray *m_pAttributesArray;
+	mappoint_t Coordinates;
+	GPtrArray* pAttributesArray;
 
-	screenrect_t m_InfoBoxRect;
-	screenrect_t m_InfoBoxCloseRect;
-	screenrect_t m_EditRect;
+	screenrect_t InfoBoxRect;
+	screenrect_t InfoBoxCloseRect;
+	screenrect_t EditRect;
 
-	gint m_nNumURLs;
+	gint nNumURLs;
 	struct {
-		screenrect_t m_Rect;
-		gchar* m_pszURL;
-	} m_aURLs[MAX_LOCATIONSELECTION_URLS];
+		screenrect_t Rect;
+		gchar* pszURL;
+	} aURLs[MAX_LOCATIONSELECTION_URLS];
 } locationselection_t;
 
 // Draw flags

@@ -66,15 +66,15 @@ int main (int argc, char *argv[])
 	gint nNewLocationID;
 
 	mappoint_t pt;
-	pt.m_fLatitude = 42.37382;
-	pt.m_fLongitude = -71.10054;
+	pt.fLatitude = 42.37382;
+	pt.fLongitude = -71.10054;
 	nNewLocationID = 0;
 	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "1369 Cambridge Street\nCambridge, MA, 02141", NULL);
 
-	pt.m_fLatitude = 42.36650;
-	pt.m_fLongitude = -71.10554;
+	pt.fLatitude = 42.36650;
+	pt.fLongitude = -71.10554;
 	nNewLocationID = 0;
 	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);

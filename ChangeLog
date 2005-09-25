@@ -1,3 +1,8 @@
+2005-09-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/*: Removed "m_" prefix from all struct variables!  (It makes much more sense in C++ where you can access this-> without writing it.)
+	* src/searchwindow.c: Refactoring and changes to what/when messages get shown to users.
+
 2005-09-24  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* data/roadster.glade: New "Go" menu with web maps.  General GUI cleanup.

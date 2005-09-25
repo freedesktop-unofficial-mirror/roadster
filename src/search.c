@@ -35,7 +35,7 @@
 #define SEARCH_RESULT_TYPE_GLYPH_HEIGHT		32
 
 struct {
-	glyph_t* m_apSearchResultTypeGlyphs[ NUM_SEARCH_RESULT_TYPES ];	// don't store pixbufs, store some custom glyph type
+	glyph_t* apSearchResultTypeGlyphs[ NUM_SEARCH_RESULT_TYPES ];	// don't store pixbufs, store some custom glyph type
 } g_Search = {0};
 
 // functions
@@ -44,20 +44,20 @@ void search_init()
 {
 	g_assert(NUM_SEARCH_RESULT_TYPES == 5);		// don't forget to add more here...
 
-	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_ROAD] = glyph_load_at_size("search-result-type-road", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
-	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_CITY] = glyph_load_at_size("search-result-type-city", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
-	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_STATE] = glyph_load_at_size("search-result-type-state", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
-	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_COUNTRY] = glyph_load_at_size("search-result-type-country", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
-	g_Search.m_apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_LOCATION] = glyph_load_at_size("search-result-type-location", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_ROAD] = glyph_load_at_size("search-result-type-road", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_CITY] = glyph_load_at_size("search-result-type-city", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_STATE] = glyph_load_at_size("search-result-type-state", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_COUNTRY] = glyph_load_at_size("search-result-type-country", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
+	g_Search.apSearchResultTypeGlyphs[SEARCH_RESULT_TYPE_LOCATION] = glyph_load_at_size("search-result-type-location", SEARCH_RESULT_TYPE_GLYPH_WIDTH, SEARCH_RESULT_TYPE_GLYPH_HEIGHT);
 }
 
 glyph_t* search_glyph_for_search_result_type(ESearchResultType eType)
 {
 	g_assert(eType >= 0);
 	g_assert(eType < NUM_SEARCH_RESULT_TYPES);
-	g_assert(g_Search.m_apSearchResultTypeGlyphs[eType] != NULL);
+	g_assert(g_Search.apSearchResultTypeGlyphs[eType] != NULL);
 
-	return g_Search.m_apSearchResultTypeGlyphs[eType];
+	return g_Search.apSearchResultTypeGlyphs[eType];
 }
 
 // functions common to all searches

@@ -80,12 +80,12 @@ void map_style_load(map_t* pMap, const gchar* pszFileName)
 	g_assert(pMap != NULL);
 	g_assert(pszFileName != NULL);
 	
-	if(pMap->m_pLayersArray != NULL) {
+	if(pMap->pLayersArray != NULL) {
 		g_warning("reloading styles currently leaks memory so... don't do it very often :)\n");
-		pMap->m_pLayersArray = NULL;
+		pMap->pLayersArray = NULL;
 	}
 
-	pMap->m_pLayersArray = g_ptr_array_new();
+	pMap->pLayersArray = g_ptr_array_new();
 
 	if(g_pConstantsHash != NULL) {
 		g_hash_table_destroy(g_pConstantsHash);		// NOTE: This frees all keys and values for us.
@@ -106,10 +106,8 @@ gboolean map_style_constant_get(const gchar* pszName, gchar** ppszReturnValue)
 	gchar* pszValue = g_hash_table_lookup(g_pConstantsHash, pszName);
 	if(pszValue != NULL) {
 		*ppszReturnValue = pszValue;
-//		g_print("map_style_constant_get(%s) == TRUE\n", pszName);
 		return TRUE;
 	}
-//	g_print("map_style_constant_get(%s) == FALSE\n", pszName);
 	return FALSE;
 }
 
@@ -118,7 +116,6 @@ void map_style_constant_set(const gchar* pszName, const gchar* pszValue)
 	g_assert(pszName != NULL);
 	g_assert(pszValue != NULL);
 
-//	g_print("map_style_constant_set(%s, %s)\n", pszName, pszValue);
 	// NOTE: if there was an existing key with this name, the old key and old value will get auto-freed by glib
 	g_hash_table_replace(g_pConstantsHash, (gchar*)pszName, (gchar*)pszValue);
 }
@@ -131,12 +128,11 @@ static maplayer_t* map_style_new_layer()
 	for(i=0 ; i<NUM_ZOOM_LEVELS ; i++) {
 		 maplayerstyle_t* pLayerStyle = g_new0(maplayerstyle_t, 1);
 
-		 pLayerStyle->m_nCapStyle = MAP_CAP_STYLE_DEFAULT;
+		 pLayerStyle->nCapStyle = MAP_CAP_STYLE_DEFAULT;
 
 		 // XXX: need to init the maplayerstyle_t's?
-		 pLayer->m_paStylesAtZoomLevels[i] = pLayerStyle;
+		 pLayer->paStylesAtZoomLevels[i] = pLayerStyle;
 	}
-
 	return pLayer;
 }
 
@@ -194,11 +190,11 @@ dashstyle_t* dashstyle_new(gdouble* pafValues, gint nValueCount)
 	dashstyle_t* pNewDashStyle = g_new0(dashstyle_t, 1);
 
 	// The list of gdouble's can just be copied in
-	pNewDashStyle->m_pafDashList = g_malloc(sizeof(gdouble) * nValueCount);
-	memcpy(pNewDashStyle->m_pafDashList, pafValues, sizeof(gdouble) * nValueCount);
+	pNewDashStyle->pafDashList = g_malloc(sizeof(gdouble) * nValueCount);
+	memcpy(pNewDashStyle->pafDashList, pafValues, sizeof(gdouble) * nValueCount);
 
 	// The list of int8's has to be converted list
-	pNewDashStyle->m_panDashList = g_malloc(sizeof(gint8) * nValueCount);
+	pNewDashStyle->panDashList = g_malloc(sizeof(gint8) * nValueCount);
 	gint i;
 	for(i=0 ; i<nValueCount ; i++) {
 		gint8 nVal = (gint)pafValues[i];
@@ -207,10 +203,10 @@ dashstyle_t* dashstyle_new(gdouble* pafValues, gint nValueCount)
 		nVal = MIN(nVal, MAX_DASH_LENGTH);
 		nVal = MAX(nVal, MIN_DASH_LENGTH);
 
-		pNewDashStyle->m_panDashList[i] = nVal;
+		pNewDashStyle->panDashList[i] = nVal;
 	}
 
-	pNewDashStyle->m_nDashCount = nValueCount;
+	pNewDashStyle->nDashCount = nValueCount;
 
 	return pNewDashStyle;
 }
@@ -410,14 +406,14 @@ static void map_style_parse_layer(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode)
 		if(strcmp(pAttribute->name, "data-source") == 0) {
 			gchar* pszDataSource = xmlNodeListGetString(pDoc, pAttribute->xmlChildrenNode, 1);
 
-			if(!map_object_type_atoi(pszDataSource, &(pLayer->m_nDataSource))) {
+			if(!map_object_type_atoi(pszDataSource, &(pLayer->nDataSource))) {
 				g_error("bad data source name %s\n", pszDataSource);
 			}
 		}
 		else if(strcmp(pAttribute->name, "draw-type") == 0) {
 			gchar* pszDrawType = xmlNodeListGetString(pDoc, pAttribute->xmlChildrenNode, 1);
 
-			if(!map_layer_render_type_atoi(pszDrawType, &(pLayer->m_nDrawType))) {
+			if(!map_layer_render_type_atoi(pszDrawType, &(pLayer->nDrawType))) {
 				g_error("bad layer draw type name %s\n", pszDrawType);
 			}
 		}
@@ -432,7 +428,7 @@ static void map_style_parse_layer(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode)
 	}
 
 	// add it to list
-	g_ptr_array_add(pMap->m_pLayersArray, pLayer);
+	g_ptr_array_add(pMap->pLayersArray, pLayer);
 
 //	map_style_print_layer(pLayer);
 }
@@ -482,32 +478,32 @@ map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, 
 		gint i;
 		if(strcmp(pszName, "line-width") == 0) {
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				pLayer->m_paStylesAtZoomLevels[i]->m_fLineWidth = (gdouble)atof(pszValue);
+				pLayer->paStylesAtZoomLevels[i]->fLineWidth = (gdouble)atof(pszValue);
 			}
 		}
 		else if(strcmp(pszName, "line-width") == 0) {
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				pLayer->m_paStylesAtZoomLevels[i]->m_fLineWidth = (gdouble)atof(pszValue);
+				pLayer->paStylesAtZoomLevels[i]->fLineWidth = (gdouble)atof(pszValue);
 			}
 		}
 		else if(strcmp(pszName, "pixel-offset-x") == 0) {
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				pLayer->m_paStylesAtZoomLevels[i]->m_nPixelOffsetX = (gint)atoi(pszValue);
+				pLayer->paStylesAtZoomLevels[i]->nPixelOffsetX = (gint)atoi(pszValue);
 			}
 		}
 		else if(strcmp(pszName, "pixel-offset-y") == 0) {
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				pLayer->m_paStylesAtZoomLevels[i]->m_nPixelOffsetY = (gint)atoi(pszValue);
+				pLayer->paStylesAtZoomLevels[i]->nPixelOffsetY = (gint)atoi(pszValue);
 			}
 		}
 		else if(strcmp(pszName, "color") == 0) {
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				util_parse_hex_color(pszValue, &(pLayer->m_paStylesAtZoomLevels[i]->m_clrPrimary));
+				util_parse_hex_color(pszValue, &(pLayer->paStylesAtZoomLevels[i]->clrPrimary));
 			}
 		}
 		else if(strcmp(pszName, "halo-size") == 0) {
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				pLayer->m_paStylesAtZoomLevels[i]->m_fHaloSize = (gdouble)atof(pszValue);
+				pLayer->paStylesAtZoomLevels[i]->fHaloSize = (gdouble)atof(pszValue);
 			}
 		}
 		else if(strcmp(pszName, "dash-pattern") == 0) {
@@ -516,7 +512,7 @@ map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, 
 				// layer should have its own copy
 				dashstyle_t* pNewDashStyle = NULL;
 				if(map_style_parse_dashstyle(pszValue, &pNewDashStyle)) {
-					pLayer->m_paStylesAtZoomLevels[i]->m_pDashStyle = pNewDashStyle;
+					pLayer->paStylesAtZoomLevels[i]->pDashStyle = pNewDashStyle;
 				}
 				else {
 					g_warning("bad dash style '%s' (should look like \"5.0 3.5\"\n", pszValue);
@@ -527,40 +523,40 @@ map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, 
 		else if(strcmp(pszName, "bold") == 0) {
 			gboolean bBold = (strcmp(pszValue, "yes") == 0);
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				pLayer->m_paStylesAtZoomLevels[i]->m_bFontBold = bBold;
+				pLayer->paStylesAtZoomLevels[i]->bFontBold = bBold;
 			}
 		}
 		else if(strcmp(pszName, "halo-color") == 0) {
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				util_parse_hex_color(pszValue, &(pLayer->m_paStylesAtZoomLevels[i]->m_clrHalo));
+				util_parse_hex_color(pszValue, &(pLayer->paStylesAtZoomLevels[i]->clrHalo));
 			}
 		}
 		else if(strcmp(pszName, "font-size") == 0) {
 			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-				pLayer->m_paStylesAtZoomLevels[i]->m_fFontSize = (gdouble)atof(pszValue);
+				pLayer->paStylesAtZoomLevels[i]->fFontSize = (gdouble)atof(pszValue);
 			}
 		}
 //         else if(strcmp(pszName, "join-style") == 0) {
 //             for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
 //                 if(strcmp(pszValue, "mitre") == 0) {
-//                     pLayer->m_paStylesAtZoomLevels[i]->m_nJoinStyle = CAIRO_LINE_JOIN_MITER;
+//                     pLayer->paStylesAtZoomLevels[i]->nJoinStyle = CAIRO_LINE_JOIN_MITER;
 //                 }
 //                 else if(strcmp(pszValue, "round") == 0) {
-//                     pLayer->m_paStylesAtZoomLevels[i]->m_nJoinStyle = CAIRO_LINE_JOIN_ROUND;
+//                     pLayer->paStylesAtZoomLevels[i]->nJoinStyle = CAIRO_LINE_JOIN_ROUND;
 //                 }
 //             }
 //         }
 		else if(strcmp(pszName, "line-cap") == 0) {
 			if(strcmp(pszValue, "square") == 0) {
 				for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-					pLayer->m_paStylesAtZoomLevels[i]->m_nCapStyle = MAP_CAP_STYLE_SQUARE;
+					pLayer->paStylesAtZoomLevels[i]->nCapStyle = MAP_CAP_STYLE_SQUARE;
 				}
 			}
 			else {
 				if(strcmp(pszValue, "round") != 0) { g_warning("bad value for line-cap found: '%s' (valid options are 'square' and 'round')\n", pszValue); }
 
 				for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
-					pLayer->m_paStylesAtZoomLevels[i]->m_nCapStyle = MAP_CAP_STYLE_ROUND;
+					pLayer->paStylesAtZoomLevels[i]->nCapStyle = MAP_CAP_STYLE_ROUND;
 				}
 			}
 		}
@@ -577,26 +573,26 @@ static void
 map_style_print_color(color_t* pColor)
 {
 	g_assert(pColor != NULL);
-	g_print("color: %3.2f, %3.2f, %3.2f, %3.2f\n", pColor->m_fRed, pColor->m_fGreen, pColor->m_fBlue, pColor->m_fAlpha);
+	g_print("color: %3.2f, %3.2f, %3.2f, %3.2f\n", pColor->fRed, pColor->fGreen, pColor->fBlue, pColor->fAlpha);
 }
 
 /*
-  	color_t m_clrPrimary;	// Color used for polygon fill or line stroke
-	gdouble m_fLineWidth;
+  	color_t clrPrimary;	// Color used for polygon fill or line stroke
+	gdouble fLineWidth;
 
-	gint m_nJoinStyle;
-	gint m_nCapStyle;
+	gint nJoinStyle;
+	gint nCapStyle;
 
-	gint m_nDashStyle;
+	gint nDashStyle;
 
 	// XXX: switch to this:
-	//dashstyle_t m_pDashStyle;	// can be NULL
+	//dashstyle_t pDashStyle;	// can be NULL
 
 	// Used just for text
-	gdouble m_fFontSize;
-	gboolean m_bBold;
-	gdouble m_fHaloSize;	// actually a stroke width
-	color_t m_clrHalo;
+	gdouble fFontSize;
+	gboolean bBold;
+	gdouble fHaloSize;	// actually a stroke width
+	color_t clrHalo;
 */
 
 static void
@@ -607,12 +603,12 @@ map_style_print_layer(maplayer_t *pLayer)
 	int i;
 	for(i = 0 ; i < NUM_ZOOM_LEVELS ; i++) {
 		g_print("\nzoom level %d\n", i+1);
-		maplayerstyle_t* pStyle = pLayer->m_paStylesAtZoomLevels[i];
+		maplayerstyle_t* pStyle = pLayer->paStylesAtZoomLevels[i];
 
-		g_print("  line width: %f\n", pStyle->m_fLineWidth);
-		g_print("  primary "); map_style_print_color(&(pStyle->m_clrPrimary));
-		g_print("  join style: %d\n", pStyle->m_nJoinStyle);
-		g_print("  cap style: %d\n", pStyle->m_nCapStyle);
-		//g_print("  dash style: %d\n", pStyle->m_nDashStyle);
+		g_print("  line width: %f\n", pStyle->fLineWidth);
+		g_print("  primary "); map_style_print_color(&(pStyle->clrPrimary));
+		g_print("  join style: %d\n", pStyle->nJoinStyle);
+		g_print("  cap style: %d\n", pStyle->nCapStyle);
+		//g_print("  dash style: %d\n", pStyle->nDashStyle);
 	}
 }

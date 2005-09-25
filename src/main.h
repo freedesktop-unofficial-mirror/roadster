@@ -35,10 +35,10 @@
 //#define ENABLE_TIMING
 
 typedef struct color {
-	gfloat m_fRed;
-	gfloat m_fGreen;
-	gfloat m_fBlue;
-	gfloat m_fAlpha;
+	gfloat fRed;
+	gfloat fGreen;
+	gfloat fBlue;
+	gfloat fAlpha;
 } color_t;
 
 #endif

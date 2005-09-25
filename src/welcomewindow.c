@@ -36,23 +36,23 @@
 #define URL_CENSUS_GOV_TIGER_DATA_WEBSITE ("http://www.census.gov/geo/www/tiger/tiger2004se/tgr2004se.html")
 
 struct {
-	GtkWindow* m_pWindow;
+	GtkWindow* pWindow;
 } g_WelcomeWindow;
 
 void welcomewindow_init(GladeXML* pGladeXML)
 {
-	g_WelcomeWindow.m_pWindow = GTK_WINDOW(glade_xml_get_widget(pGladeXML, "welcomewindow"));			g_return_if_fail(g_WelcomeWindow.m_pWindow != NULL);
+	g_WelcomeWindow.pWindow = GTK_WINDOW(glade_xml_get_widget(pGladeXML, "welcomewindow"));			g_return_if_fail(g_WelcomeWindow.pWindow != NULL);
 }
 
 void welcomewindow_show(void)
 {
-	gtk_widget_show(GTK_WIDGET(g_WelcomeWindow.m_pWindow));
-	gtk_window_present(g_WelcomeWindow.m_pWindow);
+	gtk_widget_show(GTK_WIDGET(g_WelcomeWindow.pWindow));
+	gtk_window_present(g_WelcomeWindow.pWindow);
 }
 
 static void welcomewindow_hide(void)
 {
-	gtk_widget_hide(GTK_WIDGET(g_WelcomeWindow.m_pWindow));
+	gtk_widget_hide(GTK_WIDGET(g_WelcomeWindow.pWindow));
 }
 
 /* Callbacks */

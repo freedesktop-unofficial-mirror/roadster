@@ -189,23 +189,23 @@ gboolean util_parse_hex_color(const gchar* pszString, void* pvReturnColor)
 	gchar azBuffer[3] = {0,0,0};
 
 	azBuffer[0] = *p++; azBuffer[1] = *p++;
-	pReturnColor->m_fRed = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+	pReturnColor->fRed = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
 	azBuffer[0] = *p++; azBuffer[1] = *p++;
-	pReturnColor->m_fGreen = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+	pReturnColor->fGreen = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
 	azBuffer[0] = *p++; azBuffer[1] = *p++;
-	pReturnColor->m_fBlue = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+	pReturnColor->fBlue = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
 	azBuffer[0] = *p++; azBuffer[1] = *p++;
-	pReturnColor->m_fAlpha = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+	pReturnColor->fAlpha = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
 }
 
 void util_random_color(void* p)
 {
 	color_t* pColor = (color_t*)p;
 
-	pColor->m_fRed = (random()%1000)/1000.0;
-	pColor->m_fGreen = (random()%1000)/1000.0;
-	pColor->m_fBlue = (random()%1000)/1000.0;
-	pColor->m_fAlpha = 1.0;
+	pColor->fRed = (random()%1000)/1000.0;
+	pColor->fGreen = (random()%1000)/1000.0;
+	pColor->fBlue = (random()%1000)/1000.0;
+	pColor->fAlpha = 1.0;
 }
 
 //
@@ -383,10 +383,10 @@ gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplac
 		gboolean bFound = FALSE;
 		gint i;
 		for(i=0 ; i<nNumReplacements ; i++) {
-			//g_print("comparing %s and %s\n", pszSourceWalker, aReplacements[i].m_pszOld);
-			if(strncmp(pszSourceWalker, aReplacements[i].m_pszOld, strlen(aReplacements[i].m_pszOld)) == 0) {
-				pStringBuffer = g_string_append(pStringBuffer, aReplacements[i].m_pszNew);
-				pszSourceWalker += strlen(aReplacements[i].m_pszOld);
+			//g_print("comparing %s and %s\n", pszSourceWalker, aReplacements[i].pszOld);
+			if(strncmp(pszSourceWalker, aReplacements[i].pszFind, strlen(aReplacements[i].pszFind)) == 0) {
+				pStringBuffer = g_string_append(pStringBuffer, aReplacements[i].pszReplace);
+				pszSourceWalker += strlen(aReplacements[i].pszFind);
 				bFound = TRUE;
 				break;
 			}

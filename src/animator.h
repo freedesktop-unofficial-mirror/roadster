@@ -29,9 +29,9 @@
 typedef enum { ANIMATIONTYPE_NONE=0, ANIMATIONTYPE_SLIDE=1, ANIMATIONTYPE_FAST_THEN_SLIDE=2 } EAnimationType;
 
 typedef struct animator {
-        GTimer* m_pTimer;
-        EAnimationType m_eAnimationType;
-        gdouble m_fAnimationTimeInSeconds;
+        GTimer* pTimer;
+        EAnimationType eAnimationType;
+        gdouble fAnimationTimeInSeconds;
 } animator_t;
 
 animator_t* animator_new(EAnimationType eAnimationType, gdouble fAnimationTimeInSeconds);

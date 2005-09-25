@@ -110,13 +110,13 @@
 
 // Types
 typedef struct {
-	GdkCursorType m_CursorType;
-	GdkCursor* m_pGdkCursor;
+	GdkCursorType CursorType;
+	GdkCursor* pGdkCursor;
 } cursor_t;
 
 typedef struct {
-	char* m_szName;
-	cursor_t m_Cursor;
+	char* szName;
+	cursor_t Cursor;
 } toolsettings_t;
 
 typedef enum {
@@ -148,96 +148,96 @@ void mainwindow_refresh_locationset_list();
 void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data);
 
 struct {
-	gint m_nX;
-	gint m_nY;
+	gint nX;
+	gint nY;
 } g_aDirectionMultipliers[] = {{0,0}, {0,-1}, {1,-1}, {1,0}, {1,1}, {0,1}, {-1,1}, {-1,0}, {-1,-1}};
 
 struct {
-	gint m_nCursor;
+	gint nCursor;
 } g_aDirectionCursors[] = {GDK_LEFT_PTR, GDK_TOP_SIDE, GDK_TOP_RIGHT_CORNER, GDK_RIGHT_SIDE, GDK_BOTTOM_RIGHT_CORNER, GDK_BOTTOM_SIDE, GDK_BOTTOM_LEFT_CORNER, GDK_LEFT_SIDE, GDK_TOP_LEFT_CORNER};
 
 struct {
-	GtkWindow* m_pWindow;
-	GtkTooltips* m_pTooltips;
-	GtkMenu* m_pMapPopupMenu;
+	GtkWindow* pWindow;
+	GtkTooltips* pTooltips;
+	GtkMenu* pMapPopupMenu;
 
 	// Toolbar
-	GtkHBox* m_pToolbar;
-//	GtkToolButton* m_pPointerToolButton;
-//	GtkToolButton* m_pZoomToolButton;
-	GtkHScale* m_pZoomScale;
-	GtkEntry* m_pSearchBox;
-	GtkImage* m_pStatusbarGPSIcon;
-	GtkWidget *m_pSidebox;
+	GtkHBox* pToolbar;
+//	GtkToolButton* pPointerToolButton;
+//	GtkToolButton* pZoomToolButton;
+	GtkHScale* pZoomScale;
+	GtkEntry* pSearchBox;
+	GtkImage* pStatusbarGPSIcon;
+	GtkWidget* pSidebox;
 
-	GtkButton* m_pZoomInButton;
-	GtkMenuItem* m_pZoomInMenuItem;
-	GtkButton* m_pZoomOutButton;
-	GtkMenuItem* m_pZoomOutMenuItem;
+	GtkButton* pZoomInButton;
+	GtkMenuItem* pZoomInMenuItem;
+	GtkButton* pZoomOutButton;
+	GtkMenuItem* pZoomOutMenuItem;
 
 	// Sidebar
 
 	// "Draw" Sidebar (currently POI)
-	GtkTreeView* m_pLayersListTreeView;
-	GtkTreeView* m_pLocationSetsTreeView;
-	GtkListStore* m_pLocationSetsListStore;
-	GtkNotebook* m_pSidebarNotebook;
+	GtkTreeView* pLayersListTreeView;
+	GtkTreeView* pLocationSetsTreeView;
+	GtkListStore* pLocationSetsListStore;
+	GtkNotebook* pSidebarNotebook;
 
 	// "GPS" sidebar
-	GtkLabel* m_pSpeedLabel;	// these belong in m_GPS
-	GtkProgressBar* m_pGPSSignalStrengthProgressBar;
+	GtkLabel* pSpeedLabel;	// these belong in GPS
+	GtkProgressBar* pGPSSignalStrengthProgressBar;
 
 	struct {
-		GtkCheckButton* m_pShowPositionCheckButton;
-		GtkCheckButton* m_pKeepPositionCenteredCheckButton;
-		GtkCheckButton* m_pShowTrailCheckButton;
-		GtkCheckButton* m_pStickToRoadsCheckButton;
-	} m_GPS;
+		GtkCheckButton* pShowPositionCheckButton;
+		GtkCheckButton* pKeepPositionCenteredCheckButton;
+		GtkCheckButton* pShowTrailCheckButton;
+		GtkCheckButton* pStickToRoadsCheckButton;
+	} GPS;
 
 	// Statusbar
-	GtkVBox*  m_pStatusbar;
- 	GtkLabel* m_pPositionLabel;
-	GtkLabel* m_pZoomScaleLabel;
-	GtkProgressBar* m_pProgressBar;
+	GtkVBox*  pStatusbar;
+ 	GtkLabel* pPositionLabel;
+	GtkLabel* pZoomScaleLabel;
+	GtkProgressBar* pProgressBar;
 
 	// Boxes
-	GtkHBox* m_pContentBox;
+	GtkHBox* pContentBox;
 
 	// Drawing area
-	GtkDrawingArea* m_pDrawingArea;
-	tooltip_t* m_pTooltip;
-	map_t* m_pMap;
+	GtkDrawingArea* pDrawingArea;
+	tooltip_t* pTooltip;
+	map_t* pMap;
 
-	EToolType m_eSelectedTool;
+	EToolType eSelectedTool;
 
-	gboolean m_bScrolling;
-	EDirection m_eScrollDirection;
-	gboolean m_bScrollMovement;
+	gboolean bScrolling;
+	EDirection eScrollDirection;
+	gboolean bScrollMovement;
 
-	gboolean m_bMouseDragging;
-	gboolean m_bMouseDragMovement;
+	gboolean bMouseDragging;
+	gboolean bMouseDragMovement;
 
-	screenpoint_t m_ptClickLocation;	
+	screenpoint_t ptClickLocation;	
 
-	gint m_nCurrentGPSPath;
-	gint m_nGPSLocationGlyph;
-	gint m_nDrawPrettyTimeoutID;
-	gint m_nScrollTimeoutID;
+	gint nCurrentGPSPath;
+	gint nGPSLocationGlyph;
+	gint nDrawPrettyTimeoutID;
+	gint nScrollTimeoutID;
 
 	// Sliding
-	gboolean m_bSliding;
-	mappoint_t m_ptSlideStartLocation;
-	mappoint_t m_ptSlideEndLocation;
-	animator_t* m_pAnimator;
+	gboolean bSliding;
+	mappoint_t ptSlideStartLocation;
+	mappoint_t ptSlideEndLocation;
+	animator_t* pAnimator;
 
 	// History (forward / back)
-	history_t* m_pHistory;
-	GtkButton* m_pForwardButton;
-	GtkButton* m_pBackButton;
-	GtkMenuItem* m_pForwardMenuItem;
-	GtkMenuItem* m_pBackMenuItem;
+	history_t* pHistory;
+	GtkButton* pForwardButton;
+	GtkButton* pBackButton;
+	GtkMenuItem* pForwardMenuItem;
+	GtkMenuItem* pBackMenuItem;
 	
-	GtkMenuItem* m_pWebMapsMenuItem;
+	GtkMenuItem* pWebMapsMenuItem;
 } g_MainWindow = {0};
 
 
@@ -250,35 +250,35 @@ void cursor_init()
 {
 	int i;
 	for(i=0 ; i<G_N_ELEMENTS(g_Tools) ; i++) {
-		g_Tools[i].m_Cursor.m_pGdkCursor = gdk_cursor_new(g_Tools[i].m_Cursor.m_CursorType);
+		g_Tools[i].Cursor.pGdkCursor = gdk_cursor_new(g_Tools[i].Cursor.CursorType);
 	}
 }
 
 static void util_set_image_to_stock(GtkImage* pImage, gchar* pszStockIconID, GtkIconSize nSize)
 {
-	GdkPixbuf* pPixbuf = gtk_widget_render_icon(GTK_WIDGET(g_MainWindow.m_pStatusbarGPSIcon),pszStockIconID, nSize, "name");
+	GdkPixbuf* pPixbuf = gtk_widget_render_icon(GTK_WIDGET(g_MainWindow.pStatusbarGPSIcon),pszStockIconID, nSize, "name");
 	gtk_image_set_from_pixbuf(pImage, pPixbuf);
 	g_object_unref(pPixbuf);
 }
 
 static void mainwindow_set_statusbar_position(gchar* pMessage)
 {
-	gtk_label_set_text(GTK_LABEL(g_MainWindow.m_pPositionLabel), pMessage);
+	gtk_label_set_text(GTK_LABEL(g_MainWindow.pPositionLabel), pMessage);
 }
 
 static void mainwindow_set_statusbar_zoomscale(gchar* pMessage)
 {
-	gtk_label_set_text(GTK_LABEL(g_MainWindow.m_pZoomScaleLabel), pMessage);
+	gtk_label_set_text(GTK_LABEL(g_MainWindow.pZoomScaleLabel), pMessage);
 }
 
 void* mainwindow_set_busy(void)
 {
 	GdkCursor* pCursor = gdk_cursor_new(GDK_WATCH);
 	// set it for the whole window
-	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pWindow)->window, pCursor);
+	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pWindow)->window, pCursor);
 
 	// HACK: children with their own cursors set need to be set manually and restored later :/
-	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, pCursor);
 
 	gdk_flush();
 	return pCursor;
@@ -286,8 +286,8 @@ void* mainwindow_set_busy(void)
 
 void mainwindow_set_not_busy(void** ppCursor)
 {
-	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pWindow)->window, NULL);
-	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, NULL);	// HACK: see mainwindow_set_busy
+	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pWindow)->window, NULL);
+	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, NULL);	// HACK: see mainwindow_set_busy
 
 	gdk_cursor_unref(*ppCursor);
 	gdk_flush();
@@ -302,7 +302,7 @@ void mainwindow_set_not_busy(void** ppCursor)
 
 void mainwindow_init_add_web_maps_menu_items()
 {
-	typedef struct { gchar* m_pszName; gchar* m_pszURL; } web_map_url_t;
+	typedef struct { gchar* pszName; gchar* pszURL; } web_map_url_t;
 
 	web_map_url_t aWebMapURLs[] = {
 		{"Google Maps", "http://maps.google.com/?ll={LAT}%2C{LON}&z={ZOOM_NUMBER_REVERSED}"},
@@ -325,21 +325,21 @@ void mainwindow_init_add_web_maps_menu_items()
 		gchar* pszName;
 		// Set name
 		if((i+1) <= 9) {
-			pszName = g_strdup_printf("_%d %s", i+1, aWebMapURLs[i].m_pszName);	// "1 Supermaps" with 1 underlined
+			pszName = g_strdup_printf("_%d %s", i+1, aWebMapURLs[i].pszName);	// "1 Supermaps" with 1 underlined
 		}
 		else {
-			pszName = g_strdup_printf("%s", aWebMapURLs[i].m_pszName);
+			pszName = g_strdup_printf("%s", aWebMapURLs[i].pszName);
 		}
 		GtkMenuItem* pNewMenuItem = gtk_menu_item_new_with_mnemonic(pszName);
 		g_free(pszName);
 		
 		// Add a click handler which gets passed the URL with {TAGS}
-		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", mainwindow_on_web_url_clicked, aWebMapURLs[i].m_pszURL);
+		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", mainwindow_on_web_url_clicked, aWebMapURLs[i].pszURL);
 
 		gtk_menu_shell_append(GTK_MENU_SHELL(pSubMenu), GTK_WIDGET(pNewMenuItem));
 	}
 	gtk_widget_show_all(pSubMenu);
-	gtk_menu_item_set_submenu(g_MainWindow.m_pWebMapsMenuItem, pSubMenu);
+	gtk_menu_item_set_submenu(g_MainWindow.pWebMapsMenuItem, pSubMenu);
 }
 
 void mainwindow_init(GladeXML* pGladeXML)
@@ -348,81 +348,81 @@ void mainwindow_init(GladeXML* pGladeXML)
   	GtkTreeViewColumn* pColumn;
 
 	// Window / Container Widgets
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pWindow, GTK_WINDOW, "mainwindow");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pToolbar, GTK_HBOX, "maintoolbar");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pStatusbar, GTK_VBOX, "statusbar");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pSidebox, GTK_WIDGET, "mainwindowsidebox");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pSidebarNotebook, GTK_NOTEBOOK, "sidebarnotebook");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pContentBox, GTK_HBOX, "mainwindowcontentsbox");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pWindow, GTK_WINDOW, "mainwindow");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pToolbar, GTK_HBOX, "maintoolbar");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pStatusbar, GTK_VBOX, "statusbar");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSidebox, GTK_WIDGET, "mainwindowsidebox");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSidebarNotebook, GTK_NOTEBOOK, "sidebarnotebook");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pContentBox, GTK_HBOX, "mainwindowcontentsbox");
 
 
 	// Zoom controls
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pZoomInButton, GTK_BUTTON, "zoominbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pZoomInMenuItem, GTK_MENU_ITEM, "zoominmenuitem");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pZoomOutButton, GTK_BUTTON, "zoomoutbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pZoomOutMenuItem, GTK_MENU_ITEM, "zoomoutmenuitem");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pZoomScale, GTK_HSCALE, "zoomscale");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomInButton, GTK_BUTTON, "zoominbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomInMenuItem, GTK_MENU_ITEM, "zoominmenuitem");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomOutButton, GTK_BUTTON, "zoomoutbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomOutMenuItem, GTK_MENU_ITEM, "zoomoutmenuitem");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomScale, GTK_HSCALE, "zoomscale");
 
 	// Labels
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pPositionLabel, GTK_LABEL, "positionlabel");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pZoomScaleLabel, GTK_LABEL, "zoomscalelabel");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pPositionLabel, GTK_LABEL, "positionlabel");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomScaleLabel, GTK_LABEL, "zoomscalelabel");
 
 	// Popup menus
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pMapPopupMenu, GTK_MENU, "mappopupmenu");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pMapPopupMenu, GTK_MENU, "mappopupmenu");
 
 	// Tools
-	//GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pPointerToolButton, GTK_TOOL_BUTTON, "pointertoolbutton");
-	//GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pZoomToolButton, GTK_TOOL_BUTTON, "zoomtoolbutton");
+	//GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pPointerToolButton, GTK_TOOL_BUTTON, "pointertoolbutton");
+	//GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomToolButton, GTK_TOOL_BUTTON, "zoomtoolbutton");
 
 	// GPS Widgets
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_GPS.m_pShowPositionCheckButton, GTK_CHECK_BUTTON, "gpsshowpositioncheckbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_GPS.m_pKeepPositionCenteredCheckButton, GTK_CHECK_BUTTON, "gpskeeppositioncenteredcheckbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_GPS.m_pShowTrailCheckButton, GTK_CHECK_BUTTON, "gpsshowtrailcheckbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_GPS.m_pStickToRoadsCheckButton, GTK_CHECK_BUTTON, "gpssticktoroadscheckbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pGPSSignalStrengthProgressBar, GTK_PROGRESS_BAR, "gpssignalprogressbar");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pStatusbarGPSIcon, GTK_IMAGE, "statusbargpsicon");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pSpeedLabel, GTK_LABEL, "speedlabel");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.GPS.pShowPositionCheckButton, GTK_CHECK_BUTTON, "gpsshowpositioncheckbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.GPS.pKeepPositionCenteredCheckButton, GTK_CHECK_BUTTON, "gpskeeppositioncenteredcheckbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.GPS.pShowTrailCheckButton, GTK_CHECK_BUTTON, "gpsshowtrailcheckbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.GPS.pStickToRoadsCheckButton, GTK_CHECK_BUTTON, "gpssticktoroadscheckbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pGPSSignalStrengthProgressBar, GTK_PROGRESS_BAR, "gpssignalprogressbar");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pStatusbarGPSIcon, GTK_IMAGE, "statusbargpsicon");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSpeedLabel, GTK_LABEL, "speedlabel");
 
 	// History Widgets
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pForwardButton, GTK_BUTTON, "forwardbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pBackButton, GTK_BUTTON, "backbutton");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pForwardMenuItem, GTK_MENU_ITEM, "forwardmenuitem");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pBackMenuItem, GTK_MENU_ITEM, "backmenuitem");
-	g_MainWindow.m_pHistory = history_new();
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pForwardButton, GTK_BUTTON, "forwardbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pBackButton, GTK_BUTTON, "backbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pForwardMenuItem, GTK_MENU_ITEM, "forwardmenuitem");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pBackMenuItem, GTK_MENU_ITEM, "backmenuitem");
+	g_MainWindow.pHistory = history_new();
 
 	// LocationSet Widgets
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pLocationSetsTreeView, GTK_TREE_VIEW, "locationsetstreeview");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pLocationSetsTreeView, GTK_TREE_VIEW, "locationsetstreeview");
 
 	// Web Map menu
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.m_pWebMapsMenuItem, GTK_MENU_ITEM, "webmapsmenuitem");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pWebMapsMenuItem, GTK_MENU_ITEM, "webmapsmenuitem");
 	mainwindow_init_add_web_maps_menu_items();
 
 	// Normal widget tooltips and our super-map-tooltip (tooltip.c)
-	g_MainWindow.m_pTooltips		= gtk_tooltips_new();
-	g_MainWindow.m_pTooltip 		= tooltip_new();
+	g_MainWindow.pTooltips		= gtk_tooltips_new();
+	g_MainWindow.pTooltip 		= tooltip_new();
 
 	// Drawing area
-	g_MainWindow.m_pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());
-	gtk_widget_show(GTK_WIDGET(g_MainWindow.m_pDrawingArea));
+	g_MainWindow.pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());
+	gtk_widget_show(GTK_WIDGET(g_MainWindow.pDrawingArea));
 
 	// create map and load style
-	map_new(&g_MainWindow.m_pMap, GTK_WIDGET(g_MainWindow.m_pDrawingArea));
-	map_style_load(g_MainWindow.m_pMap, MAP_STYLE_FILENAME);
+	map_new(&g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea));
+	map_style_load(g_MainWindow.pMap, MAP_STYLE_FILENAME);
 
 	// Signal handlers for drawing area
-	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.m_pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "button_release_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "motion_notify_event", G_CALLBACK(mainwindow_on_mouse_motion), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "scroll_event", G_CALLBACK(mainwindow_on_mouse_scroll), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "enter_notify_event", G_CALLBACK(mainwindow_on_enter_notify), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "leave_notify_event", G_CALLBACK(mainwindow_on_leave_notify), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pDrawingArea), "key_press_event", G_CALLBACK(mainwindow_on_key_press), NULL);
+	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_release_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "motion_notify_event", G_CALLBACK(mainwindow_on_mouse_motion), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "scroll_event", G_CALLBACK(mainwindow_on_mouse_scroll), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "enter_notify_event", G_CALLBACK(mainwindow_on_enter_notify), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "leave_notify_event", G_CALLBACK(mainwindow_on_leave_notify), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "key_press_event", G_CALLBACK(mainwindow_on_key_press), NULL);
 
 	// Pack drawing area into application window
-	gtk_box_pack_end(GTK_BOX(g_MainWindow.m_pContentBox), GTK_WIDGET(g_MainWindow.m_pDrawingArea),
+	gtk_box_pack_end(GTK_BOX(g_MainWindow.pContentBox), GTK_WIDGET(g_MainWindow.pDrawingArea),
 					TRUE, // expand
 					TRUE, // fill
 					 0);
@@ -443,13 +443,13 @@ void mainwindow_init(GladeXML* pGladeXML)
 	mainwindow_on_gps_redraw_timeout(NULL);		// give it a call to set all labels, etc.
 
 	// When main window closes, quit.
-	g_signal_connect(G_OBJECT(g_MainWindow.m_pWindow), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
 }
 
 gboolean mainwindow_locationset_list_is_separator_callback(GtkTreeModel *_unused, GtkTreeIter *pIter, gpointer __unused)
 {
 	gint nLocationSetID;
-	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore), pIter, LOCATIONSETLIST_COLUMN_ID, &nLocationSetID, -1);
+	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.pLocationSetsListStore), pIter, LOCATIONSETLIST_COLUMN_ID, &nLocationSetID, -1);
 	return (nLocationSetID == 0);
 }
 
@@ -459,17 +459,17 @@ static void mainwindow_configure_locationset_list()
   	GtkTreeViewColumn* pColumn;
 
 	// Create location sets tree view
-	g_MainWindow.m_pLocationSetsListStore = gtk_list_store_new(5, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, GDK_TYPE_PIXBUF);
-	gtk_tree_view_set_model(g_MainWindow.m_pLocationSetsTreeView, GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore));
-	gtk_tree_view_set_search_column(g_MainWindow.m_pLocationSetsTreeView, LOCATIONSETLIST_COLUMN_NAME);
-	gtk_tree_view_set_search_equal_func(g_MainWindow.m_pLocationSetsTreeView, util_treeview_match_all_words_callback, NULL, NULL);
-	gtk_tree_view_set_row_separator_func(g_MainWindow.m_pLocationSetsTreeView, mainwindow_locationset_list_is_separator_callback, NULL, NULL);
+	g_MainWindow.pLocationSetsListStore = gtk_list_store_new(5, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INT, G_TYPE_STRING, GDK_TYPE_PIXBUF);
+	gtk_tree_view_set_model(g_MainWindow.pLocationSetsTreeView, GTK_TREE_MODEL(g_MainWindow.pLocationSetsListStore));
+	gtk_tree_view_set_search_column(g_MainWindow.pLocationSetsTreeView, LOCATIONSETLIST_COLUMN_NAME);
+	gtk_tree_view_set_search_equal_func(g_MainWindow.pLocationSetsTreeView, util_treeview_match_all_words_callback, NULL, NULL);
+	gtk_tree_view_set_row_separator_func(g_MainWindow.pLocationSetsTreeView, mainwindow_locationset_list_is_separator_callback, NULL, NULL);
 
 		// NEW COLUMN: "Visibility" checkbox column
 		pCellRenderer = gtk_cell_renderer_toggle_new();
 			g_signal_connect(pCellRenderer, "toggled", G_CALLBACK(mainwindow_on_locationset_visible_checkbox_clicked), NULL);
 		pColumn = gtk_tree_view_column_new_with_attributes("", pCellRenderer, "active", LOCATIONSETLIST_COLUMN_ENABLED, NULL);
-		gtk_tree_view_append_column(g_MainWindow.m_pLocationSetsTreeView, pColumn);
+		gtk_tree_view_append_column(g_MainWindow.pLocationSetsTreeView, pColumn);
 	
 		// NEW COLUMN: "Icon"
 		pCellRenderer = gtk_cell_renderer_pixbuf_new();
@@ -478,7 +478,7 @@ static void mainwindow_configure_locationset_list()
 		g_object_set(G_OBJECT(pCellRenderer), "xpad", 2, NULL);
 		g_object_set(G_OBJECT(pCellRenderer), "ypad", 1, NULL);
 		pColumn = gtk_tree_view_column_new_with_attributes("", pCellRenderer, "pixbuf", LOCATIONSETLIST_COLUMN_PIXBUF, NULL);
-		gtk_tree_view_append_column(g_MainWindow.m_pLocationSetsTreeView, pColumn);
+		gtk_tree_view_append_column(g_MainWindow.pLocationSetsTreeView, pColumn);
 	
 		// NEW COLUMN: "Name" column
 		pCellRenderer = gtk_cell_renderer_text_new();
@@ -486,7 +486,7 @@ static void mainwindow_configure_locationset_list()
 			//g_object_set(G_OBJECT(pCellRenderer), "width-chars", LOCATIONSET_LIST_MIN_NAME_WIDTH_IN_CHARS, NULL);
 		pColumn = gtk_tree_view_column_new_with_attributes("Name", pCellRenderer, "markup", LOCATIONSETLIST_COLUMN_NAME, NULL);
 			gtk_tree_view_column_set_expand(pColumn, TRUE);
-		gtk_tree_view_append_column(g_MainWindow.m_pLocationSetsTreeView, pColumn);
+		gtk_tree_view_append_column(g_MainWindow.pLocationSetsTreeView, pColumn);
 	
 		// NEW COLUMN: "#" column
 		pCellRenderer = gtk_cell_renderer_text_new();
@@ -494,7 +494,7 @@ static void mainwindow_configure_locationset_list()
 		g_object_set(G_OBJECT(pCellRenderer), "xalign", 1.0, NULL); // right align column contents
 		pColumn = gtk_tree_view_column_new_with_attributes("#", pCellRenderer, "markup", LOCATIONSETLIST_COLUMN_COUNT, NULL);
 			gtk_tree_view_column_set_alignment(pColumn, 1.0);   // right align column header
-		gtk_tree_view_append_column(g_MainWindow.m_pLocationSetsTreeView, pColumn);
+		gtk_tree_view_append_column(g_MainWindow.pLocationSetsTreeView, pColumn);
 }
 
 void mainwindow_refresh_locationset_list()
@@ -505,19 +505,19 @@ void mainwindow_refresh_locationset_list()
 	const GPtrArray* pLocationSetArray = locationset_get_array();
 	gint i;
 
-	gtk_list_store_clear(g_MainWindow.m_pLocationSetsListStore);
+	gtk_list_store_clear(g_MainWindow.pLocationSetsListStore);
 
 	for(i=0 ; i<pLocationSetArray->len ; i++) {
 		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetArray, i);
 
-		gchar* pszName = g_strdup_printf("<small>%s</small>", pLocationSet->m_pszName);
-		gchar* pszCount = g_strdup_printf("<small><small>(%d)</small></small>", pLocationSet->m_nLocationCount);
+		gchar* pszName = g_strdup_printf("<small>%s</small>", pLocationSet->pszName);
+		gchar* pszCount = g_strdup_printf("<small><small>(%d)</small></small>", pLocationSet->nLocationCount);
 
-		gtk_list_store_append(g_MainWindow.m_pLocationSetsListStore, &iter);
-		gtk_list_store_set(g_MainWindow.m_pLocationSetsListStore, &iter, 
+		gtk_list_store_append(g_MainWindow.pLocationSetsListStore, &iter);
+		gtk_list_store_set(g_MainWindow.pLocationSetsListStore, &iter, 
 						   LOCATIONSETLIST_COLUMN_NAME, pszName, 
 						   LOCATIONSETLIST_COLUMN_ENABLED, TRUE,
-						   LOCATIONSETLIST_COLUMN_ID, pLocationSet->m_nID,
+						   LOCATIONSETLIST_COLUMN_ID, pLocationSet->nID,
 						   LOCATIONSETLIST_COLUMN_COUNT, pszCount,
 						   -1);
 		g_free(pszName);
@@ -527,18 +527,18 @@ void mainwindow_refresh_locationset_list()
 
 void mainwindow_show(void)
 {
-	gtk_widget_show(GTK_WIDGET(g_MainWindow.m_pWindow));
-	gtk_window_present(g_MainWindow.m_pWindow);
+	gtk_widget_show(GTK_WIDGET(g_MainWindow.pWindow));
+	gtk_window_present(g_MainWindow.pWindow);
 }
 
 void mainwindow_hide(void)
 {
-	gtk_widget_hide(GTK_WIDGET(g_MainWindow.m_pWindow));
+	gtk_widget_hide(GTK_WIDGET(g_MainWindow.pWindow));
 }
 
 void mainwindow_set_sensitive(gboolean bSensitive)
 {
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pWindow), bSensitive);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pWindow), bSensitive);
 }
 
 //
@@ -549,16 +549,16 @@ gboolean mainwindow_on_draw_pretty_timeout(gpointer _unused)
 	mainwindow_draw_map(DRAWFLAG_ALL);
 
 	// We've just drawn a complete frame, so we can consider this a new drag with no movement yet
-	g_MainWindow.m_bMouseDragMovement = FALSE;	// NOTE: may have already been FALSE, for example if we weren't dragging... :)
+	g_MainWindow.bMouseDragMovement = FALSE;	// NOTE: may have already been FALSE, for example if we weren't dragging... :)
 
-	g_MainWindow.m_nDrawPrettyTimeoutID = 0;
+	g_MainWindow.nDrawPrettyTimeoutID = 0;
 	return FALSE;		// NOTE: Returning FALSE from the timeout callback kills the timer.
 }
 
 void mainwindow_cancel_draw_pretty_timeout()
 {
-	if(g_MainWindow.m_nDrawPrettyTimeoutID != 0) {
-		g_source_remove(g_MainWindow.m_nDrawPrettyTimeoutID);
+	if(g_MainWindow.nDrawPrettyTimeoutID != 0) {
+		g_source_remove(g_MainWindow.nDrawPrettyTimeoutID);
 	}
 }
 
@@ -567,8 +567,8 @@ void mainwindow_set_draw_pretty_timeout(gint nTimeoutInMilliseconds)
 	// cancel existing one, if one exists
 	mainwindow_cancel_draw_pretty_timeout();
 
-	g_MainWindow.m_nDrawPrettyTimeoutID = g_timeout_add(nTimeoutInMilliseconds, mainwindow_on_draw_pretty_timeout, NULL);
-	g_assert(g_MainWindow.m_nDrawPrettyTimeoutID != 0);
+	g_MainWindow.nDrawPrettyTimeoutID = g_timeout_add(nTimeoutInMilliseconds, mainwindow_on_draw_pretty_timeout, NULL);
+	g_assert(g_MainWindow.nDrawPrettyTimeoutID != 0);
 }
 //
 // the "scroll" timeout
@@ -576,11 +576,11 @@ void mainwindow_set_draw_pretty_timeout(gint nTimeoutInMilliseconds)
 void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels)
 {
 	if(eScrollDirection != DIRECTION_NONE) {
-		gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
-		gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
+		gint nWidth = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width;
+		gint nHeight = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height;
 
-		gint nDeltaX = nPixels * g_aDirectionMultipliers[eScrollDirection].m_nX;
-		gint nDeltaY = nPixels * g_aDirectionMultipliers[eScrollDirection].m_nY;
+		gint nDeltaX = nPixels * g_aDirectionMultipliers[eScrollDirection].nX;
+		gint nDeltaY = nPixels * g_aDirectionMultipliers[eScrollDirection].nY;
 
 		mainwindow_map_center_on_windowpoint((nWidth / 2) + nDeltaX, (nHeight / 2) + nDeltaY);
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
@@ -590,17 +590,17 @@ void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels)
 
 gboolean mainwindow_on_scroll_timeout(gpointer _unused)
 {
-	if(g_MainWindow.m_bScrolling) {
-		mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
-		g_MainWindow.m_bScrollMovement = TRUE;
+	if(g_MainWindow.bScrolling) {
+		mainwindow_scroll_direction(g_MainWindow.eScrollDirection, SCROLL_DISTANCE_IN_PIXELS);
+		g_MainWindow.bScrollMovement = TRUE;
 	}
 	return TRUE;	// more events, please
 }
 
 void mainwindow_cancel_scroll_timeout()
 {
-	if(g_MainWindow.m_nScrollTimeoutID != 0) {
-		g_source_remove(g_MainWindow.m_nScrollTimeoutID);
+	if(g_MainWindow.nScrollTimeoutID != 0) {
+		g_source_remove(g_MainWindow.nScrollTimeoutID);
 	}
 }
 
@@ -609,8 +609,8 @@ void mainwindow_set_scroll_timeout()
 	// cancel existing one, if one exists
 	mainwindow_cancel_scroll_timeout();
 
-	g_MainWindow.m_nScrollTimeoutID = g_timeout_add(SCROLL_TIMEOUT_MS, mainwindow_on_scroll_timeout, NULL);
-	g_assert(g_MainWindow.m_nScrollTimeoutID != 0);
+	g_MainWindow.nScrollTimeoutID = g_timeout_add(SCROLL_TIMEOUT_MS, mainwindow_on_scroll_timeout, NULL);
+	g_assert(g_MainWindow.nScrollTimeoutID != 0);
 }
 
 /*
@@ -618,12 +618,12 @@ void mainwindow_set_scroll_timeout()
 */
 void mainwindow_set_toolbar_visible(gboolean bVisible)
 {
-	util_gtk_widget_set_visible(GTK_WIDGET(g_MainWindow.m_pToolbar), bVisible);
+	util_gtk_widget_set_visible(GTK_WIDGET(g_MainWindow.pToolbar), bVisible);
 }
 
 gboolean mainwindow_get_toolbar_visible(void)
 {
-	return GTK_WIDGET_VISIBLE(g_MainWindow.m_pToolbar);
+	return GTK_WIDGET_VISIBLE(g_MainWindow.pToolbar);
 }
 
 /*
@@ -632,21 +632,21 @@ gboolean mainwindow_get_toolbar_visible(void)
 void mainwindow_set_statusbar_visible(gboolean bVisible)
 {
 	if(bVisible) {
-		gtk_widget_show(GTK_WIDGET(g_MainWindow.m_pStatusbar));
+		gtk_widget_show(GTK_WIDGET(g_MainWindow.pStatusbar));
 	}
 	else {
-		gtk_widget_hide(GTK_WIDGET(g_MainWindow.m_pStatusbar));
+		gtk_widget_hide(GTK_WIDGET(g_MainWindow.pStatusbar));
 	}
 }
 
 gboolean mainwindow_get_statusbar_visible(void)
 {
-	return GTK_WIDGET_VISIBLE(g_MainWindow.m_pStatusbar);
+	return GTK_WIDGET_VISIBLE(g_MainWindow.pStatusbar);
 }
 
 void mainwindow_statusbar_update_zoomscale(void)
 {
-	gchar* pszNew = g_strdup_printf("1:%d", map_get_zoomlevel_scale(g_MainWindow.m_pMap));
+	gchar* pszNew = g_strdup_printf("1:%d", map_get_zoomlevel_scale(g_MainWindow.pMap));
 	mainwindow_set_statusbar_zoomscale(pszNew);
 	g_free(pszNew);
 }
@@ -654,9 +654,9 @@ void mainwindow_statusbar_update_zoomscale(void)
 void mainwindow_statusbar_update_position(void)
 {
 	mappoint_t pt;
-	map_get_centerpoint(g_MainWindow.m_pMap, &pt);
+	map_get_centerpoint(g_MainWindow.pMap, &pt);
 
-	gchar* pszNew = g_strdup_printf("Lat: %.5f, Lon: %.5f", pt.m_fLatitude, pt.m_fLongitude);
+	gchar* pszNew = g_strdup_printf("Lat: %.5f, Lon: %.5f", pt.fLatitude, pt.fLongitude);
 	mainwindow_set_statusbar_position(pszNew);
 	g_free(pszNew);
 }
@@ -667,26 +667,26 @@ void mainwindow_statusbar_update_position(void)
 void mainwindow_set_sidebox_visible(gboolean bVisible)
 {
 	if(bVisible) {
-		gtk_widget_show(GTK_WIDGET(g_MainWindow.m_pSidebox));
+		gtk_widget_show(GTK_WIDGET(g_MainWindow.pSidebox));
 	}
 	else {
-		gtk_widget_hide(GTK_WIDGET(g_MainWindow.m_pSidebox));
+		gtk_widget_hide(GTK_WIDGET(g_MainWindow.pSidebox));
 	}
 }
 
 gboolean mainwindow_get_sidebox_visible(void)
 {
-	return GTK_WIDGET_VISIBLE(g_MainWindow.m_pSidebox);
+	return GTK_WIDGET_VISIBLE(g_MainWindow.pSidebox);
 }
 
 GtkWidget* mainwindow_get_window(void)
 {
-	return GTK_WIDGET(g_MainWindow.m_pWindow);
+	return GTK_WIDGET(g_MainWindow.pWindow);
 }
 
 void mainwindow_toggle_fullscreen(void)
 {
-    GdkWindow* pTopLevelGDKWindow = gdk_window_get_toplevel(GTK_WIDGET(g_MainWindow.m_pWindow)->window);
+    GdkWindow* pTopLevelGDKWindow = gdk_window_get_toplevel(GTK_WIDGET(g_MainWindow.pWindow)->window);
 	g_return_if_fail(pTopLevelGDKWindow != NULL);
 
 	GdkWindowState windowstate = gdk_window_get_state(pTopLevelGDKWindow);
@@ -716,20 +716,20 @@ gboolean mainwindow_on_application_delete_event(GtkWidget *widget, GdkEvent *eve
 //
 void mainwindow_update_zoom_buttons()
 {
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pZoomInButton), map_can_zoom_in(g_MainWindow.m_pMap));
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pZoomInMenuItem), map_can_zoom_in(g_MainWindow.m_pMap));
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pZoomOutButton), map_can_zoom_out(g_MainWindow.m_pMap));
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pZoomOutMenuItem), map_can_zoom_out(g_MainWindow.m_pMap));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pZoomInButton), map_can_zoom_in(g_MainWindow.pMap));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pZoomInMenuItem), map_can_zoom_in(g_MainWindow.pMap));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pZoomOutButton), map_can_zoom_out(g_MainWindow.pMap));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pZoomOutMenuItem), map_can_zoom_out(g_MainWindow.pMap));
 }
 
 void mainwindow_set_zoomlevel(gint nZoomLevel)
 {
-	map_set_zoomlevel(g_MainWindow.m_pMap, nZoomLevel);
+	map_set_zoomlevel(g_MainWindow.pMap, nZoomLevel);
 
 	// set zoomlevel scale but prevent it from calling handler (mainwindow_on_zoomscale_value_changed)
-        g_signal_handlers_block_by_func(g_MainWindow.m_pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
-	gtk_range_set_value(GTK_RANGE(g_MainWindow.m_pZoomScale), nZoomLevel);
-	g_signal_handlers_unblock_by_func(g_MainWindow.m_pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
+        g_signal_handlers_block_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
+	gtk_range_set_value(GTK_RANGE(g_MainWindow.pZoomScale), nZoomLevel);
+	g_signal_handlers_unblock_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 
 	mainwindow_statusbar_update_zoomscale();
 	mainwindow_update_zoom_buttons();
@@ -756,8 +756,8 @@ void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 //
 static void gui_set_tool(EToolType eTool)
 {
-	g_MainWindow.m_eSelectedTool = eTool;
-	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, g_Tools[eTool].m_Cursor.m_pGdkCursor);
+	g_MainWindow.eSelectedTool = eTool;
+	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, g_Tools[eTool].Cursor.pGdkCursor);
 }
 
 //
@@ -804,7 +804,7 @@ void mainwindow_on_aboutmenuitem_activate(GtkMenuItem *menuitem, gpointer user_d
 
          gtk_about_dialog_set_url_hook(callback_url_clicked, NULL, NULL);
          gtk_about_dialog_set_email_hook(callback_email_clicked, NULL, NULL);
-		 gtk_show_about_dialog(g_MainWindow.m_pWindow,
+		 gtk_show_about_dialog(g_MainWindow.pWindow,
 				   "authors", ppAuthors,
 			       "artists", ppArtists,
 			       "comments", PROGRAM_DESCRIPTION,
@@ -846,8 +846,8 @@ void mainwindow_on_sidebarmenuitem_activate(GtkMenuItem *menuitem, gpointer user
 void mainwindow_on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	// tell the map
-	map_set_zoomlevel(g_MainWindow.m_pMap, map_get_zoomlevel(g_MainWindow.m_pMap) + 1);
-	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.m_pMap));
+	map_set_zoomlevel(g_MainWindow.pMap, map_get_zoomlevel(g_MainWindow.pMap) + 1);
+	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.pMap));
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 	mainwindow_add_history();
@@ -855,8 +855,8 @@ void mainwindow_on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data)
 
 void mainwindow_on_zoomout_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-	map_set_zoomlevel(g_MainWindow.m_pMap, map_get_zoomlevel(g_MainWindow.m_pMap) - 1);
-	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.m_pMap));
+	map_set_zoomlevel(g_MainWindow.pMap, map_get_zoomlevel(g_MainWindow.pMap) - 1);
+	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.pMap));
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 	mainwindow_add_history();
@@ -874,7 +874,7 @@ void mainwindow_on_gotomenuitem_activate(GtkMenuItem *menuitem, gpointer user_da
 
 void mainwindow_on_reloadstylesmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-	map_style_load(g_MainWindow.m_pMap, MAP_STYLE_FILENAME);
+	map_style_load(g_MainWindow.pMap, MAP_STYLE_FILENAME);
 	mainwindow_draw_map(DRAWFLAG_ALL);
 }
 
@@ -953,106 +953,106 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 	gint nX, nY;
 	gdk_window_get_pointer(w->window, &nX, &nY, NULL);
 
-	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
-	gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
+	gint nWidth = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width;
+	gint nHeight = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height;
 	EDirection eScrollDirection = DIRECTION_NONE;
 
 	// get mouse position on screen
 	screenpoint_t screenpoint = {nX,nY};
 	mappoint_t mappoint;
-	map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &screenpoint, &mappoint);
+	map_windowpoint_to_mappoint(g_MainWindow.pMap, &screenpoint, &mappoint);
 	
 	maphit_t* pHitStruct = NULL;
-	map_hit_test(g_MainWindow.m_pMap, &mappoint, &pHitStruct);
+	map_hit_test(g_MainWindow.pMap, &mappoint, &pHitStruct);
 	// hitstruct free'd far below
 
 	if(event->button == MOUSE_BUTTON_LEFT) {
 		// Left mouse button down?
 		if(event->type == GDK_BUTTON_PRESS) {
-			tooltip_hide(g_MainWindow.m_pTooltip);
+			tooltip_hide(g_MainWindow.pTooltip);
 
 			// Is it at a border?
 			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 			if(eScrollDirection != DIRECTION_NONE) {
 				// begin a scroll
-				GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].m_nCursor);
-				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+				GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].nCursor);
+				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, pCursor);
 				gdk_cursor_unref(pCursor);
 
-				g_MainWindow.m_bScrolling = TRUE;
-				g_MainWindow.m_eScrollDirection = eScrollDirection;
-				g_MainWindow.m_bScrollMovement = FALSE;	// no movement yet
+				g_MainWindow.bScrolling = TRUE;
+				g_MainWindow.eScrollDirection = eScrollDirection;
+				g_MainWindow.bScrollMovement = FALSE;	// no movement yet
 
 				mainwindow_set_scroll_timeout();
 			}
 			else {
-				g_MainWindow.m_bMouseDragging = TRUE;
-				g_MainWindow.m_bMouseDragMovement = FALSE;
-				g_MainWindow.m_ptClickLocation.m_nX = nX;
-				g_MainWindow.m_ptClickLocation.m_nY = nY;
+				g_MainWindow.bMouseDragging = TRUE;
+				g_MainWindow.bMouseDragMovement = FALSE;
+				g_MainWindow.ptClickLocation.nX = nX;
+				g_MainWindow.ptClickLocation.nY = nY;
 			}
 		}
 		// Left mouse button up?
 		else if(event->type == GDK_BUTTON_RELEASE) {
 			// end mouse dragging, if active
-			if(g_MainWindow.m_bMouseDragging == TRUE) {
+			if(g_MainWindow.bMouseDragging == TRUE) {
 				// restore cursor
 				GdkCursor* pCursor = gdk_cursor_new(GDK_LEFT_PTR);
-				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, pCursor);
 				gdk_cursor_unref(pCursor);
 
-				g_MainWindow.m_bMouseDragging = FALSE;
-				if(g_MainWindow.m_bMouseDragMovement) {
+				g_MainWindow.bMouseDragging = FALSE;
+				if(g_MainWindow.bMouseDragMovement) {
 					mainwindow_cancel_draw_pretty_timeout();
 					mainwindow_draw_map(DRAWFLAG_ALL);
 
 					mainwindow_add_history();
 				}
 				else if(pHitStruct != NULL) {
-					if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATION) {
-						if(map_location_selection_add(g_MainWindow.m_pMap, pHitStruct->m_LocationHit.m_nLocationID)) {
+					if(pHitStruct->eHitType == MAP_HITTYPE_LOCATION) {
+						if(map_location_selection_add(g_MainWindow.pMap, pHitStruct->LocationHit.nLocationID)) {
 							mainwindow_draw_map(DRAWFLAG_ALL);
 						}
 					}
-					else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION_CLOSE) {
-						if(map_location_selection_remove(g_MainWindow.m_pMap, pHitStruct->m_LocationHit.m_nLocationID)) {
+					else if(pHitStruct->eHitType == MAP_HITTYPE_LOCATIONSELECTION_CLOSE) {
+						if(map_location_selection_remove(g_MainWindow.pMap, pHitStruct->LocationHit.nLocationID)) {
 							mainwindow_draw_map(DRAWFLAG_ALL);
 						}
 					}
-					else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION_EDIT) {
+					else if(pHitStruct->eHitType == MAP_HITTYPE_LOCATIONSELECTION_EDIT) {
 						// edit POI
-						//g_MainWindow.m_pMap, pHitStruct->m_LocationHit.m_nLocationID
+						//g_MainWindow.pMap, pHitStruct->LocationHit.nLocationID
 					}
-					else if(pHitStruct->m_eHitType == MAP_HITTYPE_URL) {
-						util_open_uri(pHitStruct->m_URLHit.m_pszURL);
+					else if(pHitStruct->eHitType == MAP_HITTYPE_URL) {
+						util_open_uri(pHitStruct->URLHit.pszURL);
 					}
 				}
 			}
 
 			// end scrolling, if active
-			if(g_MainWindow.m_bScrolling == TRUE) {
+			if(g_MainWindow.bScrolling == TRUE) {
 				// NOTE: don't restore cursor (mouse could *still* be over screen edge)
 
-				g_MainWindow.m_bScrolling = FALSE;
+				g_MainWindow.bScrolling = FALSE;
 				mainwindow_cancel_draw_pretty_timeout();
 
 				// has there been any movement?
-				if(g_MainWindow.m_bScrollMovement) {
-					g_MainWindow.m_bScrollMovement = FALSE;
+				if(g_MainWindow.bScrollMovement) {
+					g_MainWindow.bScrollMovement = FALSE;
 					mainwindow_draw_map(DRAWFLAG_ALL);
 				}
 				else {
 					// user clicked the edge of the screen, but so far we haven't moved at all (they released the button too fast)
 					// so consider this a 'click' and just jump a bit in that direction
-					gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
-					gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
+					gint nHeight = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height;
+					gint nWidth = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width;
 
 					gint nDistanceInPixels;
-					if(g_MainWindow.m_eScrollDirection == DIRECTION_N || g_MainWindow.m_eScrollDirection == DIRECTION_S) {
+					if(g_MainWindow.eScrollDirection == DIRECTION_N || g_MainWindow.eScrollDirection == DIRECTION_S) {
 						// scroll half the height of the screen
 						nDistanceInPixels = (gint)((gdouble)nHeight * BORDER_JUMP_PERCENT_OF_SCREEN);
 					}
-					else if(g_MainWindow.m_eScrollDirection == DIRECTION_E || g_MainWindow.m_eScrollDirection == DIRECTION_W) {
+					else if(g_MainWindow.eScrollDirection == DIRECTION_E || g_MainWindow.eScrollDirection == DIRECTION_W) {
 						nDistanceInPixels = (gint)((gdouble)nWidth * BORDER_JUMP_PERCENT_OF_SCREEN);
 					}
 					else {
@@ -1060,9 +1060,9 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 						nDistanceInPixels = (gint)(sqrt(nHeight*nHeight + nWidth*nWidth) * BORDER_JUMP_PERCENT_OF_SCREEN);
 					}
 
-					mainwindow_scroll_direction(g_MainWindow.m_eScrollDirection, nDistanceInPixels);
+					mainwindow_scroll_direction(g_MainWindow.eScrollDirection, nDistanceInPixels);
 				}
-				g_MainWindow.m_eScrollDirection = DIRECTION_NONE;
+				g_MainWindow.eScrollDirection = DIRECTION_NONE;
 				mainwindow_add_history();
 			}
 		}
@@ -1070,43 +1070,43 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			// can only double click in the middle (not on a scroll border)
 			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 			if(eScrollDirection == DIRECTION_NONE) {
-				animator_destroy(g_MainWindow.m_pAnimator);
+				animator_destroy(g_MainWindow.pAnimator);
 
-				g_MainWindow.m_bSliding = TRUE;
-				g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS);
+				g_MainWindow.bSliding = TRUE;
+				g_MainWindow.pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS);
 
 				// set startpoint
-				map_get_centerpoint(g_MainWindow.m_pMap, &g_MainWindow.m_ptSlideStartLocation);
+				map_get_centerpoint(g_MainWindow.pMap, &g_MainWindow.ptSlideStartLocation);
 
 				// set endpoint
 				screenpoint_t ptScreenPoint = {nX, nY};
-				map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &ptScreenPoint, &(g_MainWindow.m_ptSlideEndLocation));
+				map_windowpoint_to_mappoint(g_MainWindow.pMap, &ptScreenPoint, &(g_MainWindow.ptSlideEndLocation));
 			}
 		}
 	}
 	else if (event->button == MOUSE_BUTTON_RIGHT) {
 		// single right-click?
 		if(event->type == GDK_BUTTON_PRESS) {
-			GtkMenu* pMenu = g_MainWindow.m_pMapPopupMenu;	// default to generic map popup
+			GtkMenu* pMenu = g_MainWindow.pMapPopupMenu;	// default to generic map popup
 
 			g_print("here %s\n", pHitStruct);
 			if(pHitStruct != NULL) {
-				if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATION) {
+				if(pHitStruct->eHitType == MAP_HITTYPE_LOCATION) {
 					// Use POI specific popup menu
-					g_print("right-clicked on a POI: %d\n", pHitStruct->m_LocationHit.m_nLocationID);
-					// pHitStruct->m_LocationHit.m_nLocationID
+					g_print("right-clicked on a POI: %d\n", pHitStruct->LocationHit.nLocationID);
+					// pHitStruct->LocationHit.nLocationID
 
 				}
-				else if(pHitStruct->m_eHitType == MAP_HITTYPE_URL) {
+				else if(pHitStruct->eHitType == MAP_HITTYPE_URL) {
 					// Use URL specific popup menu (open/copy)
-					g_print("right-clicked on a URL: %s\n", pHitStruct->m_URLHit.m_pszURL);
+					g_print("right-clicked on a URL: %s\n", pHitStruct->URLHit.pszURL);
 					//;
 				}
 			}
 
 			// Save click location for use by menu item callback
-			g_MainWindow.m_ptClickLocation.m_nX = nX;
-			g_MainWindow.m_ptClickLocation.m_nY = nY;
+			g_MainWindow.ptClickLocation.nX = nX;
+			g_MainWindow.ptClickLocation.nY = nY;
 
 			locationeditwindow_show_for_new(0);
 
@@ -1115,7 +1115,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			//gtk_menu_popup(pMenu, NULL, NULL, NULL, NULL, event->button, event->time);
 		}
 	}
-	map_hitstruct_free(g_MainWindow.m_pMap, pHitStruct);
+	map_hitstruct_free(g_MainWindow.pMap, pHitStruct);
 	return TRUE;
 }
 
@@ -1132,19 +1132,19 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		nY = event->y;
 	}
 
-	gint nWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
-	gint nHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
+	gint nWidth = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width;
+	gint nHeight = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height;
 
 	gint nCursor = GDK_LEFT_PTR;
 
-	if(g_MainWindow.m_bMouseDragging) {
-		g_MainWindow.m_bMouseDragMovement = TRUE;
+	if(g_MainWindow.bMouseDragging) {
+		g_MainWindow.bMouseDragMovement = TRUE;
 
 		// Set cursor here and not when first clicking because now we know it's a drag (on click it could be a double-click)
 		nCursor = GDK_FLEUR;
 
-		gint nDeltaX = g_MainWindow.m_ptClickLocation.m_nX - nX;
-		gint nDeltaY = g_MainWindow.m_ptClickLocation.m_nY - nY;
+		gint nDeltaX = g_MainWindow.ptClickLocation.nX - nX;
+		gint nDeltaY = g_MainWindow.ptClickLocation.nY - nY;
 
 		if(nDeltaX == 0 && nDeltaY == 0) return TRUE;
 
@@ -1152,17 +1152,17 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_DRAG_TIMEOUT_MS);
 
-		g_MainWindow.m_ptClickLocation.m_nX = nX;
-		g_MainWindow.m_ptClickLocation.m_nY = nY;
+		g_MainWindow.ptClickLocation.nX = nX;
+		g_MainWindow.ptClickLocation.nY = nY;
 	}
-	else if(g_MainWindow.m_bScrolling) {
+	else if(g_MainWindow.bScrolling) {
 		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
 		// update cursor
-		nCursor = g_aDirectionCursors[eScrollDirection].m_nCursor;
+		nCursor = g_aDirectionCursors[eScrollDirection].nCursor;
 
 		// update direction if actively scrolling
-		g_MainWindow.m_eScrollDirection = eScrollDirection;
+		g_MainWindow.eScrollDirection = eScrollDirection;
 	}
 	else {
 		// If not dragging or scrolling, user is just moving mouse around.
@@ -1173,71 +1173,71 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		if(eScrollDirection == DIRECTION_NONE) {
 			// get mouse position on screen
 			screenpoint_t screenpoint;
-			screenpoint.m_nX = nX;
-			screenpoint.m_nY = nY;
+			screenpoint.nX = nX;
+			screenpoint.nY = nY;
 			mappoint_t mappoint;
-			map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &screenpoint, &mappoint);
+			map_windowpoint_to_mappoint(g_MainWindow.pMap, &screenpoint, &mappoint);
 	
 			// try to "hit" something on the map. a road, a location, whatever!
 			maphit_t* pHitStruct = NULL;
-			if(map_hit_test(g_MainWindow.m_pMap, &mappoint, &pHitStruct)) {
+			if(map_hit_test(g_MainWindow.pMap, &mappoint, &pHitStruct)) {
 				// A hit!  Move the tooltip here, format the text, and show it.
-				tooltip_set_upper_left_corner(g_MainWindow.m_pTooltip, (gint)(event->x_root) + TOOLTIP_OFFSET_X, (gint)(event->y_root) + TOOLTIP_OFFSET_Y);
+				tooltip_set_upper_left_corner(g_MainWindow.pTooltip, (gint)(event->x_root) + TOOLTIP_OFFSET_X, (gint)(event->y_root) + TOOLTIP_OFFSET_Y);
 
-				gchar* pszMarkup = g_strdup_printf(TOOLTIP_FORMAT, pHitStruct->m_pszText);
-				tooltip_set_markup(g_MainWindow.m_pTooltip, pszMarkup);
+				gchar* pszMarkup = g_strdup_printf(TOOLTIP_FORMAT, pHitStruct->pszText);
+				tooltip_set_markup(g_MainWindow.pTooltip, pszMarkup);
 				g_free(pszMarkup);
 
 				// choose color based on type of hit
-				if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATION) {
+				if(pHitStruct->eHitType == MAP_HITTYPE_LOCATION) {
 					GdkColor clr = {0, LOCATION_TOOLTIP_BG_COLOR};
-					tooltip_set_bg_color(g_MainWindow.m_pTooltip, &clr);
+					tooltip_set_bg_color(g_MainWindow.pTooltip, &clr);
 
 					// also set mouse cursor to hand
 					nCursor = GDK_HAND2;
-					tooltip_show(g_MainWindow.m_pTooltip);
+					tooltip_show(g_MainWindow.pTooltip);
 				}
-				else if(pHitStruct->m_eHitType == MAP_HITTYPE_ROAD) {
+				else if(pHitStruct->eHitType == MAP_HITTYPE_ROAD) {
 					GdkColor clr = {0, ROAD_TOOLTIP_BG_COLOR};
-					tooltip_set_bg_color(g_MainWindow.m_pTooltip, &clr);
-					tooltip_show(g_MainWindow.m_pTooltip);
+					tooltip_set_bg_color(g_MainWindow.pTooltip, &clr);
+					tooltip_show(g_MainWindow.pTooltip);
 				}
-				else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION) {
-					tooltip_hide(g_MainWindow.m_pTooltip);
+				else if(pHitStruct->eHitType == MAP_HITTYPE_LOCATIONSELECTION) {
+					tooltip_hide(g_MainWindow.pTooltip);
 				}
-				else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION_CLOSE) {
+				else if(pHitStruct->eHitType == MAP_HITTYPE_LOCATIONSELECTION_CLOSE) {
 					nCursor = GDK_HAND2;
-					tooltip_hide(g_MainWindow.m_pTooltip);
+					tooltip_hide(g_MainWindow.pTooltip);
 				}
-				else if(pHitStruct->m_eHitType == MAP_HITTYPE_LOCATIONSELECTION_EDIT) {
+				else if(pHitStruct->eHitType == MAP_HITTYPE_LOCATIONSELECTION_EDIT) {
 					nCursor = GDK_HAND2;
-					tooltip_hide(g_MainWindow.m_pTooltip);
+					tooltip_hide(g_MainWindow.pTooltip);
 				}
-				else if(pHitStruct->m_eHitType == MAP_HITTYPE_URL) {
+				else if(pHitStruct->eHitType == MAP_HITTYPE_URL) {
 					nCursor = GDK_HAND2;
-					tooltip_hide(g_MainWindow.m_pTooltip);
+					tooltip_hide(g_MainWindow.pTooltip);
 
-					// XXX: add url (pHitStruct->m_URLHit.m_pszURL) to statusbar
-					g_print("url: %s\n", pHitStruct->m_URLHit.m_pszURL);
+					// XXX: add url (pHitStruct->URLHit.pszURL) to statusbar
+					g_print("url: %s\n", pHitStruct->URLHit.pszURL);
 				}
 
-				map_hitstruct_free(g_MainWindow.m_pMap, pHitStruct);
+				map_hitstruct_free(g_MainWindow.pMap, pHitStruct);
 			}
 			else {
 				// no hit. hide the tooltip
-				tooltip_hide(g_MainWindow.m_pTooltip);
+				tooltip_hide(g_MainWindow.pTooltip);
 			}
 		}
 		else {
-			nCursor = g_aDirectionCursors[eScrollDirection].m_nCursor;
+			nCursor = g_aDirectionCursors[eScrollDirection].nCursor;
 
 			// using a funky (non-pointer) cursor so hide the tooltip
-			tooltip_hide(g_MainWindow.m_pTooltip);
+			tooltip_hide(g_MainWindow.pTooltip);
 		}
 	}
 	// apply cursor that was chosen above
 	GdkCursor* pCursor = gdk_cursor_new(nCursor);
-	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window, pCursor);
+	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, pCursor);
 	gdk_cursor_unref(pCursor);
 
 	return FALSE;
@@ -1251,7 +1251,7 @@ static gboolean mainwindow_on_enter_notify(GtkWidget* w, GdkEventCrossing *event
 static gboolean mainwindow_on_leave_notify(GtkWidget* w, GdkEventCrossing *event)
 {
 	// mouse left our window
-	tooltip_hide(g_MainWindow.m_pTooltip);
+	tooltip_hide(g_MainWindow.pTooltip);
 }
 
 // Respond to mouse scroll wheel
@@ -1259,16 +1259,16 @@ static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 {
 	// respond to scroll wheel events by zooming in and out
 	if(event->direction == GDK_SCROLL_UP) {
-		map_set_zoomlevel(g_MainWindow.m_pMap, map_get_zoomlevel(g_MainWindow.m_pMap) + 1);
-		mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.m_pMap));
+		map_set_zoomlevel(g_MainWindow.pMap, map_get_zoomlevel(g_MainWindow.pMap) + 1);
+		mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.pMap));
 
 		// Draw map quickly, then slowly after a short timeout.  This lets the user zoom many levels quickly.
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 	}
 	else if(event->direction == GDK_SCROLL_DOWN) {
-		map_set_zoomlevel(g_MainWindow.m_pMap, map_get_zoomlevel(g_MainWindow.m_pMap) - 1);
-		mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.m_pMap));
+		map_set_zoomlevel(g_MainWindow.pMap, map_get_zoomlevel(g_MainWindow.pMap) - 1);
+		mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.pMap));
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 	}
@@ -1277,8 +1277,6 @@ static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 static gboolean mainwindow_on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	g_print("key_press\n");
-	// Enter key?
-//	if(event->keyval == 65293) {
 }
 
 static void mainwindow_begin_import_geography_data(void)
@@ -1287,7 +1285,7 @@ g_print("starting..\n");
 
 	GtkWidget* pDialog = gtk_file_chooser_dialog_new(
 						"Select TIGER .ZIP files for Import",
-                		g_MainWindow.m_pWindow,
+                		g_MainWindow.pWindow,
 		                GTK_FILE_CHOOSER_ACTION_OPEN,
 						GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 						"Import", GTK_RESPONSE_ACCEPT,
@@ -1295,7 +1293,7 @@ g_print("starting..\n");
 
 g_print("setting..\n");
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(pDialog), TRUE);
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pWindow), FALSE);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pWindow), FALSE);
 
 g_print("running..\n");
 	gint nResponse = gtk_dialog_run(GTK_DIALOG(pDialog));
@@ -1315,7 +1313,7 @@ g_print("running..\n");
 		g_slist_free(pSelectedFilesList);
 	}
 	// re-enable main window and destroy dialog
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pWindow), TRUE);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pWindow), TRUE);
 	gtk_widget_destroy(pDialog);
 }
 
@@ -1326,10 +1324,10 @@ void mainwindow_on_import_maps_activate(GtkWidget *widget, gpointer user_data)
 
 static void mainwindow_setup_selected_tool(void)
 {
-//     if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.m_pPointerToolButton))) {
+//     if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.pPointerToolButton))) {
 //         gui_set_tool(kToolPointer);
 //     }
-//     else if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.m_pZoomToolButton))) {
+//     else if(gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(g_MainWindow.pZoomToolButton))) {
 //         gui_set_tool(kToolZoom);
 //     }
 }
@@ -1340,20 +1338,42 @@ void mainwindow_on_toolbutton_clicked(GtkToolButton *toolbutton, gpointer user_d
 	// XXX: current there are no tools!
 	mainwindow_setup_selected_tool();
 }
-
+#define ENABLE_DRAW_LIVE_LABELS
 void mainwindow_draw_map(gint nDrawFlags)
 {
-	map_draw(g_MainWindow.m_pMap, g_MainWindow.m_pMap->m_pPixmap, nDrawFlags);
+#ifdef ENABLE_DRAW_LIVE_LABELS
+	map_draw(g_MainWindow.pMap, g_MainWindow.pMap->pPixmap, (nDrawFlags & ~DRAWFLAG_LABELS));
+
+	GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.pMap);
+	gdk_draw_drawable(GTK_WIDGET(g_MainWindow.pDrawingArea)->window,
+		      GTK_WIDGET(g_MainWindow.pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.pDrawingArea)],
+		      pMapPixmap, 0,0, 0,0,
+		      GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width, GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height);
+	map_release_pixmap(g_MainWindow.pMap);
+
+	if((nDrawFlags & DRAWFLAG_LABELS) > 0) {
+		map_draw(g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea)->window, (nDrawFlags & DRAWFLAG_LABELS));
+
+		GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.pMap);
+		gdk_draw_drawable(pMapPixmap,
+				  GTK_WIDGET(g_MainWindow.pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.pDrawingArea)],
+				  GTK_WIDGET(g_MainWindow.pDrawingArea)->window, 0,0, 0,0,
+				  GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width, GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height);
+		map_release_pixmap(g_MainWindow.pMap);
+	}
+#else
+	map_draw(g_MainWindow.pMap, g_MainWindow.pMap->pPixmap, nDrawFlags);
 
 	// push it to screen
-	GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.m_pMap);
-	gdk_draw_drawable(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window,
-		      GTK_WIDGET(g_MainWindow.m_pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.m_pDrawingArea)],
+	GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.pMap);
+	gdk_draw_drawable(GTK_WIDGET(g_MainWindow.pDrawingArea)->window,
+		      GTK_WIDGET(g_MainWindow.pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.pDrawingArea)],
 		      pMapPixmap,
 		      0,0,
 		      0,0,
-		      GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width, GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height);
-	map_release_pixmap(g_MainWindow.m_pMap);
+		      GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width, GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height);
+	map_release_pixmap(g_MainWindow.pMap);
+#endif
 }
 
 // A 'configure' event is sent by GTK when our window changes size
@@ -1361,9 +1381,9 @@ static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfi
 {
 	// tell the map how big to draw
 	dimensions_t dim;
-	dim.m_uWidth = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width;
-	dim.m_uHeight = GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height;
-	map_set_dimensions(g_MainWindow.m_pMap, &dim);
+	dim.uWidth = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width;
+	dim.uHeight = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height;
+	map_set_dimensions(g_MainWindow.pMap, &dim);
 
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_RESIZE_TIMEOUT_MS);
@@ -1372,17 +1392,17 @@ static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfi
 
 static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data)
 {
-	GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.m_pMap);
+	GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.pMap);
 
 	// Copy relevant portion of off-screen bitmap to window
-	gdk_draw_drawable(GTK_WIDGET(g_MainWindow.m_pDrawingArea)->window,
-                      GTK_WIDGET(g_MainWindow.m_pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.m_pDrawingArea)],
+	gdk_draw_drawable(GTK_WIDGET(g_MainWindow.pDrawingArea)->window,
+                      GTK_WIDGET(g_MainWindow.pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.pDrawingArea)],
                       pMapPixmap,
                       event->area.x, event->area.y,
                       event->area.x, event->area.y,
                       event->area.width, event->area.height);
 
-	map_release_pixmap(g_MainWindow.m_pMap);
+	map_release_pixmap(g_MainWindow.pMap);
 	return FALSE;
 }
 
@@ -1412,24 +1432,24 @@ gboolean mainwindow_on_gps_stick_to_roads_toggled(GtkWidget* _unused, gpointer* 
 static gboolean mainwindow_on_gps_redraw_timeout(gpointer __unused)
 {
 	// NOTE: we're setting tooltips on the image's
-	GtkWidget* pWidget = gtk_widget_get_parent(GTK_WIDGET(g_MainWindow.m_pStatusbarGPSIcon));
+	GtkWidget* pWidget = gtk_widget_get_parent(GTK_WIDGET(g_MainWindow.pStatusbarGPSIcon));
 
 	const gpsdata_t* pData = gpsclient_getdata();
-	if(pData->m_eStatus == GPS_STATUS_LIVE) {
+	if(pData->eStatus == GPS_STATUS_LIVE) {
 
-		if(g_MainWindow.m_nCurrentGPSPath == 0) {
+		if(g_MainWindow.nCurrentGPSPath == 0) {
 			// create a new track for GPS trail
-			g_MainWindow.m_nCurrentGPSPath = track_new();
-			map_add_track(g_MainWindow.m_pMap, g_MainWindow.m_nCurrentGPSPath);
+			g_MainWindow.nCurrentGPSPath = track_new();
+			map_add_track(g_MainWindow.pMap, g_MainWindow.nCurrentGPSPath);
 		}
 
-		track_add_point(g_MainWindow.m_nCurrentGPSPath, &pData->m_ptPosition);
+		track_add_point(g_MainWindow.nCurrentGPSPath, &pData->ptPosition);
 
 		// Show position?
-		if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.m_GPS.m_pShowPositionCheckButton))) {
+		if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.GPS.pShowPositionCheckButton))) {
 			// Keep it centered?
-			if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.m_GPS.m_pKeepPositionCenteredCheckButton))) {
-				map_set_centerpoint(g_MainWindow.m_pMap, &pData->m_ptPosition);
+			if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.GPS.pKeepPositionCenteredCheckButton))) {
+				map_set_centerpoint(g_MainWindow.pMap, &pData->ptPosition);
 				mainwindow_statusbar_update_position();
 			}
 
@@ -1438,48 +1458,48 @@ static gboolean mainwindow_on_gps_redraw_timeout(gpointer __unused)
 		}
 
 		// update image and tooltip for GPS icon
-		util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_OK, GTK_ICON_SIZE_MENU);
-		gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.m_pTooltips), pWidget,
+		util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_OK, GTK_ICON_SIZE_MENU);
+		gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 				 "A GPS device is present and active", "");
 
 		// update speed
-		gchar* pszSpeed = g_strdup_printf(SPEED_LABEL_FORMAT, pData->m_fSpeedInMilesPerHour);
-		gtk_label_set_markup(g_MainWindow.m_pSpeedLabel, pszSpeed);
+		gchar* pszSpeed = g_strdup_printf(SPEED_LABEL_FORMAT, pData->fSpeedInMilesPerHour);
+		gtk_label_set_markup(g_MainWindow.pSpeedLabel, pszSpeed);
 		g_free(pszSpeed);
 
-		gtk_progress_bar_set_fraction(g_MainWindow.m_pGPSSignalStrengthProgressBar, pData->m_fSignalQuality * 20.0/100.0);
+		gtk_progress_bar_set_fraction(g_MainWindow.pGPSSignalStrengthProgressBar, pData->fSignalQuality * 20.0/100.0);
 	}
 	else {
 		// unless we're "LIVE", set signal strength to 0
-		gtk_progress_bar_set_fraction(g_MainWindow.m_pGPSSignalStrengthProgressBar, 0.0);
+		gtk_progress_bar_set_fraction(g_MainWindow.pGPSSignalStrengthProgressBar, 0.0);
 
-		if(pData->m_eStatus == GPS_STATUS_NO_SIGNAL) {
+		if(pData->eStatus == GPS_STATUS_NO_SIGNAL) {
 			// do NOT set speed to 0 if we drop the signal temporarily...
-			util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_CANCEL, GTK_ICON_SIZE_MENU);
+			util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_CANCEL, GTK_ICON_SIZE_MENU);
 
-			gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.m_pTooltips), pWidget,
+			gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 					 "A GPS device is present but unable to hear satellites", "");
 		}
 		else {
 			// update speed, set to 0 (NOTE: we don't do this for "no signal" so we don't show 0 when a user temp. loses the signal)
 			gchar* pszSpeed = g_strdup_printf(SPEED_LABEL_FORMAT, 0.0);
-			gtk_label_set_markup(g_MainWindow.m_pSpeedLabel, pszSpeed);
+			gtk_label_set_markup(g_MainWindow.pSpeedLabel, pszSpeed);
 			g_free(pszSpeed);
 
-			if(pData->m_eStatus == GPS_STATUS_NO_DEVICE) {
-				util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_STOP, GTK_ICON_SIZE_MENU);
-				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.m_pTooltips), pWidget,
+			if(pData->eStatus == GPS_STATUS_NO_DEVICE) {
+				util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_STOP, GTK_ICON_SIZE_MENU);
+				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 						 "No GPS device is present", "");
 			}
-			else if(pData->m_eStatus == GPS_STATUS_NO_GPSD) {
-				util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_STOP, GTK_ICON_SIZE_MENU);
-				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.m_pTooltips), pWidget,
+			else if(pData->eStatus == GPS_STATUS_NO_GPSD) {
+				util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_STOP, GTK_ICON_SIZE_MENU);
+				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 						 "Install package 'gpsd' to use a GPS device with Roadster", "");
 			}
-			else if(pData->m_eStatus == GPS_STATUS_NO_GPS_COMPILED_IN) {
-				util_set_image_to_stock(g_MainWindow.m_pStatusbarGPSIcon, GTK_STOCK_CANCEL, GTK_ICON_SIZE_MENU);
+			else if(pData->eStatus == GPS_STATUS_NO_GPS_COMPILED_IN) {
+				util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_CANCEL, GTK_ICON_SIZE_MENU);
 
-				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.m_pTooltips), pWidget,
+				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 						 "GPS support was not included in this version of Roadster", "");
 			}
 			else {
@@ -1492,18 +1512,18 @@ static gboolean mainwindow_on_gps_redraw_timeout(gpointer __unused)
 
 static gboolean mainwindow_on_slide_timeout(gpointer pData)
 {
-	if(g_MainWindow.m_bSliding) {
-		g_assert(g_MainWindow.m_pAnimator != NULL);
+	if(g_MainWindow.bSliding) {
+		g_assert(g_MainWindow.pAnimator != NULL);
 
 		// Figure out the progress along the path and interpolate 
 		// between startpoint and endpoint
 
-		gdouble fPercent = animator_get_progress(g_MainWindow.m_pAnimator);
-		gboolean bDone = animator_is_done(g_MainWindow.m_pAnimator);
+		gdouble fPercent = animator_get_progress(g_MainWindow.pAnimator);
+		gboolean bDone = animator_is_done(g_MainWindow.pAnimator);
 		if(bDone) {
-			animator_destroy(g_MainWindow.m_pAnimator);
-			g_MainWindow.m_pAnimator = NULL;
-			g_MainWindow.m_bSliding = FALSE;
+			animator_destroy(g_MainWindow.pAnimator);
+			g_MainWindow.pAnimator = NULL;
+			g_MainWindow.bSliding = FALSE;
 
 			fPercent = 1.0;
 
@@ -1511,12 +1531,12 @@ static gboolean mainwindow_on_slide_timeout(gpointer pData)
 			// should we delete the timer?
 		}
 
-		gdouble fDeltaLat = g_MainWindow.m_ptSlideEndLocation.m_fLatitude - g_MainWindow.m_ptSlideStartLocation.m_fLatitude;
-		gdouble fDeltaLon = g_MainWindow.m_ptSlideEndLocation.m_fLongitude - g_MainWindow.m_ptSlideStartLocation.m_fLongitude;
+		gdouble fDeltaLat = g_MainWindow.ptSlideEndLocation.fLatitude - g_MainWindow.ptSlideStartLocation.fLatitude;
+		gdouble fDeltaLon = g_MainWindow.ptSlideEndLocation.fLongitude - g_MainWindow.ptSlideStartLocation.fLongitude;
 
 		mappoint_t ptNew;
-		ptNew.m_fLatitude = g_MainWindow.m_ptSlideStartLocation.m_fLatitude + (fPercent * fDeltaLat);
-		ptNew.m_fLongitude = g_MainWindow.m_ptSlideStartLocation.m_fLongitude + (fPercent * fDeltaLon);
+		ptNew.fLatitude = g_MainWindow.ptSlideStartLocation.fLatitude + (fPercent * fDeltaLat);
+		ptNew.fLongitude = g_MainWindow.ptSlideStartLocation.fLongitude + (fPercent * fDeltaLon);
 
 		mainwindow_map_center_on_mappoint(&ptNew);
 		if(bDone) {
@@ -1534,21 +1554,21 @@ static gboolean mainwindow_on_slide_timeout(gpointer pData)
 static void mainwindow_map_center_on_windowpoint(gint nX, gint nY)
 {
 	// Calculate the # of pixels away from the center point the click was
-	gint16 nPixelDeltaX = nX - (GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.width / 2);
-	gint16 nPixelDeltaY = nY - (GTK_WIDGET(g_MainWindow.m_pDrawingArea)->allocation.height / 2);
+	gint16 nPixelDeltaX = nX - (GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width / 2);
+	gint16 nPixelDeltaY = nY - (GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height / 2);
 
 	// Convert pixels to world coordinates
-	gint nZoomLevel = map_get_zoomlevel(g_MainWindow.m_pMap);
-	double fWorldDeltaX = map_pixels_to_degrees(g_MainWindow.m_pMap, nPixelDeltaX, nZoomLevel);
+	gint nZoomLevel = map_get_zoomlevel(g_MainWindow.pMap);
+	double fWorldDeltaX = map_pixels_to_degrees(g_MainWindow.pMap, nPixelDeltaX, nZoomLevel);
 	// reverse the X, clicking above
-	double fWorldDeltaY = -map_pixels_to_degrees(g_MainWindow.m_pMap, nPixelDeltaY, nZoomLevel);
+	double fWorldDeltaY = -map_pixels_to_degrees(g_MainWindow.pMap, nPixelDeltaY, nZoomLevel);
 
 	mappoint_t pt;
-	map_get_centerpoint(g_MainWindow.m_pMap, &pt);
+	map_get_centerpoint(g_MainWindow.pMap, &pt);
 
-	pt.m_fLatitude += fWorldDeltaY;
-	pt.m_fLongitude += fWorldDeltaX;
-	map_set_centerpoint(g_MainWindow.m_pMap, &pt);
+	pt.fLatitude += fWorldDeltaY;
+	pt.fLongitude += fWorldDeltaX;
+	map_set_centerpoint(g_MainWindow.pMap, &pt);
 
 	mainwindow_statusbar_update_position();
 }
@@ -1558,7 +1578,7 @@ void mainwindow_map_center_on_mappoint(mappoint_t* pPoint)
 {
 	g_assert(pPoint != NULL);
 
-	map_set_centerpoint(g_MainWindow.m_pMap, pPoint);
+	map_set_centerpoint(g_MainWindow.pMap, pPoint);
 
 	mainwindow_statusbar_update_position();
 }
@@ -1566,21 +1586,21 @@ void mainwindow_map_center_on_mappoint(mappoint_t* pPoint)
 void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint)
 {
 	mappoint_t centerPoint;
-	map_get_centerpoint(g_MainWindow.m_pMap, &centerPoint);
+	map_get_centerpoint(g_MainWindow.pMap, &centerPoint);
 
 	if(map_points_equal(pPoint, &centerPoint)) return;
 
-	if(map_get_distance_in_pixels(g_MainWindow.m_pMap, pPoint, &centerPoint) < MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS) {
-		g_MainWindow.m_bSliding = TRUE;
-		g_MainWindow.m_pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS_AUTO);
+	if(map_get_distance_in_pixels(g_MainWindow.pMap, pPoint, &centerPoint) < MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS) {
+		g_MainWindow.bSliding = TRUE;
+		g_MainWindow.pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS_AUTO);
 
 		// set startpoint
-		g_MainWindow.m_ptSlideStartLocation.m_fLatitude = centerPoint.m_fLatitude;
-		g_MainWindow.m_ptSlideStartLocation.m_fLongitude = centerPoint.m_fLongitude;
+		g_MainWindow.ptSlideStartLocation.fLatitude = centerPoint.fLatitude;
+		g_MainWindow.ptSlideStartLocation.fLongitude = centerPoint.fLongitude;
 
 		// set endpoint
-		g_MainWindow.m_ptSlideEndLocation.m_fLatitude = pPoint->m_fLatitude;
-		g_MainWindow.m_ptSlideEndLocation.m_fLongitude = pPoint->m_fLongitude;
+		g_MainWindow.ptSlideEndLocation.fLatitude = pPoint->fLatitude;
+		g_MainWindow.ptSlideEndLocation.fLongitude = pPoint->fLongitude;
 	}
 	else {
 		mainwindow_map_center_on_mappoint(pPoint);	// Too far-- don't slide.  Jump instead.
@@ -1592,12 +1612,12 @@ void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint)
 void mainwindow_get_centerpoint(mappoint_t* pPoint)
 {
 	g_assert(pPoint != NULL);
-	map_get_centerpoint(g_MainWindow.m_pMap, pPoint);
+	map_get_centerpoint(g_MainWindow.pMap, pPoint);
 }
 
 void mainwindow_sidebar_set_tab(gint nTab)
 {
-	gtk_notebook_set_current_page(g_MainWindow.m_pSidebarNotebook, nTab);
+	gtk_notebook_set_current_page(g_MainWindow.pSidebarNotebook, nTab);
 }
 
 //
@@ -1605,18 +1625,18 @@ void mainwindow_sidebar_set_tab(gint nTab)
 //
 void mainwindow_update_forward_back_buttons()
 {
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pForwardButton), history_can_go_forward(g_MainWindow.m_pHistory));
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pBackButton), history_can_go_back(g_MainWindow.m_pHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pForwardButton), history_can_go_forward(g_MainWindow.pHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pBackButton), history_can_go_back(g_MainWindow.pHistory));
 
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pForwardMenuItem), history_can_go_forward(g_MainWindow.m_pHistory));
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.m_pBackMenuItem), history_can_go_back(g_MainWindow.m_pHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pForwardMenuItem), history_can_go_forward(g_MainWindow.pHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pBackMenuItem), history_can_go_back(g_MainWindow.pHistory));
 }
 
 void mainwindow_go_to_current_history_item()
 {
 	mappoint_t point;
 	gint nZoomLevel;
-	history_get_current(g_MainWindow.m_pHistory, &point, &nZoomLevel);
+	history_get_current(g_MainWindow.pHistory, &point, &nZoomLevel);
 
 	mainwindow_set_zoomlevel(nZoomLevel);
 	mainwindow_map_center_on_mappoint(&point);
@@ -1625,14 +1645,14 @@ void mainwindow_go_to_current_history_item()
 
 void mainwindow_on_backbutton_clicked(GtkWidget* _unused, gpointer* __unused)
 {
-	history_go_back(g_MainWindow.m_pHistory);
+	history_go_back(g_MainWindow.pHistory);
 	mainwindow_go_to_current_history_item();
 	mainwindow_update_forward_back_buttons();
 }
 
 void mainwindow_on_forwardbutton_clicked(GtkWidget* _unused, gpointer* __unused)
 {
-	history_go_forward(g_MainWindow.m_pHistory);
+	history_go_forward(g_MainWindow.pHistory);
 	mainwindow_go_to_current_history_item();
 	mainwindow_update_forward_back_buttons();
 }
@@ -1641,9 +1661,9 @@ static void mainwindow_add_history()
 {
 	// add the current spot to the history
 	mappoint_t point;
-	map_get_centerpoint(g_MainWindow.m_pMap, &point);
+	map_get_centerpoint(g_MainWindow.pMap, &point);
 
-	history_add(g_MainWindow.m_pHistory, &point, map_get_zoomlevel(g_MainWindow.m_pMap));
+	history_add(g_MainWindow.pHistory, &point, map_get_zoomlevel(g_MainWindow.pMap));
 
 	mainwindow_update_forward_back_buttons();
 }
@@ -1653,12 +1673,12 @@ void mainwindow_toggle_locationset_visible_checkbox(GtkTreeIter* pIter)
 	// get locationset ID and whether it's set or not
 	gboolean bEnabled;
 	gint nLocationSetID;
-	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore), pIter, LOCATIONSETLIST_COLUMN_ENABLED, &bEnabled, -1);
-	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore), pIter, LOCATIONSETLIST_COLUMN_ID, &nLocationSetID, -1);
+	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.pLocationSetsListStore), pIter, LOCATIONSETLIST_COLUMN_ENABLED, &bEnabled, -1);
+	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.pLocationSetsListStore), pIter, LOCATIONSETLIST_COLUMN_ID, &nLocationSetID, -1);
 
 	// toggle selection and set GUI to reflect new value
 	bEnabled = !bEnabled;
-	gtk_list_store_set(g_MainWindow.m_pLocationSetsListStore, pIter, LOCATIONSETLIST_COLUMN_ENABLED, bEnabled, -1);
+	gtk_list_store_set(g_MainWindow.pLocationSetsListStore, pIter, LOCATIONSETLIST_COLUMN_ENABLED, bEnabled, -1);
 
 	locationset_t* pLocationSet = NULL;
 	if(locationset_find_by_id(nLocationSetID, &pLocationSet)) {
@@ -1681,7 +1701,7 @@ static void mainwindow_on_locationset_visible_checkbox_clicked(GtkCellRendererTo
 	// get an iterator for this item
 	GtkTreePath *pPath = gtk_tree_path_new_from_string(pszPath);
 	GtkTreeIter iter;
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(g_MainWindow.m_pLocationSetsListStore), &iter, pPath);
+	gtk_tree_model_get_iter(GTK_TREE_MODEL(g_MainWindow.pLocationSetsListStore), &iter, pPath);
 	gtk_tree_path_free (pPath);
 
 	mainwindow_toggle_locationset_visible_checkbox(&iter);
@@ -1691,7 +1711,7 @@ static void mainwindow_on_locationset_visible_checkbox_clicked(GtkCellRendererTo
 void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* __unused)
 {
 	mappoint_t point;
-	map_windowpoint_to_mappoint(g_MainWindow.m_pMap, &g_MainWindow.m_ptClickLocation, &point);
+	map_windowpoint_to_mappoint(g_MainWindow.pMap, &g_MainWindow.ptClickLocation, &point);
 
 //     gint nLocationSetID = 1;
 //     gint nNewLocationID;
@@ -1716,13 +1736,13 @@ void mainwindow_on_web_url_clicked(GtkWidget *_unused, gpointer* pszURLPattern)
 	};
 
 	mappoint_t ptCenter;
-	map_get_centerpoint(g_MainWindow.m_pMap, &ptCenter);
+	map_get_centerpoint(g_MainWindow.pMap, &ptCenter);
 
-	apszReplacements[0].m_pszNew = g_strdup_printf("%f", ptCenter.m_fLatitude);
-	apszReplacements[1].m_pszNew = g_strdup_printf("%f", ptCenter.m_fLongitude);
-	apszReplacements[2].m_pszNew = g_strdup_printf("%d", map_get_zoomlevel(g_MainWindow.m_pMap));
-	apszReplacements[3].m_pszNew = g_strdup_printf("%d", MAX_ZOOM_LEVEL - map_get_zoomlevel(g_MainWindow.m_pMap));
-	apszReplacements[4].m_pszNew = g_strdup_printf("%d", map_get_zoomlevel_scale(g_MainWindow.m_pMap));
+	apszReplacements[0].pszReplace = g_strdup_printf("%f", ptCenter.fLatitude);
+	apszReplacements[1].pszReplace = g_strdup_printf("%f", ptCenter.fLongitude);
+	apszReplacements[2].pszReplace = g_strdup_printf("%d", map_get_zoomlevel(g_MainWindow.pMap));
+	apszReplacements[3].pszReplace = g_strdup_printf("%d", MAX_ZOOM_LEVEL - map_get_zoomlevel(g_MainWindow.pMap));
+	apszReplacements[4].pszReplace = g_strdup_printf("%d", map_get_zoomlevel_scale(g_MainWindow.pMap));
 
 	// 
 	gchar* pszURL = util_str_replace_many(pszURLPattern, apszReplacements, G_N_ELEMENTS(apszReplacements));
@@ -1732,12 +1752,10 @@ void mainwindow_on_web_url_clicked(GtkWidget *_unused, gpointer* pszURLPattern)
 	// cleanup
 	gint i;
 	for(i=0 ; i<G_N_ELEMENTS(apszReplacements) ; i++) {
-		g_free(apszReplacements[i].m_pszNew);
-		apszReplacements[i].m_pszNew = NULL;
+		g_free(apszReplacements[i].pszReplace);
+		apszReplacements[i].pszReplace = NULL;
 	}
 }
-
-
 
 #ifdef ROADSTER_DEAD_CODE
 /*

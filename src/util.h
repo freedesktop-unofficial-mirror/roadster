@@ -67,8 +67,8 @@ gint g_strv_length(const gchar** a);
 gchar* util_g_strjoinv_limit(const gchar* separator, gchar** a, gint iFirst, gint iLast);
 
 typedef struct {
-	gchar* m_pszOld;
-	gchar* m_pszNew;
+	gchar* pszFind;
+	gchar* pszReplace;
 } util_str_replace_t;
 
 gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplacements, gint nNumReplacements);

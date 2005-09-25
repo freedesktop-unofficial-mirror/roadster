@@ -80,6 +80,6 @@ void point_free(mappoint_t* pPoint)
 
 void point_debug_print(mappoint_t* pPoint)
 {
-	g_print("pt (%f, %f)\n", pPoint->m_fLatitude, pPoint->m_fLongitude);
+	g_print("pt (%f, %f)\n", pPoint->fLatitude, pPoint->fLongitude);
 }
 

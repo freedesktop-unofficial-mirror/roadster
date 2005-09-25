@@ -25,12 +25,12 @@
 #define _ROAD_H_
 
 typedef struct {
-	GPtrArray* m_pPointsArray;
-	gchar* m_pszName;
-	gint m_nAddressLeftStart;
-	gint m_nAddressLeftEnd;
-	gint m_nAddressRightStart;
-	gint m_nAddressRightEnd;
+	GPtrArray* pPointsArray;
+	gchar* pszName;
+	gint nAddressLeftStart;
+	gint nAddressLeftEnd;
+	gint nAddressRightStart;
+	gint nAddressRightEnd;
 } road_t;
 
 void road_init(void);

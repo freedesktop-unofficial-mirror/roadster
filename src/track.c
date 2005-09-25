@@ -32,18 +32,18 @@
 #endif
 
 typedef struct track {
-	pointstring_t* m_pPointString;
-	gint m_nID;
+	pointstring_t* pPointString;
+	gint nID;
 } track_t;
 
 struct {
-	GHashTable* m_pTracksHash;
+	GHashTable* pTracksHash;
 	GMemChunk* g_pTrackChunkAllocator;
 } g_Tracks;
 
 void track_init(void)
 {
-	g_Tracks.m_pTracksHash = g_hash_table_new(g_int_hash, g_int_equal);
+	g_Tracks.pTracksHash = g_hash_table_new(g_int_hash, g_int_equal);
 	g_Tracks.g_pTrackChunkAllocator = g_mem_chunk_new("ROADSTER tracks",
 			sizeof(track_t), 1000, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_Tracks.g_pTrackChunkAllocator != NULL);
@@ -56,11 +56,11 @@ gint track_new()
 
 	// allocate structure for it
 	track_t* pNew = g_mem_chunk_alloc0(g_Tracks.g_pTrackChunkAllocator);
-	pNew->m_nID = nID;
-	pointstring_alloc(&pNew->m_pPointString);
+	pNew->nID = nID;
+	pointstring_alloc(&pNew->pPointString);
 
 	// save in hash for fast lookups
-	g_hash_table_insert(g_Tracks.m_pTracksHash, &pNew->m_nID, pNew);
+	g_hash_table_insert(g_Tracks.pTracksHash, &pNew->nID, pNew);
 
 	return nID;
 }
@@ -69,7 +69,7 @@ void track_add_point(gint nTrackID, const mappoint_t *pPoint)
 {
 //	g_print("adding point to track %d\n", nTrackID);
 
-	track_t* pTrack = g_hash_table_lookup(g_Tracks.m_pTracksHash, &nTrackID);
+	track_t* pTrack = g_hash_table_lookup(g_Tracks.pTracksHash, &nTrackID);
 	if(pTrack == NULL) {
 		// lookup in DB?
 
@@ -77,14 +77,14 @@ void track_add_point(gint nTrackID, const mappoint_t *pPoint)
 		return;
 	}
 
-	pointstring_append_point(pTrack->m_pPointString, pPoint);
+	pointstring_append_point(pTrack->pPointString, pPoint);
 }
 
 const pointstring_t* track_get_pointstring(gint nID)
 {
-	track_t* pTrack = g_hash_table_lookup(g_Tracks.m_pTracksHash, &nID);
+	track_t* pTrack = g_hash_table_lookup(g_Tracks.pTracksHash, &nID);
 	if(pTrack != NULL) {
-		return pTrack->m_pPointString;
+		return pTrack->pPointString;
 	}
 	return NULL;
 }

@@ -27,9 +27,9 @@
 #include "map.h"
 
 typedef struct {
-	gint m_nCurrentIndex;
-	gint m_nTotalItems;
-	GArray* m_MapViewArray;
+	gint nCurrentIndex;
+	gint nTotalItems;
+	GArray* MapViewArray;
 } history_t;
 
 void history_init(void);

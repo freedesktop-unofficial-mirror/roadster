@@ -25,10 +25,10 @@
 #define _TOOLTIP_H
 
 typedef struct {
-	GtkWindow* m_pWindow;
-	GtkLabel* m_pLabel;
+	GtkWindow* pWindow;
+	GtkLabel* pLabel;
 	
-	gboolean m_bEnabled;
+	gboolean bEnabled;
 } tooltip_t;
 
 void tooltip_init();

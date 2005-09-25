@@ -40,9 +40,9 @@ animator_t* animator_new(EAnimationType eAnimationType, gdouble fAnimationTimeIn
 
 	animator_t* pNew = g_new0(animator_t, 1);
 	
-	pNew->m_pTimer = g_timer_new();
-	pNew->m_eAnimationType = eAnimationType;
-	pNew->m_fAnimationTimeInSeconds = fAnimationTimeInSeconds;
+	pNew->pTimer = g_timer_new();
+	pNew->eAnimationType = eAnimationType;
+	pNew->fAnimationTimeInSeconds = fAnimationTimeInSeconds;
 	
 	return pNew;
 }
@@ -51,7 +51,7 @@ void animator_destroy(animator_t* pAnimator)
 {
 	if(pAnimator == NULL) return;	// allow NULL
 
-	g_timer_destroy(pAnimator->m_pTimer);
+	g_timer_destroy(pAnimator->pTimer);
 
 	g_free(pAnimator);
 }
@@ -60,21 +60,21 @@ gboolean animator_is_done(animator_t* pAnimator)
 {
 	g_assert(pAnimator != NULL);
 
-	gdouble fElapsedSeconds = g_timer_elapsed(pAnimator->m_pTimer, NULL);
-	return (fElapsedSeconds >= pAnimator->m_fAnimationTimeInSeconds);
+	gdouble fElapsedSeconds = g_timer_elapsed(pAnimator->pTimer, NULL);
+	return (fElapsedSeconds >= pAnimator->fAnimationTimeInSeconds);
 }
 
 gdouble animator_get_time_percent(animator_t* pAnimator)
 {
 	g_assert(pAnimator != NULL);
 
-	gdouble fElapsedSeconds = g_timer_elapsed(pAnimator->m_pTimer, NULL);
+	gdouble fElapsedSeconds = g_timer_elapsed(pAnimator->pTimer, NULL);
 
 	// Cap at 1.0
-	if(fElapsedSeconds >= pAnimator->m_fAnimationTimeInSeconds) {
+	if(fElapsedSeconds >= pAnimator->fAnimationTimeInSeconds) {
 		return 1.0;
 	}
-	return (fElapsedSeconds / pAnimator->m_fAnimationTimeInSeconds);
+	return (fElapsedSeconds / pAnimator->fAnimationTimeInSeconds);
 }
 
 // returns a floating point 0.0 to 1.0
@@ -89,7 +89,7 @@ gdouble animator_get_progress(animator_t* pAnimator)
 	// y is an output percetange (distance) from 0.0 to 1.0
 
 	gdouble fReturn;
-	switch(pAnimator->m_eAnimationType) {
+	switch(pAnimator->eAnimationType) {
 	case ANIMATIONTYPE_SLIDE:
 		// Slide - accelerate for the first half (standard upward facing parabola going from x=0 to x=0.5) 
 		if(fTimePercent < 0.5) {
