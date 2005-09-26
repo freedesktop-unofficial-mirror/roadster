@@ -28,12 +28,14 @@
 #include "db.h"
 #include "util.h"
 #include "location.h"
+#include "locationset.h"
 #include "search.h"
 #include "searchwindow.h"
 #include "search_location.h"
 
 #define MAX_QUERY					(4000)
 #define SEARCH_RESULT_COUNT_LIMIT	(100)
+#define LOCATION_RESULT_SUGGESTED_ZOOMLEVEL	(4)
 
 //typedef struct {
 //	mappoint_t ptCenter;
@@ -45,7 +47,12 @@
 //} locationsearch_t;
 
 void search_location_on_words(gchar** aWords, gint nWordCount);
-void search_location_filter_result(gint nLocationID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates);
+void search_location_filter_result(gint nLocationID, gint nLocationSetID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates);
+
+void search_location_init()
+{
+	
+}
 
 void search_location_execute(const gchar* pszSentence)
 {
@@ -92,22 +99,36 @@ void search_location_on_words(gchar** aWords, gint nWordCount)
 	gchar* pszInnerSelects = g_strdup("");
 	gint i;
 	for(i=0 ; i<nWordCount ; i++) {
+		
+		gchar* pszExcludeAddressFieldClause;
+
+		// Search the 'Address' attribute?
+		if(nWordCount >= 2) {
+			// Yes, allow it
+			pszExcludeAddressFieldClause = g_strdup("");
+		}
+		else {
+			pszExcludeAddressFieldClause = g_strdup_printf(" AND AttributeNameID != %d", LOCATION_ATTRIBUTE_ID_ADDRESS);
+		}
+
 		// add a join
 		gchar* pszNewSelect = g_strdup_printf(
 			" %s SELECT DISTINCT LocationID"	// the DISTINCT means a word showing up in 10 places for a POI will only count as 1 towards MatchedWords below
-			" FROM LocationAttributeValue WHERE MATCH(Value) AGAINST ('%s' IN BOOLEAN MODE)",
+			" FROM LocationAttributeValue WHERE (MATCH(Value) AGAINST ('%s' IN BOOLEAN MODE)%s)",	// note %s at the end
 				(i>0) ? "UNION ALL" : "",	// add "UNION ALL" between SELECTs
-				aWords[i]);
+				aWords[i],
+				pszExcludeAddressFieldClause);
 
 		// out with the old, in with the new.  yes, it's slow, but not in user-time. :)
 		gchar* pszTmp = g_strconcat(pszInnerSelects, pszNewSelect, NULL);
 		g_free(pszInnerSelects);
 		g_free(pszNewSelect);
+		g_free(pszExcludeAddressFieldClause);
 		pszInnerSelects = pszTmp;
 	}
 
 	gchar* pszSQL = g_strdup_printf(
-		"SELECT Location.ID, LocationAttributeValue_Name.Value AS Name, LocationAttributeValue_Address.Value AS Address, AsBinary(Location.Coordinates)"
+		"SELECT Location.ID, Location.LocationSetID, LocationAttributeValue_Name.Value AS Name, LocationAttributeValue_Address.Value AS Address, AsBinary(Location.Coordinates)"
 		" FROM ("
 		  "SELECT LocationID, COUNT(*) AS MatchedWords FROM ("
 		    "%s"
@@ -115,7 +136,7 @@ void search_location_on_words(gchar** aWords, gint nWordCount)
 		 " GROUP BY LocationID"
 		 " HAVING MatchedWords = %d"
 		 ") AS Matches, Location"
-		
+
 		// Get the two values we need: Name and Address
 		" LEFT JOIN LocationAttributeValue AS LocationAttributeValue_Name ON (Location.ID=LocationAttributeValue_Name.LocationID AND LocationAttributeValue_Name.AttributeNameID=%d)"
 		" LEFT JOIN LocationAttributeValue AS LocationAttributeValue_Address ON (Location.ID=LocationAttributeValue_Address.LocationID AND LocationAttributeValue_Address.AttributeNameID=%d)"
@@ -146,14 +167,14 @@ void search_location_on_words(gchar** aWords, gint nWordCount)
 			while((aRow = db_fetch_row(pResultSet))) {
 				nCount++;
 				if(nCount <= SEARCH_RESULT_COUNT_LIMIT) {
-					gint nLocationID = atoi(aRow[0]);
-					gchar* pszLocationName = aRow[1];
-					gchar* pszLocationAddress = aRow[2];
-					// Parse coordinates
 					mappoint_t pt;
-					db_parse_wkb_point(aRow[3], &pt);
+					gint nLocationID = atoi(aRow[0]);
+					gint nLocationSetID = atoi(aRow[1]);
+					gchar* pszLocationName = aRow[2];
+					gchar* pszLocationAddress = aRow[3];
+					db_parse_wkb_point(aRow[4], &pt);	// Parse coordinates
 
-					search_location_filter_result(nLocationID, pszLocationName, pszLocationAddress, &pt);
+					search_location_filter_result(nLocationID, nLocationSetID, pszLocationName, pszLocationAddress, &pt);
 				}
 			}
 			db_free_result(pResultSet);
@@ -168,15 +189,19 @@ void search_location_on_words(gchar** aWords, gint nWordCount)
 	}
 }
 
-#define LOCATION_RESULT_SUGGESTED_ZOOMLEVEL	(7)
-
-void search_location_filter_result(gint nLocationID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates)
+void search_location_filter_result(gint nLocationID, gint nLocationSetID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates)
 {
 	gchar* pszResultText = g_strdup_printf("<b>%s</b>%s%s", pszName,
 					       (pszAddress == NULL || pszAddress[0] == '\0') ? "" : "\n",
 					       (pszAddress == NULL || pszAddress[0] == '\0') ? "" : pszAddress);
 
-	searchwindow_add_result(SEARCH_RESULT_TYPE_LOCATION, pszResultText, pCoordinates, LOCATION_RESULT_SUGGESTED_ZOOMLEVEL);
+	glyph_t* pGlyph = NULL;
+
+	locationset_t* pLocationSet = NULL;
+	if(locationset_find_by_id(nLocationSetID, &pLocationSet)) {
+		pGlyph = pLocationSet->pGlyph;
+	}
+	searchwindow_add_result(SEARCH_RESULT_TYPE_LOCATION, pszResultText, pGlyph, pCoordinates, LOCATION_RESULT_SUGGESTED_ZOOMLEVEL);
 
 	g_free(pszResultText);
 }

@@ -40,6 +40,7 @@ void glyph_init(void);
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight);
 GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph);
 //void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY);
+void glyph_draw_centered(glyph_t* pGlyph, GdkDrawable* pTargetDrawable, GdkGC* pGC, gdouble fX, gdouble fY);
 void glyph_deinit(void);
 
 #endif

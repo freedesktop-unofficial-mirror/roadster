@@ -74,7 +74,8 @@ struct {
 
 static void searchwindow_on_resultslist_selection_changed(GtkTreeSelection *treeselection, gpointer user_data);
 static void searchwindow_set_message(gchar* pszMessage);
-static void searchwindow_update_next_and_prev_buttons();
+static void searchwindow_update_next_and_prev_buttons(void);
+static void searchwindow_go_to_selected_result(void);
 
 void searchwindow_init(GladeXML* pGladeXML)
 {
@@ -210,12 +211,12 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 
 	g_hash_table_destroy(g_SearchWindow.pResultsHashTable);
 	
-	//gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.pSearchButton), TRUE);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.pSearchButton), TRUE);
 	searchwindow_update_next_and_prev_buttons();
 }
 
 // add a result row to the list
-void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText, mappoint_t* pPoint, gint nZoomLevel)
+void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText, glyph_t* pGlyph, mappoint_t* pPoint, gint nZoomLevel)
 {
 	GtkTreeIter iter;
 
@@ -247,10 +248,10 @@ void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText
 
 	gchar* pszBuffer = g_strdup_printf(SEARCHWINDOW_RESULT_FORMAT, pszText);
 
-	glyph_t* pGlyph = search_glyph_for_search_result_type(eResultType);
-	g_assert(pGlyph != NULL);
-	GdkPixbuf* pRowPixbuf = glyph_get_pixbuf(pGlyph); 
-	g_assert(pRowPixbuf != NULL);
+//	glyph_t* pGlyph = search_glyph_for_search_result_type(eResultType);
+//	g_assert(pGlyph != NULL);
+	GdkPixbuf* pRowPixbuf = (pGlyph != NULL) ? glyph_get_pixbuf(pGlyph) : NULL; 
+//	g_assert(pRowPixbuf != NULL);
 
 	gtk_list_store_append(g_SearchWindow.pResultsListStore, &iter);
 	gtk_list_store_set(g_SearchWindow.pResultsListStore, &iter,
@@ -326,18 +327,16 @@ void searchwindow_on_previousresultbutton_clicked(GtkWidget *pWidget, gpointer* 
 
 void searchwindow_on_searchentry_changed(GtkWidget *pWidget, gpointer* p)
 {
-	// Clear results when search entry changes
-	searchwindow_clear_results();
+	// Clear results when search entry changes(?)
+	//searchwindow_clear_results();
+//     const gchar* pszSearch = gtk_entry_get_text(g_SearchWindow.pSearchEntry);   // NOTE: do NOT free this pointer
+//     if(pszSearch[0] != '\0') {
+//         gchar* pszBuffer = g_strdup_printf(SEARCHWINDOW_INFO_FORMAT, "Hit <b>Enter</b> to search.");
+//         searchwindow_set_message(pszBuffer);
+//         g_free(pszBuffer);
+//     }
 
-	// Set a message
-	const gchar* pszSearch = gtk_entry_get_text(g_SearchWindow.pSearchEntry);	// NOTE: do NOT free this pointer
-	if(pszSearch[0] != '\0') {
-		gchar* pszBuffer = g_strdup_printf(SEARCHWINDOW_INFO_FORMAT, "Hit <b>Enter</b> to search.");
-		searchwindow_set_message(pszBuffer);
-		g_free(pszBuffer);
-    }
-
-	// just make sure
-	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.pSearchButton), TRUE);
+	//
+	//gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.pSearchButton), TRUE);
 }
 

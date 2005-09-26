@@ -30,25 +30,17 @@ G_BEGIN_DECLS
 #include <glade/glade.h>
 #include "search.h"
 #include "map.h"
+#include "glyph.h"
 //#include "gpsclient.h"
+
+#define SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH	(24)
+#define SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT	(24)
 
 void searchwindow_init(GladeXML* pGladeXML);
 
-void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText, mappoint_t* pPoint, gint nZoomLevel);
-
-static void searchwindow_go_to_selected_result(void);
+void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText, glyph_t* pGlyph, mappoint_t* pPoint, gint nZoomLevel);
 
 void searchwindow_clear_results(void);
-
-/* Funky, auto-lookup glade signal handlers.
-
-   XXX: Better would be to hook these up manually, remove these
-   declarations, and make the functions static.
-*/
-void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p);
-void searchwindow_on_searchtypecombo_changed(GtkWidget *pWidget, gpointer* p);
-void searchwindow_on_addressresultstreeview_row_activated(GtkWidget *pWidget, gpointer* p);
-void searchwindow_on_gobutton_clicked(GtkWidget *pWidget, gpointer* p);
 
 G_END_DECLS
 

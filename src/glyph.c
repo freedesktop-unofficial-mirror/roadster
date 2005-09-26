@@ -106,6 +106,8 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
 {
+	g_print("glyph.c: loading %s\n", pszName);
+
 	// NOTE: We always return something!
 	glyph_t* pNewGlyph = g_new0(glyph_t, 1);
 
@@ -129,16 +131,15 @@ GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph)
 	return pGlyph->pPixbuf;
 }
 
-void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY)
+void glyph_draw_centered(glyph_t* pGlyph, GdkDrawable* pTargetDrawable, GdkGC* pGC, gdouble fX, gdouble fY)
 {
-//     GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file_at_size("/home/yella/Desktop/interstate-sign.svg", 32, 32, NULL);
-//     gdk_draw_pixbuf(GTK_WIDGET(g_MainWindow.pDrawingArea)->window,
-//                     GTK_WIDGET(g_MainWindow.pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.pDrawingArea)],
-//                     pixbuf,
-//                     0,0,                        // src
-//                     100,100,                    // x/y to draw to
-//                     32,32,                      // width/height
-//                     GDK_RGB_DITHER_NONE,0,0);   // no dithering
+	gdk_draw_pixbuf(pTargetDrawable,
+					pGC,
+					pGlyph->pPixbuf,
+					0,0,                        		// src
+					(gint)(fX - (pGlyph->nWidth/2)), (gint)(fY - (pGlyph->nHeight/2)),                 // x/y to draw to
+					pGlyph->nWidth, pGlyph->nHeight,    // width/height
+					GDK_RGB_DITHER_NONE,0,0);   		// no dithering
 }
 
 void glyph_free(glyph_t* pGlyph)

@@ -24,8 +24,6 @@
 #ifndef _SEARCH_H
 #define _SEARCH_H
 
-#include "glyph.h"
-
 typedef enum {
 	SEARCH_RESULT_TYPE_COUNTRY = 0,		// in order of importance (for search results)
 	SEARCH_RESULT_TYPE_STATE,
@@ -40,7 +38,6 @@ G_BEGIN_DECLS
 
 void search_init();
 void search_clean_string(gchar* p);
-glyph_t* search_glyph_for_search_result_type(ESearchResultType eType);
 
 gboolean search_address_number_atoi(const gchar* pszText, gint* pnReturn);
 

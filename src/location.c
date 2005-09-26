@@ -34,7 +34,7 @@ struct {
 void location_init()
 {
 	g_Location.pLocationChunkAllocator = g_mem_chunk_new("ROADSTER locations",
-			sizeof(location_t), 1000, G_ALLOC_AND_FREE);
+			sizeof(location_t), sizeof(location_t) * 1000, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_Location.pLocationChunkAllocator != NULL);
 }
 
@@ -85,20 +85,77 @@ gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturn
 	return TRUE;
 }
 
+gboolean location_insert_attribute_name(const gchar* pszName, gint* pnReturnID)
+{
+	g_assert(pszName != NULL);
+
+	gchar* pszSafeName = db_make_escaped_string(pszName);
+	gchar* pszSQL = g_strdup_printf(
+		"INSERT INTO LocationAttributeName"
+		" SET Name='%s';", 
+		pszSafeName
+		);
+
+	gboolean bResult = db_query(pszSQL, NULL);
+	g_free(pszSQL);
+	db_free_escaped_string(pszSafeName);
+
+	// inserted?
+	if(bResult == TRUE) {
+		if(pnReturnID) {
+			*pnReturnID = db_get_last_insert_id();
+			g_print("returning %d\n", *pnReturnID);
+		}
+		return TRUE;
+	}
+	else {
+		// couldn't insert?  try to find existing
+		if(location_lookup_attribute_name(pszName, pnReturnID)) {
+			return TRUE;
+		}
+		return FALSE;
+	}
+}
+
+gboolean location_lookup_attribute_name(const gchar* pszName, gint* pnReturnID)
+{
+	g_assert(pszName != NULL);
+
+	gchar* pszSafeName = db_make_escaped_string(pszName);
+	gchar* pszSQL = g_strdup_printf("SELECT ID FROM LocationAttributeName WHERE Name='%s';", pszSafeName);
+
+	db_resultset_t* pResultSet = NULL;
+
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+	db_free_escaped_string(pszSafeName);
+
+	db_row_t aRow;
+	if(aRow = db_fetch_row(pResultSet)) {
+		if(pnReturnID) {
+			*pnReturnID = atoi(aRow[0]);
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
 gboolean location_insert_attribute(gint nLocationID, gint nAttributeID, const gchar* pszValue, gint* pnReturnID)
 {
 	g_assert(nLocationID != 0);
 	g_assert(nAttributeID != 0);
 	g_assert(pszValue != NULL);
 
+	gchar* pszSafeValue = db_make_escaped_string(pszValue);
 	gchar* pszSQL = g_strdup_printf(
 		"INSERT INTO LocationAttributeValue"
 		" SET LocationID=%d, AttributeNameID=%d, Value='%s';", 
-		nLocationID, nAttributeID, pszValue
+		nLocationID, nAttributeID, pszSafeValue
 		);
 
 	db_query(pszSQL, NULL);
 	g_free(pszSQL);
+	db_free_escaped_string(pszSafeValue);
 
 	if(pnReturnID) {
 		*pnReturnID = db_get_last_insert_id();

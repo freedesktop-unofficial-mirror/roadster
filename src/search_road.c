@@ -33,6 +33,8 @@
 #include "search.h"
 #include "search_road.h"
 #include "road.h"
+#include "glyph.h"
+#include "searchwindow.h"		// for defines about glyph size
 
 #define ROAD_RESULT_SUGGESTED_ZOOMLEVEL		(4)
 
@@ -51,6 +53,15 @@ typedef struct {
 #define ROADSEARCH_NUMBER_NONE			(-1)
 #define SEARCH_RESULT_COUNT_LIMIT		(400)		// how many rows to get from DB
 #define MAX_QUERY 						(4000)
+
+
+static glyph_t* g_SearchResultTypeRoadGlyph = NULL;
+
+void search_road_init()
+{
+	g_SearchResultTypeRoadGlyph = glyph_load_at_size("search-result-type-road", SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH, SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
+}
+
 
 //#define ROAD_MIN_LENGTH_FOR_WILDCARD_SEARCH	(4)	  wildcard search no longer used
 
@@ -532,7 +543,7 @@ void search_road_filter_result(
 			// swap address to keep smaller number to the left
 			g_snprintf(azBuffer, BUFFER_SIZE, "%d-%d %s %s\n%s", nAddressLeftEnd, nAddressLeftStart, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
 		}
-*/		searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);		
+*/		searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);		
 	}
 	else {	// else the search had a road number
 		// NOTE: we have to filter out results like "97-157" when searching for "124" because it's
@@ -557,7 +568,7 @@ void search_road_filter_result(
 					pointstring_walk_percentage(pPointString, fPercent, ROADSIDE_LEFT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
-				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);				
+				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);				
 			}
 			else if(nRoadNumber >= nAddressLeftEnd && nRoadNumber <= nAddressLeftStart) {
 				// MATCH: left side backwards
@@ -573,7 +584,7 @@ void search_road_filter_result(
 					pointstring_walk_percentage(pPointString, (100.0 - fPercent), ROADSIDE_RIGHT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
-				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
+				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
 			}
 		}
 
@@ -594,7 +605,7 @@ void search_road_filter_result(
 					pointstring_walk_percentage(pPointString, fPercent, ROADSIDE_RIGHT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
-				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
+				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
 			}
 			else if(nRoadNumber >= nAddressRightEnd && nRoadNumber <= nAddressRightStart) {
 				// MATCH: right side backwards
@@ -610,7 +621,7 @@ void search_road_filter_result(
 					pointstring_walk_percentage(pPointString, (100.0 - fPercent), ROADSIDE_LEFT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
-				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
+				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
 			}
 		}
 	}

@@ -32,6 +32,7 @@
 #include "locationset.h"
 #include "db.h"
 #include "util.h"
+#include "searchwindow.h"		// for defines about glyph size
 
 struct {
 	GPtrArray* pLocationSetArray;	// an array of locationsets
@@ -47,7 +48,7 @@ void locationset_init()
 
 	// create memory allocator
 	g_LocationSet.pLocationSetChunkAllocator = g_mem_chunk_new("ROADSTER locationsets",
-			sizeof(locationset_t), 20, G_ALLOC_AND_FREE);
+			sizeof(locationset_t), sizeof(locationset_t) * 20, G_ALLOC_AND_FREE);
 	g_return_if_fail(g_LocationSet.pLocationSetChunkAllocator != NULL);
 }
 
@@ -66,14 +67,17 @@ static gboolean locationset_alloc(locationset_t** ppReturn)
 	return TRUE;
 }
 
-gboolean locationset_insert(const gchar* pszName, gint* pnReturnID)
+gboolean locationset_insert(const gchar* pszName, const gchar* pszIconName, gint* pnReturnID)
 {
 	g_assert(pszName != NULL);
+	g_assert(pszIconName != NULL);
 	g_assert(pnReturnID != NULL);
 	g_assert(*pnReturnID == 0);
 
 	gchar* pszSafeName = db_make_escaped_string(pszName);
-	gchar* pszSQL = g_strdup_printf("INSERT INTO LocationSet SET Name='%s'", pszSafeName);
+	gchar* pszSafeIconName = db_make_escaped_string(pszIconName);
+	gchar* pszSQL = g_strdup_printf("INSERT INTO LocationSet SET Name='%s', IconName='%s'", pszSafeName, pszSafeIconName);
+	db_free_escaped_string(pszSafeIconName);
 	db_free_escaped_string(pszSafeName);
 
 	// create query SQL
@@ -81,6 +85,7 @@ gboolean locationset_insert(const gchar* pszName, gint* pnReturnID)
 	g_free(pszSQL);
 
 	*pnReturnID = db_get_last_insert_id();
+	g_assert(*pnReturnID > 0);
 	return TRUE;
 }
 
@@ -100,6 +105,8 @@ void locationset_load_locationsets(void)
 			pNewLocationSet->nID = atoi(aRow[0]);
 			pNewLocationSet->pszName = g_strdup(aRow[1]);
 			pNewLocationSet->pszIconName = g_strdup(aRow[2]);
+			pNewLocationSet->pGlyph = glyph_load_at_size(pNewLocationSet->pszIconName, SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH, SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
+			pNewLocationSet->pMapGlyph = glyph_load_at_size(pNewLocationSet->pszIconName, 16, 16);
 			pNewLocationSet->nLocationCount = atoi(aRow[3]);
 
 			// Add the new set to both data structures

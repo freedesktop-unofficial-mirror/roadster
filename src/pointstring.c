@@ -40,7 +40,7 @@ void pointstring_init(void)
 	g_pPointStringFreeList = g_free_list_new(sizeof(pointstring_t), 1000);
 #else
 	g_pPointStringChunkAllocator = g_mem_chunk_new("ROADSTER pointstrings",
-			sizeof(pointstring_t), 1000, G_ALLOC_AND_FREE);
+			sizeof(pointstring_t), sizeof(pointstring_t)*1000, G_ALLOC_AND_FREE);
 #endif
 }
 

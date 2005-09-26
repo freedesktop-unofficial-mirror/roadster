@@ -339,11 +339,15 @@ static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t
 static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics)
 {
 	const GPtrArray* pLocationSetsArray = locationset_get_array();
+
+	g_print("pLocationSetsArray->len = %d\n", pLocationSetsArray->len);
+
 	gint i;
 	for(i=0 ; i<pLocationSetsArray->len ; i++) {
 		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetsArray, i);
 
 		if(!locationset_is_visible(pLocationSet)) continue;
+		g_print("visible one: %s\n", pLocationSet->pszName);
 
 		// 2. Get array of Locations from the hash table using LocationSetID
 		GPtrArray* pLocationsArray;
@@ -360,6 +364,7 @@ static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetric
 
 static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray)
 {
+	g_print("Drawing set with %d\n", pLocationsArray->len);
 	gint i;
 	for(i=0 ; i<pLocationsArray->len ; i++) {
 		location_t* pLocation = g_ptr_array_index(pLocationsArray, i);
@@ -376,30 +381,31 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		gint nX = (gint)SCALE_X(pRenderMetrics, pLocation->Coordinates.fLongitude);
 		gint nY = (gint)SCALE_Y(pRenderMetrics, pLocation->Coordinates.fLatitude);
 
-//		g_print("drawing at %d,%d\n", nX,nY);
-		
 		GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
+		glyph_draw_centered(pLocationSet->pMapGlyph, pPixmap, pGC, (gdouble)nX, (gdouble)nY);
 
-		GdkColor clr1;
-		clr1.red = 255/255.0 * 65535;
-		clr1.green = 80/255.0 * 65535;
-		clr1.blue = 80/255.0 * 65535;
-		GdkColor clr2;
-		clr2.red = 255/255.0 * 65535;
-		clr2.green = 255/255.0 * 65535;
-		clr2.blue = 255/255.0 * 65535;
+//		g_print("drawing at %d,%d\n", nX,nY);
 
-		gdk_gc_set_rgb_fg_color(pGC, &clr1);
-		gdk_draw_rectangle(pPixmap, pGC, TRUE, 
-					nX-3,nY-3,
-					7, 7);
-		gdk_gc_set_rgb_fg_color(pGC, &clr2);
-		gdk_draw_rectangle(pPixmap, pGC, TRUE, 
-					nX-2,nY-2,
-					5, 5);
-		gdk_gc_set_rgb_fg_color(pGC, &clr1);
-		gdk_draw_rectangle(pPixmap, pGC, TRUE, 
-					nX-1,nY-1,
-					3, 3);
+//         GdkColor clr1;
+//         clr1.red = 255/255.0 * 65535;
+//         clr1.green = 80/255.0 * 65535;
+//         clr1.blue = 80/255.0 * 65535;
+//         GdkColor clr2;
+//         clr2.red = 255/255.0 * 65535;
+//         clr2.green = 255/255.0 * 65535;
+//         clr2.blue = 255/255.0 * 65535;
+//
+//         gdk_gc_set_rgb_fg_color(pGC, &clr1);
+//         gdk_draw_rectangle(pPixmap, pGC, TRUE,
+//                     nX-3,nY-3,
+//                     7, 7);
+//         gdk_gc_set_rgb_fg_color(pGC, &clr2);
+//         gdk_draw_rectangle(pPixmap, pGC, TRUE,
+//                     nX-2,nY-2,
+//                     5, 5);
+//         gdk_gc_set_rgb_fg_color(pGC, &clr1);
+//         gdk_draw_rectangle(pPixmap, pGC, TRUE,
+//                     nX-1,nY-1,
+//                     3, 3);
 	}
 }

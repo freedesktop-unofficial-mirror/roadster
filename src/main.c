@@ -58,28 +58,6 @@ int main (int argc, char *argv[])
 	if(!main_init())
 		return 1;
 
-// Insert some POI for testing...
-/*
-	gint nNewLocationSetID = 0;
-	locationset_insert("Coffee Shops", &nNewLocationSetID);
-
-	gint nNewLocationID;
-
-	mappoint_t pt;
-	pt.fLatitude = 42.37382;
-	pt.fLongitude = -71.10054;
-	nNewLocationID = 0;
-	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
-	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
-	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "1369 Cambridge Street\nCambridge, MA, 02141", NULL);
-
-	pt.fLatitude = 42.36650;
-	pt.fLongitude = -71.10554;
-	nNewLocationID = 0;
-	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
-	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
-	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "757 Massachusetts Avenue\nCambridge, MA 02139", NULL);
-*/
 	g_print("Running %s\n", g_thread_supported() ? "multi-threaded" : "single-threaded");
 
 	gui_run();
@@ -87,6 +65,67 @@ int main (int argc, char *argv[])
 
 	return 0;
 }
+
+void main_debug_insert_test_data()
+{
+	//
+	// New POI Attributes 'name' and 'address'
+	//
+
+#if 0	// only run with this enabled once ;)
+	gint nNameAttributeID = 0;
+	location_insert_attribute_name("name", &nNameAttributeID);
+	g_assert(nNameAttributeID == LOCATION_ATTRIBUTE_ID_NAME);
+
+	gint nAddressAttributeID = 0;
+	location_insert_attribute_name("address", &nAddressAttributeID);
+	g_assert(nAddressAttributeID == LOCATION_ATTRIBUTE_ID_ADDRESS);
+
+	// and 'review'
+	gint nAttributeIDReview = 0;
+	location_insert_attribute_name("review", &nAttributeIDReview);
+
+	//
+	// New POI Type
+	//
+	gint nNewLocationSetID = 0;
+	gint nNewLocationID;
+
+	locationset_insert("Coffee Shops", "coffee-shops", &nNewLocationSetID);
+
+	// New POI
+	mappoint_t pt;
+	pt.fLatitude = 42.37382;
+	pt.fLongitude = -71.10054;
+	nNewLocationID = 0;
+	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "1369 Cambridge Street\nCambridge, MA, 02141", NULL);
+	location_insert_attribute(nNewLocationID, nAttributeIDReview, "1369 Coffee House (specifically, the one on Mass Ave) has a special place in my heart; it's sort of my office away from the office, or my vacation home away from my tiny Central Square rented home. It's cozy. It's hip.", NULL);
+
+	// New POI
+	pt.fLatitude = 42.36650;
+	pt.fLongitude = -71.10554;
+	nNewLocationID = 0;
+	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "757 Massachusetts Avenue\nCambridge, MA 02139", NULL);
+	location_insert_attribute(nNewLocationID, nAttributeIDReview, "Don't know if I've ever been to the Central Square version, but I've tried 1369 at Inman Square three times and will not go back. I drink regular coffee and am incredulous at how poorly 1369 serves it. Most real coffee drinkers have specific preferences for their sugar and milk and know that the sugar needs to go in first in order for it to dissolve, but 1369 has the milk and cream behind the counter and the sugar at the condiments bar. I could also taste the filthiness of the urn in each cup. Cool enough crowd, good location, but not for truly down-to-earth folks.", NULL);
+
+	nNewLocationSetID = 0;
+	locationset_insert("Restaurants", "restaurants", &nNewLocationSetID);
+
+	// New POI (Anna's)
+	pt.fLatitude = 42.38821;
+	pt.fLongitude = -71.11799;
+	nNewLocationID = 0;
+	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "Anna's Taqueria", NULL);
+	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_ADDRESS, "822 Somerville Avenue\nCambridge, MA 02140", NULL);
+	location_insert_attribute(nNewLocationID, nAttributeIDReview, "Anna's kicks ass. Some of the best Mexican food I've ever had, and I've been to Mexico. You won't get better Mexican food than this anywhere in a day's drive.", NULL);
+#endif
+}
+
 
 gboolean main_init(void)
 {
@@ -129,6 +168,12 @@ gboolean main_init(void)
 	g_print("initializing db\n");
 	db_init();
 
+	g_print("connecting to db\n");
+	gboolean bConnected = db_connect(NULL, NULL, NULL, "");
+
+	g_print("creating database tables\n");
+	db_create_tables();
+
 	g_print("initializing locationsets\n");
 	locationset_init();
 
@@ -138,11 +183,7 @@ gboolean main_init(void)
 	g_print("initializing animator\n");
 	animator_init();
 
-	g_print("connecting to db\n");
-	gboolean bConnected = db_connect(NULL, NULL, NULL, "");
-
-	g_print("creating database tables\n");
-	db_create_tables();
+	main_debug_insert_test_data();
 
 	// Load location sets from DB.  This is "coffee shops", "ATMs", etc.
 	locationset_load_locationsets();

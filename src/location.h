@@ -28,7 +28,7 @@
 
 G_BEGIN_DECLS
 
-#define LOCATION_ATTRIBUTE_ID_NAME	(1)		// "name" must be #1 in the DB
+#define LOCATION_ATTRIBUTE_ID_NAME		(1)		// "name" must be #1 in the DB
 #define LOCATION_ATTRIBUTE_ID_ADDRESS	(2)		// "address" must be #2 in the DB
 #define LOCATION_ATTRIBUTE_ID________	(3)		// "" must be #3 in the DB
 

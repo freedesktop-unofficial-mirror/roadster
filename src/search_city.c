@@ -31,6 +31,13 @@
 
 void search_city_on_words(gchar** aWords, gint nWordCount);
 
+static glyph_t* g_SearchResultTypeCityGlyph = NULL;
+
+void search_city_init()
+{
+	g_SearchResultTypeCityGlyph = glyph_load_at_size("search-result-type-city", SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH, SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
+}
+
 void search_city_execute(const gchar* pszSentence)
 {
 	// Create an array of the words
@@ -130,7 +137,7 @@ void search_city_on_words(gchar** aWords, gint nWordCount)
 			mappoint_t point = {0,0};
 
 			gchar* pszResultText = g_strdup_printf("<b>%s,\n%s</b>", aRow[0], aRow[1]);	// XXX: add country?
-			searchwindow_add_result(SEARCH_RESULT_TYPE_CITY, pszResultText, &point, CITY_RESULT_SUGGESTED_ZOOMLEVEL);
+			searchwindow_add_result(SEARCH_RESULT_TYPE_CITY, pszResultText, g_SearchResultTypeCityGlyph, &point, CITY_RESULT_SUGGESTED_ZOOMLEVEL);
 			g_free(pszResultText);
 		}
 		db_free_result(pResultSet);

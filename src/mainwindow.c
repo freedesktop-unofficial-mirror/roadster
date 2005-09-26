@@ -353,7 +353,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pStatusbar, GTK_VBOX, "statusbar");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSidebox, GTK_WIDGET, "mainwindowsidebox");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSidebarNotebook, GTK_NOTEBOOK, "sidebarnotebook");
-	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pContentBox, GTK_HBOX, "mainwindowcontentsbox");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pContentBox, GTK_VBOX, "mainwindowcontentsbox");
 
 
 	// Zoom controls
@@ -513,12 +513,15 @@ void mainwindow_refresh_locationset_list()
 		gchar* pszName = g_strdup_printf("<small>%s</small>", pLocationSet->pszName);
 		gchar* pszCount = g_strdup_printf("<small><small>(%d)</small></small>", pLocationSet->nLocationCount);
 
+		GdkPixbuf* pPixbuf = glyph_get_pixbuf(pLocationSet->pGlyph);
+
 		gtk_list_store_append(g_MainWindow.pLocationSetsListStore, &iter);
 		gtk_list_store_set(g_MainWindow.pLocationSetsListStore, &iter, 
 						   LOCATIONSETLIST_COLUMN_NAME, pszName, 
 						   LOCATIONSETLIST_COLUMN_ENABLED, TRUE,
 						   LOCATIONSETLIST_COLUMN_ID, pLocationSet->nID,
 						   LOCATIONSETLIST_COLUMN_COUNT, pszCount,
+						   LOCATIONSETLIST_COLUMN_PIXBUF, pPixbuf,
 						   -1);
 		g_free(pszName);
 		g_free(pszCount);
@@ -1338,7 +1341,9 @@ void mainwindow_on_toolbutton_clicked(GtkToolButton *toolbutton, gpointer user_d
 	// XXX: current there are no tools!
 	mainwindow_setup_selected_tool();
 }
-#define ENABLE_DRAW_LIVE_LABELS
+
+//#define ENABLE_DRAW_LIVE_LABELS
+
 void mainwindow_draw_map(gint nDrawFlags)
 {
 #ifdef ENABLE_DRAW_LIVE_LABELS

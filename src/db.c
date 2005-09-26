@@ -131,6 +131,7 @@ gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)
 	if(nResult != MYSQL_RESULT_SUCCESS) {
 		gint nErrorNumber = mysql_errno(g_pDB->pMySQLConnection);
 
+		// show an error (except for duplicate key 'error', which is common)
 		if(nErrorNumber != MYSQL_ERROR_DUPLICATE_KEY) {
 			g_warning("db_query: %d:%s (SQL: %s)\n", mysql_errno(g_pDB->pMySQLConnection), mysql_error(g_pDB->pMySQLConnection), pszSQL);
 		}
@@ -631,14 +632,6 @@ void db_create_tables()
 		" Name VARCHAR(30) NOT NULL,"
 		" PRIMARY KEY (ID),"
 		" UNIQUE INDEX (Name));", NULL);
-
-	gchar* pszSQL = g_strdup_printf("INSERT INTO LocationAttributeName SET ID=%d, Name='name'", LOCATION_ATTRIBUTE_ID_NAME);
-	db_query(pszSQL, NULL);
-        g_free(pszSQL);
-
-	pszSQL = g_strdup_printf("INSERT INTO LocationAttributeName SET ID=%d, Name='address'", LOCATION_ATTRIBUTE_ID_ADDRESS);
-	db_query(pszSQL, NULL);
-        g_free(pszSQL);
 
 	// Location Attribute Value
 	db_query("CREATE TABLE IF NOT EXISTS LocationAttributeValue("

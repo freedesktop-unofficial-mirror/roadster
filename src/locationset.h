@@ -27,6 +27,7 @@
 G_BEGIN_DECLS
 
 #include "map.h"
+#include "glyph.h"
 
 // typedef struct locationsetstyle {
 //     // icon?
@@ -42,13 +43,15 @@ typedef struct locationset {
 	gint nLocationCount;
 	gboolean bVisible;		// user has chosen to view these
 //	locationsetstyle_t Style;
+	glyph_t* pGlyph;
+	glyph_t* pMapGlyph;
 } locationset_t;
 
 void locationset_init(void);
 void locationset_load_locationsets(void);
 const GPtrArray* locationset_get_array(void);
 gboolean locationset_find_by_id(gint nLocationSetID, locationset_t** ppLocationSet);
-gboolean locationset_insert(const gchar* pszName, gint* pnReturnID);
+gboolean locationset_insert(const gchar* pszName, const gchar* pszIconName, gint* pnReturnID);
 void locationset_set_visible(locationset_t* pLocationSet, gboolean bVisible);
 gboolean locationset_is_visible(locationset_t* pLocationSet);
 

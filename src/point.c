@@ -40,7 +40,7 @@ void point_init(void)
 #else
 	// create memory allocators
 	g_pPointChunkAllocator = g_mem_chunk_new("ROADSTER points",
-			sizeof(mappoint_t), 1000, G_ALLOC_AND_FREE);
+			sizeof(mappoint_t), sizeof(mappoint_t)*1000, G_ALLOC_AND_FREE);
 #endif
 }
 

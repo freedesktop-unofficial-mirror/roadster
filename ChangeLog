@@ -1,3 +1,22 @@
+2005-09-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* data/help/roadster-help.xml:
+	* data/help/legal.xml:
+	* data/help/figures/window_layout.png: Added the basics of a help system.
+
+	* src/db.c: Removed debug stuff.
+	* src/glyph.c: Added glyph drawing (via gdk/pixbufs).
+	* src/location.c: Added location attribute name inserting / retrieving.
+	* src/locationset.c: Added 'icon' field.
+	* src/main.c: Add some debug code to insert test POI data.
+	* src/search.c: Removed knowledge of search result type icons.  Now each type can provide its own.
+	* src/search_*.c: Provide an icon suggestion along with results.
+	* src/map.c:
+	* src/map_draw_gdk.c: Re-enable / fix POI drawing.
+	* src/point.c:
+	* src/pointstring.c:
+	* src/locationset.c: Fixed area_size of chunk allocators.	
+
 2005-09-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* data/roadster-icon.png:

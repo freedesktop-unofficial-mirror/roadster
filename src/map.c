@@ -685,27 +685,32 @@ static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect)
 	g_return_val_if_fail(pMap != NULL, FALSE);
 	g_return_val_if_fail(pRect != NULL, FALSE);
 
-	if(map_get_zoomlevel(pMap) < MIN_ZOOM_LEVEL_FOR_LOCATIONS) {
-		return TRUE;
-	}
+//     if(map_get_zoomlevel(pMap) < MIN_ZOOM_LEVEL_FOR_LOCATIONS) {
+//         return TRUE;
+//     }
 
 	TIMER_BEGIN(mytimer, "BEGIN Locations LOAD");
 
 	// generate SQL
 	gchar* pszSQL;
+	gchar azCoord1[20], azCoord2[20], azCoord3[20], azCoord4[20], azCoord5[20], azCoord6[20], azCoord7[20], azCoord8[20];
 	pszSQL = g_strdup_printf(
 		"SELECT Location.ID, Location.LocationSetID, AsBinary(Location.Coordinates), LocationAttributeValue_Name.Value"	// LocationAttributeValue_Name.Value is the "Name" field of this Location
 		" FROM Location"
 		" LEFT JOIN LocationAttributeValue AS LocationAttributeValue_Name ON (LocationAttributeValue_Name.LocationID=Location.ID AND LocationAttributeValue_Name.AttributeNameID=%d)"
 		" WHERE"
-		" MBRIntersects(GeomFromText('Polygon((%f %f,%f %f,%f %f,%f %f,%f %f))'), Coordinates)",
+		" MBRIntersects(GeomFromText('Polygon((%s %s,%s %s,%s %s,%s %s,%s %s))'), Coordinates)",
 		LOCATION_ATTRIBUTE_ID_NAME,	// attribute ID for 'name'
-		pRect->A.fLatitude, pRect->A.fLongitude, 	// upper left
-		pRect->A.fLatitude, pRect->B.fLongitude, 	// upper right
-		pRect->B.fLatitude, pRect->B.fLongitude, 	// bottom right
-		pRect->B.fLatitude, pRect->A.fLongitude, 	// bottom left
-		pRect->A.fLatitude, pRect->A.fLongitude		// upper left again
-		);
+		// upper left
+		g_ascii_dtostr(azCoord1, 20, pRect->A.fLatitude), g_ascii_dtostr(azCoord2, 20, pRect->A.fLongitude), 
+		// upper right
+		g_ascii_dtostr(azCoord3, 20, pRect->A.fLatitude), g_ascii_dtostr(azCoord4, 20, pRect->B.fLongitude), 
+		// bottom right
+		g_ascii_dtostr(azCoord5, 20, pRect->B.fLatitude), g_ascii_dtostr(azCoord6, 20, pRect->B.fLongitude), 
+		// bottom left
+		g_ascii_dtostr(azCoord7, 20, pRect->B.fLatitude), g_ascii_dtostr(azCoord8, 20, pRect->A.fLongitude), 
+		// upper left again
+		azCoord1, azCoord2);
 	//g_print("sql: %s\n", pszSQL);
 
 	db_resultset_t* pResultSet = NULL;
