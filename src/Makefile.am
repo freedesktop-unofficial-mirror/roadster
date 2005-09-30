@@ -20,6 +20,7 @@ bin_PROGRAMS = roadster
 roadster_SOURCES = \
 	main.c\
 	db.c\
+	downloader.c\
 	gui.c\
 	mainwindow.c\
 	gotowindow.c\

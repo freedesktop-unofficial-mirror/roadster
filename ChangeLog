@@ -1,3 +1,7 @@
+2005-09-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/downloader.c: Added.  This provides an easy interface to asyncronous file downloads.
+
 2005-09-29  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/map_style.c: Removed "constants"-- found out that XML already has this feature!

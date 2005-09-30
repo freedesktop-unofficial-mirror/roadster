@@ -37,6 +37,8 @@
 #include "locationset.h"
 #include "location.h"
 #include "search.h"
+#include "search.h"
+#include "downloader.h"
 
 static gboolean main_init(void);
 static void main_deinit(void);
@@ -126,7 +128,6 @@ void main_debug_insert_test_data()
 #endif
 }
 
-
 gboolean main_init(void)
 {
 #ifdef USE_GNOME_VFS
@@ -196,6 +197,7 @@ gboolean main_init(void)
 
 	g_print("initialization complete\n");
 
+	downloader_init();
 	return TRUE;
 }
 
