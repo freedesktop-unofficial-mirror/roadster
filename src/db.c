@@ -520,7 +520,7 @@ void db_parse_wkb_point(const gint8* data, mappoint_t* pPoint)
 	data += sizeof(double);
 }
 
-void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolean (*callback_alloc_point)(mappoint_t**))
+void db_parse_wkb_linestring(const gint8* data, GArray* pPointsArray)
 {
 	g_assert(sizeof(double) == 8);	// mysql gives us 8 bytes per point
 
@@ -534,18 +534,20 @@ void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolea
 	gint nNumPoints = *((gint32*)data);	// NOTE for later: this field doesn't exist for type POINT
 	data += sizeof(gint32);
 
+    g_array_set_size(pPointsArray, nNumPoints);
+
+	gint i = 0;
 	while(nNumPoints > 0) {
-		mappoint_t* pPoint = NULL;
-		if(!callback_alloc_point(&pPoint)) return;
+		mappoint_t* p = &g_array_index(pPointsArray, mappoint_t, i);
 
-		pPoint->fLatitude = *((double*)data);
+		p->fLatitude = *((double*)data);
 		data += sizeof(double);
-		pPoint->fLongitude = *((double*)data);
+		p->fLongitude = *((double*)data);
 		data += sizeof(double);
 
-		g_ptr_array_add(pPointsArray, pPoint);
-
+//		g_array_append_val(pPointsArray, p);
 		nNumPoints--;
+		i++;
 	}
 }
 

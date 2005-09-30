@@ -32,7 +32,6 @@
 #include "map.h"
 #include "gpsclient.h"
 #include "scenemanager.h"
-#include "road.h"
 #include "locationset.h"
 #include "location.h"
 #include "search.h"
@@ -138,13 +137,10 @@ gboolean main_init(void)
 	g_free(pszApplicationDir);
 #endif
 
-	g_print("initializing points\n");
-	point_init();
-	g_print("initializing pointstrings\n");
-	pointstring_init();
-
-	g_print("initializing roads\n");
-	road_init();
+//     g_print("initializing points\n");
+//     point_init();
+//     g_print("initializing pointstrings\n");
+//     pointstring_init();
 
 	g_print("initializing map styles\n");
 	map_style_init();

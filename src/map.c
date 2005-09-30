@@ -603,7 +603,6 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 			// aRow[6] is road address left end
 			// aRow[7] is road address right start 
 			// aRow[8] is road address right end
-//			g_print("data: %s, %s, %s, %s, %s\n", aRow[0], aRow[1], aRow[2], aRow[3], aRow[4]);
 
 			// Get layer type that this belongs on
 			gint nTypeID = atoi(aRow[1]);
@@ -612,49 +611,31 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 				continue;
 			}
 
-			if(nTypeID == 12) g_warning("(got a 12)");
-
-			road_t* pNewRoad = NULL;
-			road_alloc(&pNewRoad);
+			//road_t* pNewRoad = NULL;
+			//road_alloc(&pNewRoad);
+			road_t* pNewRoad = g_new0(road_t, 1);
 
 			// Build name by adding suffix, if one is present
-			gchar azFullName[100] = "";
-
-			// does it have a name?			
 			if(aRow[3] != NULL && aRow[4] != NULL) {
-				gint nSuffixID = atoi(aRow[4]);
-				const gchar* pszSuffix = road_suffix_itoa(nSuffixID, ROAD_SUFFIX_LENGTH_SHORT);
-				g_snprintf(azFullName, 100, "%s%s%s",
-					aRow[3], (pszSuffix[0] != '\0') ? " " : "", pszSuffix);
+				const gchar* pszSuffix = road_suffix_itoa(atoi(aRow[4]), ROAD_SUFFIX_LENGTH_SHORT);
+				pNewRoad->pszName = g_strdup_printf("%s%s%s", aRow[3], (pszSuffix[0] != '\0') ? " " : "", pszSuffix);
+			}
+			else {
+				pNewRoad->pszName = g_strdup("");	// XXX: could we maybe not do this?
 			}
 			pNewRoad->nAddressLeftStart = atoi(aRow[5]);
 			pNewRoad->nAddressLeftEnd = atoi(aRow[6]);
 			pNewRoad->nAddressRightStart = atoi(aRow[7]);
 			pNewRoad->nAddressRightEnd = atoi(aRow[8]);
 
-			pNewRoad->pszName = g_strdup(azFullName);
-
-#ifdef	ENABLE_RIVER_SMOOTHING
-			if(nTypeID == MAP_OBJECT_TYPE_RIVER) {
-				// XXX: Hacky. Add randomness to river lines
-				GPtrArray* pTempArray = g_ptr_array_new();
-				db_parse_wkb_linestring(aRow[2], pTempArray, point_alloc);
-				map_enhance_linestring(pTempArray, pNewRoad->pPointsArray, point_alloc,
-									   0.00025,      // distance between points
-									   0.000060); 	// randomness
-				g_ptr_array_free(pTempArray, TRUE);
-			}
-			else {
-				db_parse_wkb_linestring(aRow[2], pNewRoad->pPointsArray, point_alloc);
-             }
-#else
-			db_parse_wkb_linestring(aRow[2], pNewRoad->pPointsArray, point_alloc);
-#endif
+			// perhaps let the wkb parser create the array (at the perfect size)
+			pNewRoad->pMapPointsArray = g_array_new(FALSE, FALSE, sizeof(road_t));
+			db_parse_wkb_linestring(aRow[2], pNewRoad->pMapPointsArray);
 
 #ifdef ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// XXX: combine this and above hack and you get lakes with squiggly edges. whoops. :)
 			if(nTypeID == MAP_OBJECT_TYPE_RIVER) {
-				mappoint_t* pPointA = g_ptr_array_index(pNewRoad->pPointsArray, 0);
-				mappoint_t* pPointB = g_ptr_array_index(pNewRoad->pPointsArray, pNewRoad->pPointsArray->len-1);
+				mappoint_t* pPointA = &g_array_index(pNewRoad->pMapPointsArray, mappoint_t, 0);
+				mappoint_t* pPointB = &g_array_index(pNewRoad->pMapPointsArray, mappoint_t, pNewRoad->pMapPointsArray->len-1);
 
 				if(pPointA->fLatitude == pPointB->fLatitude && pPointA->fLongitude == pPointB->fLongitude) {
 					nTypeID = MAP_OBJECT_TYPE_LAKE;
@@ -675,7 +656,7 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 		return TRUE;
 	}
 	else {
-//		g_print(" no rows\n");
+		//g_print(" no rows\n");
 		return FALSE;
 	}	
 }
@@ -769,7 +750,8 @@ static void map_data_clear(map_t* pMap)
 		// Free each
 		for(j = (pLayerData->pRoadsArray->len - 1) ; j>=0 ; j--) {
 			road_t* pRoad = g_ptr_array_remove_index_fast(pLayerData->pRoadsArray, j);
-			road_free(pRoad);
+			g_array_free(pRoad->pMapPointsArray, TRUE);
+			g_free(pRoad);
 		}
 		g_assert(pLayerData->pRoadsArray->len == 0);
 	}
@@ -916,13 +898,13 @@ static gboolean map_hit_test_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDis
 	gint iString;
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		road_t* pRoad = g_ptr_array_index(pRoadsArray, iString);
-		if(pRoad->pPointsArray->len < 2) continue;
+		if(pRoad->pMapPointsArray->len < 2) continue;
 
 		// start on 1 so we can do -1 trick below
 		gint iPoint;
-		for(iPoint=1 ; iPoint<pRoad->pPointsArray->len ; iPoint++) {
-			mappoint_t* pPoint1 = g_ptr_array_index(pRoad->pPointsArray, iPoint-1);
-			mappoint_t* pPoint2 = g_ptr_array_index(pRoad->pPointsArray, iPoint);
+		for(iPoint=1 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
+			mappoint_t* pPoint1 = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint-1);
+			mappoint_t* pPoint2 = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
 
 			mappoint_t pointClosest;
 			gdouble fPercentAlongLine;

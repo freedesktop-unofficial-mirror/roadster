@@ -79,7 +79,8 @@ void db_end_thread(void);
 gchar* db_make_escaped_string(const gchar* pszString);
 void db_free_escaped_string(gchar* pszString);
 
-void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolean (*callback_alloc_point)(mappoint_t**));
+//void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolean (*callback_alloc_point)(mappoint_t**));
+void db_parse_wkb_linestring(const gint8* data, GArray* pPointsArray);
 void db_parse_wkb_point(const gint8* data, mappoint_t* pPoint);
 
 void db_enable_keys(void);

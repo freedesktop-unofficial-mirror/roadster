@@ -84,7 +84,7 @@ gboolean search_address_match_zipcode(const gchar* pszWord)
 
 void search_road_on_words(gchar** aWords, gint nWordCount);
 void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch);
-void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint nRoadSuffixID, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, const gchar* pszCityNameLeft, const gchar* pszCityNameRight, const gchar* pszStateNameLeft, const gchar* pszStateNameRight, const gchar* pszZIPLeft, const gchar* pszZIPRight, pointstring_t* pPointString);
+void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint nRoadSuffixID, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, const gchar* pszCityNameLeft, const gchar* pszCityNameRight, const gchar* pszStateNameLeft, const gchar* pszStateNameRight, const gchar* pszZIPLeft, const gchar* pszZIPRight, GArray* pMapPointsArray);
 
 // functions
 
@@ -349,14 +349,13 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 
 			nCount++;
 			if(nCount <= SEARCH_RESULT_COUNT_LIMIT) {
-				pointstring_t* pPointString = NULL;
-				pointstring_alloc(&pPointString);
 
-				db_parse_wkb_linestring(aRow[3], pPointString->pPointsArray, point_alloc);
-
-				search_road_filter_result(aRow[1], pRoadSearch->nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pPointString);
+				GArray* pMapPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
+				db_parse_wkb_linestring(aRow[3], pMapPointsArray);
+				search_road_filter_result(aRow[1], pRoadSearch->nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pMapPointsArray);
 				//g_print("%03d: Road.ID='%s' RoadName.Name='%s', Suffix=%s, L:%s-%s, R:%s-%s\n", nCount, aRow[0], aRow[1], aRow[3], aRow[4], aRow[5], aRow[6], aRow[7]);
-				pointstring_free(pPointString);
+				
+				g_array_free(pMapPointsArray, TRUE);
 			}
 		}
 		db_free_result(pResultSet);
@@ -383,10 +382,10 @@ typedef enum {
 
 #define HIGHLIGHT_DISTANCE_FROM_ROAD (0.00012)		// this seems like a good amount...
 
-static void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPercent, ERoadSide eRoadSide, mappoint_t* pReturnPoint)
+static void mappoint_array_walk_percentage(GArray* pMapPointsArray, gdouble fPercent, ERoadSide eRoadSide, mappoint_t* pReturnPoint)
 {
 	gint i;
-	if(pPointString->pPointsArray->len < 2) {
+	if(pMapPointsArray->len < 2) {
 		g_assert_not_reached();
 	}
 
@@ -394,25 +393,25 @@ static void pointstring_walk_percentage(pointstring_t* pPointString, gdouble fPe
 	// count total distance
 	//
 	gfloat fTotalDistance = 0.0;
-	mappoint_t* pPointA = g_ptr_array_index(pPointString->pPointsArray, 0);
+	mappoint_t* pPointA = &g_array_index(pMapPointsArray, mappoint_t, 0);
 	mappoint_t* pPointB;
-	for(i=1 ; i<pPointString->pPointsArray->len ; i++) {
-		pPointB = g_ptr_array_index(pPointString->pPointsArray, 1);
+	for(i=1 ; i<pMapPointsArray->len ; i++) {
+		pPointB = &g_array_index(pMapPointsArray, mappoint_t, 1);
 
 		fTotalDistance += point_calc_distance(pPointA, pPointB);
-		
+
 		pPointA = pPointB;
 	}
 
 	gfloat fTargetDistance = (fTotalDistance * fPercent);
 	gfloat fRemainingDistance = fTargetDistance;
 
-	pPointA = g_ptr_array_index(pPointString->pPointsArray, 0);
-	for(i=1 ; i<pPointString->pPointsArray->len ; i++) {
-		pPointB = g_ptr_array_index(pPointString->pPointsArray, 1);
+	pPointA = &g_array_index(pMapPointsArray, mappoint_t, 0);
+	for(i=1 ; i<pMapPointsArray->len ; i++) {
+		pPointB = &g_array_index(pMapPointsArray, mappoint_t, 1);
 
 		gfloat fLineSegmentDistance = point_calc_distance(pPointA, pPointB);
-		if(fRemainingDistance <= fLineSegmentDistance || (i == pPointString->pPointsArray->len-1)) {
+		if(fRemainingDistance <= fLineSegmentDistance || (i == pMapPointsArray->len-1)) {
 			// this is the line segment we are looking for.
 
 			gfloat fPercentOfLine = (fRemainingDistance / fLineSegmentDistance);
@@ -478,8 +477,7 @@ void search_road_filter_result(
 		const gchar* pszCityNameLeft, const gchar* pszCityNameRight,
 		const gchar* pszStateNameLeft, const gchar* pszStateNameRight,
 		const gchar* pszZIPLeft, const gchar* pszZIPRight,
-
-		pointstring_t* pPointString)
+		GArray* pMapPointsArray)
 {
 	gint nRoadID = 0;
 	gchar azBuffer[BUFFER_SIZE];
@@ -508,7 +506,7 @@ void search_road_filter_result(
 
 	if(nRoadNumber == ROADSEARCH_NUMBER_NONE) {
 		// Right in the center
-		pointstring_walk_percentage(pPointString, 0.5, ROADSIDE_CENTER, &ptAddress);
+		mappoint_array_walk_percentage(pMapPointsArray, 0.5, ROADSIDE_CENTER, &ptAddress);
 
 //         gint nStart = min4(nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRigtEnd);
 //         gint nEnd = min4(nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRigtEnd);
@@ -561,11 +559,11 @@ void search_road_filter_result(
 				gint nRange = (nAddressLeftEnd - nAddressLeftStart);
 				if(nRange == 0) {
 					// just use road center...?
-					pointstring_walk_percentage(pPointString, 0.5, ROADSIDE_LEFT, &ptAddress);
+					mappoint_array_walk_percentage(pMapPointsArray, 0.5, ROADSIDE_LEFT, &ptAddress);
 				}
 				else {
 					gfloat fPercent = (gfloat)(nRoadNumber - nAddressLeftStart) / (gfloat)nRange;
-					pointstring_walk_percentage(pPointString, fPercent, ROADSIDE_LEFT, &ptAddress);
+					mappoint_array_walk_percentage(pMapPointsArray, fPercent, ROADSIDE_LEFT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
 				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);				
@@ -575,13 +573,13 @@ void search_road_filter_result(
 				gint nRange = (nAddressLeftStart - nAddressLeftEnd);
 				if(nRange == 0) {
 					// just use road center...?
-					pointstring_walk_percentage(pPointString, 0.5, ROADSIDE_RIGHT, &ptAddress);
+					mappoint_array_walk_percentage(pMapPointsArray, 0.5, ROADSIDE_RIGHT, &ptAddress);
 				}
 				else {
 					gfloat fPercent = (gfloat)(nRoadNumber - nAddressLeftEnd) / (gfloat)nRange;
 
 					// flip percent (23 becomes 77, etc.)
-					pointstring_walk_percentage(pPointString, (100.0 - fPercent), ROADSIDE_RIGHT, &ptAddress);
+					mappoint_array_walk_percentage(pMapPointsArray, (100.0 - fPercent), ROADSIDE_RIGHT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
 				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
@@ -598,11 +596,11 @@ void search_road_filter_result(
 				gint nRange = (nAddressRightEnd - nAddressRightStart);
 				if(nRange == 0) {
 					// just use road center...?
-					pointstring_walk_percentage(pPointString, 0.5, ROADSIDE_RIGHT, &ptAddress);
+					mappoint_array_walk_percentage(pMapPointsArray, 0.5, ROADSIDE_RIGHT, &ptAddress);
 				}
 				else {
 					gfloat fPercent = (gfloat)(nRoadNumber - nAddressRightStart) / (gfloat)nRange;
-					pointstring_walk_percentage(pPointString, fPercent, ROADSIDE_RIGHT, &ptAddress);
+					mappoint_array_walk_percentage(pMapPointsArray, fPercent, ROADSIDE_RIGHT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
 				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
@@ -612,13 +610,13 @@ void search_road_filter_result(
 				gint nRange = (nAddressRightStart - nAddressRightEnd);
 				if(nRange == 0) {
 					// just use road center...?
-					pointstring_walk_percentage(pPointString, 0.5, ROADSIDE_LEFT, &ptAddress);
+					mappoint_array_walk_percentage(pMapPointsArray, 0.5, ROADSIDE_LEFT, &ptAddress);
 				}
 				else {
 					gfloat fPercent = (gfloat)(nRoadNumber - nAddressRightEnd) / (gfloat)nRange;
 
 					// flip percent (23 becomes 77, etc.)
-					pointstring_walk_percentage(pPointString, (100.0 - fPercent), ROADSIDE_LEFT, &ptAddress);
+					mappoint_array_walk_percentage(pMapPointsArray, (100.0 - fPercent), ROADSIDE_LEFT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
 				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);

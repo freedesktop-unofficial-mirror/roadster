@@ -92,18 +92,18 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 			maplayer_t* pLayer = g_ptr_array_index(pMap->pLayersArray, i);
 
 			if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_FILL) {
-				map_draw_gdk_layer_fill(pMap, pPixmap,	pRenderMetrics,
-										 pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);		// style
+				map_draw_gdk_layer_fill(pMap, pPixmap,  pRenderMetrics,
+										 pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);       // style
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
-				map_draw_gdk_layer_lines(pMap, pPixmap,	pRenderMetrics,
-										 pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,				// data
-										 pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);		// style
+				map_draw_gdk_layer_lines(pMap, pPixmap, pRenderMetrics,
+										 pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,               // data
+										 pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);       // style
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGONS) {
 				map_draw_gdk_layer_polygons(pMap, pPixmap, pRenderMetrics,
 											pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,          // data
-											pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]); 	// style
+											pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);    // style
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LOCATIONS) {
 				map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
@@ -112,7 +112,6 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 				//map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
 			}
 		}
-//		map_draw_gdk_tracks(pMap, pPixmap, pRenderMetrics);
 	}
 
 	// 3. Labels
@@ -159,17 +158,17 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 		gdouble fMaxLon = MIN_LONGITUDE;
 		gdouble fMinLon = MAX_LONGITUDE;
 
-		if(pRoad->pPointsArray->len >= 2) {
+		if(pRoad->pMapPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
-			if(pRoad->pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+			if(pRoad->pMapPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
 				g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
 				continue;
 			}
 
 			// XXX: the bounding box should be pre-calculated!!!!
-			for(iPoint=0 ; iPoint<pRoad->pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pRoad->pPointsArray, iPoint);
+			for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
+				pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
 
 				// find extents
 				fMaxLat = max(pPoint->fLatitude,fMaxLat);
@@ -191,7 +190,7 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 			}
 
 			gdk_draw_polygon(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)],
-				TRUE, aPoints, pRoad->pPointsArray->len);
+				TRUE, aPoints, pRoad->pMapPointsArray->len);
    		}
 	}
 	if(pLayerStyle->pGlyphFill != NULL) {
@@ -272,7 +271,7 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
-		if(pRoad->pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+		if(pRoad->pMapPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
 			//g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
 			continue;
 		}
@@ -282,12 +281,12 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		gdouble fMaxLon = MIN_LONGITUDE;
 		gdouble fMinLon = MAX_LONGITUDE;
 
-		if(pRoad->pPointsArray->len >= 2) {
+		if(pRoad->pMapPointsArray->len >= 2) {
 			// Copy all points into this array.  Yuuup this is slow. :)
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
-			for(iPoint=0 ; iPoint<pRoad->pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pRoad->pPointsArray, iPoint);
+			for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
+				pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
 
 				// find extents
 				fMaxLat = max(pPoint->fLatitude,fMaxLat);
@@ -310,7 +309,7 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 			    continue;	// not visible
 			}
 
-			gdk_draw_lines(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], aPoints, pRoad->pPointsArray->len);
+			gdk_draw_lines(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], aPoints, pRoad->pMapPointsArray->len);
    		}
 	}
 }
@@ -394,7 +393,7 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 // {
 //     gint i;
 //     for(i=0 ; i<pMap->pTracksArray->len ; i++) {
-//         gint hTrack = g_array_index(pMap->pTracksArray, gint, i);
+//         gint hTrack = &g_array_index(pMap->pTracksArray, gint, i);
 //
 //         GdkColor clr;
 //         clr.red = (gint)(0.5 * 65535.0);

@@ -70,8 +70,8 @@ static void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetr
 //static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionArray);
 
 // Draw labels for a single line/polygon
-static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GPtrArray* pPointsArray, const gchar* pszLabel);
-static void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GPtrArray* pPointsArray, const gchar* pszLabel);
+static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel);
+static void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel);
 
 // Draw map extras
 static void map_draw_cairo_map_scale(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics);
@@ -142,7 +142,7 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 		gint i;
 		for(i=pMap->pLayersArray->len-1 ; i>=0 ; i--) {
 			maplayer_t* pLayer = g_ptr_array_index(pMap->pLayersArray, i);
-	
+
 			if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
 				if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 					map_draw_cairo_layer_roads(pMap, pCairo, pRenderMetrics,
@@ -237,7 +237,7 @@ void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 
 	if(pLayerStyle->fFontSize == 0) return;
 
-	gchar* pszFontFamily = ROAD_FONT;	// XXX: remove hardcoded font
+	gchar* pszFontFamily = ROAD_FONT;   // XXX: remove hardcoded font
 
 	// set font for whole layer
 	cairo_save(pCairo);
@@ -247,7 +247,7 @@ void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 	for(i=0 ; i<pRoadsArray->len ; i++) {
 		road_t* pRoad = g_ptr_array_index(pRoadsArray, i);
 		if(pRoad->pszName[0] != '\0') {
-			map_draw_cairo_road_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->pPointsArray, pRoad->pszName);
+			map_draw_cairo_road_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->pMapPointsArray, pRoad->pszName);
 		}
 	}
 	cairo_restore(pCairo);
@@ -273,7 +273,7 @@ void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermet
 	for(i=0 ; i<pRoadsArray->len ; i++) {
 		road_t* pRoad = g_ptr_array_index(pRoadsArray, i);
 		if(pRoad->pszName[0] != '\0') {
-			map_draw_cairo_polygon_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->pPointsArray, pRoad->pszName);
+			map_draw_cairo_polygon_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->pMapPointsArray, pRoad->pszName);
 		}
 	}
 	cairo_restore(pCairo);
@@ -331,8 +331,8 @@ void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* p
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
-		if(pRoad->pPointsArray->len >= 2) {
-			pPoint = g_ptr_array_index(pRoad->pPointsArray, 0);
+		if(pRoad->pMapPointsArray->len >= 2) {
+			pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, 0);
 
 			// go to index 0
 			cairo_move_to(pCairo, 
@@ -340,8 +340,8 @@ void map_draw_cairo_layer_roads(map_t* pMap, cairo_t* pCairo, rendermetrics_t* p
 						  pLayerStyle->nPixelOffsetY + SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 
 			// start at index 1 (0 was used above)
-			for(iPoint=1 ; iPoint<pRoad->pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pRoad->pPointsArray, iPoint);//~ g_print("  point (%.05f,%.05f)\n", ScaleX(pPoint->fLongitude), ScaleY(pPoint->fLatitude));
+			for(iPoint=1 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
+				pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);//~ g_print("  point (%.05f,%.05f)\n", ScaleX(pPoint->fLongitude), ScaleY(pPoint->fLatitude));
 				cairo_line_to(pCairo, 
 							  pLayerStyle->nPixelOffsetX + SCALE_X(pRenderMetrics, pPoint->fLongitude), 
 							  pLayerStyle->nPixelOffsetY + SCALE_Y(pRenderMetrics, pPoint->fLatitude));
@@ -384,16 +384,16 @@ void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
-		if(pRoad->pPointsArray->len >= 3) {
-			pPoint = g_ptr_array_index(pRoad->pPointsArray, 0);
+		if(pRoad->pMapPointsArray->len >= 3) {
+			pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, 0);
 
 			// move to index 0
 			cairo_move_to(pCairo, SCALE_X(pRenderMetrics, pPoint->fLongitude), SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 
 			// start at index 1 (0 was used above)
 			gint iPoint;
-			for(iPoint=1 ; iPoint<pRoad->pPointsArray->len ; iPoint++) {
-				pPoint = g_ptr_array_index(pRoad->pPointsArray, iPoint);				
+			for(iPoint=1 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
+				pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);				
 				cairo_line_to(pCairo, SCALE_X(pRenderMetrics, pPoint->fLongitude), SCALE_Y(pRenderMetrics, pPoint->fLatitude));
 			}
 		}
@@ -465,15 +465,15 @@ typedef struct labelposition {
 //
 // Draw a label along a 2-point line
 //
-static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GPtrArray* pPointsArray, const gchar* pszLabel)
+static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel)
 {
 	// get permission to draw this label
 	if(FALSE == scenemanager_can_draw_label_at(pMap->pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
 		return;
 	}
 
-	mappoint_t* pMapPoint1 = g_ptr_array_index(pPointsArray, 0);
-	mappoint_t* pMapPoint2 = g_ptr_array_index(pPointsArray, 1);
+	mappoint_t* pMapPoint1 = &g_array_index(pMapPointsArray, mappoint_t, 0);
+	mappoint_t* pMapPoint2 = &g_array_index(pMapPointsArray, mappoint_t, 1);
 
 	// swap first and second points such that the line goes left-to-right
 	if(pMapPoint2->fLongitude < pMapPoint1->fLongitude) {
@@ -632,17 +632,17 @@ static gint map_draw_cairo_road_label_position_sort(gconstpointer pA, gconstpoin
 	return 1;
 }
 
-static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GPtrArray* pPointsArray, const gchar* pszLabel)
+static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel)
 {
-	if(pPointsArray->len < 2) return;
+	if(pMapPointsArray->len < 2) return;
 
 	// pass off single segments to a specialized function
-	if(pPointsArray->len == 2) {
-		map_draw_cairo_road_label_one_segment(pMap, pCairo, pLayerStyle, pRenderMetrics, pPointsArray, pszLabel);
+	if(pMapPointsArray->len == 2) {
+		map_draw_cairo_road_label_one_segment(pMap, pCairo, pLayerStyle, pRenderMetrics, pMapPointsArray, pszLabel);
 		return;
 	}
 
-	if(pPointsArray->len > ROAD_MAX_SEGMENTS) {
+	if(pMapPointsArray->len > ROAD_MAX_SEGMENTS) {
 		g_warning("not drawing label for road '%s' with > %d segments.\n", pszLabel, ROAD_MAX_SEGMENTS);
 		return;
 	}
@@ -668,7 +668,7 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 	gdouble aSlopes[ROAD_MAX_SEGMENTS];
 
 	mappoint_t* apPoints[ROAD_MAX_SEGMENTS];
-	gint nNumPoints = pPointsArray->len;
+	gint nNumPoints = pMapPointsArray->len;
 
 	mappoint_t* pMapPoint1;
 	mappoint_t* pMapPoint2;
@@ -676,7 +676,7 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 	// load point string into an array
 	gint iRead;
 	for(iRead=0 ; iRead<nNumPoints ; iRead++) {
-		apPoints[iRead] = g_ptr_array_index(pPointsArray, iRead);
+		apPoints[iRead] = &g_array_index(pMapPointsArray, mappoint_t, iRead);
 	}
 
 	// measure total line length
@@ -803,7 +803,7 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 			// reverse the array
 			gint iRead,iWrite;
 			for(iWrite=0, iRead=nNumPoints-1 ; iRead>= 0 ; iWrite++, iRead--) {
-				apPoints[iWrite] = g_ptr_array_index(pPointsArray, iRead);
+				apPoints[iWrite] = &g_array_index(pMapPointsArray, mappoint_t, iRead);
 			}
 		}
 
@@ -1135,9 +1135,9 @@ static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyl
 //
 // Draw a single polygon label
 //
-void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GPtrArray* pPointsArray, const gchar* pszLabel)
+void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel)
 {
-	if(pPointsArray->len < 3) return;
+	if(pMapPointsArray->len < 3) return;
 
 	if(FALSE == scenemanager_can_draw_label_at(pMap->pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
 		return;
@@ -1149,8 +1149,8 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t*
 	gdouble fMinLon = MAX_LONGITUDE;
 	
 	gint i;
-	for(i=0 ; i<pPointsArray->len ; i++) {
-		mappoint_t* pMapPoint = g_ptr_array_index(pPointsArray, i);
+	for(i=0 ; i<pMapPointsArray->len ; i++) {
+		mappoint_t* pMapPoint = &g_array_index(pMapPointsArray, mappoint_t, i);
 
 		// find polygon bounding box for visibility test below
 		fMaxLat = max(pMapPoint->fLatitude,fMaxLat);
@@ -1683,7 +1683,6 @@ static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rende
 #endif
 
 #ifdef ROADSTER_DEAD_CODE
-
 /*
 =======
 //
@@ -1798,10 +1797,5 @@ void map_draw_cairo_gps_trail(map_t* pMap, cairo_t* pCairo, pointstring_t* pPoin
 		cairo_stroke(pCairo);
 	}
 }
-
-
-#if 0	this is the curvy road labeler
-void map_draw_cairo_road_label(...)
-{
 */
 #endif

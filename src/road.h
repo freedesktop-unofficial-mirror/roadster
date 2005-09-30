@@ -25,8 +25,7 @@
 #define _ROAD_H_
 
 typedef struct {
-	GPtrArray* pPointsArray;
-//	maprect_t rcMapBoundingBox;
+	GArray* pMapPointsArray;
 
 	gchar* pszName;
 	gint nAddressLeftStart;
@@ -34,11 +33,6 @@ typedef struct {
 	gint nAddressRightStart;
 	gint nAddressRightEnd;
 } road_t;
-
-void road_init(void);
-gboolean road_alloc(road_t** ppReturnRoad);
-void road_free(road_t* pRoad);
-
 
 // ESuffixLength
 typedef enum {

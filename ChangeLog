@@ -1,5 +1,14 @@
 2005-09-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/road.c: Removed alloc/dealloc of road_t.
+	* src/point.c:
+	* src/point.h:
+	* src/pointstring.c:
+	* src/pointstring.h: Removed, since road_t now has a basic GArray of mappoint_t objects.
+	* src/*.c: Use new road_t format.
+
+2005-09-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/locationselection.c:
 	* src/locationselection.h:
 	* src/track.c:
