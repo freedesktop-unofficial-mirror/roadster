@@ -51,7 +51,6 @@
 #include "mainwindow.h"
 #include "util.h"
 #include "road.h"
-#include "point.h"
 #include "map_style.h"
 #include "location.h"
 #include "locationset.h"

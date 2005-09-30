@@ -34,7 +34,6 @@
 #include "util.h"
 #include "db.h"
 #include "road.h"
-#include "point.h"
 #include "locationset.h"
 #include "location.h"
 #include "scenemanager.h"
@@ -630,7 +629,7 @@ static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect)
 
 			// perhaps let the wkb parser create the array (at the perfect size)
 			pNewRoad->pMapPointsArray = g_array_new(FALSE, FALSE, sizeof(road_t));
-			db_parse_wkb_linestring(aRow[2], pNewRoad->pMapPointsArray);
+			db_parse_wkb_linestring(aRow[2], pNewRoad->pMapPointsArray, &(pNewRoad->rWorldBoundingBox));
 
 #ifdef ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// XXX: combine this and above hack and you get lakes with squiggly edges. whoops. :)
 			if(nTypeID == MAP_OBJECT_TYPE_RIVER) {
@@ -1361,4 +1360,14 @@ gboolean map_location_selection_remove(map_t* pMap, gint nLocationID)
 		}
 	}
 	return FALSE;	// removed
+}
+
+gboolean map_rects_overlap(const maprect_t* p1, const maprect_t* p2)
+{
+	if(p1->B.fLatitude < p2->A.fLatitude) return FALSE;
+	if(p1->B.fLongitude < p2->A.fLongitude) return FALSE;
+	if(p1->A.fLatitude > p2->B.fLatitude) return FALSE;
+	if(p1->A.fLongitude > p2->B.fLongitude) return FALSE;
+
+	return TRUE;
 }

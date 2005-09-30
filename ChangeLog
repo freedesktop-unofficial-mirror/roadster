@@ -1,5 +1,16 @@
 2005-09-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/welcomewindow.c: Removed.
+	* src/gui.c: Removed welcome window.
+	* src/db.c: Added bounding rect calculation to pointstring loading.
+	* src/search_road.c: Update to new pointstring loading function.
+	* src/mainwindow.c: Removed unneeded includes.
+	* src/map.c: Add rect overlap test function.
+	* src/map_draw_gdk.c: Use rect overlap test from map.c.
+	* src/tooltip.c: Remove unused init function.
+
+2005-09-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/road.c: Removed alloc/dealloc of road_t.
 	* src/point.c:
 	* src/point.h:

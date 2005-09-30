@@ -34,7 +34,6 @@
 #include "mainwindow.h"
 #include "gotowindow.h"
 #include "importwindow.h"
-#include "welcomewindow.h"
 #include "searchwindow.h"
 #include "locationeditwindow.h"
 
@@ -53,8 +52,6 @@ void gui_init()
 	g_print("- initializing importwindow\n");
 	importwindow_init(pGladeXML);
 	//datasetwindow_init(pGladeXML);
-	g_print("- initializing welcomewindow\n");
-	welcomewindow_init(pGladeXML);
 	g_print("- initializing locationeditwindow\n");
 	locationeditwindow_init(pGladeXML);
 }
@@ -85,7 +82,7 @@ GladeXML* gui_load_xml(gchar* pszFileName, gchar* pszXMLTreeRoot)
 
 void gui_run()
 {
-	welcomewindow_show();
+	mainwindow_show();
 	gtk_main();
 }
 

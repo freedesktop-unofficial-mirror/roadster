@@ -31,7 +31,6 @@ typedef struct {
 	gboolean bEnabled;
 } tooltip_t;
 
-void tooltip_init();
 tooltip_t* tooltip_new();
 void tooltip_set_markup(tooltip_t* pTooltip, const gchar* pszMarkup);
 void tooltip_set_upper_left_corner(tooltip_t* pTooltip, gint nX, gint nY);

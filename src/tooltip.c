@@ -26,11 +26,6 @@
 #include "main.h"
 #include "tooltip.h"
 
-void tooltip_init()
-{
-
-}
-
 static gboolean tooltip_on_mouse_motion(GtkWidget* w, GdkEventMotion *event);
 
 tooltip_t* tooltip_new()

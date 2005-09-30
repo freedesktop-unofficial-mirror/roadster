@@ -27,10 +27,10 @@
 
 #include <gtk/gtk.h>
 #include <gtk/gtksignal.h>
-#include <gdk/gdk.h>
-#include <gdk/gdkx.h>
-#include <cairo.h>
-#include <cairo-xlib.h>
+//#include <gdk/gdk.h>
+//#include <gdk/gdkx.h>
+//#include <cairo.h>
+//#include <cairo-xlib.h>
 
 #include "main.h"
 #include "search_road.h"
@@ -41,7 +41,6 @@
 #include "map.h"
 #include "map_style.h"
 #include "importwindow.h"
-#include "welcomewindow.h"
 #include "locationset.h"
 #include "gpsclient.h"
 #include "mainwindow.h"

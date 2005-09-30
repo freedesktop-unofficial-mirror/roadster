@@ -41,8 +41,6 @@ typedef MYSQL_ROW db_row_t;
 #define DB_FEATURES_TABLENAME	("Feature")
 
 #include "map.h"
-//#include "layers.h"
-#include "pointstring.h"
 
 void db_create_tables(void);
 
@@ -80,7 +78,8 @@ gchar* db_make_escaped_string(const gchar* pszString);
 void db_free_escaped_string(gchar* pszString);
 
 //void db_parse_wkb_linestring(const gint8* data, GPtrArray* pPointsArray, gboolean (*callback_alloc_point)(mappoint_t**));
-void db_parse_wkb_linestring(const gint8* data, GArray* pPointsArray);
+//void db_parse_wkb_linestring(const gint8* data, GArray* pMapPointsArray);
+void db_parse_wkb_linestring(const gint8* data, GArray* pMapPointsArray, maprect_t* pBoundingRect);
 void db_parse_wkb_point(const gint8* data, mappoint_t* pPoint);
 
 void db_enable_keys(void);

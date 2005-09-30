@@ -520,7 +520,7 @@ void db_parse_wkb_point(const gint8* data, mappoint_t* pPoint)
 	data += sizeof(double);
 }
 
-void db_parse_wkb_linestring(const gint8* data, GArray* pPointsArray)
+void db_parse_wkb_linestring(const gint8* data, GArray* pMapPointsArray, maprect_t* pBoundingRect)
 {
 	g_assert(sizeof(double) == 8);	// mysql gives us 8 bytes per point
 
@@ -534,18 +534,27 @@ void db_parse_wkb_linestring(const gint8* data, GArray* pPointsArray)
 	gint nNumPoints = *((gint32*)data);	// NOTE for later: this field doesn't exist for type POINT
 	data += sizeof(gint32);
 
-    g_array_set_size(pPointsArray, nNumPoints);
+    g_array_set_size(pMapPointsArray, nNumPoints);
+
+	pBoundingRect->A.fLatitude = MAX_LATITUDE;
+	pBoundingRect->A.fLongitude = MAX_LONGITUDE;
+	pBoundingRect->B.fLatitude = MIN_LATITUDE;
+	pBoundingRect->B.fLongitude = MIN_LONGITUDE;
 
 	gint i = 0;
 	while(nNumPoints > 0) {
-		mappoint_t* p = &g_array_index(pPointsArray, mappoint_t, i);
+		mappoint_t* p = &g_array_index(pMapPointsArray, mappoint_t, i);
 
 		p->fLatitude = *((double*)data);
-		data += sizeof(double);
-		p->fLongitude = *((double*)data);
+		pBoundingRect->A.fLatitude = min(pBoundingRect->A.fLatitude, p->fLatitude);
+		pBoundingRect->B.fLatitude = max(pBoundingRect->B.fLatitude, p->fLatitude);
 		data += sizeof(double);
 
-//		g_array_append_val(pPointsArray, p);
+		p->fLongitude = *((double*)data);
+		pBoundingRect->A.fLongitude = min(pBoundingRect->A.fLongitude, p->fLongitude);
+		pBoundingRect->B.fLongitude = max(pBoundingRect->B.fLongitude, p->fLongitude);
+		data += sizeof(double);
+
 		nNumPoints--;
 		i++;
 	}

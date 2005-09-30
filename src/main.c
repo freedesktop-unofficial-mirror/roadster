@@ -137,11 +137,6 @@ gboolean main_init(void)
 	g_free(pszApplicationDir);
 #endif
 
-//     g_print("initializing points\n");
-//     point_init();
-//     g_print("initializing pointstrings\n");
-//     pointstring_init();
-
 	g_print("initializing map styles\n");
 	map_style_init();
 	g_print("initializing map\n");

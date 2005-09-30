@@ -24,6 +24,8 @@
 #ifndef _ROAD_H_
 #define _ROAD_H_
 
+#include "map.h"
+
 typedef struct {
 	GArray* pMapPointsArray;
 
@@ -32,6 +34,8 @@ typedef struct {
 	gint nAddressLeftEnd;
 	gint nAddressRightStart;
 	gint nAddressRightEnd;
+
+	maprect_t rWorldBoundingBox;
 } road_t;
 
 // ESuffixLength

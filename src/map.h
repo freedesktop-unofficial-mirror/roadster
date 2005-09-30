@@ -342,4 +342,6 @@ const gchar* map_location_selection_get_attribute(const map_t* pMap, const locat
 gboolean map_object_type_atoi(const gchar* pszName, gint* pnReturnObjectTypeID);
 gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTypeID);
 
+gboolean map_rects_overlap(const maprect_t* p1, const maprect_t* p2);
+
 #endif

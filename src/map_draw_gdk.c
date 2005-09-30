@@ -37,7 +37,6 @@
 #include "util.h"
 #include "db.h"
 #include "road.h"
-#include "point.h"
 #include "map_style.h"
 #include "locationset.h"
 #include "location.h"
@@ -153,10 +152,9 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
-		gdouble fMaxLat = MIN_LATITUDE;	// init to the worst possible value so first point will override
-		gdouble fMinLat = MAX_LATITUDE;
-		gdouble fMaxLon = MIN_LONGITUDE;
-		gdouble fMinLon = MAX_LONGITUDE;
+		if(!map_rects_overlap(&(pRoad->rWorldBoundingBox), &(pRenderMetrics->rWorldBoundingBox))) {
+			continue;
+		}
 
 		if(pRoad->pMapPointsArray->len >= 2) {
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
@@ -170,23 +168,8 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 			for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
 				pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
 
-				// find extents
-				fMaxLat = max(pPoint->fLatitude,fMaxLat);
-				fMinLat = min(pPoint->fLatitude,fMinLat);
-				fMaxLon = max(pPoint->fLongitude,fMaxLon);
-				fMinLon = min(pPoint->fLongitude,fMinLon);
-
 				aPoints[iPoint].x = pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
 				aPoints[iPoint].y = pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
-			}
-
-			// rectangle overlap test
-			if(fMaxLat < pRenderMetrics->rWorldBoundingBox.A.fLatitude
-			   || fMaxLon < pRenderMetrics->rWorldBoundingBox.A.fLongitude
-			   || fMinLat > pRenderMetrics->rWorldBoundingBox.B.fLatitude
-			   || fMinLon > pRenderMetrics->rWorldBoundingBox.B.fLongitude)
-			{
-			    continue;	// not visible
 			}
 
 			gdk_draw_polygon(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)],
@@ -271,15 +254,14 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
+		if(!map_rects_overlap(&(pRoad->rWorldBoundingBox), &(pRenderMetrics->rWorldBoundingBox))) {
+			continue;
+		}
+
 		if(pRoad->pMapPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
 			//g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
 			continue;
 		}
-
-		gdouble fMaxLat = MIN_LATITUDE;	// init to the worst possible value so first point will override
-		gdouble fMinLat = MAX_LATITUDE;
-		gdouble fMaxLon = MIN_LONGITUDE;
-		gdouble fMinLon = MAX_LONGITUDE;
 
 		if(pRoad->pMapPointsArray->len >= 2) {
 			// Copy all points into this array.  Yuuup this is slow. :)
@@ -288,25 +270,8 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 			for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
 				pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
 
-				// find extents
-				fMaxLat = max(pPoint->fLatitude,fMaxLat);
-				fMinLat = min(pPoint->fLatitude,fMinLat);
-				fMaxLon = max(pPoint->fLongitude,fMaxLon);
-				fMinLon = min(pPoint->fLongitude,fMinLon);
-
 				aPoints[iPoint].x = pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
 				aPoints[iPoint].y = pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
-			}
-
-			// basic rectangle overlap test
-			// XXX: not quite right. the points that make up a road may be offscreen,
-			// but a thick road should still be visible
-			if(fMaxLat < pRenderMetrics->rWorldBoundingBox.A.fLatitude
-			   || fMaxLon < pRenderMetrics->rWorldBoundingBox.A.fLongitude
-			   || fMinLat > pRenderMetrics->rWorldBoundingBox.B.fLatitude
-			   || fMinLon > pRenderMetrics->rWorldBoundingBox.B.fLongitude)
-			{
-			    continue;	// not visible
 			}
 
 			gdk_draw_lines(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], aPoints, pRoad->pMapPointsArray->len);
