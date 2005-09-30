@@ -38,9 +38,7 @@ typedef struct {
 } downloader_t;
 
 // public API
-void downloader_init(void);
 downloader_t* downloader_new(gint nMaxConcurrentActive);
-
 void downloader_add_uri(downloader_t* pDownloader, const gchar* pszRemoteFilePath, DownloaderCallbackFileResult pCallbackFileResult);
 
 #endif

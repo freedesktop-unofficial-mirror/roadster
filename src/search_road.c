@@ -367,7 +367,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 	g_free(pszQuery);
 }
 
-
+// XXX: doesn't map.c have something like this? :)
 static gfloat point_calc_distance(mappoint_t* pA, mappoint_t* pB)
 {
 	gdouble fRise = pB->fLatitude - pA->fLatitude;

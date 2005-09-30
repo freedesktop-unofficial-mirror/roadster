@@ -46,7 +46,6 @@ roadster_SOURCES = \
 	scenemanager.c\
 	point.c\
 	pointstring.c\
-	track.c\
 	glyph.c\
 	road.c\
 	animator.c\

@@ -1445,13 +1445,13 @@ static gboolean mainwindow_on_gps_redraw_timeout(gpointer __unused)
 	const gpsdata_t* pData = gpsclient_getdata();
 	if(pData->eStatus == GPS_STATUS_LIVE) {
 
-		if(g_MainWindow.nCurrentGPSPath == 0) {
-			// create a new track for GPS trail
-			g_MainWindow.nCurrentGPSPath = track_new();
-			map_add_track(g_MainWindow.pMap, g_MainWindow.nCurrentGPSPath);
-		}
-
-		track_add_point(g_MainWindow.nCurrentGPSPath, &pData->ptPosition);
+//         if(g_MainWindow.nCurrentGPSPath == 0) {
+//             // create a new track for GPS trail
+//             g_MainWindow.nCurrentGPSPath = track_new();
+//             map_add_track(g_MainWindow.pMap, g_MainWindow.nCurrentGPSPath);
+//         }
+//
+//         track_add_point(g_MainWindow.nCurrentGPSPath, &pData->ptPosition);
 
 		// Show position?
 		if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.GPS.pShowPositionCheckButton))) {

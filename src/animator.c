@@ -29,11 +29,6 @@
 
 #include "animator.h"
 
-void animator_init()
-{
-
-}
-
 animator_t* animator_new(EAnimationType eAnimationType, gdouble fAnimationTimeInSeconds)
 {
 	g_assert(fAnimationTimeInSeconds > 0.0);

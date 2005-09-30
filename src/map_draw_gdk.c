@@ -39,7 +39,6 @@
 #include "road.h"
 #include "point.h"
 #include "map_style.h"
-#include "track.h"
 #include "locationset.h"
 #include "location.h"
 #include "scenemanager.h"
@@ -50,9 +49,10 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 
 static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle);
 
-static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
+
+//static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 
 //#define ENABLE_MAP_GRAYSCALE_HACK 	// just a little test.  black and white might be good for something
 
@@ -112,7 +112,7 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 				//map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
 			}
 		}
-		map_draw_gdk_tracks(pMap, pPixmap, pRenderMetrics);
+//		map_draw_gdk_tracks(pMap, pPixmap, pRenderMetrics);
 	}
 
 	// 3. Labels
@@ -315,63 +315,6 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	}
 }
 
-static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics)
-{
-	gint i;
-	for(i=0 ; i<pMap->pTracksArray->len ; i++) {
-		gint hTrack = g_array_index(pMap->pTracksArray, gint, i);
-
-		GdkColor clr;
-		clr.red = (gint)(0.5 * 65535.0);
-		clr.green = (gint)(0.5 * 65535.0);
-		clr.blue = (gint)(1.0 * 65535.0);
-		gdk_gc_set_rgb_fg_color(pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], &clr);
-
-		pointstring_t* pPointString = track_get_pointstring(hTrack);
-		if(pPointString == NULL) continue;
-
-		if(pPointString->pPointsArray->len >= 2) {
-
-			if(pPointString->pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-				//g_warning("not drawing track with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
-				continue;
-			}
-
-			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
-
-			gdouble fMaxLat = MIN_LATITUDE;	// init to the worst possible value so first point will override
-			gdouble fMinLat = MAX_LATITUDE;
-			gdouble fMaxLon = MIN_LONGITUDE;
-			gdouble fMinLon = MAX_LONGITUDE;
-
-			gint iPoint;
-			for(iPoint=0 ; iPoint<pPointString->pPointsArray->len ; iPoint++) {
-				mappoint_t* pPoint = g_ptr_array_index(pPointString->pPointsArray, iPoint);
-
-				// find extents
-				fMaxLat = max(pPoint->fLatitude,fMaxLat);
-				fMinLat = min(pPoint->fLatitude,fMinLat);
-				fMaxLon = max(pPoint->fLongitude,fMaxLon);
-				fMinLon = min(pPoint->fLongitude,fMinLon);
-
-				aPoints[iPoint].x = (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
-				aPoints[iPoint].y = (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
-			}
-
-			// rectangle overlap test
-			if(fMaxLat < pRenderMetrics->rWorldBoundingBox.A.fLatitude
-			   || fMaxLon < pRenderMetrics->rWorldBoundingBox.A.fLongitude
-			   || fMinLat > pRenderMetrics->rWorldBoundingBox.B.fLatitude
-			   || fMinLon > pRenderMetrics->rWorldBoundingBox.B.fLongitude)
-			{
-			    continue;	// not visible
-			}
-
-			gdk_draw_lines(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], aPoints, pPointString->pPointsArray->len);
-   		}
-	}
-}
-
 // Draw all locations from sets marked visible
 static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics)
 {
@@ -424,6 +367,7 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	}
 }
 
+#ifdef ROADSTER_DEAD_CODE
 //             GdkColor clr1;
 //             clr1.red = 255/255.0 * 65535;
 //             clr1.green = 80/255.0 * 65535;
@@ -446,3 +390,60 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 //                         nX-1,nY-1,
 //                         3, 3);
 
+// static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics)
+// {
+//     gint i;
+//     for(i=0 ; i<pMap->pTracksArray->len ; i++) {
+//         gint hTrack = g_array_index(pMap->pTracksArray, gint, i);
+//
+//         GdkColor clr;
+//         clr.red = (gint)(0.5 * 65535.0);
+//         clr.green = (gint)(0.5 * 65535.0);
+//         clr.blue = (gint)(1.0 * 65535.0);
+//         gdk_gc_set_rgb_fg_color(pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], &clr);
+//
+//         pointstring_t* pPointString = track_get_pointstring(hTrack);
+//         if(pPointString == NULL) continue;
+//
+//         if(pPointString->pPointsArray->len >= 2) {
+//
+//             if(pPointString->pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+//                 //g_warning("not drawing track with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
+//                 continue;
+//             }
+//
+//             GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
+//
+//             gdouble fMaxLat = MIN_LATITUDE; // init to the worst possible value so first point will override
+//             gdouble fMinLat = MAX_LATITUDE;
+//             gdouble fMaxLon = MIN_LONGITUDE;
+//             gdouble fMinLon = MAX_LONGITUDE;
+//
+//             gint iPoint;
+//             for(iPoint=0 ; iPoint<pPointString->pPointsArray->len ; iPoint++) {
+//                 mappoint_t* pPoint = g_ptr_array_index(pPointString->pPointsArray, iPoint);
+//
+//                 // find extents
+//                 fMaxLat = max(pPoint->fLatitude,fMaxLat);
+//                 fMinLat = min(pPoint->fLatitude,fMinLat);
+//                 fMaxLon = max(pPoint->fLongitude,fMaxLon);
+//                 fMinLon = min(pPoint->fLongitude,fMinLon);
+//
+//                 aPoints[iPoint].x = (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
+//                 aPoints[iPoint].y = (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
+//             }
+//
+//             // rectangle overlap test
+//             if(fMaxLat < pRenderMetrics->rWorldBoundingBox.A.fLatitude
+//                || fMaxLon < pRenderMetrics->rWorldBoundingBox.A.fLongitude
+//                || fMinLat > pRenderMetrics->rWorldBoundingBox.B.fLatitude
+//                || fMinLon > pRenderMetrics->rWorldBoundingBox.B.fLongitude)
+//             {
+//                 continue;   // not visible
+//             }
+//
+//             gdk_draw_lines(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], aPoints, pPointString->pPointsArray->len);
+//         }
+//     }
+// }
+#endif

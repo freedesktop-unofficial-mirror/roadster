@@ -1,5 +1,17 @@
 2005-09-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/locationselection.c:
+	* src/locationselection.h:
+	* src/track.c:
+	* src/track.h: Removed these unused files.
+	* src/map_draw_gdk.c:
+	* src/mainwindow.c: Commented out track code.
+	* src/animator.c:
+	* src/downloader.c: Removed unused init() functions.
+	* src/main.c: Removed calls to *_init() for above.
+
+2005-09-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/downloader.c: Added.  This provides an easy interface to asyncronous file downloads.
 
 2005-09-29  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>

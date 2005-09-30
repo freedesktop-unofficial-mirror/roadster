@@ -56,11 +56,6 @@ static void _downloader_move_pending_to_active(downloader_t* pDownloader);
 //
 // functions
 //
-void downloader_init(void)
-{
-	// nothing
-}
-
 downloader_t* downloader_new(gint nMaxConcurrentActive)
 {
 	downloader_t* pNew = g_new0(downloader_t, 1);

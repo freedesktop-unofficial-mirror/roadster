@@ -32,13 +32,11 @@
 #include "map.h"
 #include "gpsclient.h"
 #include "scenemanager.h"
-#include "animator.h"
 #include "road.h"
 #include "locationset.h"
 #include "location.h"
 #include "search.h"
 #include "search.h"
-#include "downloader.h"
 
 static gboolean main_init(void);
 static void main_deinit(void);
@@ -135,11 +133,11 @@ gboolean main_init(void)
 		g_warning("gnome_vfs_init failed\n");
 		return FALSE;
 	}
-
 	gchar* pszApplicationDir = g_strdup_printf("%s/.roadster", g_get_home_dir());
 	gnome_vfs_make_directory(pszApplicationDir, 0700);
 	g_free(pszApplicationDir);
 #endif
+
 	g_print("initializing points\n");
 	point_init();
 	g_print("initializing pointstrings\n");
@@ -148,8 +146,6 @@ gboolean main_init(void)
 	g_print("initializing roads\n");
 	road_init();
 
-	g_print("initializing tracks\n");
-	track_init();
 	g_print("initializing map styles\n");
 	map_style_init();
 	g_print("initializing map\n");
@@ -160,9 +156,6 @@ gboolean main_init(void)
 
 	g_print("initializing gpsclient\n");
 	gpsclient_init();
-
-	g_print("initializing animator\n");
-	animator_init();
 
 	//
 	// Database
@@ -196,8 +189,6 @@ gboolean main_init(void)
 	location_init();
 
 	g_print("initialization complete\n");
-
-	downloader_init();
 	return TRUE;
 }
 

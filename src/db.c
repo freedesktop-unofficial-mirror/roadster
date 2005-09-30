@@ -89,8 +89,8 @@ void db_init()
 		"--skip-bdb",
 
 		// query cache options
-                "--query-cache-type=1",		// enable query cache (for map tiles)
-                pszSetQueryCacheSize,
+		"--query-cache-type=1",		// enable query cache (for map tiles)
+		pszSetQueryCacheSize,
 
 		// fulltext index options
 		"--ft-min-word-len=1",		// don't miss any words, even 1-letter words (esp. numbers like "3")
@@ -653,4 +653,15 @@ void db_create_tables()
 		" Name VARCHAR(60) NOT NULL,"
 		" IconName VARCHAR(60) NOT NULL,"
 		" PRIMARY KEY (ID));", NULL);
+
+//     // Remote File Cache
+//     db_query("CREATE TABLE IF NOT EXISTS RemoteFileCache("
+//         " ID INT3 UNSIGNED NOT NULL AUTO_INCREMENT,"        // NOTE: 3 bytes.
+//         " RemoteFilePath VARCHAR(255) NOT NULL,"            // the full URI (eg. "http://site/path/file.png"
+//         " LocalFileName VARCHAR(255) NOT NULL,"             // just the 'name' part.  the path should be prepended
+//         " LocalFileSize INT4 NOT NULL,"
+//         " PRIMARY KEY (ID),"
+//         " INDEX (RemoteFilePath),"
+//         " INDEX (LocalFileName))",
+//         NULL);
 }
