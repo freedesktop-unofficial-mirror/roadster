@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"[
 	<!ENTITY legal SYSTEM "legal.xml">
   	<!ENTITY appversion "0.4.0">
@@ -8,25 +8,22 @@
   	<!ENTITY app "Roadster">
 ]>
   
-<article id="index" lang="en">
+<book id="index">
+<title>&app; Guide</title>
 
-<!-- =============Document Header ============================= -->
-<!-- please do not change the id; for translations, change lang to -->
-<!-- appropriate code -->
-
-	<articleinfo> 
-		<title>&app; Manual v&manrevision;</title>
+	<bookinfo> 
 	 	<copyright> 
 			<year>2005</year>
 			<holder>Ian McIntosh</holder> 
 		</copyright>
-			
+
 <!-- translators: uncomment this:
   		<copyright>
    			<year>2005</year>
    			<holder>ME-THE-TRANSLATOR (Latin translation)</holder>
   		</copyright>
 -->
+
 	<publisher> 
 		<publishername>&app; Documentation Project</publishername>
 	 </publisher>
@@ -41,24 +38,9 @@
 			</affiliation>
 		</author>
 	</authorgroup>
-	
+
 <!-- According to GNU FDL, revision history is mandatory if you are -->
 <!-- modifying/reusing someone else's document.  If not, you can omit it. -->
-	
-	<revhistory>
-	
-	<!-- Remember to remove the &manrevision; entity from the revision entries 
-		 other than the current revision. -->
-   		
-   		<revision> 
-			<revnumber>&app; Manual v&manrevision;</revnumber>
-			<date>&date;</date> 
-		  	<revdescription> 
-				<para role="author">Ian McIntosh</para>
-			 	<para role="publisher">&app; Documentation Project</para>
-		  	</revdescription>
-		</revision>
-	</revhistory>
 
 	<releaseinfo>This manual describes version &appversion; of &app;.</releaseinfo>
 
@@ -72,292 +54,175 @@
       	</para>
 
 	<!-- Translators may also add here feedback address for translations -->
-	
+
 	</legalnotice>
-	</articleinfo>
+	</bookinfo>
+<!-- ============= Working with Roadster ============================== -->
+<chapter id="basics">
+	<title>Using &app;</title>
+	<highlights>
+		<para>This chapter explains the windows and XXX of &app;</para>
+	</highlights>
 
-	<indexterm><primary>roadster</primary></indexterm>
-  	
-  	<!-- ============= Document Body ============================= -->
-	<!-- ============= Introduction ============================== -->
-
-	<sect1 id="intro"> 
-		<title>Introduction</title>
+	<section id="mainwindow">
+		<title>Main Window</title>
+			<screenshot>
+			<mediaobject> 
+				<imageobject> 
+					<imagedata fileref="figures/window_layout.png" format="PNG"/>
+				</imageobject>
+			</mediaobject>
+		</screenshot>
 		<para>
-			<application>&app;</application> is desktop mapping software.
-            It was designed to be fun and useful for everyone, not just
-            highly technical people.
+		The main window.  The individual parts of this window are described below.
 		</para>
-		<para>
-			This document will help you go 0 to 60 in no time.
-		</para>
-  	</sect1>
-
-	<!-- ======================Window Layout ===================== -->
-	<sect1 id="window-layout">
-		<title>Window Layout</title>
-        <screenshot> 
-            <mediaobject> 
-                <imageobject> 
-                    <imagedata fileref="figures/window_layout.png" format="PNG"/>
-                </imageobject>
-            </mediaobject>
-        </screenshot>
-		<para>
-			The main window.  The individual parts of this window are described below.
-		</para>
-        <!-- ======================Toolbar ===================== -->	
-    	<sect2 id="toolbar">
-    		<title>Toolbar</title>
-    		
-    		<para>
-    			The toolbar provides access to the most useful map navigation operations.
-    		</para>		
-    		<itemizedlist>
-    			<listitem>
-    				<para>
-    					<guibutton>Back Button.</guibutton> The Back button takes you to the last place you were looking at.  It works in a similar way to the Back button in your web browser.
-                        No matter how you move the map, clicking Back will undo the movement.
-    				</para>
-    			</listitem>
-    			<listitem>
-    				<para>
-    					<guibutton>Forward Button.</guibutton> After using the Back button, you can click Forward to return to where you were.  It works in a similar way to the Forward button in your web browser.
-    				</para>
-    			</listitem>
-    			<listitem>
-    				<para>
-    					<guibutton>Zoom-Out Button.</guibutton>  Zoom out one level.  When you are zoomed out as far as possible, the button will be grayed out. and unavailable.
-    				</para>
-    			</listitem>
-    			<listitem>
-    				<para>
-    					<guibutton>Zoom Slider.</guibutton> The slider allows you to quickly zoom to any level.  Click and drag the slider to zoom.
-    				</para>
-    			</listitem>
-    			<listitem>
-    				<para>
-    					<guibutton>Zoom-In Button.</guibutton>  Zoom in one level.  When you are zoomed in as far as possible, the button will be grayed out. and unavailable.
-    				</para>
-    			</listitem>
-    			<listitem>
-    				<para>
-    					<guibutton>Search Entry.</guibutton> Read more about how to use the search, see the section titled <link linkend="search">How to Search</link>.
-    				</para>
-    			</listitem>
+    
+        <section id="toolbar">
+            <title>Toolbar</title>
+            <para>
+            The toolbar is the horizontal bar across the top of the &app; window.  It provides access to the most useful map navigation operations:
+            </para>
+            <itemizedlist>
+                <listitem>
+                <para>
+                <guibutton>Back Button.</guibutton> The Back button takes you to the last place you were looking at.  It works in a similar way to the Back button in your web browser.
+                No matter how you move the map, clicking Back will undo the movement.
+                </para>
+                </listitem>
+                <listitem>
+                <para>
+                <guibutton>Forward Button.</guibutton> After using the Back button, you can click Forward to return to where you were.  It works in a similar way to the Forward button in your web browser.
+                </para>
+                </listitem>
+                <listitem>
+                <para id="back-button">
+                <guibutton>Zoom-Out Button.</guibutton>  Zoom out one level.  When you are zoomed out as far as possible, the button will be grayed out and unavailable.
+                </para>
+                </listitem>
+                <listitem>
+                <para>
+                <guibutton>Zoom Slider.</guibutton> The slider allows you to quickly zoom to any level.  Click and drag the slider to zoom.
+                </para>
+                </listitem>
+                <listitem>
+                <para>
+                <guibutton>Zoom-In Button.</guibutton>  Zoom in one level.  When you are zoomed in as far as possible, the button will be grayed out and unavailable.
+                </para>
+                </listitem>
+                <listitem>
+                <para>
+                <guibutton>Search Entry.</guibutton> Read more about searching in the section titled <link linkend="search">How to Search</link>.
+                </para>
+                </listitem>
             </itemizedlist>
-    		<note>
-    			<para>
-    				Many of the operations available on the toolbar can also be performed using <link linkend="shortcuts">Shortcut Keys</link>.
-    			</para>
-    		</note>
-    	</sect2>
-    	
-    	<sect2 id="sidebar">
-    		<title>Sidebar</title>
-    		<para>
-    			To read more about what  information shows up on the sidebar and how to use it, head on over to the <link linkend="shortcuts">Using the Sidebar</link> section.
-    		</para>
-    	</sect2>
-    
-    	<sect2 id="map-area">
-    		<title>Map Area</title>
-    		<para>
-    			insert text
-    		</para>
-    	</sect2>
-    
-    	<sect2 id="status-bar">
-    		<title>Statusbar</title>
-    		
-    		<para>
-    			The status bar displays ...
-    		</para>
-    	</sect2>
-	</sect1>
+            <para>To hide the toolbar, choose <menuchoice><guimenu>View</guimenu><guimenuitem>Toolbar</guimenuitem></menuchoice>. To display the
+  toolbar again, choose <menuchoice><guimenu>View</guimenu><guimenuitem>Toolbar</guimenuitem></menuchoice> again. </para>
+        </section>
 
-	<!-- ======================How to Search ===================== -->
-	<sect1 id="search">
-		<title>How to Search</title>
-		<para>
-			This section will show you how to perform searches in &app; and offers some tips for improving the results you get.
-		</para>
-        <sect2 id="search-basics">
+        <section id="sidebar">
+            <title>Sidebar</title>
+            <para>
+                The sidebar is the vertical bar on the right edge of the &app; window.  It has three tabs:
+            </para>
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        <guibutton>1.Locations.</guibutton> The Locations list shows a list of types of Locations, and allows you to show or hide each type of Location.  For example, you could
+                        choose to show all Restaurants.  To show a type of Location, set the checkbox next to it to "on" (checked).  To hide a type of
+                        Location, set the checkbox next to it to "off" (unchecked).
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <guibutton>2.Tracks.</guibutton> The Tracks tab shows a list of your Tracks, and allows you to show or hide individual Tracks.  To show a Track, set 
+                        the checkbox next to it to "on" (checked).  To hide a Track, set the checkbox next to it to "off" (unchecked).
+                    </para>
+                </listitem>
+                <listitem>
+                    <para>
+                        <guibutton>3.Results.</guibutton>
+                        The Results Tab shows a list of the search results from your most recent search.  Clicking on a search
+                        result will move the map to show you that road or Location.  Clicking the Back button on the toolbar will return you to where you previously were.
+                    </para>
+                </listitem>
+            </itemizedlist>
+            <para>To hide the sidebar, choose <menuchoice><guimenu>View</guimenu><guimenuitem>Sidebar</guimenuitem></menuchoice>. To display the
+  sidebar again, choose <menuchoice><guimenu>View</guimenu><guimenuitem>Sidebar</guimenuitem></menuchoice> again. </para>
+        </section>
+
+        <section id="map-area">
+            <title>Map Area</title>
+            <para>
+            XXX
+            </para>
+        </section>
+    </section>
+</chapter>
+
+
+<chapter id="search">
+<title>How to Search</title>
+    <highlights>
+        <para>
+        This chapter will show you how to perform searches in &app; and offers some tips for improving the results you get.
+        </para>
+    </highlights>
+
+    <section id="search-basics">
+        <title>Search Basics</title>
+
+        <section>
             <title>Search Basics</title>
             <para>
-                To start a search, enter search words into the search box in the upper right corner of the main window, and then hit the Enter key on your keyboard.  Some example searches you could try now:
+            To start a search, enter search words into the search box in the upper right corner of the <link linkend="mainwindow">main window</link>, and then hit the <keycap>Enter</keycap> key on your keyboard.  Some example searches you could try now:
             </para>
             <itemizedlist>
-                <listitem>120 Main Street, Orleans, Massachusetts</listitem>
-                <listitem>Buffalo Street, ND</listitem>
-                <listitem>Miami</listitem>
-                <listitem>Arizona</listitem>
-                <listitem>90210</listitem>
+            <listitem><para>120 Main Street, Orleans, Massachusetts</para></listitem>
+            <listitem><para>Buffalo Street, ND</para></listitem>
+            <listitem><para>Miami</para></listitem>
+            <listitem><para>Arizona</para></listitem>
+            <listitem><para>90210</para></listitem>
             </itemizedlist>
             <para>
-                After performing a search, the <link linkend="">search results sidebar tab</link> will automatically be displayed.  Click on one of the results to view the location.
+            After performing a search, the search results sidebar tab will automatically be displayed.  Click on one of the results to view the location.
             </para>
             <note>
-            <para>
-                Don't worry about losing your current spot, you can use the <guibutton>Back Button</guibutton> to return to it later.
-            </para>
+                <para>
+                    Don't worry about losing your current spot, you can use the <guibutton>Back Button</guibutton> to return to it later.
+                </para>
             </note>
-        </sect2>
-        <sect2 id="finding-locations">
-            <title>Finding Places</title>
+        </section>
+
+        <section>
+            <title>Searching for Locations</title>
             <para>
-                The search box can also find places like restaurants, schools, and police stations.  Try these searches:
+            The search box can also find places like restaurants, schools, and police stations.  Try these searches:
             </para>
             <itemizedlist>
-                <listitem>pizza in Portland, OR</listitem>
-                <listitem>coffee shop wifi Cambridge</listitem>
-                <listitem>gas</listitem>
+                <listitem><para>pizza in Portland, OR</para></listitem>
+                <listitem><para>coffee shop wifi Cambridge</para></listitem>
+                <listitem><para>gas</para></listitem>
             </itemizedlist>
             <para>
-            Notice that some searches have a city name in them.  When you include a city name in your search, &app; will try to find Places in or near that city.
+            Notice that some searches have a city name in them.  When you include a city name at the end of your search words, &app; will try to find Places in or near that city.
             </para>
             <para>
             When you don't specify a city in your search, &app; will find Places nearby where you are currently looking.
             </para>
-        </sect2>
-        <sect2 id="find-tips">
-            <title>Tips</title>
-            <itemizedlist>
-                <listitem>When searching in &app;, capitalization doesn't matter.  The word PIZZA is treated the same as Pizza and even PiZZa.  They will all get the same results.</listitem>
-                <listitem>Punctuation like commas, quotation marks, pluses, minuses, and parentheses are ignored.</listitem>
-                <listitem>Words like "in" or "near" are optional.</listitem>
-                <listitem>If you get too many search results, try adding more search words.</listitem>
-                <listitem>If you get too few search results, try removing one or more search words.</listitem>
-            </itemizedlist>
-        </sect2>
-    </sect1>
-	
-    <!-- ======================Shortcuts ===================== -->
-	<sect1 id="shortcuts">
-		<title>Shortcut Keys</title>
-		
-		<para>
-			You can use the keyboard to perform all of the operations 
-			available in &app;.  Most of these operations have a
-            keyboard shortcut.  The available shortcuts are listed below.
-		</para>
+        </section>
+    </section>
 
-        <sect2 id="file-menu-shortcuts-section">
-            <title>Shortcut Table</title>
+    <section id="search-tips">
+    <title>Search Tips</title>
+        <itemizedlist>
+            <listitem><para>When searching in &app;, capitalization doesn't matter.  The word PIZZA is treated the same as Pizza and even PiZZa.  They will all get the same results.</para></listitem>
+            <listitem><para>Punctuation like commas, quotation marks, pluses, minuses, and parentheses are ignored.</para></listitem>
+            <listitem><para>Words like "in" or "near" are optional.  They wilk not change the results you get.</para></listitem>
+            <listitem><para>If you get too many search results, try adding more search words.</para></listitem>
+            <listitem><para>If you get too few search results, try removing one or more search words.</para></listitem>
+        </itemizedlist>
+    </section>
 
-    		<table frame="topbot" id="file-menu-shortcuts-table">
-    			<title></title>     		
-          		<tgroup cols="2" colsep="0" rowsep="0">
-                	<colspec colname="colspec0" colwidth="30*"/>
-                	<colspec colname="colspec1" colwidth="70*"/>
-                	
-                	<thead>
-                  		<row rowsep="1">
-                    		<entry valign="top">
-                                <para>Shortcut</para>
-                    		</entry>
-                    		<entry valign="top">
-                      			<para>Description</para>
-                    		</entry>
-                  		</row>
-                	</thead>
-        
-                    <tbody>
-                        <row>
-                            <entry colname="colspec0" valign="top">
-                                <para><keycap>Ctrl+T</keycap></para>
-                            </entry>
-                    
-                            <entry colname="colspec1" valign="top">
-                                <para>Show or Hide the Toolbar</para>
-                            </entry>
-                        </row>
-                    </tbody>
+</chapter>
 
-                    <tbody>
-                        <row>
-                            <entry colname="colspec0" valign="top">
-                                <para><keycap>Ctrl+S</keycap></para>
-                            </entry>
-                    
-                            <entry colname="colspec1" valign="top">
-                                <para>Show or Hide the Sidebar</para>
-                            </entry>
-                        </row>
-                    </tbody>
-
-                    <tbody>
-                        <row>
-                            <entry colname="colspec0" valign="top">
-                                <para><keycap>Ctrl+B</keycap></para>
-                            </entry>
-                    
-                            <entry colname="colspec1" valign="top">
-                                <para>Show or Hide the Statusbar</para>
-                            </entry>
-                        </row>
-                    </tbody>
-
-                    <tbody>
-                        <row>
-                            <entry colname="colspec0" valign="top">
-                                <para><keycap>Ctrl+-</keycap></para>
-                            </entry>
-                    
-                            <entry colname="colspec1" valign="top">
-                                <para>Zoom Out one level</para>
-                            </entry>
-                        </row>
-                    </tbody>
-
-                    <tbody>
-                        <row>
-                            <entry colname="colspec0" valign="top">
-                                <para><keycap>Ctrl+=</keycap></para>
-                            </entry>
-                    
-                            <entry colname="colspec1" valign="top">
-                                <para>Zoom In one level</para>
-                            </entry>
-                        </row>
-                    </tbody>
-
-                    <tbody>
-                        <row>
-                            <entry colname="colspec0" valign="top">
-                                <para><keycap>Ctrl-Q</keycap></para>
-                            </entry>
-                        
-                            <entry colname="colspec1" valign="top">
-                                <para>Close &app;</para>
-                            </entry>
-                        </row>
-                    </tbody>
-
-            	</tgroup>
-            </table>
-            <para>
-                TODO: Finish this list.
-            </para>
-        </sect2>
-	</sect1>
-
-	<!-- ======================About ===================== -->	
-	<sect1 id="about">
-		<title>About Roadster</title>
-		
-		<para>
-			The &app; project was started by Ian McIntosh in early 2005.
-            His goal was to create a Free Software alternative to the proprietary
-            mapping applications available at the time.  He also hoped to make
-            something more fun to use, and to provide a platform on which
-            others could innovate.
-		</para>
-
-		<para>
-			 &app; is distributed under the terms of the <ulink url="ghelp:gpl" type="help">GNU General 
-			 Public license</ulink> as published by the Free Software Foundation; either
-			 version 2 of the License, or any later version.
-		</para>		
-	</sect1>
-</article>
+</book>

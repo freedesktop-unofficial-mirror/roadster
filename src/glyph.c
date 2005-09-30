@@ -28,10 +28,12 @@
 
 struct {
 	GPtrArray* pGlyphArray;	// to store all glyphs we hand out
-} g_Glyph;
+	GtkWidget* pTargetWidget;
+} g_Glyph = {0};
 
-void glyph_init(void)
+void glyph_init(GtkWidget* pTargetWidget)
 {
+	g_Glyph.pTargetWidget = pTargetWidget;
 	g_Glyph.pGlyphArray = g_ptr_array_new();
 }
 
@@ -75,6 +77,21 @@ gboolean glyph_is_safe_file_name(const gchar* pszName)
 	return TRUE;
 }
 
+gboolean glyph_find_by_attributes(const gchar* pszName, gint nMaxWidth, gint nMaxHeight, glyph_t** ppReturnGlyph)
+{
+	gint i;
+	for(i=0 ; i<g_Glyph.pGlyphArray->len ; i++) {
+		glyph_t* pGlyph = g_ptr_array_index(g_Glyph.pGlyphArray, i);
+		if(pGlyph->nMaxWidth == nMaxWidth && pGlyph->nMaxHeight == nMaxHeight && strcmp(pGlyph->pszName, pszName) == 0) {
+			if(ppReturnGlyph) {
+				*ppReturnGlyph = pGlyph;
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
+
 void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
 {
 	// pszName is an icon name without extension or path
@@ -88,15 +105,30 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 	gint iExtension;
 	for(iExtension = 0 ; iExtension < G_N_ELEMENTS(apszExtensions) ; iExtension++) {
 		gchar* pszFilePath = g_strdup_printf("%s%s.%s", pszPath, pszName, apszExtensions[iExtension]);
-		pNewPixbuf = gdk_pixbuf_new_from_file_at_scale(pszFilePath, nMaxWidth, nMaxHeight, TRUE, NULL);	// NOTE: scales image to fit in this size
+		if(nMaxWidth == -1) {
+			pNewPixbuf = gdk_pixbuf_new_from_file(pszFilePath, NULL);
+		}
+		else {
+			pNewPixbuf = gdk_pixbuf_new_from_file_at_scale(pszFilePath, nMaxWidth, nMaxHeight, TRUE, NULL);	// NOTE: scales image to fit in this size
+		}
 		g_free(pszFilePath);
 
-		if(pNewPixbuf != NULL) break;	// got it!
+		if(pNewPixbuf != NULL) {
+			g_print("loaded image '%s' as %s with size (%d,%d)\n", pszName, apszExtensions[iExtension], gdk_pixbuf_get_width(pNewPixbuf), gdk_pixbuf_get_height(pNewPixbuf));
+			break;	// got it!
+		}
 	}
 
 	// Create a fake pixbuf if not found
 	if(pNewPixbuf == NULL) {
-		pNewPixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, nMaxWidth, nMaxHeight);
+		g_print("unabled to load image '%s'\n", pszName);
+
+		if(nMaxWidth == -1) {
+			pNewPixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, 16, 16);
+		}
+		else {
+			pNewPixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, nMaxWidth, nMaxHeight);
+		}
 		gdk_pixbuf_fill(pNewPixbuf, 0xFF000080);
 	}
 	pNewGlyph->pPixbuf = pNewPixbuf;
@@ -104,12 +136,52 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 	pNewGlyph->nHeight = gdk_pixbuf_get_height(pNewPixbuf);
 }
 
-glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
+// Load at image's default size
+glyph_t* glyph_load(const gchar* pszName)
 {
-	g_print("glyph.c: loading %s\n", pszName);
+	g_assert(g_Glyph.pTargetWidget != NULL);
+	g_assert(g_Glyph.pGlyphArray != NULL);
+	g_assert(pszName != NULL);
+
+	glyph_t* pExistingGlyph = NULL;
+	if(glyph_find_by_attributes(pszName, -1, -1, &pExistingGlyph)) {
+		g_print("Found in cache '%s'\n", pszName);
+		pExistingGlyph->nReferenceCount++;
+		return pExistingGlyph;
+	}
 
 	// NOTE: We always return something!
 	glyph_t* pNewGlyph = g_new0(glyph_t, 1);
+	pNewGlyph->nReferenceCount = 1;
+
+	pNewGlyph->pszName = g_strdup(pszName);
+	pNewGlyph->nMaxWidth = -1;
+	pNewGlyph->nMaxHeight = -1;
+
+	// call internal function to fill the struct
+	_glyph_load_at_size_into_struct(pNewGlyph, pszName, -1, -1);
+
+	g_ptr_array_add(g_Glyph.pGlyphArray, pNewGlyph);
+
+	return pNewGlyph;
+}
+
+glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
+{
+	g_assert(g_Glyph.pTargetWidget != NULL);
+	g_assert(g_Glyph.pGlyphArray != NULL);
+	g_assert(pszName != NULL);
+
+	glyph_t* pExistingGlyph = NULL;
+	if(glyph_find_by_attributes(pszName, nMaxWidth, nMaxHeight, &pExistingGlyph)) {
+		g_print("Found in cache '%s'\n", pszName);
+		pExistingGlyph->nReferenceCount++;
+		return pExistingGlyph;
+	}
+
+	// NOTE: We always return something!
+	glyph_t* pNewGlyph = g_new0(glyph_t, 1);
+	pNewGlyph->nReferenceCount = 1;
 
 	pNewGlyph->pszName = g_strdup(pszName);
 	pNewGlyph->nMaxWidth = nMaxWidth;
@@ -123,6 +195,9 @@ glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeigh
 	return pNewGlyph;
 }
 
+//
+//
+//
 GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph)
 {
 	g_assert(pGlyph != NULL);
@@ -131,13 +206,28 @@ GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph)
 	return pGlyph->pPixbuf;
 }
 
+GdkPixmap* glyph_get_pixmap(glyph_t* pGlyph)
+{
+	g_assert(pGlyph != NULL);
+	
+	if(pGlyph->pPixmap == NULL) {
+		GdkGC* pGC = g_Glyph.pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(g_Glyph.pTargetWidget)];
+        pGlyph->pPixmap = gdk_pixmap_new(g_Glyph.pTargetWidget->window, pGlyph->nWidth, pGlyph->nHeight, -1);	// -1 is bpp
+		gdk_draw_pixbuf(pGlyph->pPixmap, pGC, pGlyph->pPixbuf,0,0,0,0,-1,-1,
+						GDK_RGB_DITHER_NONE,0,0);           // no dithering
+	}
+	g_assert(pGlyph->pPixmap != NULL);
+
+	return pGlyph->pPixmap;
+}
+
 void glyph_draw_centered(glyph_t* pGlyph, GdkDrawable* pTargetDrawable, GdkGC* pGC, gdouble fX, gdouble fY)
 {
 	gdk_draw_pixbuf(pTargetDrawable,
 					pGC,
 					pGlyph->pPixbuf,
-					0,0,                        		// src
-					(gint)(fX - (pGlyph->nWidth/2)), (gint)(fY - (pGlyph->nHeight/2)),                 // x/y to draw to
+					0,0, // src
+					(gint)(fX - ((gdouble)(pGlyph->nWidth)/2.0)), (gint)(fY - ((gdouble)(pGlyph->nHeight)/2.0)),                 // x/y to draw to
 					pGlyph->nWidth, pGlyph->nHeight,    // width/height
 					GDK_RGB_DITHER_NONE,0,0);   		// no dithering
 }

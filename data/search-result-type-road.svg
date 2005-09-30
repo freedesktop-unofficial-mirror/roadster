@@ -53,7 +53,7 @@
      inkscape:pageopacity="0.0000000"
      inkscape:pageshadow="2"
      inkscape:zoom="3.8104332"
-     inkscape:cx="29.444196"
+     inkscape:cx="29.444197"
      inkscape:cy="9.1676075"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -98,18 +98,18 @@
        d="M 70.914135 35.409073 A 35.322250 35.187431 0 1 1  0.26963425,35.409073 A 35.322250 35.187431 0 1 1  70.914135 35.409073 z"
        transform="matrix(0.872919,0.000000,0.000000,0.872919,4.523054,4.386425)" />
     <path
-       style="fill:#000000;fill-opacity:1.0000000;stroke:#000000;stroke-width:3.0322678;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-dashoffset:0.0000000;stroke-opacity:1.0000000"
+       style="fill:#4d4d4d;fill-opacity:1.0000000;stroke:#000000;stroke-width:3.0322678;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-dashoffset:0.0000000;stroke-opacity:1.0000000;"
        d="M 35.594264,5.0594416 C 30.993989,5.0594416 26.669344,6.1701020 22.747024,7.9720148 L 16.323403,58.527703 C 21.617899,62.792218 28.260438,65.470002 35.594264,65.470001 C 44.124494,65.470001 51.834643,61.995917 57.418615,56.413094 L 51.154587,9.4083526 C 46.572930,6.7195541 41.293080,5.0594416 35.594264,5.0594416 z "
        id="path1837"
        sodipodi:nodetypes="ccccccc" />
     <path
        style="fill:#ffffff;fill-opacity:1.0000000;stroke:none;stroke-width:1.1500000;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-dashoffset:0.0000000;stroke-opacity:1.0000000"
-       d="M 34.082720,3.8075477 L 38.908560,3.8075477 L 40.645672,26.325074 L 32.421135,26.325074 L 34.082720,3.8075477 z "
+       d="M 34.185079,7.0866147 L 39.010919,7.0866147 L 40.748031,28.346457 L 32.523494,28.346457 L 34.185079,7.0866147 z "
        id="path1833"
        sodipodi:nodetypes="ccccc" />
     <path
        style="fill:#ffffff;fill-opacity:1.0000000;stroke:none;stroke-width:1.1500000;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-dashoffset:0.0000000;stroke-opacity:1.0000000"
-       d="M 31.763234,43.011352 L 40.940887,43.011352 L 44.244481,64.383022 C 37.669541,65.744224 35.282920,65.744224 28.603272,64.383022 L 31.763234,43.011352 z "
+       d="M 31.810092,41.386956 L 40.987745,41.386956 L 44.291339,62.758626 C 37.716399,64.119828 35.329778,64.119828 28.650130,62.758626 L 31.810092,41.386956 z "
        id="path1834"
        sodipodi:nodetypes="ccccc" />
   </g>

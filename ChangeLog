@@ -1,3 +1,10 @@
+2005-09-29  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/map_style.c: Removed "constants"-- found out that XML already has this feature!
+	* src/glyph.c: Don't load the same image twice.  Allow loading at image's native resolution.
+	* src/map_draw_gdk.c: Can now fill polygons with a tiled image.  Beginning support for moving POI to the layers.XML file.
+	* src/util.c: Add code for GtkEntry "hints".  These are messages shown when there is nothing in the entry.  May be used for search box.
+
 2005-09-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* data/help/roadster-help.xml:

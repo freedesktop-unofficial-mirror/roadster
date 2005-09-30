@@ -1257,7 +1257,7 @@ gboolean map_object_type_atoi(const gchar* pszName, gint* pnReturnObjectTypeID)
 
 gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTypeID)
 {
-	gchar* g_apszMapRenderTypeNames[] = {"lines", "polygons", "line-labels", "polygon-labels", "fill"};
+	gchar* g_apszMapRenderTypeNames[] = {"lines", "polygons", "line-labels", "polygon-labels", "fill", "locations", "location-labels"};
 
 	gint i;
 	for(i=0 ; i<G_N_ELEMENTS(g_apszMapRenderTypeNames) ; i++) {

@@ -26,6 +26,8 @@
 
 typedef struct {
 	GPtrArray* pPointsArray;
+//	maprect_t rcMapBoundingBox;
+
 	gchar* pszName;
 	gint nAddressLeftStart;
 	gint nAddressLeftEnd;

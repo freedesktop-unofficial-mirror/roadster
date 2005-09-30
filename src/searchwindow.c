@@ -57,6 +57,10 @@
 
 struct {
 	GtkEntry* pSearchEntry;		// search text box (on the toolbar)
+	GtkComboBoxEntry* pSearchComboBoxEntry;
+
+	GtkEntry* pSearchLocationEntry;		// search text box (on the toolbar)
+
 	GtkButton* pSearchButton;		// search button (on the toolbar)
 
 	// results list (on the sidebar)
@@ -80,6 +84,8 @@ static void searchwindow_go_to_selected_result(void);
 void searchwindow_init(GladeXML* pGladeXML)
 {
 	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.pSearchEntry, GTK_ENTRY, "searchentry");
+	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.pSearchComboBoxEntry, GTK_COMBO_BOX_ENTRY, "searchcomboboxentry");
+	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.pSearchLocationEntry, GTK_ENTRY, "searchlocationentry");
 	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.pSearchButton, GTK_BUTTON, "searchbutton");
 	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.pResultsTreeView, GTK_TREE_VIEW, "searchresultstreeview");
 	GLADE_LINK_WIDGET(pGladeXML, g_SearchWindow.pNextSearchResultMenuItem, GTK_MENU_ITEM, "nextresultmenuitem");
@@ -112,6 +118,12 @@ void searchwindow_init(GladeXML* pGladeXML)
 	g_signal_connect(G_OBJECT(pTreeSelection), "changed", (GtkSignalFunc)searchwindow_on_resultslist_selection_changed, NULL);
 
 	searchwindow_update_next_and_prev_buttons();
+
+//	util_gtk_entry_add_hint_text(g_SearchWindow.pSearchEntry, "type place or address");
+	util_gtk_entry_add_hint_text(g_SearchWindow.pSearchLocationEntry, "near here");
+
+	g_SearchWindow.pSearchComboBoxEntry;
+	GtkComboBoxEntry a;
 }
 
 void searchwindow_clear_results(void)

@@ -106,8 +106,6 @@
 
 #define MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS	(3500.0)	// when selecting search results, we slide to them instead of jumping if they are within this distance
 
-#define LOCATIONSET_LIST_MIN_NAME_WIDTH_IN_CHARS (17)	// also forces minimum sidebar width
-
 // Types
 typedef struct {
 	GdkCursorType CursorType;
@@ -240,6 +238,7 @@ struct {
 	GtkMenuItem* pWebMapsMenuItem;
 } g_MainWindow = {0};
 
+// XXX: Use GDK_HAND1 for the map
 
 // Data
 toolsettings_t g_Tools[] = {
@@ -402,24 +401,17 @@ void mainwindow_init(GladeXML* pGladeXML)
 	g_MainWindow.pTooltip 		= tooltip_new();
 
 	// Drawing area
-	g_MainWindow.pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());
+	g_MainWindow.pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());	
+	g_print("initializing glyphs\n");
+	glyph_init(g_MainWindow.pDrawingArea);
 	gtk_widget_show(GTK_WIDGET(g_MainWindow.pDrawingArea));
 
 	// create map and load style
 	map_new(&g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea));
 	map_style_load(g_MainWindow.pMap, MAP_STYLE_FILENAME);
-
-	// Signal handlers for drawing area
-	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_release_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "motion_notify_event", G_CALLBACK(mainwindow_on_mouse_motion), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "scroll_event", G_CALLBACK(mainwindow_on_mouse_scroll), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "enter_notify_event", G_CALLBACK(mainwindow_on_enter_notify), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "leave_notify_event", G_CALLBACK(mainwindow_on_leave_notify), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "key_press_event", G_CALLBACK(mainwindow_on_key_press), NULL);
+	
+	g_assert(g_MainWindow.pContentBox);
+	g_assert(g_MainWindow.pDrawingArea);
 
 	// Pack drawing area into application window
 	gtk_box_pack_end(GTK_BOX(g_MainWindow.pContentBox), GTK_WIDGET(g_MainWindow.pDrawingArea),
@@ -433,17 +425,29 @@ void mainwindow_init(GladeXML* pGladeXML)
 	mainwindow_refresh_locationset_list();
 
 	mainwindow_statusbar_update_zoomscale();
-	mainwindow_statusbar_update_position();	
+	mainwindow_statusbar_update_position();
 
 	// Slide timeout
 	g_timeout_add(SLIDE_TIMEOUT_MS, (GSourceFunc)mainwindow_on_slide_timeout, (gpointer)NULL);
 
 	// GPS check timeout
 	g_timeout_add(TIMER_GPS_REDRAW_INTERVAL_MS, (GSourceFunc)mainwindow_on_gps_redraw_timeout, (gpointer)NULL);
-	mainwindow_on_gps_redraw_timeout(NULL);		// give it a call to set all labels, etc.
+	mainwindow_on_gps_redraw_timeout(NULL);     // give it a call to set all labels, etc.
 
 	// When main window closes, quit.
 	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
+
+	// Signal handlers for drawing area
+	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_release_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "motion_notify_event", G_CALLBACK(mainwindow_on_mouse_motion), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "scroll_event", G_CALLBACK(mainwindow_on_mouse_scroll), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "enter_notify_event", G_CALLBACK(mainwindow_on_enter_notify), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "leave_notify_event", G_CALLBACK(mainwindow_on_leave_notify), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "key_press_event", G_CALLBACK(mainwindow_on_key_press), NULL);
 }
 
 gboolean mainwindow_locationset_list_is_separator_callback(GtkTreeModel *_unused, GtkTreeIter *pIter, gpointer __unused)
@@ -483,7 +487,6 @@ static void mainwindow_configure_locationset_list()
 		// NEW COLUMN: "Name" column
 		pCellRenderer = gtk_cell_renderer_text_new();
 			g_object_set(G_OBJECT(pCellRenderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
-			//g_object_set(G_OBJECT(pCellRenderer), "width-chars", LOCATIONSET_LIST_MIN_NAME_WIDTH_IN_CHARS, NULL);
 		pColumn = gtk_tree_view_column_new_with_attributes("Name", pCellRenderer, "markup", LOCATIONSETLIST_COLUMN_NAME, NULL);
 			gtk_tree_view_column_set_expand(pColumn, TRUE);
 		gtk_tree_view_append_column(g_MainWindow.pLocationSetsTreeView, pColumn);

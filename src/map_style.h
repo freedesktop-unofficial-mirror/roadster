@@ -31,6 +31,7 @@ G_BEGIN_DECLS
 
 #include "main.h"
 #include "map.h"
+#include "glyph.h"
 
 typedef struct dashstyle {
 	gdouble* pafDashList;	// the dashes, as an array of gdouble's (for Cairo)
@@ -40,16 +41,14 @@ typedef struct dashstyle {
 
 // defines the look of a layer
 typedef struct layerstyle {
-	color_t clrPrimary;	// Color used for polygon fill or line stroke
-	gdouble fLineWidth;
+	color_t clrPrimary;		// Color used for polygon fill or line stroke
+	glyph_t* pGlyphFill;	// glyph image used to fill polygon, or NULL
 
+	// Used just for lines
+	gdouble fLineWidth;
 	gint nJoinStyle;
 	gint nCapStyle;
-	
 	dashstyle_t* pDashStyle;
-
-	// XXX: switch to this:
-	//dashstyle_t pDashStyle;	// can be NULL
 
 	// Used just for text
 	gdouble fFontSize;

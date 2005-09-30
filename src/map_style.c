@@ -33,8 +33,6 @@
 #define EACH_ATTRIBUTE_OF_NODE(a,n)		(a) = (n)->properties ; (a) != NULL ; (a) = (a)->next
 #define EACH_CHILD_OF_NODE(c,n)			(c) = (n)->children ; (c) != NULL ; (c) = (c)->next
 
-GHashTable* g_pConstantsHash = NULL;	// XXX: globals suck. :(
-
 static maplayer_t* map_style_new_layer();
 
 static void map_style_load_from_file(map_t* pMap, const gchar* pszFileName);
@@ -42,8 +40,6 @@ static void map_style_parse_file(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode);
 static void map_style_parse_layers(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pParentNode);
 static void map_style_parse_layer(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode);
 static void map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, xmlNodePtr pNode);
-static void map_style_parse_constants(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pParentNode);
-static void map_style_parse_constant(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode);
 
 // Debugging
 static void map_style_print_layer(maplayer_t *layer);
@@ -86,38 +82,7 @@ void map_style_load(map_t* pMap, const gchar* pszFileName)
 	}
 
 	pMap->pLayersArray = g_ptr_array_new();
-
-	if(g_pConstantsHash != NULL) {
-		g_hash_table_destroy(g_pConstantsHash);		// NOTE: This frees all keys and values for us.
-	}
-	g_pConstantsHash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);	// same as above
 	map_style_load_from_file(pMap, pszFileName);
-}
-
-//
-// Constants
-//
-gboolean map_style_constant_get(const gchar* pszName, gchar** ppszReturnValue)
-{
-	g_assert(pszName);
-	g_assert(ppszReturnValue);
-	g_assert(*ppszReturnValue == NULL);	// require pointer to NULL pointer
-
-	gchar* pszValue = g_hash_table_lookup(g_pConstantsHash, pszName);
-	if(pszValue != NULL) {
-		*ppszReturnValue = pszValue;
-		return TRUE;
-	}
-	return FALSE;
-}
-
-void map_style_constant_set(const gchar* pszName, const gchar* pszValue)
-{
-	g_assert(pszName != NULL);
-	g_assert(pszValue != NULL);
-
-	// NOTE: if there was an existing key with this name, the old key and old value will get auto-freed by glib
-	g_hash_table_replace(g_pConstantsHash, (gchar*)pszName, (gchar*)pszValue);
 }
 
 static maplayer_t* map_style_new_layer()
@@ -315,9 +280,6 @@ static void map_style_parse_file(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pParent
 			if(strcmp(pChildNode->name, "layers") == 0) {
 				map_style_parse_layers(pMap, pDoc, pChildNode);
 			}
-			else if(strcmp(pChildNode->name, "constants") == 0) {
-				map_style_parse_constants(pMap, pDoc, pChildNode);
-			}
 		}
 	}
 }
@@ -338,55 +300,6 @@ static void map_style_parse_layers(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pPare
 			map_style_parse_layer(pMap, pDoc, pChildNode);
 		}
 	}
-}
-
-static void map_style_parse_constants(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pParentNode)
-{
-	g_assert(pMap != NULL);
-	g_assert(pDoc != NULL);
-	g_assert(pParentNode != NULL);
-
-//	g_print("map_style_parse_constants()\n");
-	xmlNodePtr pChildNode = NULL;
-
-	for(EACH_CHILD_OF_NODE(pChildNode, pParentNode)) {
-		if(pChildNode->type == XML_ELEMENT_NODE && strcmp(pChildNode->name, "constant") == 0) {
-			map_style_parse_constant(pMap, pDoc, pChildNode);
-		}
-	}
-}
-
-static void map_style_parse_constant(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode)
-{
-	g_assert(pMap != NULL);
-	g_assert(pDoc != NULL);
-	g_assert(pNode != NULL);
-
-//	g_print("map_style_parse_constant()\n");
-	xmlAttrPtr pAttribute = NULL;
-
-	gchar* pszName = NULL;
-	gchar* pszValue = NULL;
-
-	for(EACH_ATTRIBUTE_OF_NODE(pAttribute, pNode)) {
-		if(strcmp(pAttribute->name, "name") == 0) {
-			g_free(pszName);
-			pszName = get_attribute_value(pDoc, pAttribute);
-		}
-		else if(strcmp(pAttribute->name, "value") == 0) {
-			g_free(pszValue);
-			pszValue = get_attribute_value(pDoc, pAttribute);
-		}
-	}
-
-	if(pszName != NULL && pszValue != NULL) {
-		// duplicate strings to keep long-term in the hash table
-		map_style_constant_set(g_strdup(pszName), g_strdup(pszValue));		
-	}
-	g_free(pszName);
-	g_free(pszValue);
-//	g_free(pszName);
-//	g_free(pszValue);
 }
 
 static void map_style_parse_layer(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode)
@@ -467,13 +380,6 @@ map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, 
 		map_style_parse_zoomlevel(pszZoomLevel, &nMinZoomLevel, &nMaxZoomLevel);
 	}
 
-	// If the 'value' is the name of a constant, replace it with the value of the constant
-	gchar* pszConstantValue = NULL;
-	if(map_style_constant_get(pszValue, &pszConstantValue)) {
-		g_free(pszValue);
-		pszValue = g_strdup(pszConstantValue);
-	}
-
 	if(pszName != NULL && pszValue != NULL) {
 		gint i;
 		if(strcmp(pszName, "line-width") == 0) {
@@ -518,6 +424,11 @@ map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, 
 					g_warning("bad dash style '%s' (should look like \"5.0 3.5\"\n", pszValue);
 					break;
 				}
+			}
+		}
+		else if(strcmp(pszName, "fill-image") == 0) {
+			for(i = nMinZoomLevel - 1; i < nMaxZoomLevel ; i++) {
+				pLayer->paStylesAtZoomLevels[i]->pGlyphFill = glyph_load(pszValue);
 			}
 		}
 		else if(strcmp(pszName, "bold") == 0) {

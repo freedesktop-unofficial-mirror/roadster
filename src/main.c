@@ -95,8 +95,8 @@ void main_debug_insert_test_data()
 
 	// New POI
 	mappoint_t pt;
-	pt.fLatitude = 42.37382;
-	pt.fLongitude = -71.10054;
+	pt.fLatitude = 42.37391;
+	pt.fLongitude = -71.10045;
 	nNewLocationID = 0;
 	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
@@ -104,8 +104,8 @@ void main_debug_insert_test_data()
 	location_insert_attribute(nNewLocationID, nAttributeIDReview, "1369 Coffee House (specifically, the one on Mass Ave) has a special place in my heart; it's sort of my office away from the office, or my vacation home away from my tiny Central Square rented home. It's cozy. It's hip.", NULL);
 
 	// New POI
-	pt.fLatitude = 42.36650;
-	pt.fLongitude = -71.10554;
+	pt.fLatitude = 42.36654;
+	pt.fLongitude = -71.10541;
 	nNewLocationID = 0;
 	location_insert(nNewLocationSetID, &pt, &nNewLocationID);
 	location_insert_attribute(nNewLocationID, LOCATION_ATTRIBUTE_ID_NAME, "1369 Coffee House", NULL);
@@ -151,13 +151,8 @@ gboolean main_init(void)
 	track_init();
 	g_print("initializing map styles\n");
 	map_style_init();
-	g_print("initializing glyphs\n");
-	glyph_init();
 	g_print("initializing map\n");
 	map_init();
-
-	g_print("initializing search\n");
-	search_init();
 
 	g_print("initializing scenemanager\n");
 	scenemanager_init();
@@ -165,6 +160,12 @@ gboolean main_init(void)
 	g_print("initializing gpsclient\n");
 	gpsclient_init();
 
+	g_print("initializing animator\n");
+	animator_init();
+
+	//
+	// Database
+	//
 	g_print("initializing db\n");
 	db_init();
 
@@ -174,22 +175,24 @@ gboolean main_init(void)
 	g_print("creating database tables\n");
 	db_create_tables();
 
+	main_debug_insert_test_data();
+
+	//
+	// Load location sets from DB.  This is "coffee shops", "ATMs", etc.
+	//
 	g_print("initializing locationsets\n");
 	locationset_init();
 
-	g_print("initializing locations\n");
-	location_init();
-
-	g_print("initializing animator\n");
-	animator_init();
-
-	main_debug_insert_test_data();
-
-	// Load location sets from DB.  This is "coffee shops", "ATMs", etc.
-	locationset_load_locationsets();
-
 	g_print("initializing gui\n");
 	gui_init();
+
+	locationset_load_locationsets();	// needs glyph
+
+	g_print("initializing search\n");
+	search_init();
+
+	g_print("initializing locations\n");
+	location_init();
 
 	g_print("initialization complete\n");
 

@@ -28,17 +28,20 @@
 #include <cairo.h>
 
 typedef struct {
-	GdkPixbuf* pPixbuf;
+	GdkPixbuf* pPixbuf;		// pixbuf is just a decoded image
+	GdkPixmap* pPixmap;		// pixmap is converted to screen color depth, etc.
 	gint nWidth;
 	gint nHeight;
 	gint nMaxWidth;
 	gint nMaxHeight;
 	gchar* pszName;
+	gint nReferenceCount;
 } glyph_t;
 
-void glyph_init(void);
+void glyph_init(GtkWidget* pTargetWidget);
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight);
 GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph);
+GdkPixmap* glyph_get_pixmap(glyph_t* pGlyph);
 //void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY);
 void glyph_draw_centered(glyph_t* pGlyph, GdkDrawable* pTargetDrawable, GdkGC* pGC, gdouble fX, gdouble fY);
 void glyph_deinit(void);

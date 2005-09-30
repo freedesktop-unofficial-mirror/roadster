@@ -403,3 +403,48 @@ gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplac
 	g_string_free(pStringBuffer, FALSE);	// do NOT free the 'str' memory
 	return pszReturn;
 }
+
+//
+// 
+//
+static void _util_gtk_entry_set_hint_text(GtkEntry* pEntry, const gchar* pszHint)
+{
+	gtk_widget_modify_text(pEntry, GTK_STATE_NORMAL, &(GTK_WIDGET(pEntry)->style->text_aa[GTK_WIDGET_STATE(pEntry)]));
+	gtk_entry_set_text(pEntry, pszHint);
+}
+
+static void _util_gtk_entry_clear_hint_text(GtkEntry* pEntry)
+{
+	gtk_widget_modify_text(pEntry, GTK_STATE_NORMAL, NULL); 
+	gtk_entry_set_text(pEntry, "");
+}
+
+static gboolean _util_gtk_entry_on_focus_in_event(GtkEntry* pEntry, GdkEventFocus* _unused, gchar* pszHint)
+{
+	// If the box is showing pszHint, clear it
+	gchar* pszExistingText = gtk_entry_get_text(pEntry);
+	if(strcmp(pszExistingText, pszHint) == 0) {
+		_util_gtk_entry_clear_hint_text(pEntry);
+	}
+	return FALSE;	// always say we didn't handle it so the normal processing happens
+}
+
+static gboolean _util_gtk_entry_on_focus_out_event(GtkEntry* pEntry, GdkEventFocus* _unused, gchar* pszHint)
+{
+	// If the box is empty, set the hint text
+	gchar* pszExistingText = gtk_entry_get_text(pEntry);
+	if(strcmp(pszExistingText, "") == 0) {
+		_util_gtk_entry_set_hint_text(pEntry, pszHint);
+	}
+	return FALSE;	// always say we didn't handle it so the normal processing happens
+}
+
+// The API
+void util_gtk_entry_add_hint_text(GtkEntry* pEntry, const gchar* pszHint)
+{
+	g_signal_connect(G_OBJECT(pEntry), "focus-in-event", _util_gtk_entry_on_focus_in_event, pszHint);
+	g_signal_connect(G_OBJECT(pEntry), "focus-out-event", _util_gtk_entry_on_focus_out_event, pszHint);
+
+	// Init it
+	_util_gtk_entry_on_focus_out_event(pEntry, NULL, pszHint);
+}

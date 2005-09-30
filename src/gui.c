@@ -44,12 +44,18 @@ void gui_init()
 	glade_xml_signal_autoconnect(pGladeXML);
 
 	// init all windows/dialogs
-	mainwindow_init(pGladeXML);	
+	g_print("- initializing mainwindow\n");
+	mainwindow_init(pGladeXML);
+	g_print("- initializing searchwindow\n");
 	searchwindow_init(pGladeXML);
+	g_print("- initializing gotowindow\n");
 	gotowindow_init(pGladeXML);
+	g_print("- initializing importwindow\n");
 	importwindow_init(pGladeXML);
 	//datasetwindow_init(pGladeXML);
+	g_print("- initializing welcomewindow\n");
 	welcomewindow_init(pGladeXML);
+	g_print("- initializing locationeditwindow\n");
 	locationeditwindow_init(pGladeXML);
 }
 

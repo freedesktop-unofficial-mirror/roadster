@@ -73,4 +73,7 @@ typedef struct {
 
 gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplacements, gint nNumReplacements);
 
+// GtkEntry "hint"
+void util_gtk_entry_add_hint_text(GtkEntry* pEntry, const gchar* pszMessage);
+
 #endif

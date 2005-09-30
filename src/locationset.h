@@ -45,6 +45,8 @@ typedef struct locationset {
 //	locationsetstyle_t Style;
 	glyph_t* pGlyph;
 	glyph_t* pMapGlyph;
+	glyph_t* pMapGlyphSmall;
+
 } locationset_t;
 
 void locationset_init(void);

@@ -27,7 +27,7 @@
 #define 	ROUND_DOWN_TEXT_ANGLE	(100.0)		// 10.0 to keep one decimal place or 100.0 to keep two
 
 #define ENABLE_LABEL_LIMIT_TO_ROAD				// take road line length into account when drawing labels!
-#define	ACCEPTABLE_LINE_LABEL_OVERDRAW_IN_PIXELS (15)	// XXX: make this a run-time variable
+#define	ACCEPTABLE_LINE_LABEL_OVERDRAW_IN_PIXELS (18)	// XXX: make this a run-time variable
 #define ENABLE_DRAW_MAP_SCALE
 //#define ENABLE_MAP_DROP_SHADOW
 

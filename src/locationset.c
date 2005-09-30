@@ -106,7 +106,8 @@ void locationset_load_locationsets(void)
 			pNewLocationSet->pszName = g_strdup(aRow[1]);
 			pNewLocationSet->pszIconName = g_strdup(aRow[2]);
 			pNewLocationSet->pGlyph = glyph_load_at_size(pNewLocationSet->pszIconName, SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH, SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
-			pNewLocationSet->pMapGlyph = glyph_load_at_size(pNewLocationSet->pszIconName, 16, 16);
+			pNewLocationSet->pMapGlyph = glyph_load_at_size(pNewLocationSet->pszIconName, 24, 24);
+			pNewLocationSet->pMapGlyphSmall = glyph_load_at_size(pNewLocationSet->pszIconName, 6, 6);
 			pNewLocationSet->nLocationCount = atoi(aRow[3]);
 
 			// Add the new set to both data structures

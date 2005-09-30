@@ -105,10 +105,14 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 											pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,          // data
 											pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]); 	// style
 			}
+			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LOCATIONS) {
+				map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
+			}
+			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LOCATION_LABELS) {
+				//map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
+			}
 		}
-
 		map_draw_gdk_tracks(pMap, pPixmap, pRenderMetrics);
-		map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
 	}
 
 	// 3. Labels
@@ -119,18 +123,6 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 	TIMER_END(maptimer, "END RENDER MAP (gdk)");
 }
 
-// static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap)
-// {
-//     GdkColor clr;
-//     clr.red = 236/255.0 * 65535;
-//     clr.green = 230/255.0 * 65535;
-//     clr.blue = 230/255.0 * 65535;
-//     gdk_gc_set_rgb_fg_color(pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], &clr);
-//
-//     gdk_draw_rectangle(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)],
-//             TRUE, 0,0, pMap->MapDimensions.uWidth, pMap->MapDimensions.uHeight);
-// }
-
 static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
 {
 	mappoint_t* pPoint;
@@ -139,8 +131,25 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	gint iPoint;
 
 	if(pLayerStyle->clrPrimary.fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
+	if(pRoadsArray->len == 0) return;
 
-	map_draw_gdk_set_color(pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], &(pLayerStyle->clrPrimary));
+	GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
+
+	GdkGCValues gcValues;
+	if(pLayerStyle->pGlyphFill != NULL) {
+		// Instead of filling with a color, fill with a tiled image
+		gdk_gc_get_values(pGC, &gcValues);
+		gdk_gc_set_fill(pGC, GDK_TILED);
+		gdk_gc_set_tile(pGC, glyph_get_pixmap(pLayerStyle->pGlyphFill));
+		
+		// This makes the fill image scroll with the map, instead of staying still
+		gdk_gc_set_ts_origin(pGC, SCALE_X(pRenderMetrics, pRenderMetrics->fScreenLongitude), SCALE_Y(pRenderMetrics, pRenderMetrics->fScreenLatitude));
+	}
+	else {
+		// Simple color fill
+		map_draw_gdk_set_color(pGC, &(pLayerStyle->clrPrimary));
+	}
+
 
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
@@ -154,10 +163,11 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
 			if(pRoad->pPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-				//g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
+				g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
 				continue;
 			}
 
+			// XXX: the bounding box should be pre-calculated!!!!
 			for(iPoint=0 ; iPoint<pRoad->pPointsArray->len ; iPoint++) {
 				pPoint = g_ptr_array_index(pRoad->pPointsArray, iPoint);
 
@@ -179,18 +189,44 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 			{
 			    continue;	// not visible
 			}
+
 			gdk_draw_polygon(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)],
 				TRUE, aPoints, pRoad->pPointsArray->len);
    		}
+	}
+	if(pLayerStyle->pGlyphFill != NULL) {
+		// Restore fill style
+		gdk_gc_set_values(pGC, &gcValues, GDK_GC_FILL);
 	}
 }
 
 // useful for filling the screen with a color.  not much else.
 static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle)
 {
-	map_draw_gdk_set_color(pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], &(pLayerStyle->clrPrimary));
+	GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
+
+	GdkGCValues gcValues;
+	if(pLayerStyle->pGlyphFill != NULL) {
+		// Instead of filling with a color, fill with a tiled image
+		gdk_gc_get_values(pGC, &gcValues);
+		gdk_gc_set_fill(pGC, GDK_TILED);
+		gdk_gc_set_tile(pGC, glyph_get_pixmap(pLayerStyle->pGlyphFill));
+		
+		// This makes the fill image scroll with the map, instead of staying still
+		gdk_gc_set_ts_origin(pGC, SCALE_X(pRenderMetrics, pRenderMetrics->fScreenLongitude), SCALE_Y(pRenderMetrics, pRenderMetrics->fScreenLatitude));
+	}
+	else {
+		// Simple color fill
+		map_draw_gdk_set_color(pGC, &(pLayerStyle->clrPrimary));
+	}
+
 	gdk_draw_rectangle(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)],
 			TRUE, 0,0, pMap->MapDimensions.uWidth, pMap->MapDimensions.uHeight);
+
+	if(pLayerStyle->pGlyphFill != NULL) {
+		// Restore fill style
+		gdk_gc_set_values(pGC, &gcValues, GDK_GC_FILL);
+	}
 }
 
 static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
@@ -336,20 +372,17 @@ static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t
 	}
 }
 
+// Draw all locations from sets marked visible
 static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics)
 {
 	const GPtrArray* pLocationSetsArray = locationset_get_array();
 
-	g_print("pLocationSetsArray->len = %d\n", pLocationSetsArray->len);
-
 	gint i;
 	for(i=0 ; i<pLocationSetsArray->len ; i++) {
 		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetsArray, i);
-
 		if(!locationset_is_visible(pLocationSet)) continue;
-		g_print("visible one: %s\n", pLocationSet->pszName);
 
-		// 2. Get array of Locations from the hash table using LocationSetID
+		// 2. Get the array of Locations from the hash table using LocationSetID
 		GPtrArray* pLocationsArray;
 		pLocationsArray = g_hash_table_lookup(pMap->pLocationArrayHashTable, &(pLocationSet->nID));
 		if(pLocationsArray != NULL) {
@@ -364,7 +397,7 @@ static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetric
 
 static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray)
 {
-	g_print("Drawing set with %d\n", pLocationsArray->len);
+	//g_print("Drawing set with %d\n", pLocationsArray->len);
 	gint i;
 	for(i=0 ; i<pLocationsArray->len ; i++) {
 		location_t* pLocation = g_ptr_array_index(pLocationsArray, i);
@@ -378,34 +411,38 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		    continue;   // not visible
 		}
 
-		gint nX = (gint)SCALE_X(pRenderMetrics, pLocation->Coordinates.fLongitude);
-		gint nY = (gint)SCALE_Y(pRenderMetrics, pLocation->Coordinates.fLatitude);
+		gdouble fX = SCALE_X(pRenderMetrics, pLocation->Coordinates.fLongitude);
+		gdouble fY = SCALE_Y(pRenderMetrics, pLocation->Coordinates.fLatitude);
 
 		GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
-		glyph_draw_centered(pLocationSet->pMapGlyph, pPixmap, pGC, (gdouble)nX, (gdouble)nY);
-
-//		g_print("drawing at %d,%d\n", nX,nY);
-
-//         GdkColor clr1;
-//         clr1.red = 255/255.0 * 65535;
-//         clr1.green = 80/255.0 * 65535;
-//         clr1.blue = 80/255.0 * 65535;
-//         GdkColor clr2;
-//         clr2.red = 255/255.0 * 65535;
-//         clr2.green = 255/255.0 * 65535;
-//         clr2.blue = 255/255.0 * 65535;
-//
-//         gdk_gc_set_rgb_fg_color(pGC, &clr1);
-//         gdk_draw_rectangle(pPixmap, pGC, TRUE,
-//                     nX-3,nY-3,
-//                     7, 7);
-//         gdk_gc_set_rgb_fg_color(pGC, &clr2);
-//         gdk_draw_rectangle(pPixmap, pGC, TRUE,
-//                     nX-2,nY-2,
-//                     5, 5);
-//         gdk_gc_set_rgb_fg_color(pGC, &clr1);
-//         gdk_draw_rectangle(pPixmap, pGC, TRUE,
-//                     nX-1,nY-1,
-//                     3, 3);
+		if(map_get_zoomlevel(pMap) <= 3) {
+			glyph_draw_centered(pLocationSet->pMapGlyphSmall, pPixmap, pGC, fX, fY);
+		}
+		else {
+			glyph_draw_centered(pLocationSet->pMapGlyph, pPixmap, pGC, fX, fY);
+		}
 	}
 }
+
+//             GdkColor clr1;
+//             clr1.red = 255/255.0 * 65535;
+//             clr1.green = 80/255.0 * 65535;
+//             clr1.blue = 80/255.0 * 65535;
+//             GdkColor clr2;
+//             clr2.red = 255/255.0 * 65535;
+//             clr2.green = 255/255.0 * 65535;
+//             clr2.blue = 255/255.0 * 65535;
+//
+//             gdk_gc_set_rgb_fg_color(pGC, &clr1);
+//             gdk_draw_rectangle(pPixmap, pGC, TRUE,
+//                         nX-3,nY-3,
+//                         7, 7);
+//             gdk_gc_set_rgb_fg_color(pGC, &clr2);
+//             gdk_draw_rectangle(pPixmap, pGC, TRUE,
+//                         nX-2,nY-2,
+//                         5, 5);
+//             gdk_gc_set_rgb_fg_color(pGC, &clr1);
+//             gdk_draw_rectangle(pPixmap, pGC, TRUE,
+//                         nX-1,nY-1,
+//                         3, 3);
+
