@@ -404,6 +404,28 @@ gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplac
 	return pszReturn;
 }
 
+gboolean util_gtk_window_is_fullscreen(GtkWindow* pWindow)
+{
+    GdkWindow* pTopLevelGDKWindow = gdk_window_get_toplevel(GTK_WIDGET(pWindow)->window);
+	g_return_if_fail(pTopLevelGDKWindow != NULL);
+
+	GdkWindowState windowstate = gdk_window_get_state(pTopLevelGDKWindow);
+
+	return((windowstate & GDK_WINDOW_STATE_FULLSCREEN) > 0);
+}
+
+gboolean util_gtk_window_set_fullscreen(GtkWindow* pWindow, gboolean bFullscreen)
+{
+	GdkWindow* pTopLevelGDKWindow = gdk_window_get_toplevel(GTK_WIDGET(pWindow)->window);
+	g_return_if_fail(pTopLevelGDKWindow != NULL);
+	if(bFullscreen) {
+		gdk_window_fullscreen(pTopLevelGDKWindow);
+	}
+	else {
+		gdk_window_unfullscreen(pTopLevelGDKWindow);
+	}
+}
+
 //
 // 
 //
@@ -448,3 +470,5 @@ void util_gtk_entry_add_hint_text(GtkEntry* pEntry, const gchar* pszHint)
 	// Init it
 	_util_gtk_entry_on_focus_out_event(pEntry, NULL, pszHint);
 }
+
+

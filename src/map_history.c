@@ -26,6 +26,8 @@
 #include "map.h"
 #include "map_history.h"
 
+static void map_history_debug_print(maphistory_t* pHistory);
+
 typedef struct {
 	mappoint_t MapPoint;
 	gint nZoomLevel;
@@ -72,6 +74,7 @@ void map_history_add(maphistory_t* pHistory, mappoint_t* pPoint, gint nZoomLevel
 	pHistory->nTotalItems++;
 
 	g_assert(pHistory->nCurrentIndex < pHistory->nTotalItems);
+	map_history_debug_print(pHistory);
 }
 
 gboolean map_history_can_go_forward(maphistory_t* pHistory)
@@ -88,6 +91,7 @@ gboolean map_history_go_forward(maphistory_t* pHistory)
 {
 	if(map_history_can_go_forward(pHistory)) {
 		pHistory->nCurrentIndex++;
+		map_history_debug_print(pHistory);
 		return TRUE;
 	}
 }
@@ -96,6 +100,7 @@ gboolean map_history_go_back(maphistory_t* pHistory)
 {
 	if(map_history_can_go_back(pHistory)) {
 		pHistory->nCurrentIndex--;
+		map_history_debug_print(pHistory);
 		return TRUE;
 	}
 }
@@ -112,4 +117,17 @@ void map_history_get_current(maphistory_t* pHistory, mappoint_t* pReturnPoint, g
 
 	memcpy(pReturnPoint, &(pCurrent->MapPoint), sizeof(mappoint_t));
 	*pnReturnZoomLevel  = pCurrent->nZoomLevel;
+}
+
+static void map_history_debug_print(maphistory_t* pHistory)
+{
+	return;
+
+	gint i;
+	g_print("Map History:\n");
+	for(i=0 ; i<pHistory->nTotalItems ; i++) {
+		mapview_t* pCurrent = &g_array_index(pHistory->MapViewArray, mapview_t, i);
+
+		g_print("%s(%f,%f @ %d)\n", (i==pHistory->nCurrentIndex) ? "*" : "", pCurrent->MapPoint.fLongitude, pCurrent->MapPoint.fLatitude, pCurrent->nZoomLevel);
+	}
 }

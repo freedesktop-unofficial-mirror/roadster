@@ -305,6 +305,7 @@ static void searchwindow_go_to_selected_result(void)
 		//mainwindow_map_slide_to_mappoint(&pt);
 		mainwindow_set_zoomlevel(nZoomLevel);
 		mainwindow_map_center_on_mappoint(&pt);
+		mainwindow_add_history();
 
 		void* pBusy = mainwindow_set_busy();
 		mainwindow_draw_map(DRAWFLAG_ALL);

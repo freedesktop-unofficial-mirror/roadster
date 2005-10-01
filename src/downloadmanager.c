@@ -38,7 +38,7 @@
 typedef struct {
 	gchar* pszRemoteFilePath;
 	gchar* pszLocalFilePath;								// will be NULL until file moves into 'active' list
-	gint nBytesDownloaded;								// a count
+	gint nBytesDownloaded;									// a count
 
 	downloadmanager_t* pDownloadManager;					// a handy pointer to the parent
 	GnomeVFSAsyncHandle* pGnomeVFSHandle;
@@ -52,9 +52,9 @@ static gboolean _downloadmanager_begin_download(download_t* pDownload);
 static void _downloadmanager_move_pending_to_active(downloadmanager_t* pDownloadManager);
 
 //
-// functions
+// Public API
 //
-downloadmanager_t* _downloadmanager_new(gint nMaxConcurrentActive)
+downloadmanager_t* downloadmanager_new(gint nMaxConcurrentActive)
 {
 	downloadmanager_t* pNew = g_new0(downloadmanager_t, 1);
 	pNew->pActiveArray = g_ptr_array_new();
@@ -78,9 +78,13 @@ void downloadmanager_add_uri(downloadmanager_t* pDownloadManager, const gchar* p
 	_downloadmanager_move_pending_to_active(pDownloadManager);
 }
 
-// Check to see if we can add any pending files to active list
+//
+// Private functions
+//
+
 static void _downloadmanager_move_pending_to_active(downloadmanager_t* pDownloadManager)
 {
+	// Check to see if we can add any pending files to active list
 	if((pDownloadManager->pActiveArray->len < pDownloadManager->nMaxConcurrentActive) && (pDownloadManager->pPendingArray->len > 0)) {
 		// time to promote one from pending
 		download_t* pNext = g_ptr_array_index(pDownloadManager->pPendingArray, 0);

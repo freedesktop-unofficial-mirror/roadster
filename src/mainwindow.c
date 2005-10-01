@@ -125,8 +125,13 @@ typedef enum {
 // Prototypes
 static void mainwindow_setup_selected_tool(void);
 static void mainwindow_map_center_on_windowpoint(gint nX, gint nY);
-static void mainwindow_add_history();
 static void mainwindow_on_web_url_clicked(GtkWidget *_unused, gchar* pszURLPattern);
+
+static gboolean mainwindow_on_window_state_change(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
+
+void mainwindow_update_zoom_buttons();
+
+void mainwindow_on_sidebarmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
 
 static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event);
 static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event);
@@ -139,6 +144,9 @@ static gboolean mainwindow_on_enter_notify(GtkWidget* w, GdkEventCrossing *event
 static gboolean mainwindow_on_leave_notify(GtkWidget* w, GdkEventCrossing *event);
 static void 	mainwindow_on_locationset_visible_checkbox_clicked(GtkCellRendererToggle *cell, gchar *path_str, gpointer data);
 static gboolean mainwindow_on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
+static gboolean mainwindow_on_key_release(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
+
+void mainwindow_on_fullscreenmenuitem_activate(GtkMenuItem *menuitem, gpointer user_data);
 
 static void mainwindow_configure_locationset_list();
 void mainwindow_refresh_locationset_list();
@@ -236,6 +244,9 @@ struct {
 	GtkMenuItem* pBackMenuItem;
 	
 	GtkMenuItem* pWebMapsMenuItem;
+
+	GtkCheckMenuItem* pViewSidebarMenuItem;
+	GtkCheckMenuItem* pViewFullscreenMenuItem;
 } g_MainWindow = {0};
 
 // XXX: Use GDK_HAND1 for the map
@@ -354,6 +365,10 @@ void mainwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSidebarNotebook, GTK_NOTEBOOK, "sidebarnotebook");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pContentBox, GTK_VBOX, "mainwindowcontentsbox");
 
+	// View menu
+   	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pViewSidebarMenuItem, GTK_CHECK_MENU_ITEM, "viewsidebarmenuitem");
+   	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pViewFullscreenMenuItem, GTK_CHECK_MENU_ITEM, "viewfullscreenmenuitem");
+
 	// Zoom controls
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomInButton, GTK_BUTTON, "zoominbutton");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomInMenuItem, GTK_MENU_ITEM, "zoominmenuitem");
@@ -399,22 +414,38 @@ void mainwindow_init(GladeXML* pGladeXML)
 	g_MainWindow.pTooltips		= gtk_tooltips_new();
 	g_MainWindow.pTooltip 		= tooltip_new();
 
+
+	// Signal handlers for main window
+	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.pWindow), GDK_KEY_PRESS_MASK);
+	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "window_state_event", G_CALLBACK(mainwindow_on_window_state_change), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "key_press_event", G_CALLBACK(mainwindow_on_key_press), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "key_release_event", G_CALLBACK(mainwindow_on_key_release), NULL);
+	
 	// Drawing area
 	g_MainWindow.pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());	
-	gtk_widget_show(GTK_WIDGET(g_MainWindow.pDrawingArea));
-
-	// create map and load style
-	map_new(&g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea));
-	map_style_load(g_MainWindow.pMap, MAP_STYLE_FILENAME);
-	
-	g_assert(g_MainWindow.pContentBox);
-	g_assert(g_MainWindow.pDrawingArea);
 
 	// Pack drawing area into application window
 	gtk_box_pack_end(GTK_BOX(g_MainWindow.pContentBox), GTK_WIDGET(g_MainWindow.pDrawingArea),
 					TRUE, // expand
 					TRUE, // fill
 					 0);
+	gtk_widget_show(GTK_WIDGET(g_MainWindow.pDrawingArea));
+	
+	// Signal handlers for drawing area
+	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_release_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "motion_notify_event", G_CALLBACK(mainwindow_on_mouse_motion), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "scroll_event", G_CALLBACK(mainwindow_on_mouse_scroll), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "enter_notify_event", G_CALLBACK(mainwindow_on_enter_notify), NULL);
+	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "leave_notify_event", G_CALLBACK(mainwindow_on_leave_notify), NULL);
+
+	// create map and load style
+	map_new(&g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea));
+	map_style_load(g_MainWindow.pMap, MAP_STYLE_FILENAME);
+	
 
 	cursor_init();
 
@@ -434,17 +465,9 @@ void mainwindow_init(GladeXML* pGladeXML)
 	// When main window closes, quit.
 	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
 
-	// Signal handlers for drawing area
-	gtk_widget_add_events(GTK_WIDGET(g_MainWindow.pDrawingArea), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "expose_event", G_CALLBACK(mainwindow_on_expose_event), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "configure_event", G_CALLBACK(mainwindow_on_configure_event), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_press_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "button_release_event", G_CALLBACK(mainwindow_on_mouse_button_click), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "motion_notify_event", G_CALLBACK(mainwindow_on_mouse_motion), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "scroll_event", G_CALLBACK(mainwindow_on_mouse_scroll), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "enter_notify_event", G_CALLBACK(mainwindow_on_enter_notify), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "leave_notify_event", G_CALLBACK(mainwindow_on_leave_notify), NULL);
-	g_signal_connect(G_OBJECT(g_MainWindow.pDrawingArea), "key_press_event", G_CALLBACK(mainwindow_on_key_press), NULL);
+	// XXX: move map to starting location... for now it's (0,0)
+	mainwindow_add_history();
+	mainwindow_update_zoom_buttons();	// make sure buttons are grayed out
 }
 
 gboolean mainwindow_locationset_list_is_separator_callback(GtkTreeModel *_unused, GtkTreeIter *pIter, gpointer __unused)
@@ -669,12 +692,12 @@ void mainwindow_statusbar_update_position(void)
 */
 void mainwindow_set_sidebox_visible(gboolean bVisible)
 {
-	if(bVisible) {
-		gtk_widget_show(GTK_WIDGET(g_MainWindow.pSidebox));
-	}
-	else {
-		gtk_widget_hide(GTK_WIDGET(g_MainWindow.pSidebox));
-	}
+	// Set the menu's check without calling the signal handler
+	g_signal_handlers_block_by_func(g_MainWindow.pViewSidebarMenuItem, mainwindow_on_sidebarmenuitem_activate, NULL);
+	gtk_check_menu_item_set_active(g_MainWindow.pViewSidebarMenuItem, bVisible);
+	g_signal_handlers_unblock_by_func(g_MainWindow.pViewSidebarMenuItem, mainwindow_on_sidebarmenuitem_activate, NULL);
+
+	util_gtk_widget_set_visible(GTK_WIDGET(g_MainWindow.pSidebox), bVisible);
 }
 
 gboolean mainwindow_get_sidebox_visible(void)
@@ -689,16 +712,7 @@ GtkWidget* mainwindow_get_window(void)
 
 void mainwindow_toggle_fullscreen(void)
 {
-    GdkWindow* pTopLevelGDKWindow = gdk_window_get_toplevel(GTK_WIDGET(g_MainWindow.pWindow)->window);
-	g_return_if_fail(pTopLevelGDKWindow != NULL);
-
-	GdkWindowState windowstate = gdk_window_get_state(pTopLevelGDKWindow);
-	if(windowstate & GDK_WINDOW_STATE_FULLSCREEN) {
-		gdk_window_unfullscreen(pTopLevelGDKWindow);
-	}
-	else {
-		gdk_window_fullscreen(pTopLevelGDKWindow);
-	}
+	util_gtk_window_set_fullscreen(g_MainWindow.pWindow, !util_gtk_window_is_fullscreen(g_MainWindow.pWindow));
 }
 
 // User clicked Quit window
@@ -730,7 +744,7 @@ void mainwindow_set_zoomlevel(gint nZoomLevel)
 	map_set_zoomlevel(g_MainWindow.pMap, nZoomLevel);
 
 	// set zoomlevel scale but prevent it from calling handler (mainwindow_on_zoomscale_value_changed)
-        g_signal_handlers_block_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
+    g_signal_handlers_block_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 	gtk_range_set_value(GTK_RANGE(g_MainWindow.pZoomScale), nZoomLevel);
 	g_signal_handlers_unblock_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 
@@ -850,6 +864,8 @@ void mainwindow_on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
 	// tell the map
 	map_set_zoomlevel(g_MainWindow.pMap, map_get_zoomlevel(g_MainWindow.pMap) + 1);
+	
+	// update the gui
 	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.pMap));
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
@@ -1280,6 +1296,20 @@ static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 static gboolean mainwindow_on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	g_print("key_press\n");
+	return FALSE;
+}
+static gboolean mainwindow_on_key_release(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	g_print("key_release\n");
+	return FALSE;
+}
+
+static gboolean mainwindow_on_window_state_change(GtkWidget *_unused, GdkEventKey *pEvent, gpointer __unused)
+{
+	// Set the menu's check without calling the signal handler
+	g_signal_handlers_block_by_func(g_MainWindow.pViewFullscreenMenuItem, mainwindow_on_fullscreenmenuitem_activate, NULL);
+	gtk_check_menu_item_set_active(g_MainWindow.pViewFullscreenMenuItem, util_gtk_window_is_fullscreen(g_MainWindow.pWindow));
+	g_signal_handlers_unblock_by_func(g_MainWindow.pViewFullscreenMenuItem, mainwindow_on_fullscreenmenuitem_activate, NULL);
 }
 
 static void mainwindow_begin_import_geography_data(void)
@@ -1662,7 +1692,7 @@ void mainwindow_on_forwardbutton_clicked(GtkWidget* _unused, gpointer* __unused)
 	mainwindow_update_forward_back_buttons();
 }
 
-static void mainwindow_add_history()
+void mainwindow_add_history()
 {
 	// add the current spot to the history
 	mappoint_t point;

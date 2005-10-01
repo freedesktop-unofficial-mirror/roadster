@@ -1,5 +1,13 @@
 2005-10-01  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/downloadmanager.c: Remove _ from public function _downloadmanager_new().
+	* src/mainwindow.c: Set check on View/Fullscreen and View/Sidebar when state changes for reasons other than the user clicking the menu item.
+	* src/map_history.c: Add some debug printing support.
+	* src/searchwindow.c: Add a new history item when user selects a search result.
+	* src/util.c: Moved some basic window state set/test functions here.
+
+2005-10-01  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* Renamed src/history.c to src/map_history.c
 	* Renamed src/tooltip.c to src/tooltipwindow.c
 	* Renamed src/downloader.c to src/downloadmanager.c

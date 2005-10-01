@@ -1237,7 +1237,7 @@ Banks</property>
 		  </child>
 
 		  <child>
-		    <widget class="GtkCheckMenuItem" id="layerspanemenuitem">
+		    <widget class="GtkCheckMenuItem" id="viewsidebarmenuitem">
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_Sidebar</property>
 		      <property name="use_underline">True</property>
@@ -1337,7 +1337,7 @@ Banks</property>
 		  </child>
 
 		  <child>
-		    <widget class="GtkCheckMenuItem" id="fullscreenmenuitem">
+		    <widget class="GtkCheckMenuItem" id="viewfullscreenmenuitem">
 		      <property name="visible">True</property>
 		      <property name="label" translatable="yes">_Full Screen</property>
 		      <property name="use_underline">True</property>

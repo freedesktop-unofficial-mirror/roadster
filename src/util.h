@@ -58,6 +58,9 @@ gboolean util_treeview_match_all_words_callback(GtkTreeModel *pTreeModel, gint n
 gboolean util_gtk_tree_view_select_next(GtkTreeView* pTreeView);
 gboolean util_gtk_tree_view_select_previous(GtkTreeView* pTreeView);
 
+gboolean util_gtk_window_is_fullscreen(GtkWindow* pWindow);
+gboolean util_gtk_window_set_fullscreen(GtkWindow* pWindow, gboolean bFullscreen);
+
 // if glib < 2.6
 #if(!GLIB_CHECK_VERSION(2,6,0))
 gint g_strv_length(const gchar** a);
