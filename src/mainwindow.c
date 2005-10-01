@@ -46,8 +46,9 @@
 #include "mainwindow.h"
 #include "glyph.h"
 #include "animator.h"
-#include "history.h"
-#include "tooltip.h"
+#include "map_history.h"
+
+#include "tooltipwindow.h"
 
 #define PROGRAM_NAME			"Roadster"
 #define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
@@ -125,7 +126,7 @@ typedef enum {
 static void mainwindow_setup_selected_tool(void);
 static void mainwindow_map_center_on_windowpoint(gint nX, gint nY);
 static void mainwindow_add_history();
-static void mainwindow_on_web_url_clicked(GtkWidget *_unused, gpointer* pszURLPattern);
+static void mainwindow_on_web_url_clicked(GtkWidget *_unused, gchar* pszURLPattern);
 
 static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event);
 static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event);
@@ -198,7 +199,7 @@ struct {
 	GtkProgressBar* pProgressBar;
 
 	// Boxes
-	GtkHBox* pContentBox;
+	GtkVBox* pContentBox;
 
 	// Drawing area
 	GtkDrawingArea* pDrawingArea;
@@ -228,7 +229,7 @@ struct {
 	animator_t* pAnimator;
 
 	// History (forward / back)
-	history_t* pHistory;
+	maphistory_t* pMapHistory;
 	GtkButton* pForwardButton;
 	GtkButton* pBackButton;
 	GtkMenuItem* pForwardMenuItem;
@@ -328,11 +329,11 @@ void mainwindow_init_add_web_maps_menu_items()
 		else {
 			pszName = g_strdup_printf("%s", aWebMapURLs[i].pszName);
 		}
-		GtkMenuItem* pNewMenuItem = gtk_menu_item_new_with_mnemonic(pszName);
+		GtkMenuItem* pNewMenuItem = GTK_MENU_ITEM(gtk_menu_item_new_with_mnemonic(pszName));
 		g_free(pszName);
 		
 		// Add a click handler which gets passed the URL with {TAGS}
-		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", mainwindow_on_web_url_clicked, aWebMapURLs[i].pszURL);
+		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mainwindow_on_web_url_clicked, aWebMapURLs[i].pszURL);
 
 		gtk_menu_shell_append(GTK_MENU_SHELL(pSubMenu), GTK_WIDGET(pNewMenuItem));
 	}
@@ -352,7 +353,6 @@ void mainwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSidebox, GTK_WIDGET, "mainwindowsidebox");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSidebarNotebook, GTK_NOTEBOOK, "sidebarnotebook");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pContentBox, GTK_VBOX, "mainwindowcontentsbox");
-
 
 	// Zoom controls
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomInButton, GTK_BUTTON, "zoominbutton");
@@ -386,7 +386,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pBackButton, GTK_BUTTON, "backbutton");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pForwardMenuItem, GTK_MENU_ITEM, "forwardmenuitem");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pBackMenuItem, GTK_MENU_ITEM, "backmenuitem");
-	g_MainWindow.pHistory = history_new();
+	g_MainWindow.pMapHistory = map_history_new();
 
 	// LocationSet Widgets
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pLocationSetsTreeView, GTK_TREE_VIEW, "locationsetstreeview");
@@ -401,8 +401,6 @@ void mainwindow_init(GladeXML* pGladeXML)
 
 	// Drawing area
 	g_MainWindow.pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());	
-	g_print("initializing glyphs\n");
-	glyph_init(g_MainWindow.pDrawingArea);
 	gtk_widget_show(GTK_WIDGET(g_MainWindow.pDrawingArea));
 
 	// create map and load style
@@ -1632,18 +1630,18 @@ void mainwindow_sidebar_set_tab(gint nTab)
 //
 void mainwindow_update_forward_back_buttons()
 {
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pForwardButton), history_can_go_forward(g_MainWindow.pHistory));
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pBackButton), history_can_go_back(g_MainWindow.pHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pForwardButton), map_history_can_go_forward(g_MainWindow.pMapHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pBackButton), map_history_can_go_back(g_MainWindow.pMapHistory));
 
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pForwardMenuItem), history_can_go_forward(g_MainWindow.pHistory));
-	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pBackMenuItem), history_can_go_back(g_MainWindow.pHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pForwardMenuItem), map_history_can_go_forward(g_MainWindow.pMapHistory));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pBackMenuItem), map_history_can_go_back(g_MainWindow.pMapHistory));
 }
 
 void mainwindow_go_to_current_history_item()
 {
 	mappoint_t point;
 	gint nZoomLevel;
-	history_get_current(g_MainWindow.pHistory, &point, &nZoomLevel);
+	map_history_get_current(g_MainWindow.pMapHistory, &point, &nZoomLevel);
 
 	mainwindow_set_zoomlevel(nZoomLevel);
 	mainwindow_map_center_on_mappoint(&point);
@@ -1652,14 +1650,14 @@ void mainwindow_go_to_current_history_item()
 
 void mainwindow_on_backbutton_clicked(GtkWidget* _unused, gpointer* __unused)
 {
-	history_go_back(g_MainWindow.pHistory);
+	map_history_go_back(g_MainWindow.pMapHistory);
 	mainwindow_go_to_current_history_item();
 	mainwindow_update_forward_back_buttons();
 }
 
 void mainwindow_on_forwardbutton_clicked(GtkWidget* _unused, gpointer* __unused)
 {
-	history_go_forward(g_MainWindow.pHistory);
+	map_history_go_forward(g_MainWindow.pMapHistory);
 	mainwindow_go_to_current_history_item();
 	mainwindow_update_forward_back_buttons();
 }
@@ -1670,7 +1668,7 @@ static void mainwindow_add_history()
 	mappoint_t point;
 	map_get_centerpoint(g_MainWindow.pMap, &point);
 
-	history_add(g_MainWindow.pHistory, &point, map_get_zoomlevel(g_MainWindow.pMap));
+	map_history_add(g_MainWindow.pMapHistory, &point, map_get_zoomlevel(g_MainWindow.pMap));
 
 	mainwindow_update_forward_back_buttons();
 }
@@ -1732,7 +1730,7 @@ void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* __unu
 //     }
 }
 
-void mainwindow_on_web_url_clicked(GtkWidget *_unused, gpointer* pszURLPattern)
+static void mainwindow_on_web_url_clicked(GtkWidget *_unused, gchar* pszURLPattern)
 {
 	static util_str_replace_t apszReplacements[] = {
 		{"{LAT}", NULL},

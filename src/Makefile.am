@@ -20,12 +20,13 @@ bin_PROGRAMS = roadster
 roadster_SOURCES = \
 	main.c\
 	db.c\
-	downloader.c\
+	downloadmanager.c\
 	gui.c\
 	mainwindow.c\
 	gotowindow.c\
 	map.c\
 	map_tile.c\
+	map_history.c\
 	map_style.c\
 	map_draw_cairo.c\
 	map_draw_gdk.c\
@@ -47,8 +48,7 @@ roadster_SOURCES = \
 	road.c\
 	animator.c\
 	gfreelist.c\
-	history.c\
-	tooltip.c
+	tooltipwindow.c
 
 roadster_LDADD = \
 	$(GNOME_LIBS) \

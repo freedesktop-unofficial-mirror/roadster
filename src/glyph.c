@@ -28,12 +28,10 @@
 
 struct {
 	GPtrArray* pGlyphArray;	// to store all glyphs we hand out
-	GtkWidget* pTargetWidget;
 } g_Glyph = {0};
 
-void glyph_init(GtkWidget* pTargetWidget)
+void glyph_init()
 {
-	g_Glyph.pTargetWidget = pTargetWidget;
 	g_Glyph.pGlyphArray = g_ptr_array_new();
 }
 
@@ -139,7 +137,6 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 // Load at image's default size
 glyph_t* glyph_load(const gchar* pszName)
 {
-	g_assert(g_Glyph.pTargetWidget != NULL);
 	g_assert(g_Glyph.pGlyphArray != NULL);
 	g_assert(pszName != NULL);
 
@@ -168,7 +165,6 @@ glyph_t* glyph_load(const gchar* pszName)
 
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
 {
-	g_assert(g_Glyph.pTargetWidget != NULL);
 	g_assert(g_Glyph.pGlyphArray != NULL);
 	g_assert(pszName != NULL);
 
@@ -206,14 +202,15 @@ GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph)
 	return pGlyph->pPixbuf;
 }
 
-GdkPixmap* glyph_get_pixmap(glyph_t* pGlyph)
+GdkPixmap* glyph_get_pixmap(glyph_t* pGlyph, GtkWidget* pTargetWidget)
 {
 	g_assert(pGlyph != NULL);
-	
+
 	if(pGlyph->pPixmap == NULL) {
-		GdkGC* pGC = g_Glyph.pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(g_Glyph.pTargetWidget)];
-        pGlyph->pPixmap = gdk_pixmap_new(g_Glyph.pTargetWidget->window, pGlyph->nWidth, pGlyph->nHeight, -1);	// -1 is bpp
-		gdk_draw_pixbuf(pGlyph->pPixmap, pGC, pGlyph->pPixbuf,0,0,0,0,-1,-1,
+		// XXX: This assumes that we aren't being passed different pTargetWidgets each time
+        pGlyph->pPixmap = gdk_pixmap_new(pTargetWidget->window, pGlyph->nWidth, pGlyph->nHeight, -1);	// -1 is bpp
+		GdkGC* pGC = pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pTargetWidget)];
+		gdk_draw_pixbuf(pGlyph->pPixmap, pGC, pGlyph->pPixbuf, 0,0,0,0,-1,-1,
 						GDK_RGB_DITHER_NONE,0,0);           // no dithering
 	}
 	g_assert(pGlyph->pPixmap != NULL);

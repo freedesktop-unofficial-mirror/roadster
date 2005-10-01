@@ -23,28 +23,23 @@
 
 #include <gtk/gtk.h>
 #include "main.h"
-#include "history.h"
 #include "map.h"
+#include "map_history.h"
 
 typedef struct {
 	mappoint_t MapPoint;
 	gint nZoomLevel;
 } mapview_t;
 
-void history_init(void)
+maphistory_t* map_history_new()
 {
-	// module init
-}
-
-history_t* history_new()
-{
-	history_t* pNew = g_new0(history_t, 1);
+	maphistory_t* pNew = g_new0(maphistory_t, 1);
 	pNew->MapViewArray = g_array_new(FALSE, FALSE, sizeof(mapview_t));
 	pNew->nCurrentIndex = -1;
 	return pNew;
 }
 
-void history_add(history_t* pHistory, mappoint_t* pPoint, gint nZoomLevel)
+void map_history_add(maphistory_t* pHistory, mappoint_t* pPoint, gint nZoomLevel)
 {
 	g_assert(pHistory != NULL);
 	g_assert(pPoint != NULL);
@@ -79,33 +74,33 @@ void history_add(history_t* pHistory, mappoint_t* pPoint, gint nZoomLevel)
 	g_assert(pHistory->nCurrentIndex < pHistory->nTotalItems);
 }
 
-gboolean history_can_go_forward(history_t* pHistory)
+gboolean map_history_can_go_forward(maphistory_t* pHistory)
 {
 	return(pHistory->nCurrentIndex < (pHistory->nTotalItems - 1));
 }
 
-gboolean history_can_go_back(history_t* pHistory)
+gboolean map_history_can_go_back(maphistory_t* pHistory)
 {
 	return(pHistory->nCurrentIndex > 0);
 }
 
-gboolean history_go_forward(history_t* pHistory)
+gboolean map_history_go_forward(maphistory_t* pHistory)
 {
-	if(history_can_go_forward(pHistory)) {
+	if(map_history_can_go_forward(pHistory)) {
 		pHistory->nCurrentIndex++;
 		return TRUE;
 	}
 }
 
-gboolean history_go_back(history_t* pHistory)
+gboolean map_history_go_back(maphistory_t* pHistory)
 {
-	if(history_can_go_back(pHistory)) {
+	if(map_history_can_go_back(pHistory)) {
 		pHistory->nCurrentIndex--;
 		return TRUE;
 	}
 }
 
-void history_get_current(history_t* pHistory, mappoint_t* pReturnPoint, gint* pnReturnZoomLevel)
+void map_history_get_current(maphistory_t* pHistory, mappoint_t* pReturnPoint, gint* pnReturnZoomLevel)
 {
 	g_assert(pHistory != NULL);
 	g_assert(pReturnPoint != NULL);

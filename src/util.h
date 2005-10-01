@@ -72,6 +72,7 @@ typedef struct {
 } util_str_replace_t;
 
 gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplacements, gint nNumReplacements);
+gchar** util_split_words_onto_two_lines(const gchar* pszText, gint nMinLineLength, gint nMaxLineLength);
 
 // GtkEntry "hint"
 void util_gtk_entry_add_hint_text(GtkEntry* pEntry, const gchar* pszMessage);

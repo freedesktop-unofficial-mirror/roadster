@@ -162,6 +162,9 @@ gboolean main_init(void)
 
 	main_debug_insert_test_data();
 
+	g_print("initializing glyphs\n");
+	glyph_init();
+
 	//
 	// Load location sets from DB.  This is "coffee shops", "ATMs", etc.
 	//

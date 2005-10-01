@@ -1,5 +1,5 @@
 /***************************************************************************
- *            welcomewindow.h
+ *            downloader.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -20,23 +20,29 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
-#ifndef _WELCOMEWINDOW_H
-#define _WELCOMEWINDOW_H
 
-G_BEGIN_DECLS
+#ifndef _DOWNLOADMANAGER_H_
+#define _DOWNLOADMANAGER_H_
 
-void welcomewindow_init(GladeXML* pGladeXML);
-void welcomewindow_show(void);
+#include <libgnomevfs/gnome-vfs.h>
+#include <gtk/gtk.h>
 
-/* Funky, auto-lookup glade signal handlers.
+typedef enum { DOWNLOADMANAGER_RESULT_FAILURE=0, DOWNLOADMANAGER_RESULT_SUCCESS } EDownloadManagerFileResult;
 
-   XXX: Better would be to hook these up manually, remove these
-   declarations, and make the functions static.
-*/
-void welcomewindow_on_url_clicked(GtkWidget* pButton, gpointer data);
-void welcomewindow_on_okbutton_clicked(GtkWidget* pButton, gpointer data);
+typedef void (*DownloadManagerCallbackFileResult)(const gchar* pszRemotePath, EDownloadManagerFileResult eDownloadManagerResult, const gchar* pszLocalPath);
 
-G_END_DECLS
+typedef struct {
+	GPtrArray* pPendingArray;
+	GPtrArray* pActiveArray;
+	gint nMaxConcurrentActive;
+} downloadmanager_t;
 
-#endif /* _WELCOMEWINDOW_H */
+// public API
+downloadmanager_t* downloadmanager_new(gint nMaxConcurrentActive);
+void downloadmanager_add_uri(downloadmanager_t* pDownloader, const gchar* pszRemoteFilePath, DownloadManagerCallbackFileResult pCallbackFileResult);
+
+#endif
+
+
+
+

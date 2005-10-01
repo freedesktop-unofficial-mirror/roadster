@@ -27,6 +27,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include "main.h"
+#include "glyph.h"
 #include "map_style.h"
 
 // utility functions for iterating through lists of XML things

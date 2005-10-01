@@ -138,7 +138,7 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 		// Instead of filling with a color, fill with a tiled image
 		gdk_gc_get_values(pGC, &gcValues);
 		gdk_gc_set_fill(pGC, GDK_TILED);
-		gdk_gc_set_tile(pGC, glyph_get_pixmap(pLayerStyle->pGlyphFill));
+		gdk_gc_set_tile(pGC, glyph_get_pixmap(pLayerStyle->pGlyphFill, pMap->pTargetWidget));
 		
 		// This makes the fill image scroll with the map, instead of staying still
 		gdk_gc_set_ts_origin(pGC, SCALE_X(pRenderMetrics, pRenderMetrics->fScreenLongitude), SCALE_Y(pRenderMetrics, pRenderMetrics->fScreenLatitude));
@@ -192,7 +192,7 @@ static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetri
 		// Instead of filling with a color, fill with a tiled image
 		gdk_gc_get_values(pGC, &gcValues);
 		gdk_gc_set_fill(pGC, GDK_TILED);
-		gdk_gc_set_tile(pGC, glyph_get_pixmap(pLayerStyle->pGlyphFill));
+		gdk_gc_set_tile(pGC, glyph_get_pixmap(pLayerStyle->pGlyphFill, pMap->pTargetWidget));
 		
 		// This makes the fill image scroll with the map, instead of staying still
 		gdk_gc_set_ts_origin(pGC, SCALE_X(pRenderMetrics, pRenderMetrics->fScreenLongitude), SCALE_Y(pRenderMetrics, pRenderMetrics->fScreenLatitude));

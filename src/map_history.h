@@ -1,5 +1,5 @@
 /***************************************************************************
- *            tooltip.h
+ *            history.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -21,21 +21,24 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _TOOLTIP_H
-#define _TOOLTIP_H
+#ifndef _HISTORY_H_
+#define _HISTORY_H_
+
+#include "map.h"
 
 typedef struct {
-	GtkWindow* pWindow;
-	GtkLabel* pLabel;
-	
-	gboolean bEnabled;
-} tooltip_t;
+	gint nCurrentIndex;
+	gint nTotalItems;
+	GArray* MapViewArray;
+} maphistory_t;
 
-tooltip_t* tooltip_new();
-void tooltip_set_markup(tooltip_t* pTooltip, const gchar* pszMarkup);
-void tooltip_set_upper_left_corner(tooltip_t* pTooltip, gint nX, gint nY);
-void tooltip_show(tooltip_t* pTooltip);
-void tooltip_hide(tooltip_t* pTooltip);
-void tooltip_set_bg_color(tooltip_t* pTooltip, GdkColor* pColor);
+maphistory_t* map_history_new();
+void map_history_add(maphistory_t* pHistory, mappoint_t* pPoint, gint nZoomLevel);
+gboolean map_history_can_go_forward(maphistory_t* pHistory);
+gboolean map_history_can_go_back(maphistory_t* pHistory);
+gboolean map_history_go_forward(maphistory_t* pHistory);
+gboolean map_history_go_back(maphistory_t* pHistory);
+
+void map_history_get_current(maphistory_t* pHistory, mappoint_t* pReturnPoint, gint* pnReturnZoomLevel);
 
 #endif

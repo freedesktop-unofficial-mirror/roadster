@@ -37,7 +37,7 @@
 #include "searchwindow.h"
 #include "locationeditwindow.h"
 
-void gui_init()
+void gui_init(void)
 {
 	GladeXML* pGladeXML = gui_load_xml(GLADE_FILE_NAME, NULL);
 	glade_xml_signal_autoconnect(pGladeXML);

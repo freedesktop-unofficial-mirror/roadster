@@ -68,11 +68,13 @@
 #define MIN_ZOOMLEVEL_FOR_LOCATIONS	(6)
 
 /* Prototypes */
+static void map_init_location_hash(map_t* pMap);
 
 // data loading
 static gboolean map_data_load_tiles(map_t* pMap, maprect_t* pRect);
 static gboolean map_data_load_geometry(map_t* pMap, maprect_t* pRect);
 static gboolean map_data_load_locations(map_t* pMap, maprect_t* pRect);
+
 
 // hit testing
 static gboolean map_hit_test_layer_roads(GPtrArray* pPointStringsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
@@ -1250,7 +1252,7 @@ gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTy
 	return FALSE;
 }
 
-void map_callback_free_locations_array(gpointer* p)
+void map_callback_free_locations_array(gpointer p)
 {
 	GPtrArray* pLocationsArray = (GPtrArray*)p;
 	gint i;

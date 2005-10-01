@@ -21,19 +21,17 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-/*
-Purpose: A general purpose, easy to use, asyncronous downloader.
+// Purpose:
+// A general purpose, easy to use, asyncronous download manager.   Hand it URLs,
+// and it calls your callback function when it's done.  It's that simple!
 
-
-
-*/
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
 #include <libgnomevfs/gnome-vfs.h>
 #include <gnome.h>
-#include "downloader.h"
+#include "downloadmanager.h"
 
 #define TEMP_FILE_TEMPLATE	("roadster_download_XXXXXX")	// format of temp files
 
@@ -42,53 +40,53 @@ typedef struct {
 	gchar* pszLocalFilePath;								// will be NULL until file moves into 'active' list
 	gint nBytesDownloaded;								// a count
 
-	downloader_t* pDownloader;					// a handy pointer to the parent
+	downloadmanager_t* pDownloadManager;					// a handy pointer to the parent
 	GnomeVFSAsyncHandle* pGnomeVFSHandle;
-	DownloaderCallbackFileResult pCallbackFileResult;	// called when file succeeds or fails
+	DownloadManagerCallbackFileResult pCallbackFileResult;	// called when file succeeds or fails
 } download_t;
 
 //
 // prototypes
 //
-static gboolean _downloader_begin_download(download_t* pDownload);
-static void _downloader_move_pending_to_active(downloader_t* pDownloader);
+static gboolean _downloadmanager_begin_download(download_t* pDownload);
+static void _downloadmanager_move_pending_to_active(downloadmanager_t* pDownloadManager);
 
 //
 // functions
 //
-downloader_t* downloader_new(gint nMaxConcurrentActive)
+downloadmanager_t* _downloadmanager_new(gint nMaxConcurrentActive)
 {
-	downloader_t* pNew = g_new0(downloader_t, 1);
+	downloadmanager_t* pNew = g_new0(downloadmanager_t, 1);
 	pNew->pActiveArray = g_ptr_array_new();
 	pNew->pPendingArray = g_ptr_array_new();
 	pNew->nMaxConcurrentActive = nMaxConcurrentActive;
 	return pNew;
 }
 
-void downloader_add_uri(downloader_t* pDownloader, const gchar* pszRemoteFilePath, DownloaderCallbackFileResult pCallbackFileResult)
+void downloadmanager_add_uri(downloadmanager_t* pDownloadManager, const gchar* pszRemoteFilePath, DownloadManagerCallbackFileResult pCallbackFileResult)
 {
-	g_assert(pDownloader != NULL);
+	g_assert(pDownloadManager != NULL);
 	g_assert(pszRemoteFilePath != NULL);
 	g_assert(pCallbackFileResult != NULL);
 
 	download_t* pNewDownload = g_new0(download_t, 1);
 	pNewDownload->pszRemoteFilePath = g_strdup(pszRemoteFilePath);
 	pNewDownload->pCallbackFileResult = pCallbackFileResult;
-	pNewDownload->pDownloader = pDownloader;
+	pNewDownload->pDownloadManager = pDownloadManager;
 
-	g_ptr_array_add(pDownloader->pPendingArray, pNewDownload);
-	_downloader_move_pending_to_active(pDownloader);
+	g_ptr_array_add(pDownloadManager->pPendingArray, pNewDownload);
+	_downloadmanager_move_pending_to_active(pDownloadManager);
 }
 
 // Check to see if we can add any pending files to active list
-static void _downloader_move_pending_to_active(downloader_t* pDownloader)
+static void _downloadmanager_move_pending_to_active(downloadmanager_t* pDownloadManager)
 {
-	if((pDownloader->pActiveArray->len < pDownloader->nMaxConcurrentActive) && (pDownloader->pPendingArray->len > 0)) {
+	if((pDownloadManager->pActiveArray->len < pDownloadManager->nMaxConcurrentActive) && (pDownloadManager->pPendingArray->len > 0)) {
 		// time to promote one from pending
-		download_t* pNext = g_ptr_array_index(pDownloader->pPendingArray, 0);
-		if(_downloader_begin_download(pNext)) {
-			g_ptr_array_remove(pDownloader->pPendingArray, pNext);
-			g_ptr_array_add(pDownloader->pActiveArray, pNext);
+		download_t* pNext = g_ptr_array_index(pDownloadManager->pPendingArray, 0);
+		if(_downloadmanager_begin_download(pNext)) {
+			g_ptr_array_remove(pDownloadManager->pPendingArray, pNext);
+			g_ptr_array_add(pDownloadManager->pActiveArray, pNext);
 		}
 	}
 }
@@ -98,7 +96,7 @@ static void _downloader_move_pending_to_active(downloader_t* pDownloader)
 //     //g_print("downloader: a file has been closed\n");
 // }
 
-static void _downloader_download_free(downloader_t* pDownloader, download_t* pDownload)
+static void _downloadmanager_download_free(downloadmanager_t* pDownloadManager, download_t* pDownload)
 {
 	// Empty struct
 	g_free(pDownload->pszRemoteFilePath);
@@ -109,14 +107,14 @@ static void _downloader_download_free(downloader_t* pDownloader, download_t* pDo
 	}
 
 	// XXX: store a 'state' so we know which array it's in?
-	g_ptr_array_remove_fast(pDownloader->pActiveArray, pDownload);
-	g_ptr_array_remove(pDownloader->pPendingArray, pDownload);
+	g_ptr_array_remove_fast(pDownloadManager->pActiveArray, pDownload);
+	g_ptr_array_remove(pDownloadManager->pPendingArray, pDownload);
 
 	// Free struct
 	g_free(pDownload);
 }
 
-static gint _downloader_gnome_vfs_progress_callback(GnomeVFSAsyncHandle *pHandle, GnomeVFSXferProgressInfo *pInfo, download_t* pDownload)
+static gint _downloadmanager_gnome_vfs_progress_callback(GnomeVFSAsyncHandle *pHandle, GnomeVFSXferProgressInfo *pInfo, download_t* pDownload)
 {
 	g_assert(pHandle != NULL);
 	g_assert(pInfo != NULL);
@@ -128,23 +126,23 @@ static gint _downloader_gnome_vfs_progress_callback(GnomeVFSAsyncHandle *pHandle
 		g_print("downloader: downloaded '%s' to '%s' (%d bytes)\n", pDownload->pszRemoteFilePath, pDownload->pszLocalFilePath, pDownload->nBytesDownloaded);
 
 		// Call user-supplied callback
-		pDownload->pCallbackFileResult(pDownload->pszRemoteFilePath, DOWNLOADER_RESULT_SUCCESS, pDownload->pszLocalFilePath);
+		pDownload->pCallbackFileResult(pDownload->pszRemoteFilePath, DOWNLOADMANAGER_RESULT_SUCCESS, pDownload->pszLocalFilePath);
 
 		// callback shouldn't leave the file in the temp directory
 		if(g_file_test(pDownload->pszLocalFilePath, G_FILE_TEST_EXISTS)) {
 			g_warning("downloader: callback failed to move/delete local file '%s' (from remote '%s')\n", pDownload->pszLocalFilePath, pDownload->pszRemoteFilePath);
 		}
 
-		downloader_t* pDownloader = pDownload->pDownloader;
-		_downloader_download_free(pDownloader, pDownload);
+		downloadmanager_t* pDownloadManager = pDownload->pDownloadManager;
+		_downloadmanager_download_free(pDownloadManager, pDownload);
 
 		// 
-		_downloader_move_pending_to_active(pDownloader);
+		_downloadmanager_move_pending_to_active(pDownloadManager);
 	}
 	// XXX: what other statuses messages do we care about?  (failed?)
 }
 
-static gboolean _downloader_begin_download(download_t* pDownload)
+static gboolean _downloadmanager_begin_download(download_t* pDownload)
 {
 	g_assert(pDownload != NULL);
 	//g_print("downloader: beginning download of %s\n", pDownload->pszRemoteFilePath);
@@ -172,7 +170,7 @@ static gboolean _downloader_begin_download(download_t* pDownload)
 											 GNOME_VFS_XFER_ERROR_MODE_ABORT,
 											 GNOME_VFS_XFER_OVERWRITE_MODE_REPLACE,		// overwrite the tmp file we just made.
                                              GNOME_VFS_PRIORITY_MIN,
-											 (GnomeVFSAsyncXferProgressCallback)_downloader_gnome_vfs_progress_callback,
+											 (GnomeVFSAsyncXferProgressCallback)_downloadmanager_gnome_vfs_progress_callback,
 											 (gpointer)pDownload,	// callback userdata
                                              NULL,
 											 NULL);

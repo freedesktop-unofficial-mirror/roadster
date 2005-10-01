@@ -55,6 +55,7 @@
 #include "location.h"
 #include "locationset.h"
 #include "scenemanager.h"
+#include "util.h"
 
 // Draw whole layers
 static void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);

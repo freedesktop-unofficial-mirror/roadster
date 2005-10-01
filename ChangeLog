@@ -1,3 +1,12 @@
+2005-10-01  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* Renamed src/history.c to src/map_history.c
+	* Renamed src/tooltip.c to src/tooltipwindow.c
+	* Renamed src/downloader.c to src/downloadmanager.c
+	* src/glyph.c: Only require a targetwidget when generating a pixmap.
+	* src/main.c: Move glyph module init here.
+	* src/*: Fix all compiler warning messages.
+
 2005-09-30  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/welcomewindow.c: Removed.
