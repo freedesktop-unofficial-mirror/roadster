@@ -1,5 +1,10 @@
 2005-10-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/map_math.c:
+	* src/map_math.h: Added missing files.
+
+2005-10-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/map_hittest.c:
 	* src/map_hittest.h: Added missing files.
 
