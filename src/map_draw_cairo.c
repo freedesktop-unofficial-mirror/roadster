@@ -172,9 +172,13 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGON_LABELS) {
 				if(nDrawFlags & DRAWFLAG_LABELS) {
-//                     map_draw_cairo_layer_polygon_labels(pMap, pCairo, pRenderMetrics,
-//                                                         pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
-//                                                         pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);
+					gint iTile;
+					for(iTile=0 ; iTile < pTiles->len ; iTile++) {
+						maptile_t* pTile = g_ptr_array_index(pTiles, iTile);
+						map_draw_cairo_layer_polygon_labels(pMap, pCairo, pRenderMetrics,
+															pTile->apMapObjectArrays[pLayer->nDataSource],               // data
+															pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);
+					}
 				}
 			}
 		}

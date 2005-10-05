@@ -207,12 +207,12 @@
 </layer>
 
 <layer data-source="rivers" draw-type="lines">
-	<property zoom-level="6" name="line-width" value="1" />
+	<property zoom-level="1-6" name="line-width" value="1" />
 	<property zoom-level="7" name="line-width" value="2" />
 	<property zoom-level="8" name="line-width" value="2" />
 	<property zoom-level="9" name="line-width" value="2" />
 	<property zoom-level="10" name="line-width" value="2" />
-	<property zoom-level="6-10" name="color" value="#B5C6D6FF" />
+	<property zoom-level="1-10" name="color" value="#B5C6D6FF" />
 </layer>
 
 <layer data-source="lakes" draw-type="polygons">
@@ -229,7 +229,7 @@
 </layer>
 
 <layer data-source="misc-areas" draw-type="polygons">
-	<property zoom-level="6-10" name="color" value="#C0C0C0ff" />
+	<property zoom-level="1-10" name="color" value="#C0C0C0ff" />
 </layer>
 
 <!-- <layer data-source="urban-areas" draw-type="polygons">           -->
@@ -237,6 +237,7 @@
 <!-- </layer>                                                         -->
 
 <layer draw-type="fill">
+<!--     <property zoom-level="1-10" name="fill-image" value="ground-pattern" /> -->
     <property zoom-level="1-10" name="color" value="#F3EDDEFF" />
 </layer>
 

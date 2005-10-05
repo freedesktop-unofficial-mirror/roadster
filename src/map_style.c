@@ -82,7 +82,7 @@ void map_style_load(map_t* pMap, const gchar* pszFileName)
 	
 	if(pMap->pLayersArray != NULL) {
 		g_warning("reloading styles currently leaks memory so... don't do it very often :)\n");
-		pMap->pLayersArray = NULL;
+		pMap->pLayersArray = NULL;	// XXX: memory leak :)
 	}
 
 	pMap->pLayersArray = g_ptr_array_new();

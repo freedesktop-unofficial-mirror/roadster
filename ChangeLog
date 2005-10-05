@@ -1,5 +1,10 @@
 2005-10-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/map_hittest.c:
+	* src/map_hittest.h: Added missing files.
+
+2005-10-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/import_tiger.c:
 	* src/search_road.c:
 	* src/db.c: Add level of detail concept.
