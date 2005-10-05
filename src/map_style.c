@@ -30,6 +30,9 @@
 #include "glyph.h"
 #include "map_style.h"
 
+#define MIN_STYLE_LEVEL (1)
+#define MAX_STYLE_LEVEL	(10)
+
 // utility functions for iterating through lists of XML things
 #define EACH_ATTRIBUTE_OF_NODE(a,n)		(a) = (n)->properties ; (a) != NULL ; (a) = (a)->next
 #define EACH_CHILD_OF_NODE(c,n)			(c) = (n)->children ; (c) != NULL ; (c) = (c)->next
@@ -127,12 +130,12 @@ gboolean map_style_parse_zoomlevel(const gchar* pszZoomLevel, gint* pnReturnMinZ
 		nMin = nMax = atoi(pszStr);
 	}
 
-	if(nMin < MIN_ZOOM_LEVEL || nMin > MAX_ZOOM_LEVEL) {
-		g_warning("zoom-level '%s' out of valid range (%d to %d)\n", pszZoomLevel, MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL);
+	if(nMin < MIN_STYLE_LEVEL || nMin > MAX_STYLE_LEVEL) {
+		g_warning("zoom-level '%s' out of valid range (%d to %d)\n", pszZoomLevel, MIN_STYLE_LEVEL, MAX_STYLE_LEVEL);
 		bReturn = FALSE;
 	}
-	else if(nMax < MIN_ZOOM_LEVEL || nMax > MAX_ZOOM_LEVEL) {
-		g_warning("zoom-level '%s' out of valid range (%d to %d)\n", pszZoomLevel, MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL);
+	else if(nMax < MIN_STYLE_LEVEL || nMax > MAX_STYLE_LEVEL) {
+		g_warning("zoom-level '%s' out of valid range (%d to %d)\n", pszZoomLevel, MIN_STYLE_LEVEL, MAX_STYLE_LEVEL);
 		bReturn = FALSE;
 	}
 	else {
@@ -375,8 +378,8 @@ map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, 
 		}
 	}
 
-	gint nMinZoomLevel = MIN_ZOOM_LEVEL;
-	gint nMaxZoomLevel = MAX_ZOOM_LEVEL;
+	gint nMinZoomLevel = MIN_STYLE_LEVEL;
+	gint nMaxZoomLevel = MAX_STYLE_LEVEL;
 	if(pszZoomLevel != NULL) {
 		map_style_parse_zoomlevel(pszZoomLevel, &nMinZoomLevel, &nMaxZoomLevel);
 	}

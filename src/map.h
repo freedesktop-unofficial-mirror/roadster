@@ -24,6 +24,7 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
+#include <math.h>
 #include "gfreelist.h"
 
 //
@@ -48,6 +49,9 @@
 #define MAP_OBJECT_TYPE_FIRST					(1)
 #define MAP_OBJECT_TYPE_LAST					(12)
 
+#define MAP_LEVEL_OF_DETAIL_BEST	(0)
+#define MAP_LEVEL_OF_DETAIL_WORST	(3)
+#define MAP_NUM_LEVELS_OF_DETAIL	(4)
 
 //
 // Line CAP styles
@@ -101,9 +105,9 @@ typedef enum {
 struct GtkWidget;
 
 #define MIN_ZOOM_LEVEL					(1)
-#define MAX_ZOOM_LEVEL					(5)
-#define NUM_ZOOM_LEVELS					(5)
-#define MIN_ZOOM_LEVEL_FOR_LOCATIONS	(6)		// don't show POI above this level
+#define MAX_ZOOM_LEVEL					(41)
+#define NUM_ZOOM_LEVELS					(41)
+#define MIN_ZOOM_LEVEL_FOR_LOCATIONS	(25)		// don't show POI above this level
 
 #include "scenemanager.h"
 
@@ -153,7 +157,10 @@ typedef struct {
 	EDistanceUnits eScaleMetricUnit;
 	gint nScaleMetricNumber;
 
-	gchar* szName;
+	//gchar* szName;
+	
+	gint nStyleZoomLevel;				// pretend we're zoomlevel X because there are more real zoomlevels than in the map layer style definitions
+	gint nLevelOfDetail;				// pretend we're zoomlevel X because there are more real zoomlevels than in the map layer style definitions
 } zoomlevel_t;
 
 extern zoomlevel_t g_sZoomLevels[];
@@ -173,18 +180,21 @@ typedef struct {
 	maprect_t rWorldBoundingBox;
 	gint nWindowWidth;
 	gint nWindowHeight;
+	gint nLevelOfDetail;
 } rendermetrics_t;
 
 #define SCALE_X(p, x)  ((((x) - (p)->rWorldBoundingBox.A.fLongitude) / (p)->fScreenLongitude) * (p)->nWindowWidth)
 #define SCALE_Y(p, y)  ((p)->nWindowHeight - ((((y) - (p)->rWorldBoundingBox.A.fLatitude) / (p)->fScreenLatitude) * (p)->nWindowHeight))
 
-typedef struct {
-	GPtrArray* pRoadsArray;
-} maplayer_data_t;
+// typedef struct {
+//     GPtrArray* pRoadsArray;
+// } maplayer_data_t;
 
 typedef struct {
 	GPtrArray* pLocationsArray;
 } maplayer_locations_t;
+
+#include "map_tilemanager.h"
 
 typedef struct {
 	mappoint_t 		MapCenter;
@@ -195,7 +205,9 @@ typedef struct {
 
 	// data
 	GArray			*pTracksArray;
-	maplayer_data_t	*apLayerData[ MAP_NUM_OBJECT_TYPES + 1 ];
+//	maplayer_data_t	*apLayerData[ MAP_NUM_OBJECT_TYPES + 1 ];
+
+	maptilemanager_t* pTileManager;
 
 	// Locationsets
 	GHashTable		*pLocationArrayHashTable;
@@ -207,42 +219,6 @@ typedef struct {
 
 	GPtrArray* pLayersArray;
 } map_t;
-
-typedef enum {
-	MAP_HITTYPE_LOCATION,
-	MAP_HITTYPE_ROAD,
-	
-	// the following all use LocationSelectionHit in the union below
-	MAP_HITTYPE_LOCATIONSELECTION,	// hit somewhere on a locationselection graphic (info balloon)
-	MAP_HITTYPE_LOCATIONSELECTION_CLOSE,	// hit locationselection graphic close graphic (info balloon [X])
-	MAP_HITTYPE_LOCATIONSELECTION_EDIT,	// hit locationselection graphic edit graphic (info balloon "edit")
-
-	MAP_HITTYPE_URL,
-} EMapHitType;
-
-typedef struct {
-	EMapHitType eHitType;
-	gchar* pszText;
-	union {
-		struct {
-			gint nLocationID;
-			mappoint_t Coordinates;
-		} LocationHit;
-
-		struct {
-			gint nRoadID;
-			mappoint_t ClosestPoint;
-		} RoadHit;
-
-		struct {
-			gint nLocationID;
-		} LocationSelectionHit;
-
-		struct {
-			gchar* pszURL;
-		} URLHit;
-	};
-} maphit_t;
 
 typedef enum {
 	MAP_LAYER_RENDERTYPE_LINES,
@@ -287,8 +263,9 @@ typedef struct {
 
 #define DRAWFLAG_ALL 		(1|2)
 
-#define NUM_SUBLAYER_TO_DRAW (21) //(24)
-extern draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW];	//
+// #define NUM_SUBLAYER_TO_DRAW (21) //(24)
+// extern draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW];    //
+
 
 void map_init(void);
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget);
@@ -331,9 +308,6 @@ void map_release_pixmap(map_t* pMap);
 void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags);
 void map_add_track(map_t* pMap, gint hTrack);
 
-gboolean map_hit_test(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStruct);
-void map_hitstruct_free(map_t* pMap, maphit_t* pHitStruct);
-
 gboolean map_location_selection_add(map_t* pMap, gint nLocationID);
 gboolean map_location_selection_remove(map_t* pMap, gint nLocationID);
 
@@ -343,5 +317,10 @@ gboolean map_object_type_atoi(const gchar* pszName, gint* pnReturnObjectTypeID);
 gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTypeID);
 
 gboolean map_rects_overlap(const maprect_t* p1, const maprect_t* p2);
+
+void map_zoom_to_screenrect(map_t* pMap, const screenrect_t* pRect);
+gint map_screenrect_width(const screenrect_t* pRect);
+gint map_screenrect_height(const screenrect_t* pRect);
+void map_get_screenrect_centerpoint(const screenrect_t* pRect, screenpoint_t* pPoint);
 
 #endif

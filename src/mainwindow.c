@@ -27,7 +27,7 @@
 
 #include <gtk/gtk.h>
 #include <gtk/gtksignal.h>
-//#include <gdk/gdk.h>
+#include <gdk/gdkkeysyms.h>
 //#include <gdk/gdkx.h>
 //#include <cairo.h>
 //#include <cairo-xlib.h>
@@ -39,6 +39,7 @@
 #include "gotowindow.h"
 #include "db.h"
 #include "map.h"
+#include "map_hittest.h"
 #include "map_style.h"
 #include "importwindow.h"
 #include "locationset.h"
@@ -89,6 +90,8 @@
 #define LOCATIONSETLIST_COLUMN_COUNT	(3)
 #define LOCATIONSETLIST_COLUMN_PIXBUF	(4)
 
+#define ZOOM_TOOL_THRESHOLD (5) // in pixels.  a box less than AxA will be ignored
+
 // Limits
 #define MAX_SEARCH_TEXT_LENGTH			(100)
 #define SPEED_LABEL_FORMAT				("<span font_desc='32'>%.0f</span>")
@@ -107,20 +110,20 @@
 #define MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS	(3500.0)	// when selecting search results, we slide to them instead of jumping if they are within this distance
 
 // Types
-typedef struct {
-	GdkCursorType CursorType;
-	GdkCursor* pGdkCursor;
-} cursor_t;
+// typedef struct {
+//     GdkCursorType CursorType;
+//     GdkCursor* pGdkCursor;
+// } cursor_t;
 
-typedef struct {
-	char* szName;
-	cursor_t Cursor;
-} toolsettings_t;
+// typedef struct {
+//     char* szName;
+//     cursor_t Cursor;
+// } toolsettings_t;
 
-typedef enum {
-	kToolPointer = 0,
-	kToolZoom = 1,
-} EToolType;
+// typedef enum {
+//     MOUSE_TOOL_POINTER = 0,
+//     MOUSE_TOOL_ZOOM = 1,
+// } EMouseToolType;
 
 // Prototypes
 static void mainwindow_setup_selected_tool(void);
@@ -169,8 +172,8 @@ struct {
 
 	// Toolbar
 	GtkHBox* pToolbar;
-//	GtkToolButton* pPointerToolButton;
-//	GtkToolButton* pZoomToolButton;
+	GtkRadioButton* pPointerToolRadioButton;
+	GtkRadioButton* pZoomToolRadioButton;
 	GtkHScale* pZoomScale;
 	GtkEntry* pSearchBox;
 	GtkImage* pStatusbarGPSIcon;
@@ -214,7 +217,7 @@ struct {
 	tooltip_t* pTooltip;
 	map_t* pMap;
 
-	EToolType eSelectedTool;
+//     EToolType eSelectedTool;
 
 	gboolean bScrolling;
 	EDirection eScrollDirection;
@@ -236,6 +239,10 @@ struct {
 	mappoint_t ptSlideEndLocation;
 	animator_t* pAnimator;
 
+	// Zoom Tool
+	gboolean bDrawingZoomRect;
+	screenrect_t rcZoomRect;
+
 	// History (forward / back)
 	maphistory_t* pMapHistory;
 	GtkButton* pForwardButton;
@@ -252,17 +259,17 @@ struct {
 // XXX: Use GDK_HAND1 for the map
 
 // Data
-toolsettings_t g_Tools[] = {
-	{"Pointer Tool", {GDK_LEFT_PTR, NULL}},
-	{"Zoom Tool", {GDK_CIRCLE, NULL}},
-};
-void cursor_init()
-{
-	int i;
-	for(i=0 ; i<G_N_ELEMENTS(g_Tools) ; i++) {
-		g_Tools[i].Cursor.pGdkCursor = gdk_cursor_new(g_Tools[i].Cursor.CursorType);
-	}
-}
+// toolsettings_t g_Tools[] = {
+//     {"Pointer Tool", {GDK_LEFT_PTR, NULL}},
+//     {"Zoom Tool", {GDK_CIRCLE, NULL}},
+// };
+// void cursor_init()
+// {
+//     int i;
+//     for(i=0 ; i<G_N_ELEMENTS(g_Tools) ; i++) {
+//         g_Tools[i].Cursor.pGdkCursor = gdk_cursor_new(g_Tools[i].Cursor.CursorType);
+//     }
+// }
 
 static void util_set_image_to_stock(GtkImage* pImage, gchar* pszStockIconID, GtkIconSize nSize)
 {
@@ -292,6 +299,11 @@ void* mainwindow_set_busy(void)
 
 	gdk_flush();
 	return pCursor;
+}
+
+void mainwindow_draw_xor_rect(screenrect_t* pRect)
+{
+	map_draw_gdk_xor_rect(g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea)->window, pRect);
 }
 
 void mainwindow_set_not_busy(void** ppCursor)
@@ -365,6 +377,10 @@ void mainwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pSidebarNotebook, GTK_NOTEBOOK, "sidebarnotebook");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pContentBox, GTK_VBOX, "mainwindowcontentsbox");
 
+//     g_object_set(G_OBJECT(g_MainWindow.pSidebarNotebook), "show-border", FALSE, NULL);
+	g_object_set(G_OBJECT(g_MainWindow.pSidebarNotebook), "tab-border", 1, NULL);
+//     g_object_set(G_OBJECT(g_MainWindow.pSidebarNotebook), "tab-hborder", 0, NULL);
+
 	// View menu
    	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pViewSidebarMenuItem, GTK_CHECK_MENU_ITEM, "viewsidebarmenuitem");
    	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pViewFullscreenMenuItem, GTK_CHECK_MENU_ITEM, "viewfullscreenmenuitem");
@@ -384,8 +400,8 @@ void mainwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pMapPopupMenu, GTK_MENU, "mappopupmenu");
 
 	// Tools
-	//GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pPointerToolButton, GTK_TOOL_BUTTON, "pointertoolbutton");
-	//GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomToolButton, GTK_TOOL_BUTTON, "zoomtoolbutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pPointerToolRadioButton, GTK_RADIO_BUTTON, "pointertoolradiobutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomToolRadioButton, GTK_RADIO_BUTTON, "zoomtoolradiobutton");
 
 	// GPS Widgets
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.GPS.pShowPositionCheckButton, GTK_CHECK_BUTTON, "gpsshowpositioncheckbutton");
@@ -446,8 +462,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	map_new(&g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea));
 	map_style_load(g_MainWindow.pMap, MAP_STYLE_FILENAME);
 	
-
-	cursor_init();
+//     cursor_init();
 
 	mainwindow_configure_locationset_list();
 	mainwindow_refresh_locationset_list();
@@ -737,6 +752,13 @@ void mainwindow_update_zoom_buttons()
 	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pZoomInMenuItem), map_can_zoom_in(g_MainWindow.pMap));
 	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pZoomOutButton), map_can_zoom_out(g_MainWindow.pMap));
 	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.pZoomOutMenuItem), map_can_zoom_out(g_MainWindow.pMap));
+
+	// set zoomlevel scale but prevent it from calling handler (mainwindow_on_zoomscale_value_changed)
+    g_signal_handlers_block_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
+	gtk_range_set_value(GTK_RANGE(g_MainWindow.pZoomScale), map_get_zoomlevel(g_MainWindow.pMap));
+	g_signal_handlers_unblock_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
+
+	mainwindow_statusbar_update_zoomscale();
 }
 
 void mainwindow_set_zoomlevel(gint nZoomLevel)
@@ -744,11 +766,10 @@ void mainwindow_set_zoomlevel(gint nZoomLevel)
 	map_set_zoomlevel(g_MainWindow.pMap, nZoomLevel);
 
 	// set zoomlevel scale but prevent it from calling handler (mainwindow_on_zoomscale_value_changed)
-    g_signal_handlers_block_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
-	gtk_range_set_value(GTK_RANGE(g_MainWindow.pZoomScale), nZoomLevel);
-	g_signal_handlers_unblock_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
+//     g_signal_handlers_block_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
+//     gtk_range_set_value(GTK_RANGE(g_MainWindow.pZoomScale), nZoomLevel);
+//     g_signal_handlers_unblock_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 
-	mainwindow_statusbar_update_zoomscale();
 	mainwindow_update_zoom_buttons();
 }
 
@@ -771,11 +792,11 @@ void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 //
 //
 //
-static void gui_set_tool(EToolType eTool)
-{
-	g_MainWindow.eSelectedTool = eTool;
-	gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, g_Tools[eTool].Cursor.pGdkCursor);
-}
+// static void gui_set_tool(EToolType eTool)
+// {
+//     g_MainWindow.eSelectedTool = eTool;
+//     gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, g_Tools[eTool].Cursor.pGdkCursor);
+// }
 
 //
 // Callbacks for About box
@@ -859,11 +880,18 @@ void mainwindow_on_sidebarmenuitem_activate(GtkMenuItem *menuitem, gpointer user
 	mainwindow_set_sidebox_visible(!mainwindow_get_sidebox_visible());
 }
 
+#define ZOOM_MAJOR_TICK_SIZE	(4)
+
 // Zoom buttons / menu items (shared callbacks)
 void mainwindow_on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
+	gint nNewZoomLevel = map_get_zoomlevel(g_MainWindow.pMap) - 1; 	// XXX: make zoomlevel 0-based and the -1 will go away
+	nNewZoomLevel -= (nNewZoomLevel % ZOOM_MAJOR_TICK_SIZE);
+	nNewZoomLevel += ZOOM_MAJOR_TICK_SIZE;
+	nNewZoomLevel += 1;	// XXX: make zoomlevel 0-based and the +1 will go away
+
 	// tell the map
-	map_set_zoomlevel(g_MainWindow.pMap, map_get_zoomlevel(g_MainWindow.pMap) + 1);
+	map_set_zoomlevel(g_MainWindow.pMap, nNewZoomLevel);
 	
 	// update the gui
 	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.pMap));
@@ -874,7 +902,12 @@ void mainwindow_on_zoomin_activate(GtkMenuItem *menuitem, gpointer user_data)
 
 void mainwindow_on_zoomout_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
-	map_set_zoomlevel(g_MainWindow.pMap, map_get_zoomlevel(g_MainWindow.pMap) - 1);
+	gint nNewZoomLevel = map_get_zoomlevel(g_MainWindow.pMap) - 1;
+	if((nNewZoomLevel % ZOOM_MAJOR_TICK_SIZE) == 0) nNewZoomLevel -= ZOOM_MAJOR_TICK_SIZE;
+	else nNewZoomLevel -= (nNewZoomLevel % ZOOM_MAJOR_TICK_SIZE);
+	nNewZoomLevel += 1;	// XXX: make zoomlevel 0-based and the +1 will go away
+
+	map_set_zoomlevel(g_MainWindow.pMap, nNewZoomLevel);
 	mainwindow_set_zoomlevel(map_get_zoomlevel(g_MainWindow.pMap));
 	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
@@ -974,6 +1007,11 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 
 	gint nWidth = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width;
 	gint nHeight = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height;
+
+	// nX and nY clipped to screen
+	gint nClippedX = (nX < 0) ? 0 : (nX > nWidth) ? nWidth : nX;
+	gint nClippedY = (nY < 0) ? 0 : (nY > nHeight) ? nHeight : nY;
+
 	EDirection eScrollDirection = DIRECTION_NONE;
 
 	// get mouse position on screen
@@ -982,7 +1020,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 	map_windowpoint_to_mappoint(g_MainWindow.pMap, &screenpoint, &mappoint);
 	
 	maphit_t* pHitStruct = NULL;
-	map_hit_test(g_MainWindow.pMap, &mappoint, &pHitStruct);
+	map_hittest(g_MainWindow.pMap, &mappoint, &pHitStruct);
 	// hitstruct free'd far below
 
 	if(event->button == MOUSE_BUTTON_LEFT) {
@@ -1003,6 +1041,14 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				g_MainWindow.bScrollMovement = FALSE;	// no movement yet
 
 				mainwindow_set_scroll_timeout();
+			}
+			else if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.pZoomToolRadioButton))) {
+				//g_print("begin rect draw\n");
+				g_MainWindow.bDrawingZoomRect = TRUE;
+
+				// set both rect points to click point
+				g_MainWindow.rcZoomRect.A.nX = g_MainWindow.rcZoomRect.B.nX = nX;
+				g_MainWindow.rcZoomRect.A.nY = g_MainWindow.rcZoomRect.B.nY = nY;
 			}
 			else {
 				g_MainWindow.bMouseDragging = TRUE;
@@ -1048,6 +1094,27 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				}
 			}
 
+			if(g_MainWindow.bDrawingZoomRect == TRUE) {
+				if((map_screenrect_width(&(g_MainWindow.rcZoomRect)) > ZOOM_TOOL_THRESHOLD) && (map_screenrect_height(&(g_MainWindow.rcZoomRect)) > ZOOM_TOOL_THRESHOLD)) {
+					map_zoom_to_screenrect(g_MainWindow.pMap, &(g_MainWindow.rcZoomRect));
+
+					// update GUI
+					mainwindow_update_zoom_buttons();
+					mainwindow_statusbar_update_position();
+
+					mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+					mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
+					mainwindow_add_history();
+				}
+				else {
+					// Since we're not redrawing the map, we need to erase the selection rectangle
+					mainwindow_draw_xor_rect(&(g_MainWindow.rcZoomRect));
+				}
+
+				// all done
+				g_MainWindow.bDrawingZoomRect = FALSE;
+			}
+
 			// end scrolling, if active
 			if(g_MainWindow.bScrolling == TRUE) {
 				// NOTE: don't restore cursor (mouse could *still* be over screen edge)
@@ -1086,7 +1153,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			}
 		}
 		else if(event->type == GDK_2BUTTON_PRESS) {
-			// can only double click in the middle (not on a scroll border)
+			// can only double-click in the middle (not on a scroll border)
 			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 			if(eScrollDirection == DIRECTION_NONE) {
 				animator_destroy(g_MainWindow.pAnimator);
@@ -1108,7 +1175,6 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 		if(event->type == GDK_BUTTON_PRESS) {
 			GtkMenu* pMenu = g_MainWindow.pMapPopupMenu;	// default to generic map popup
 
-			g_print("here %s\n", pHitStruct);
 			if(pHitStruct != NULL) {
 				if(pHitStruct->eHitType == MAP_HITTYPE_LOCATION) {
 					// Use POI specific popup menu
@@ -1134,7 +1200,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			//gtk_menu_popup(pMenu, NULL, NULL, NULL, NULL, event->button, event->time);
 		}
 	}
-	map_hitstruct_free(g_MainWindow.pMap, pHitStruct);
+	map_hittest_maphit_free(g_MainWindow.pMap, pHitStruct);
 	return TRUE;
 }
 
@@ -1154,7 +1220,17 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 	gint nWidth = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width;
 	gint nHeight = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height;
 
-	gint nCursor = GDK_LEFT_PTR;
+	// nX and nY clipped to screen
+	gint nClippedX = (nX < 0) ? 0 : ((nX > nWidth-1) ? nWidth-1 : nX);
+	gint nClippedY = (nY < 0) ? 0 : ((nY > nHeight-1) ? nHeight-1 : nY);
+
+	gint nCursor;
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.pZoomToolRadioButton))) {
+		nCursor = GDK_SIZING;
+	}
+	else {
+		nCursor = GDK_LEFT_PTR;
+	}
 
 	if(g_MainWindow.bMouseDragging) {
 		g_MainWindow.bMouseDragMovement = TRUE;
@@ -1183,6 +1259,15 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		// update direction if actively scrolling
 		g_MainWindow.eScrollDirection = eScrollDirection;
 	}
+	else if(g_MainWindow.bDrawingZoomRect) {
+		//g_print("updating rect\n");
+		mainwindow_draw_xor_rect(&g_MainWindow.rcZoomRect);	// erase old rect (XOR operator rocks!)
+
+		g_MainWindow.rcZoomRect.B.nX = nClippedX;
+		g_MainWindow.rcZoomRect.B.nY = nClippedY;
+
+		mainwindow_draw_xor_rect(&g_MainWindow.rcZoomRect);	// draw new rect
+	}
 	else {
 		// If not dragging or scrolling, user is just moving mouse around.
 		// Update tooltip and mouse cursor based on what we're pointing at.
@@ -1199,7 +1284,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 	
 			// try to "hit" something on the map. a road, a location, whatever!
 			maphit_t* pHitStruct = NULL;
-			if(map_hit_test(g_MainWindow.pMap, &mappoint, &pHitStruct)) {
+			if(map_hittest(g_MainWindow.pMap, &mappoint, &pHitStruct)) {
 				// A hit!  Move the tooltip here, format the text, and show it.
 				tooltip_set_upper_left_corner(g_MainWindow.pTooltip, (gint)(event->x_root) + TOOLTIP_OFFSET_X, (gint)(event->y_root) + TOOLTIP_OFFSET_Y);
 
@@ -1240,7 +1325,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 					g_print("url: %s\n", pHitStruct->URLHit.pszURL);
 				}
 
-				map_hitstruct_free(g_MainWindow.pMap, pHitStruct);
+				map_hittest_maphit_free(g_MainWindow.pMap, pHitStruct);
 			}
 			else {
 				// no hit. hide the tooltip
@@ -1293,14 +1378,27 @@ static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 	}
 }
 
-static gboolean mainwindow_on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+static gboolean mainwindow_on_key_press(GtkWidget *widget, GdkEventKey *pEvent, gpointer user_data)
 {
-	g_print("key_press\n");
+	//g_print("key_press\n");
+	if(pEvent->keyval == GDK_F1) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(g_MainWindow.pPointerToolRadioButton), TRUE);
+	}
+	else if(pEvent->keyval == GDK_F2) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(g_MainWindow.pZoomToolRadioButton), TRUE);
+	}
+	else if(pEvent->keyval == GDK_Escape) {
+		if(g_MainWindow.bDrawingZoomRect == TRUE) {
+			// cancel zoom-rect
+			mainwindow_draw_xor_rect(&(g_MainWindow.rcZoomRect));
+			g_MainWindow.bDrawingZoomRect = FALSE;
+		}
+	}
 	return FALSE;
 }
 static gboolean mainwindow_on_key_release(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
-	g_print("key_release\n");
+	//g_print("key_release\n");
 	return FALSE;
 }
 

@@ -155,6 +155,96 @@ typedef struct tiger_record_rtc
 	gint nCityID;					// a database ID, stored here after it is inserted
 } tiger_record_rtc_t;
 
+// #define MAP_OBJECT_TYPE_NONE                    (0)
+// #define MAP_OBJECT_TYPE_MINORROAD               (1)
+// #define MAP_OBJECT_TYPE_MAJORROAD               (2)
+// #define MAP_OBJECT_TYPE_MINORHIGHWAY            (3)
+// #define MAP_OBJECT_TYPE_MINORHIGHWAY_RAMP       (4)
+// #define MAP_OBJECT_TYPE_MAJORHIGHWAY            (5) // Unused
+// #define MAP_OBJECT_TYPE_MAJORHIGHWAY_RAMP       (6) // Unused
+// #define MAP_OBJECT_TYPE_RAILROAD                (7)
+// #define MAP_OBJECT_TYPE_PARK                    (8)
+// #define MAP_OBJECT_TYPE_RIVER                   (9)
+// #define MAP_OBJECT_TYPE_LAKE                    (10)
+// #define MAP_OBJECT_TYPE_MISC_AREA               (11)
+// #define MAP_OBJECT_TYPE_URBAN_AREA              (12)
+
+gdouble g_afPolygonMinSizeAtLODs[MAP_NUM_LEVELS_OF_DETAIL] = {0, 0.001, 0.01};	// in world degrees
+
+gint g_aaObjectTypeDetailAtLODs[MAP_NUM_OBJECT_TYPES][MAP_NUM_LEVELS_OF_DETAIL] = {
+	{0,0,0,0},
+	{1,0,0,0},	// minor rd
+	{1,6,0,0},	// major rd
+	{1,6,12,0},	// hw
+	{1,3,0,0},	// hw ramp
+	{0,0,0,0},	// (unused)
+	{0,0,0,0},	// (unused)
+	{1,8,0,0},	// rail
+	{1,1,1,1},	// park
+	{2,16,0,0},	// river
+	{1,1,1,1},	// lake
+	{1,1,1,1},	// misc area
+	{1,1,1,1},	// urban area
+};
+
+gboolean object_type_exists_at_lod(gint nRecordType, gint nLOD)
+{
+	if(nRecordType < 0) {
+		g_warning("nRecordType = %d\n", nRecordType); 
+	}
+	g_assert(nRecordType >= 0);
+	g_assert(nRecordType < MAP_NUM_OBJECT_TYPES);
+	g_assert(nLOD >= 0);
+	g_assert(nLOD <= 3);
+	return (g_aaObjectTypeDetailAtLODs[nRecordType][nLOD] > 0);
+}
+
+gint object_type_detail_at_lod(gint nRecordType, gint nLOD)
+{
+	g_assert(nRecordType >= 0);
+	g_assert(nRecordType < MAP_NUM_OBJECT_TYPES);
+	g_assert(nLOD >= 0);
+	g_assert(nLOD <= 3);
+	return (g_aaObjectTypeDetailAtLODs[nRecordType][nLOD]);
+}
+
+void reduce_object_detail_for_lod(gint nRecordType, gint nLOD, GPtrArray* pSourceArray, GPtrArray* pDestArray)
+{
+	g_assert(pSourceArray);
+	g_assert(pDestArray);
+
+	if(!object_type_exists_at_lod(nRecordType, nLOD)) return;
+
+	gint nDetail = object_type_detail_at_lod(nRecordType, nLOD);
+	g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, 0));
+
+	// our super-hacky algorithm just steps N points at a time
+	gint i;
+	for(i = nDetail ; i < (pSourceArray->len-1) ; i+=nDetail) {
+		g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, i));
+	}
+	g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, pSourceArray->len-1));
+}
+
+void util_bounding_box_of_points_array(GPtrArray* pPointsArray, maprect_t* pReturnRect)
+{
+	pReturnRect->A.fLatitude = MAX_LATITUDE;	// init to worst possible values
+	pReturnRect->A.fLongitude = MAX_LONGITUDE;
+	
+	pReturnRect->B.fLatitude = MIN_LATITUDE;
+	pReturnRect->B.fLongitude = MIN_LONGITUDE;
+
+	gint i;
+	for(i=0 ; i<pPointsArray->len ; i++) {
+		mappoint_t* pPoint = g_ptr_array_index(pPointsArray, i);
+
+		pReturnRect->A.fLatitude = min(pReturnRect->A.fLatitude, pPoint->fLatitude);
+		pReturnRect->A.fLongitude = min(pReturnRect->A.fLongitude, pPoint->fLongitude);
+
+		pReturnRect->B.fLatitude = max(pReturnRect->B.fLatitude, pPoint->fLatitude);
+		pReturnRect->B.fLongitude = max(pReturnRect->B.fLongitude, pPoint->fLongitude);
+	}
+}
 
 static gboolean import_tiger_read_lat(gint8* pBuffer, gdouble* pValue)
 {
@@ -254,6 +344,8 @@ static gboolean import_tiger_read_string(char* pBuffer, gint nLen, char* pValue)
 	return TRUE;
 }
 
+// NOTE: This function can return MAP_OBJECT_TYPE_NONE.  Lines of this type shouldn't be saved, but they
+// might be used for polygons, so we have to keep them in memory.
 static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 {
 	//g_print("%c%c%c\n", *(pBuffer), *(pBuffer+1), *(pBuffer+2));
@@ -282,7 +374,6 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 		}
 		else if(chCode == '5') {	// dirt roads
 			//*pValue = MAP_OBJECT_TYPE_TRAIL;
-			return FALSE;
 		}
 		else if(chCode == '6') {
 			if(chSubCode == '1') {
@@ -294,7 +385,6 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 			}
 			else if(chSubCode == '5') {
 				//*pValue = MAP_OBJECT_TYPE_FERRY_ROUTE;	// where a boat carrying cars goes
-				return FALSE;
 			}
 			else if(chSubCode == '7') {
 				g_print("found code A67: toll booth!\n");
@@ -587,8 +677,8 @@ static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTa
 
 		// 22-24 is a CFCC (
 		gint nRecordType;
-
 		import_tiger_read_layer_type(&pLine[22-1], &nRecordType);
+
 		pRecord = g_new0(tiger_record_rt7_t, 1);
 		pRecord->nRecordType = nRecordType;
 
@@ -832,16 +922,26 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 			db_insert_roadname(pRecordRT1->achName, pRecordRT1->nRoadNameSuffixID, &nRoadNameID);
 		}
 
-		gint nRoadID;
-		db_insert_road(nRoadNameID,
-			pRecordRT1->nRecordType,
-			pRecordRT1->nAddressLeftStart,
-			pRecordRT1->nAddressLeftEnd,
-			pRecordRT1->nAddressRightStart,
-			pRecordRT1->nAddressRightEnd,
-			nCityLeftID, nCityRightID,
-			azZIPCodeLeft, azZIPCodeRight,
-			pTempPointsArray, &nRoadID);
+		gint nLOD = MAP_LEVEL_OF_DETAIL_BEST;
+		db_insert_road(nLOD, nRoadNameID, pRecordRT1->nRecordType,
+					   pRecordRT1->nAddressLeftStart, pRecordRT1->nAddressLeftEnd,
+					   pRecordRT1->nAddressRightStart, pRecordRT1->nAddressRightEnd,
+					   nCityLeftID, nCityRightID,
+					   azZIPCodeLeft, azZIPCodeRight,
+					   pTempPointsArray, NULL);
+
+		for(nLOD = MAP_LEVEL_OF_DETAIL_BEST+1 ; nLOD <= MAP_LEVEL_OF_DETAIL_WORST ; nLOD++) {
+			GPtrArray* pReducedPointsArray = g_ptr_array_new();
+
+			reduce_object_detail_for_lod(pRecordRT1->nRecordType, nLOD, pTempPointsArray, pReducedPointsArray);
+			if(pReducedPointsArray->len > 0) {
+				g_assert(pReducedPointsArray->len >= 2);
+
+				db_insert_road(nLOD, nRoadNameID, pRecordRT1->nRecordType, 0, 0, 0, 0, 0, 0, NULL, NULL, 
+							   pReducedPointsArray, NULL);
+			}
+			g_ptr_array_free(pReducedPointsArray, TRUE);
+		}
 	}
 	g_ptr_array_free(pTempPointsArray, TRUE);
 }
@@ -1012,12 +1112,6 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 			g_print("Found a polygon that doesn't loop %s\n", pRecordRT7->achName);
 		}
 
-		// XXX: looking up a city for a polygon?  unimplemented.
-		gint nCityLeftID = 0;
-		gchar* pszZIPCodeLeft = "";
-		gint nCityRightID = 0;
-		gchar* pszZIPCodeRight = "";
-
 		// insert record
 		if(pRecordRT7->nRecordType != MAP_OBJECT_TYPE_NONE) {
 			gint nRoadNameID = 0;
@@ -1026,14 +1120,34 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 				db_insert_roadname(pRecordRT7->achName, 0, &nRoadNameID);
 			}
 
-			gint nRoadID;
-			db_insert_road(
-				nRoadNameID,
-				pRecordRT7->nRecordType,
-				0,0,0,0,
-				nCityLeftID, nCityRightID,
-				pszZIPCodeLeft, pszZIPCodeRight,
-				pTempPointsArray, &nRoadID);
+			// Write LOD 0
+			gint nLOD = MAP_LEVEL_OF_DETAIL_BEST;
+			db_insert_road(nLOD, nRoadNameID, pRecordRT7->nRecordType, 0, 0, 0, 0, 0, 0, "", "", 
+						   pTempPointsArray, NULL);
+
+			// Write higher LODs
+			maprect_t rc;
+			util_bounding_box_of_points_array(pTempPointsArray, &rc);
+			gdouble fWidth = rc.B.fLongitude - rc.A.fLongitude;
+			gdouble fHeight = rc.B.fLatitude - rc.A.fLatitude;
+
+			for(nLOD = MAP_LEVEL_OF_DETAIL_BEST+1 ; nLOD <= MAP_LEVEL_OF_DETAIL_WORST ; nLOD++) {
+				if((fWidth < g_afPolygonMinSizeAtLODs[nLOD]) || (fHeight < g_afPolygonMinSizeAtLODs[nLOD])) {
+					g_print("object exluded at LOD %d\n", nLOD);
+					break;	// not visible (nor at higher LODs, so break instead of continue)
+				}
+				
+				GPtrArray* pReducedPointsArray = g_ptr_array_new();
+
+				reduce_object_detail_for_lod(pRecordRT7->nRecordType, nLOD, pTempPointsArray, pReducedPointsArray);
+				if(pReducedPointsArray->len > 0) {
+					g_assert(pReducedPointsArray->len >= 2);
+
+					db_insert_road(nLOD, nRoadNameID, pRecordRT7->nRecordType, 0, 0, 0, 0, 0, 0, NULL, NULL, 
+								   pReducedPointsArray, NULL);
+				}
+				g_ptr_array_free(pReducedPointsArray, TRUE);
+			}
 
 		}
 	}

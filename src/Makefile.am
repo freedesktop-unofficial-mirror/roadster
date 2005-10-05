@@ -25,11 +25,13 @@ roadster_SOURCES = \
 	mainwindow.c\
 	gotowindow.c\
 	map.c\
-	map_tile.c\
-	map_history.c\
-	map_style.c\
 	map_draw_cairo.c\
 	map_draw_gdk.c\
+	map_history.c\
+	map_hittest.c\
+	map_math.c\
+	map_style.c\
+	map_tilemanager.c\
 	import.c\
 	import_tiger.c\
 	importwindow.c\

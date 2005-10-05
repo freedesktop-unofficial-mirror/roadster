@@ -21,23 +21,18 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <gtk/gtk.h>
-
-#include "main.h"
-#include "scenemanager.h"
-
-#define ENABLE_NO_DUPLICATE_LABELS
-
 /*
 Goals:
  - Keep text labels and other screen objects from overlapping
  - Prevent the same text from showing up too often (currently not more than once)
 */
 
-void scenemanager_init(void)
-{
-	
-}
+#include <gtk/gtk.h>
+
+#include "main.h"
+#include "scenemanager.h"
+
+#define ENABLE_NO_DUPLICATE_LABELS
 
 void scenemanager_new(scenemanager_t** ppReturn)
 {

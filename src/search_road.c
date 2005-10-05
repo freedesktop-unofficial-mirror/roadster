@@ -34,7 +34,7 @@
 #include "glyph.h"
 #include "searchwindow.h"		// for defines about glyph size
 
-#define ROAD_RESULT_SUGGESTED_ZOOMLEVEL		(4)
+#define ROAD_RESULT_SUGGESTED_ZOOMLEVEL		(37)
 
 #define FORMAT_ROAD_RESULT_WITHOUT_NUMBER 	("%s %s\n%s")
 #define FORMAT_ROAD_RESULT_WITH_NUMBER 		("%d %s %s\n%s")
@@ -214,10 +214,10 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 	if(pRoadSearch->nNumber != ROADSEARCH_NUMBER_NONE) {
 		pszAddressClause = g_strdup_printf(
 			" AND ("
-			"(%d BETWEEN Road.AddressLeftStart AND Road.AddressLeftEnd)"
-			" OR (%d BETWEEN Road.AddressLeftEnd AND Road.AddressLeftStart)"
-			" OR (%d BETWEEN Road.AddressRightStart AND Road.AddressRightEnd)"
-			" OR (%d BETWEEN Road.AddressRightEnd AND Road.AddressRightStart)"
+			"(%d BETWEEN Road0.AddressLeftStart AND Road0.AddressLeftEnd)"
+			" OR (%d BETWEEN Road0.AddressLeftEnd AND Road0.AddressLeftStart)"
+			" OR (%d BETWEEN Road0.AddressRightStart AND Road0.AddressRightEnd)"
+			" OR (%d BETWEEN Road0.AddressRightEnd AND Road0.AddressRightStart)"
 			")", pRoadSearch->nNumber, pRoadSearch->nNumber,
 				 pRoadSearch->nNumber, pRoadSearch->nNumber);
 	}
@@ -238,7 +238,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 	gchar* pszZIPClause;
 	if(pRoadSearch->pszZIPCode != NULL) {
 		gchar* pszSafeZIP = db_make_escaped_string(pRoadSearch->pszZIPCode);
-		pszZIPClause = g_strdup_printf(" AND (Road.ZIPCodeLeft='%s' OR Road.ZIPCodeRight='%s')", pszSafeZIP, pszSafeZIP);
+		pszZIPClause = g_strdup_printf(" AND (Road0.ZIPCodeLeft='%s' OR Road0.ZIPCodeRight='%s')", pszSafeZIP, pszSafeZIP);
 		db_free_escaped_string(pszSafeZIP);
 	}
 	else {
@@ -247,7 +247,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 
 	gchar* pszCityClause;
 	if(pRoadSearch->nCityID != 0) {
-		pszCityClause = g_strdup_printf(" AND (Road.CityLeftID=%d OR Road.CityRightID=%d)", pRoadSearch->nCityID, pRoadSearch->nCityID);
+		pszCityClause = g_strdup_printf(" AND (Road0.CityLeftID=%d OR Road0.CityRightID=%d)", pRoadSearch->nCityID, pRoadSearch->nCityID);
 	}
 	else {
 		pszCityClause = g_strdup("");
@@ -280,19 +280,19 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 	//pszRoadNameCondition = g_strdup_printf("RoadName.NameSoundex = SUBSTRING(SOUNDEX('%s') FROM 1 FOR 10)", pszSafeRoadName);
 
 	gchar* pszQuery = g_strdup_printf(
-		"SELECT Road.ID, RoadName.Name, RoadName.SuffixID, AsBinary(Road.Coordinates), Road.AddressLeftStart, Road.AddressLeftEnd, Road.AddressRightStart, Road.AddressRightEnd, CityLeft.Name, CityRight.Name"
-		", StateLeft.Code, StateRight.Code, Road.ZIPCodeLeft, Road.ZIPCodeRight"
+		"SELECT 0 AS ID, RoadName.Name, RoadName.SuffixID, AsBinary(Road0.Coordinates), Road0.AddressLeftStart, Road0.AddressLeftEnd, Road0.AddressRightStart, Road0.AddressRightEnd, CityLeft.Name, CityRight.Name"
+		", StateLeft.Code, StateRight.Code, Road0.ZIPCodeLeft, Road0.ZIPCodeRight"
 		" FROM RoadName"
-		" LEFT JOIN Road ON (RoadName.ID=Road.RoadNameID%s)"					// address # clause
+		" LEFT JOIN Road0 ON (RoadName.ID=Road0.RoadNameID%s)"					// address # clause
 		// left side
-	    " LEFT JOIN City AS CityLeft ON (Road.CityLeftID=CityLeft.ID)"
+	    " LEFT JOIN City AS CityLeft ON (Road0.CityLeftID=CityLeft.ID)"
 		" LEFT JOIN State AS StateLeft ON (CityLeft.StateID=StateLeft.ID)"
 		// right side
-		" LEFT JOIN City AS CityRight ON (Road.CityRightID=CityRight.ID)"
+		" LEFT JOIN City AS CityRight ON (Road0.CityRightID=CityRight.ID)"
 		" LEFT JOIN State AS StateRight ON (CityRight.StateID=StateRight.ID)"
 		" WHERE %s"
 //		" WHERE RoadName.Name='%s'"
-		" AND Road.ID IS NOT NULL"	// don't include rows where the Road didn't match
+		" AND Road0.TypeID IS NOT NULL"	// (any field will do) don't include rows where the Road didn't match
 		// begin clauses
 		"%s"
 		"%s"
@@ -353,7 +353,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 				db_parse_wkb_linestring(aRow[3], pMapPointsArray, &r);
 				search_road_filter_result(aRow[1], pRoadSearch->nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pMapPointsArray);
 				//g_print("%03d: Road.ID='%s' RoadName.Name='%s', Suffix=%s, L:%s-%s, R:%s-%s\n", nCount, aRow[0], aRow[1], aRow[3], aRow[4], aRow[5], aRow[6], aRow[7]);
-				
+
 				g_array_free(pMapPointsArray, TRUE);
 			}
 		}

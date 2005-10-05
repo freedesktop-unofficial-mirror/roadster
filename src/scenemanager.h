@@ -38,7 +38,6 @@ typedef struct scenemanager {
 	GHashTable* pLabelHash;
 } scenemanager_t;
 
-void scenemanager_init(void);
 void scenemanager_new(scenemanager_t** ppReturn);
 void scenemanager_set_screen_dimensions(scenemanager_t* pSceneManager, gint nWindowWidth, gint nWindowHeight);
 

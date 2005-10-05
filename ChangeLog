@@ -1,3 +1,15 @@
+2005-10-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/import_tiger.c:
+	* src/search_road.c:
+	* src/db.c: Add level of detail concept.
+	* src/mainwindow.c: Add zoomtool.
+	* src/map_draw_gdk.c: 
+	* src/map_draw_cairo.c: Calculate bounding box on load instead of draw.  Update to tile drawing.
+	* src/map.c: Begin splitting this file up more.  Add lots more zoom levels.
+	* src/scenemanager.c: Remove empty module init.
+	* src/main.c: Don't need to init scenemanager module.
+
 2005-10-01  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/downloadmanager.c: Remove _ from public function _downloadmanager_new().

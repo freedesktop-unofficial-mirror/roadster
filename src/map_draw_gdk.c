@@ -1,5 +1,5 @@
 /***************************************************************************
- *            map_draw_cairo.c
+ *            map_draw_gdk.c
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -69,7 +69,24 @@ void map_draw_gdk_set_color(GdkGC* pGC, color_t* pColor)
 	gdk_gc_set_rgb_fg_color(pGC, &clr);
 }
 
-void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
+void map_draw_gdk_xor_rect(map_t* pMap, GdkDrawable* pTargetDrawable, screenrect_t* pRect)
+{
+	GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
+
+	GdkGCValues gcValues;
+	gdk_gc_get_values(pGC, &gcValues);
+
+	GdkColor clrWhite = {0, 32000, 32000, 32000};
+	gdk_gc_set_function(pGC, GDK_XOR);
+	gdk_gc_set_rgb_fg_color(pGC, &clrWhite);
+	gdk_draw_rectangle(pTargetDrawable, pGC, FALSE, 
+					   min(pRect->A.nX, pRect->B.nX), min(pRect->A.nY, pRect->B.nY),	// x,y
+					   map_screenrect_width(pRect), map_screenrect_height(pRect));		// w,h
+
+	gdk_gc_set_values(pGC, &gcValues, GDK_GC_FUNCTION | GDK_GC_FOREGROUND);
+}
+
+void map_draw_gdk(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
 {
 	TIMER_BEGIN(maptimer, "BEGIN RENDER MAP (gdk)");
 
@@ -86,29 +103,40 @@ void map_draw_gdk(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixm
 		// 2.1. Draw Background
 //		map_draw_gdk_background(pMap, pPixmap);
 
+		gint nStyleZoomLevel = g_sZoomLevels[pRenderMetrics->nZoomLevel-1].nStyleZoomLevel;
+
 		// 2.2. Draw layer list in reverse order (painter's algorithm: http://en.wikipedia.org/wiki/Painter's_algorithm )
 		for(i=pMap->pLayersArray->len-1 ; i>=0 ; i--) {
 			maplayer_t* pLayer = g_ptr_array_index(pMap->pLayersArray, i);
 
 			if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_FILL) {
 				map_draw_gdk_layer_fill(pMap, pPixmap,  pRenderMetrics,
-										 pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);       // style
+										 pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);       // style
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
-				map_draw_gdk_layer_lines(pMap, pPixmap, pRenderMetrics,
-										 pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,               // data
-										 pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);       // style
+				gint iTile;
+				for(iTile=0 ; iTile < pTiles->len ; iTile++) {
+					maptile_t* pTile = g_ptr_array_index(pTiles, iTile);
+					map_draw_gdk_layer_lines(pMap, pPixmap, pRenderMetrics,
+											 pTile->apMapObjectArrays[pLayer->nDataSource],               // data
+											 pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);       // style
+				}
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGONS) {
-				map_draw_gdk_layer_polygons(pMap, pPixmap, pRenderMetrics,
-											pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,          // data
-											pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);    // style
+				gint iTile;
+				for(iTile=0 ; iTile < pTiles->len ; iTile++) {
+					maptile_t* pTile = g_ptr_array_index(pTiles, iTile);
+					map_draw_gdk_layer_polygons(pMap, pPixmap, pRenderMetrics,
+												pTile->apMapObjectArrays[pLayer->nDataSource],          // data
+												pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);    // style
+				}
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LOCATIONS) {
-				map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
+//                 map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
 			}
-			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LOCATION_LABELS) {
-				//map_draw_gdk_locations(pMap, pPixmap, pRenderMetrics);
+			else {
+//                 g_print("pLayer->nDrawType = %d\n", pLayer->nDrawType);
+//                 g_assert_not_reached();
 			}
 		}
 	}
@@ -148,7 +176,6 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 		map_draw_gdk_set_color(pGC, &(pLayerStyle->clrPrimary));
 	}
 
-
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
@@ -156,25 +183,27 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 			continue;
 		}
 
-		if(pRoad->pMapPointsArray->len >= 2) {
-			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
+		if(pRoad->pMapPointsArray->len < 3) {
+			//g_warning("not drawing polygon with < 3 points\n");
+			continue;
+		}
 
-			if(pRoad->pMapPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-				g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
-				continue;
-			}
+		if(pRoad->pMapPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+			//g_warning("not drawing polygon with > %d points\n", MAX_GDK_LINE_SEGMENTS);
+			continue;
+		}
 
-			// XXX: the bounding box should be pre-calculated!!!!
-			for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
-				pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
+		GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
-				aPoints[iPoint].x = pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
-				aPoints[iPoint].y = pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
-			}
+		for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
+			pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
 
-			gdk_draw_polygon(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)],
-				TRUE, aPoints, pRoad->pMapPointsArray->len);
-   		}
+			aPoints[iPoint].x = pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
+			aPoints[iPoint].y = pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
+		}
+
+		gdk_draw_polygon(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)],
+			TRUE, aPoints, pRoad->pMapPointsArray->len);
 	}
 	if(pLayerStyle->pGlyphFill != NULL) {
 		// Restore fill style
@@ -259,23 +288,26 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		}
 
 		if(pRoad->pMapPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-			//g_warning("not drawing line with > %d segments\n", MAX_GDK_LINE_SEGMENTS);
+			//g_warning("not drawing line with > %d points\n", MAX_GDK_LINE_SEGMENTS);
 			continue;
 		}
 
-		if(pRoad->pMapPointsArray->len >= 2) {
-			// Copy all points into this array.  Yuuup this is slow. :)
-			GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
+		if(pRoad->pMapPointsArray->len < 2) {
+			//g_warning("not drawing line with < 2 points\n");
+			continue;
+		}
 
-			for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
-				pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
+		// Copy all points into this array.  Yuuup this is slow. :)
+		GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
 
-				aPoints[iPoint].x = pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
-				aPoints[iPoint].y = pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
-			}
+		for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
+			pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
 
-			gdk_draw_lines(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], aPoints, pRoad->pMapPointsArray->len);
-   		}
+			aPoints[iPoint].x = pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
+			aPoints[iPoint].y = pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
+		}
+
+		gdk_draw_lines(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], aPoints, pRoad->pMapPointsArray->len);
 	}
 }
 

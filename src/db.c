@@ -256,11 +256,6 @@ static guint db_count_table_rows(const gchar* pszTable)
 	return uRows;
 }
 
-gboolean db_is_empty()
-{
-	return (db_count_table_rows(DB_ROADS_TABLENAME) == 0);
-}
-
 /******************************************************
 ** data inserting
 ******************************************************/
@@ -285,9 +280,9 @@ static gboolean db_insert(const gchar* pszSQL, gint* pnReturnRowsInserted)
 	return FALSE;
 }
 
-gboolean db_insert_road(gint nRoadNameID, gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GPtrArray* pPointsArray, gint* pReturnID)
+gboolean db_insert_road(gint nLOD, gint nRoadNameID, gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GPtrArray* pPointsArray, gint* pReturnID)
 {
-	g_assert(pReturnID != NULL);
+//	g_assert(pReturnID != NULL);
 	if(!db_is_connected()) return FALSE;
 	if(pPointsArray->len == 0) return TRUE; 	// skip 0-length
 
@@ -307,23 +302,32 @@ gboolean db_insert_road(gint nRoadNameID, gint nLayerType, gint nAddressLeftStar
 		nCount++;
 	}
 
-	gchar azQuery[MAX_SQLBUFFER_LEN];
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN,
-		"INSERT INTO %s SET RoadNameID=%d, TypeID=%d, Coordinates=GeometryFromText('LINESTRING(%s)')"
-		", AddressLeftStart=%d, AddressLeftEnd=%d, AddressRightStart=%d, AddressRightEnd=%d"
-		", CityLeftID=%d, CityRightID=%d"
-		", ZIPCodeLeft='%s', ZIPCodeRight='%s'",
-		DB_ROADS_TABLENAME, nRoadNameID, nLayerType, azCoordinateList,
-	    nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRightEnd,
-		nCityLeftID, nCityRightID,
-		pszZIPCodeLeft, pszZIPCodeRight);
-
-	if(MYSQL_RESULT_SUCCESS != mysql_query(g_pDB->pMySQLConnection, azQuery)) {
-		g_warning("db_insert_road failed: %s (SQL: %s)\n", mysql_error(g_pDB->pMySQLConnection), azQuery);
-		return FALSE;
+	gchar* pszQuery;
+	
+	if(nLOD == 0) {
+		pszQuery = g_strdup_printf(
+			"INSERT INTO %s%d SET RoadNameID=%d, TypeID=%d, Coordinates=GeometryFromText('LINESTRING(%s)')"
+			", AddressLeftStart=%d, AddressLeftEnd=%d, AddressRightStart=%d, AddressRightEnd=%d"
+			", CityLeftID=%d, CityRightID=%d"
+			", ZIPCodeLeft='%s', ZIPCodeRight='%s'",
+			DB_ROADS_TABLENAME, nLOD, nRoadNameID, nLayerType, azCoordinateList,
+			nAddressLeftStart, nAddressLeftEnd, nAddressRightStart, nAddressRightEnd,
+			nCityLeftID, nCityRightID,
+			pszZIPCodeLeft, pszZIPCodeRight);
 	}
+	else {
+		pszQuery = g_strdup_printf(
+			"INSERT INTO %s%d SET RoadNameID=%d, TypeID=%d, Coordinates=GeometryFromText('LINESTRING(%s)')",
+			DB_ROADS_TABLENAME, nLOD, nRoadNameID, nLayerType, azCoordinateList);
+	}
+
+	mysql_query(g_pDB->pMySQLConnection, pszQuery);
+	g_free(pszQuery);
+
 	// return the new ID
-	*pReturnID = mysql_insert_id(g_pDB->pMySQLConnection);
+	if(pReturnID != NULL) {
+		*pReturnID = mysql_insert_id(g_pDB->pMySQLConnection);
+	}
 	return TRUE;
 }
 
@@ -571,32 +575,43 @@ void db_create_tables()
 //	db_query("ALTER TABLE RoadName ADD INDEX (NameSoundex);", NULL);
 
 	// Road
-	db_query("CREATE TABLE IF NOT EXISTS Road("
-		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"	// XXX: can we get away with INT3 ?
+	db_query(
+		"CREATE TABLE IF NOT EXISTS Road0("
+//		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"	// XXX: can we get away with INT3 ?
 		" TypeID INT1 UNSIGNED NOT NULL,"
-
 		" RoadNameID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
-
 		" AddressLeftStart INT2 UNSIGNED NOT NULL,"
 		" AddressLeftEnd INT2 UNSIGNED NOT NULL,"
 		" AddressRightStart INT2 UNSIGNED NOT NULL,"
 		" AddressRightEnd INT2 UNSIGNED NOT NULL,"
-
 		" CityLeftID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
 		" CityRightID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
-
 		" ZIPCodeLeft CHAR(6) NOT NULL,"
 		" ZIPCodeRight CHAR(6) NOT NULL,"
-
 		" Coordinates point NOT NULL,"
 
 	    // lots of indexes:
-		" PRIMARY KEY (ID),"	// XXX: we'll probably want to keep a unique ID, but we don't use this for anything yet.
+//		" PRIMARY KEY (ID),"	// XXX: we'll probably want to keep a unique ID, but we don't use this for anything yet.
 		" INDEX(RoadNameID),"	// to get roads when we've matched a RoadName
 		" SPATIAL KEY (Coordinates));", NULL);
 
+	db_query(
+		"CREATE TABLE IF NOT EXISTS Road1("
+		" TypeID INT1 UNSIGNED NOT NULL,"
+		" RoadNameID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
+		" Coordinates point NOT NULL,"
+		" SPATIAL KEY (Coordinates));", NULL);
+
+	db_query(
+		"CREATE TABLE IF NOT EXISTS Road2("
+		" TypeID INT1 UNSIGNED NOT NULL,"
+		" RoadNameID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
+		" Coordinates point NOT NULL,"
+		" SPATIAL KEY (Coordinates));", NULL);
+
 	// RoadName
-	db_query("CREATE TABLE IF NOT EXISTS RoadName("
+	db_query(
+		"CREATE TABLE IF NOT EXISTS RoadName("
 		" ID INT3 UNSIGNED NOT NULL auto_increment,"	// NOTE: 3 bytes
 		" Name VARCHAR(30) NOT NULL,"
 		" NameSoundex CHAR(10) NOT NULL,"	// see soundex() function
@@ -607,8 +622,8 @@ void db_create_tables()
 		,NULL);
 
 	// City
-	db_query("CREATE TABLE IF NOT EXISTS City("
-		// a unique ID for the value
+	db_query(
+		"CREATE TABLE IF NOT EXISTS City("
 		" ID INT3 UNSIGNED NOT NULL AUTO_INCREMENT,"	// NOTE: 3 bytes
 		" StateID INT2 UNSIGNED NOT NULL,"		// NOTE: 2 bytes
 		" Name CHAR(60) NOT NULL,"			// are city names ever 60 chars anyway??  TIGER think so
@@ -618,8 +633,8 @@ void db_create_tables()
 	    ,NULL);
 
 	// State
-	db_query("CREATE TABLE IF NOT EXISTS State("
-		// a unique ID for the value
+	db_query(
+		"CREATE TABLE IF NOT EXISTS State("
 		" ID INT2 UNSIGNED NOT NULL AUTO_INCREMENT,"	// NOTE: 2 bytes (enough to go global..?)
 		" Name CHAR(40) NOT NULL,"
 		" Code CHAR(3) NOT NULL,"			// eg. "MA"
@@ -629,7 +644,8 @@ void db_create_tables()
 	    ,NULL);
 
 	// Location
-	db_query("CREATE TABLE IF NOT EXISTS Location("
+	db_query(
+		"CREATE TABLE IF NOT EXISTS Location("
 		" ID INT4 UNSIGNED NOT NULL AUTO_INCREMENT,"
 		" LocationSetID INT3 NOT NULL,"				// NOTE: 3 bytes
 		" Coordinates point NOT NULL,"

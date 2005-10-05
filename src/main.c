@@ -31,7 +31,6 @@
 #include "db.h"
 #include "map.h"
 #include "gpsclient.h"
-#include "scenemanager.h"
 #include "locationset.h"
 #include "location.h"
 #include "search.h"
@@ -141,9 +140,6 @@ gboolean main_init(void)
 	map_style_init();
 	g_print("initializing map\n");
 	map_init();
-
-	g_print("initializing scenemanager\n");
-	scenemanager_init();
 
 	g_print("initializing gpsclient\n");
 	gpsclient_init();

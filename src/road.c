@@ -22,11 +22,7 @@
  */
 
 #include <gtk/gtk.h>
-#include "main.h"
 #include "road.h"
-#include "util.h"
-#include "map.h"
-#include "gfreelist.h"
 
 struct {
 	gchar* pszLong;

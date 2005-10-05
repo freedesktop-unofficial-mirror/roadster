@@ -1,5 +1,5 @@
 /***************************************************************************
- *            main.h
+ *            map_tilemanager.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -21,27 +21,25 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _MAIN_H_
-#define _MAIN_H_
-
-//#define G_DISABLE_ASSERT
+#ifndef _MAP_TILEMANAGER_H_
+#define _MAP_TILEMANAGER_H_
 
 #include <gtk/gtk.h>
 
-#define USE_GNOME_VFS		// comment this out to get a faster single-threaded compile (can't import, though)
-#define USE_GFREELIST
+typedef struct {
+	GPtrArray* apTileCachedArrays[4];	// MAP_NUM_LEVELS_OF_DETAIL
+} maptilemanager_t;
 
-#define MOUSE_BUTTON_LEFT				(1)		// These are X/GDK/GTK numbers, now with names.
-#define MOUSE_BUTTON_RIGHT				(3)
+#include "map.h"
 
-//#define ENABLE_TIMING
+typedef struct {
+	maprect_t rcWorldBoundingBox;
+	GPtrArray* apMapObjectArrays[ MAP_NUM_OBJECT_TYPES + 1 ];
+} maptile_t;
 
-typedef struct color {
-	gfloat fRed;
-	gfloat fGreen;
-	gfloat fBlue;
-	gfloat fAlpha;
-} color_t;
+maptilemanager_t* map_tilemanager_new();
+
+// returns GArray containing maptile_t types 
+GPtrArray* map_tilemanager_load_tiles_for_worldrect(maptilemanager_t* pTileManager, maprect_t* pWorldRect, gint nLOD);
 
 #endif
-

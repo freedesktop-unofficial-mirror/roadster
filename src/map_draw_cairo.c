@@ -99,7 +99,7 @@ void map_draw_cairo_set_rgba(cairo_t* pCairo, color_t* pColor)
 	cairo_set_source_rgba(pCairo, pColor->fRed, pColor->fGreen, pColor->fBlue, pColor->fAlpha);
 }
 
-void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
+void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags)
 {
 	// 1. Set draw target to X Drawable
 	Display* dpy;
@@ -143,32 +143,38 @@ void map_draw_cairo(map_t* pMap, rendermetrics_t* pRenderMetrics, GdkPixmap* pPi
 		for(i=pMap->pLayersArray->len-1 ; i>=0 ; i--) {
 			maplayer_t* pLayer = g_ptr_array_index(pMap->pLayersArray, i);
 
+			gint nStyleZoomLevel = g_sZoomLevels[pRenderMetrics->nZoomLevel-1].nStyleZoomLevel;
+
 			if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
 				if(nDrawFlags & DRAWFLAG_GEOMETRY) {
-					map_draw_cairo_layer_roads(pMap, pCairo, pRenderMetrics,
-											   pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
-											   pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);
+//                     map_draw_cairo_layer_roads(pMap, pCairo, pRenderMetrics,
+//                                                pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
+//                                                pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);
 				}
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGONS) {
 				if(nDrawFlags & DRAWFLAG_GEOMETRY) {
-					map_draw_cairo_layer_polygons(pMap, pCairo, pRenderMetrics,
-												  pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
-												  pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);
+//                     map_draw_cairo_layer_polygons(pMap, pCairo, pRenderMetrics,
+//                                                   pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
+//                                                   pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);
 				}
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINE_LABELS) {
 				if(nDrawFlags & DRAWFLAG_LABELS) {
-					map_draw_cairo_layer_road_labels(pMap, pCairo, pRenderMetrics,
-													 pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
-													 pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);
+					gint iTile;
+					for(iTile=0 ; iTile < pTiles->len ; iTile++) {
+						maptile_t* pTile = g_ptr_array_index(pTiles, iTile);
+						map_draw_cairo_layer_road_labels(pMap, pCairo, pRenderMetrics,
+														 pTile->apMapObjectArrays[pLayer->nDataSource],               // data
+														 pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);
+					}
 				}
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGON_LABELS) {
 				if(nDrawFlags & DRAWFLAG_LABELS) {
-					map_draw_cairo_layer_polygon_labels(pMap, pCairo, pRenderMetrics,
-														pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
-														pLayer->paStylesAtZoomLevels[pRenderMetrics->nZoomLevel-1]);
+//                     map_draw_cairo_layer_polygon_labels(pMap, pCairo, pRenderMetrics,
+//                                                         pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
+//                                                         pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);
 				}
 			}
 		}
@@ -246,6 +252,11 @@ void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetric
 
 	for(i=0 ; i<pRoadsArray->len ; i++) {
 		road_t* pRoad = g_ptr_array_index(pRoadsArray, i);
+		
+		if(!map_rects_overlap(&(pRoad->rWorldBoundingBox), &(pRenderMetrics->rWorldBoundingBox))) {
+			continue;
+		}
+
 		if(pRoad->pszName[0] != '\0') {
 			map_draw_cairo_road_label(pMap, pCairo, pLayerStyle, pRenderMetrics, pRoad->pMapPointsArray, pRoad->pszName);
 		}
@@ -480,25 +491,10 @@ static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 		mappoint_t* pTmp = pMapPoint1; pMapPoint1 = pMapPoint2; pMapPoint2 = pTmp;
 	}
 
-	// find extents
-	gdouble fMaxLat = max(pMapPoint1->fLatitude, pMapPoint2->fLatitude);
-	gdouble fMinLat = min(pMapPoint1->fLatitude, pMapPoint2->fLatitude);
-	gdouble fMaxLon = max(pMapPoint1->fLongitude, pMapPoint2->fLongitude);
-	gdouble fMinLon = min(pMapPoint1->fLongitude, pMapPoint2->fLongitude);
-
 	gdouble fX1 = SCALE_X(pRenderMetrics, pMapPoint1->fLongitude);
 	gdouble fY1 = SCALE_Y(pRenderMetrics, pMapPoint1->fLatitude);
 	gdouble fX2 = SCALE_X(pRenderMetrics, pMapPoint2->fLongitude);
 	gdouble fY2 = SCALE_Y(pRenderMetrics, pMapPoint2->fLatitude);
-
-	// rectangle overlap test
-	if(fMaxLat < pRenderMetrics->rWorldBoundingBox.A.fLatitude
-	   || fMaxLon < pRenderMetrics->rWorldBoundingBox.A.fLongitude
-	   || fMinLat > pRenderMetrics->rWorldBoundingBox.B.fLatitude
-	   || fMinLon > pRenderMetrics->rWorldBoundingBox.B.fLongitude)
-	{
-		return;
-	}
 
 	gdouble fRise = fY2 - fY1;
 	gdouble fRun = fX2 - fX1;
@@ -1276,7 +1272,7 @@ void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t*
 
 static void map_draw_cairo_map_scale(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics)
 {
-	zoomlevel_t* pZoomLevel = &g_sZoomLevels[pRenderMetrics->nZoomLevel];
+	zoomlevel_t* pZoomLevel = &g_sZoomLevels[pRenderMetrics->nZoomLevel-1];
 
 	// Imperial
 	gdouble fImperialLength = 0;
