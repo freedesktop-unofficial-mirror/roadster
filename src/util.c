@@ -426,6 +426,53 @@ gboolean util_gtk_window_set_fullscreen(GtkWindow* pWindow, gboolean bFullscreen
 	}
 }
 
+gint util_gtk_widget_style_get_property_gint(GtkWidget* pWidget, const gchar* pszName)
+{
+	GValue vValue = {0};
+	g_value_init(&vValue, G_TYPE_INT);
+	gtk_widget_style_get_property(pWidget, pszName, &vValue);
+	gint nValue = g_value_get_int(&vValue);
+	g_value_unset(&vValue);
+
+	return nValue;
+}
+
+// This callback changes the behavior of a GtkHScale.  Clicking on the scale to the sides of the 'thumb' will
+// now cause the thumb to jump to that position. 
+// To use:	g_signal_connect(G_OBJECT(pScaleWidget), "change-value", util_gtk_range_instant_set_on_value_changing_callback, NULL);
+gboolean util_gtk_range_instant_set_on_value_changing_callback(GtkRange *pRangeWidget, GtkScrollType scroll, gdouble value, gpointer user_data)
+{
+	gint nMouseX;
+	gtk_widget_get_pointer(GTK_WIDGET(pRangeWidget), &nMouseX, NULL);
+
+	// Get the width of the "slider" gizmo (the thing the user clicks and drags)
+	gint nSliderWidth = util_gtk_widget_style_get_property_gint(GTK_WIDGET(pRangeWidget), "slider-length");
+
+	// The center of the slider is the actual setting, so we subtract slider width from total width
+	// Example: If the slider width is 4, the effect range of the slider would be the ===s here:
+	// [--===============--]
+
+	// Subtract half the width, which gives us: [===============----]
+	nMouseX -= ((nSliderWidth) / 2);
+	gint nEffectiveRangeWidth = (gdouble)(GTK_WIDGET(pRangeWidget)->allocation.width) - (nSliderWidth);
+
+	gdouble fPercent = (gdouble)nMouseX / (gdouble)nEffectiveRangeWidth;
+	if(fPercent < 0.0) fPercent = 0.0;
+	if(fPercent > 1.0) fPercent = 1.0;
+
+	// Get adjustment's range and set value as % of that range
+	GtkAdjustment* pAdjustment;
+	g_object_get(G_OBJECT(pRangeWidget), "adjustment", &pAdjustment, NULL);
+
+	gdouble fMin, fMax;
+	g_object_get(G_OBJECT(pAdjustment), "lower", &fMin, "upper", &fMax, NULL);
+
+	gdouble fNewValue = fMin + (fPercent * (fMax - fMin));
+	gtk_range_set_value(pRangeWidget, fNewValue);
+
+	return TRUE;	// we handled it
+}
+
 //
 // 
 //
@@ -471,4 +518,25 @@ void util_gtk_entry_add_hint_text(GtkEntry* pEntry, const gchar* pszHint)
 	_util_gtk_entry_on_focus_out_event(pEntry, NULL, pszHint);
 }
 
+gint util_get_int_at_percent_of_range(gdouble fPercent, gint nA, gint nB)
+{
+	if(fPercent > 1.0) fPercent = 1.0;
+	else if(fPercent < 0.0) fPercent = 0.0;
 
+	return (gint)(nA + (fPercent * (nB - nA)));
+}
+
+gdouble util_get_percent_of_range(gint nMiddle, gint nA, gint nB)
+{
+	if(nMiddle < nA) return 0.0;
+	else if(nMiddle > nB) return 1.0;
+
+	return (gdouble)(nMiddle - nA) / (gdouble)(nB - nA);
+}
+
+gchar* util_format_gdouble(gdouble d)
+{
+	gchar achBuffer[20];
+	g_ascii_dtostr(achBuffer, 20, d);
+	return g_strdup(achBuffer);
+}

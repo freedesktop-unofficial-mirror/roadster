@@ -142,8 +142,8 @@ void searchwindow_clear_results(void)
 
 static void searchwindow_update_next_and_prev_buttons()
 {
-	gtk_widget_set_sensitive(g_SearchWindow.pNextSearchResultMenuItem, g_SearchWindow.nNumResults > 0);
-	gtk_widget_set_sensitive(g_SearchWindow.pPreviousSearchResultMenuItem, g_SearchWindow.nNumResults > 0);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.pNextSearchResultMenuItem), g_SearchWindow.nNumResults > 0);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_SearchWindow.pPreviousSearchResultMenuItem), g_SearchWindow.nNumResults > 0);
 }
 
 void searchwindow_set_message(gchar* pszMessage)

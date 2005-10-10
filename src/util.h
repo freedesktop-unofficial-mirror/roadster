@@ -61,6 +61,8 @@ gboolean util_gtk_tree_view_select_previous(GtkTreeView* pTreeView);
 gboolean util_gtk_window_is_fullscreen(GtkWindow* pWindow);
 gboolean util_gtk_window_set_fullscreen(GtkWindow* pWindow, gboolean bFullscreen);
 
+gboolean util_gtk_range_instant_set_on_value_changing_callback(GtkRange *range, GtkScrollType scroll, gdouble value, gpointer user_data);
+
 // if glib < 2.6
 #if(!GLIB_CHECK_VERSION(2,6,0))
 gint g_strv_length(const gchar** a);
@@ -79,5 +81,11 @@ gchar** util_split_words_onto_two_lines(const gchar* pszText, gint nMinLineLengt
 
 // GtkEntry "hint"
 void util_gtk_entry_add_hint_text(GtkEntry* pEntry, const gchar* pszMessage);
+
+gint util_get_int_at_percent_of_range(gdouble fPercent, gint nA, gint nB);
+gdouble util_get_percent_of_range(gint nMiddle, gint nA, gint nB);
+
+gchar* util_format_gdouble(gdouble d);
+
 
 #endif

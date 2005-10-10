@@ -608,6 +608,13 @@ void db_create_tables()
 		" RoadNameID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
 		" Coordinates point NOT NULL,"
 		" SPATIAL KEY (Coordinates));", NULL);
+	
+	db_query(
+		"CREATE TABLE IF NOT EXISTS Road3("
+		" TypeID INT1 UNSIGNED NOT NULL,"
+		" RoadNameID INT3 UNSIGNED NOT NULL,"		// NOTE: 3 bytes
+		" Coordinates point NOT NULL,"
+		" SPATIAL KEY (Coordinates));", NULL);
 
 	// RoadName
 	db_query(

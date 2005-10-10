@@ -76,6 +76,7 @@ typedef enum {
 // For road names: Bitstream Vera Sans Mono ?
 
 #define INCHES_PER_METER (39.37007)
+#define FEET_PER_MILE				(5280.0)
 
 #define WORLD_CIRCUMFERENCE_IN_METERS (40075452.7)
 #define WORLD_METERS_PER_DEGREE (WORLD_CIRCUMFERENCE_IN_METERS / 360.0)
@@ -85,11 +86,14 @@ typedef enum {
 #define WORLD_KILOMETERS_TO_DEGREES(x)	(((x) * KILOMETERS_PER_METER) / WORLD_METERS_PER_DEGREE)
 
 #define WORLD_CIRCUMFERENCE_IN_FEET (131482939.8324)
+
+#define WORLD_MILES_PER_DEGREE		((WORLD_CIRCUMFERENCE_IN_FEET / 360.0) / FEET_PER_MILE)
 #define WORLD_FEET_PER_DEGREE 		(WORLD_CIRCUMFERENCE_IN_FEET / 360.0)
 #define WORLD_FEET_TO_DEGREES(X)	((X) / WORLD_FEET_PER_DEGREE)
 
-#define FEET_PER_MILE				(5280.0)
 #define WORLD_MILES_TO_DEGREES(x)	((x * FEET_PER_MILE) / WORLD_FEET_PER_DEGREE)
+
+#define WORLD_DEGREES_TO_MILES(x)	((x) * WORLD_MILES_PER_DEGREE)
 
 // Earth is slightly egg shaped so there are infinite radius measurements:
 
@@ -278,7 +282,6 @@ gboolean map_can_zoom_in(const map_t* pMap);
 gboolean map_can_zoom_out(const map_t* pMap);
 
 void map_set_zoomlevel(map_t* pMap, guint16 uZoomLevel);
-//void map_get_render_metrics(rendermetrics_t* pMetrics);
 
 void map_set_redraw_needed(map_t* pMap, gboolean bNeeded);
 gboolean map_get_redraw_needed(const map_t* pMap);
@@ -294,7 +297,7 @@ gdouble map_distance_in_units_to_degrees(map_t* pMap, gdouble fDistance, gint nD
 gdouble map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB);
 gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2);
 
-gdouble map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel);
+gdouble map_pixels_to_degrees(const map_t* pMap, gint16 nPixels, guint16 uZoomLevel);
 gdouble map_degrees_to_pixels(map_t* pMap, gdouble fDegrees, guint16 uZoomLevel);
 gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2);
 gdouble map_get_distance_in_pixels(map_t* pMap, mappoint_t* p1, mappoint_t* p2);
@@ -322,5 +325,8 @@ void map_zoom_to_screenrect(map_t* pMap, const screenrect_t* pRect);
 gint map_screenrect_width(const screenrect_t* pRect);
 gint map_screenrect_height(const screenrect_t* pRect);
 void map_get_screenrect_centerpoint(const screenrect_t* pRect, screenpoint_t* pPoint);
+
+void map_get_visible_maprect(const map_t* pMap, maprect_t* pReturnMapRect);
+gdouble map_get_altitude(const map_t* pMap, EDistanceUnits eUnit);
 
 #endif

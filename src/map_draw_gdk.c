@@ -23,7 +23,7 @@
 
 #define MAX_GDK_LINE_SEGMENTS (2000)
 
-//#define ENABLE_MAP_GRAYSCALE_HACK
+//#define ENABLE_MAP_GRAYSCALE_HACK 	// just a little test.  black and white might be good for something
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
@@ -53,8 +53,6 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 
 //static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 
-//#define ENABLE_MAP_GRAYSCALE_HACK 	// just a little test.  black and white might be good for something
-
 void map_draw_gdk_set_color(GdkGC* pGC, color_t* pColor)
 {
 	GdkColor clr;
@@ -76,9 +74,9 @@ void map_draw_gdk_xor_rect(map_t* pMap, GdkDrawable* pTargetDrawable, screenrect
 	GdkGCValues gcValues;
 	gdk_gc_get_values(pGC, &gcValues);
 
-	GdkColor clrWhite = {0, 32000, 32000, 32000};
+	GdkColor clr = {0, 65535, 65535, 65535};
 	gdk_gc_set_function(pGC, GDK_XOR);
-	gdk_gc_set_rgb_fg_color(pGC, &clrWhite);
+	gdk_gc_set_rgb_fg_color(pGC, &clr);
 	gdk_draw_rectangle(pTargetDrawable, pGC, FALSE, 
 					   min(pRect->A.nX, pRect->B.nX), min(pRect->A.nY, pRect->B.nY),	// x,y
 					   map_screenrect_width(pRect), map_screenrect_height(pRect));		// w,h

@@ -181,7 +181,7 @@ gint g_aaObjectTypeDetailAtLODs[MAP_NUM_OBJECT_TYPES][MAP_NUM_LEVELS_OF_DETAIL] 
 	{0,0,0,0},	// (unused)
 	{1,8,0,0},	// rail
 	{1,1,1,1},	// park
-	{2,16,0,0},	// river
+	{2,0,0,0},	// river
 	{1,1,1,1},	// lake
 	{1,1,1,1},	// misc area
 	{1,1,1,1},	// urban area

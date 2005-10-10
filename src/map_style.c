@@ -33,7 +33,7 @@
 #define MIN_STYLE_LEVEL (1)
 #define MAX_STYLE_LEVEL	(10)
 
-// utility functions for iterating through lists of XML things
+// utility macros for iterating through lists of XML things
 #define EACH_ATTRIBUTE_OF_NODE(a,n)		(a) = (n)->properties ; (a) != NULL ; (a) = (a)->next
 #define EACH_CHILD_OF_NODE(c,n)			(c) = (n)->children ; (c) != NULL ; (c) = (c)->next
 
@@ -48,18 +48,6 @@ static void map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer
 // Debugging
 static void map_style_print_layer(maplayer_t *layer);
 static void map_style_print_color(color_t *color);
-
-
-// Callbacks
-// void map_style_callback_generic_error(void * ctx, const char * msg, ...)
-// {
-//     g_print("map_style_callback_generic_error: %s\n", msg);
-// }
-//
-// void map_style_callback_structured_error(void * userData, xmlErrorPtr error)
-// {
-//     g_print("map_style_callback_structured_error\n");
-// }
 
 //
 // Functions
@@ -105,7 +93,7 @@ static maplayer_t* map_style_new_layer()
 	return pLayer;
 }
 
-gboolean map_style_parse_zoomlevel(const gchar* pszZoomLevel, gint* pnReturnMinZoomLevel, gint* pnReturnMaxZoomLevel)
+static gboolean map_style_parse_zoomlevel(const gchar* pszZoomLevel, gint* pnReturnMinZoomLevel, gint* pnReturnMaxZoomLevel)
 {
 	g_assert(pszZoomLevel != NULL);
 	g_assert(pnReturnMinZoomLevel != NULL);
@@ -150,7 +138,7 @@ gboolean map_style_parse_zoomlevel(const gchar* pszZoomLevel, gint* pnReturnMinZ
 #define MAX_DASH_LENGTH		(50)
 #define MIN_DASH_LENGTH		(1)
 
-dashstyle_t* dashstyle_new(gdouble* pafValues, gint nValueCount)
+static dashstyle_t* dashstyle_new(gdouble* pafValues, gint nValueCount)
 {
 	g_assert(pafValues != NULL);
 
@@ -162,7 +150,7 @@ dashstyle_t* dashstyle_new(gdouble* pafValues, gint nValueCount)
 	pNewDashStyle->pafDashList = g_malloc(sizeof(gdouble) * nValueCount);
 	memcpy(pNewDashStyle->pafDashList, pafValues, sizeof(gdouble) * nValueCount);
 
-	// The list of int8's has to be converted list
+	// The list of int8's has to be converted
 	pNewDashStyle->panDashList = g_malloc(sizeof(gint8) * nValueCount);
 	gint i;
 	for(i=0 ; i<nValueCount ; i++) {
@@ -180,7 +168,7 @@ dashstyle_t* dashstyle_new(gdouble* pafValues, gint nValueCount)
 	return pNewDashStyle;
 }
 
-gboolean map_style_parse_dashstyle(const gchar* pszDashStyle, dashstyle_t** ppReturnDashStyle)
+static gboolean map_style_parse_dashstyle(const gchar* pszDashStyle, dashstyle_t** ppReturnDashStyle)
 {
 	g_assert(pszDashStyle);
 	g_assert(ppReturnDashStyle);
@@ -219,7 +207,7 @@ gboolean map_style_parse_dashstyle(const gchar* pszDashStyle, dashstyle_t** ppRe
 	return FALSE;
 }
 
-gchar* get_attribute_value(const xmlDocPtr pDoc, const xmlAttrPtr pAttribute)
+static gchar* get_attribute_value(const xmlDocPtr pDoc, const xmlAttrPtr pAttribute)
 {
 	g_assert(pDoc != NULL);
 	g_assert(pAttribute != NULL);
@@ -350,8 +338,7 @@ static void map_style_parse_layer(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode)
 //	map_style_print_layer(pLayer);
 }
 
-static void
-map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, xmlNodePtr pNode)
+static void map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, xmlNodePtr pNode)
 {
 	g_assert(pMap != NULL);
 	g_assert(pLayer != NULL);
@@ -484,8 +471,7 @@ map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, 
 /******************************************************************
  * map_style_print_* functions for debugging
  *****************************************************************/
-static void
-map_style_print_color(color_t* pColor)
+static void map_style_print_color(color_t* pColor)
 {
 	g_assert(pColor != NULL);
 	g_print("color: %3.2f, %3.2f, %3.2f, %3.2f\n", pColor->fRed, pColor->fGreen, pColor->fBlue, pColor->fAlpha);
@@ -510,8 +496,7 @@ map_style_print_color(color_t* pColor)
 	color_t clrHalo;
 */
 
-static void
-map_style_print_layer(maplayer_t *pLayer)
+static void map_style_print_layer(maplayer_t *pLayer)
 {
 	g_assert(pLayer != NULL);
 

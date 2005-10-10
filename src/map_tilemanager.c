@@ -159,10 +159,10 @@ static maptile_t* map_tilemanager_tile_new(maptilemanager_t* pTileManager, mapre
 	for(i=0 ; i<MAP_NUM_OBJECT_TYPES ; i++) {
 		pNewTile->apMapObjectArrays[i] = g_ptr_array_new();
 	}
-	g_print("(");
+//	g_print("(");
 	_map_tilemanager_tile_load_map_objects(pNewTile, pRect, nLOD);
 //	_map_tilemanager_tile_load_locations(pNewTile, pRect);
-	g_print(")");
+//	g_print(")");
 
 	// Add to cache
 	g_ptr_array_add(pTileManager->apTileCachedArrays[nLOD], pNewTile);

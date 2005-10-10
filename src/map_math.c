@@ -29,7 +29,7 @@
 // ========================================================
 
 // convert pixels to a span of degrees
-gdouble map_pixels_to_degrees(map_t* pMap, gint16 nPixels, guint16 uZoomLevel)
+gdouble map_pixels_to_degrees(const map_t* pMap, gint16 nPixels, guint16 uZoomLevel)
 {
 	gdouble fMonitorPixelsPerInch = 85.333;	// XXX: don't hardcode this
 	gdouble fPixelsPerMeter = fMonitorPixelsPerInch * INCHES_PER_METER;

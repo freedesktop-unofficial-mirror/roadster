@@ -72,66 +72,63 @@ static void map_init_location_hash(map_t* pMap);
 static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID);
 
 static void map_data_clear(map_t* pMap);
-void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics);
+void map_get_render_metrics(const map_t* pMap, rendermetrics_t* pMetrics);
 
 gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2);
 
-// Each zoomlevel has a scale and an optional name (name isn't used for anything)
+// Each zoomlevel has a scale (XXX: this should really be in an XML file)
 zoomlevel_t g_sZoomLevels[NUM_ZOOM_LEVELS] = {
-	// 1.166144850000 magic number for 2000-80000 in 25 steps.  (each scale is previous * this #)
-	// 1.181891000000 magic number for 2000-1,600,000 in 41 steps (11 major with 3 minor in between)
+	{150000000, UNIT_MILES,3000,UNIT_KILOMETERS,4000, 	1, 3},	// *1
+	{123000000, UNIT_MILES,3000,UNIT_KILOMETERS,4000, 	1, 3},	// 2
+	{ 96000000, UNIT_MILES,2000,UNIT_KILOMETERS,2000, 	1, 3},	// 3
+	{ 69000000, UNIT_MILES,2000,UNIT_KILOMETERS,2000, 	1, 3},	// 4
 
-	{150000000, UNIT_MILES,2000,UNIT_KILOMETERS,2000, 	1, 3},	// *1
-	{123000000, UNIT_MILES,1000,UNIT_KILOMETERS,48, 	1, 3},	// 2
-	{ 96000000, UNIT_MILES,500,	UNIT_KILOMETERS,48, 	1, 3},	// 3
-	{ 69000000, UNIT_MILES,200,	UNIT_KILOMETERS,48, 	1, 3},	// 4
+	{ 42000000, UNIT_MILES,1000,UNIT_KILOMETERS,1000, 	1, 3},	// *5
+	{ 35000000, UNIT_MILES,1000,UNIT_KILOMETERS,1000, 	1, 3},	// 6
+	{ 28000000, UNIT_MILES,500,UNIT_KILOMETERS,500, 	1, 3},	// 7
+	{ 21000000, UNIT_MILES,500,UNIT_KILOMETERS,500, 	1, 3},	// 8
 
-	{ 42000000, UNIT_MILES,100,	UNIT_KILOMETERS,24, 	1, 3},	// *5
-	{ 35000000, UNIT_MILES,50,	UNIT_KILOMETERS,24, 	1, 3},	// 6
-	{ 28000000, UNIT_MILES,20,	UNIT_KILOMETERS,24, 	1, 3},	// 7
-	{ 21000000, UNIT_MILES,10,	UNIT_KILOMETERS,24, 	1, 3},	// 8
-
-	{ 14000000, UNIT_MILES,10,	UNIT_KILOMETERS,12, 	2, 3},	// *9
-	{ 11600000, UNIT_MILES,10,	UNIT_KILOMETERS,12, 	2, 3},	// 10
-	{  9200000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	2, 3},	// 11
-	{  6800000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	2, 3},	// 12
+	{ 14000000, UNIT_MILES,10,	UNIT_KILOMETERS,12, 	2, 2},	// *9
+	{ 11600000, UNIT_MILES,10,	UNIT_KILOMETERS,12, 	2, 2},	// 10
+	{  9200000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	2, 2},	// 11
+	{  6800000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	2, 2},	// 12
 
 	{  4400000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	3, 2},	// *13
 	{  3850000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	3, 2},	// 14
 	{  3300000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	3, 2},	// 15
 	{  2750000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	3, 2},	// 16
 
-	{  2200000, UNIT_MILES, 2,	UNIT_KILOMETERS, 2, 	4, 2},	// *17
-	{  1832250, UNIT_MILES, 2,	UNIT_KILOMETERS, 2, 	4, 2},	// 18
-	{  1464500, UNIT_MILES, 2,	UNIT_KILOMETERS, 2, 	4, 2},	// 19
-	{  1100000, UNIT_MILES, 2,	UNIT_KILOMETERS, 2, 	4, 2},	// 20
+	{  2200000, UNIT_MILES, 8,	UNIT_KILOMETERS, 5, 	4, 1},	// *17
+	{  1832250, UNIT_MILES, 8,	UNIT_KILOMETERS, 5, 	4, 1},	// 18
+	{  1464500, UNIT_MILES, 8,	UNIT_KILOMETERS, 5, 	4, 1},	// 19
+	{  1100000, UNIT_MILES, 8,	UNIT_KILOMETERS, 5, 	4, 1},	// 20
 
-	{   729000, UNIT_MILES, 2,	UNIT_KILOMETERS, 2, 	5, 1},	// *21
-	{   607500, UNIT_MILES, 1,	UNIT_KILOMETERS, 1, 	5, 1},	// 22
-	{   486000, UNIT_MILES, 1,	UNIT_KILOMETERS, 1,		5, 1},	// 23
-	{   364500, UNIT_MILES, 1,	UNIT_KILOMETERS, 1,		5, 1},	// 24
+	{   729000, UNIT_MILES,10,	UNIT_KILOMETERS, 8, 	5, 1},	// *21
+	{   607500, UNIT_MILES,10,	UNIT_KILOMETERS, 8, 	5, 1},	// 22
+	{   486000, UNIT_MILES,10,	UNIT_KILOMETERS, 8,		5, 1},	// 23
+	{   364500, UNIT_MILES,10,	UNIT_KILOMETERS, 8,		5, 1},	// 24
 
-	{   243000, UNIT_MILES, 1,	UNIT_KILOMETERS, 1,		6, 1},	// *25
-	{   202500, UNIT_FEET, 3000,UNIT_METERS, 500, 		6, 1},	// 26
-	{   162000, UNIT_FEET, 2000,UNIT_METERS, 500, 		6, 1},	// 27
-	{  	121500, UNIT_FEET, 2000,UNIT_METERS, 500, 		6, 1},	// 28
+	{   243000, UNIT_MILES, 5,	UNIT_KILOMETERS, 4,		6, 1},	// *25
+	{   209750, UNIT_MILES, 5,	UNIT_KILOMETERS, 4, 	6, 1},	// 26
+	{   176500, UNIT_MILES, 5,	UNIT_KILOMETERS, 4, 	6, 1},	// 27
+	{  	143250, UNIT_MILES, 5,	UNIT_KILOMETERS, 4, 	6, 1},	// 28
 
-	{    81000, UNIT_FEET, 2000,UNIT_METERS, 300, 		7, 0},	// *29
-	{    67500, UNIT_FEET, 2000,UNIT_METERS, 300, 		7, 0},	// 30
-	{    54000, UNIT_FEET, 2000,UNIT_METERS, 300, 		7, 0},	// 31
-	{    40500, UNIT_FEET, 1000,UNIT_METERS, 200, 		7, 0},	// 32
+	{   110000, UNIT_MILES, 2,	UNIT_KILOMETERS,2, 		7, 0},	// *29
+	{    89250, UNIT_MILES, 2,	UNIT_KILOMETERS,2, 		7, 0},	// 30
+	{    68500, UNIT_MILES, 2,	UNIT_KILOMETERS,2, 		7, 0},	// 31
+	{    47750, UNIT_MILES, 2,	UNIT_KILOMETERS,2, 		7, 0},	// 32
 
-	{    27000, UNIT_FEET, 1000,UNIT_METERS, 200, 		8, 0},	// *33	
-	{    22500, UNIT_FEET, 1000,UNIT_METERS, 200, 		8, 0},	// 34
-	{    18000, UNIT_FEET, 1000,UNIT_METERS, 200, 		8, 0},	// 35
-	{    13500, UNIT_FEET, 500,	UNIT_METERS, 100, 		8, 0},	// 36
+	{    27000, UNIT_FEET, 2000,UNIT_METERS, 500, 		8, 0},	// *33	
+	{    22500, UNIT_FEET, 2000,UNIT_METERS, 500, 		8, 0},	// 34
+	{    18000, UNIT_FEET, 2000,UNIT_METERS, 500, 		8, 0},	// 35
+	{    13500, UNIT_FEET, 2000,UNIT_METERS, 500, 		8, 0},	// 36
 
-	{     9000, UNIT_FEET, 500,	UNIT_METERS, 100, 		9,  0},	// *37
-	{     7500, UNIT_FEET, 500,	UNIT_METERS, 100, 		9,  0},	// 38
-	{     6000, UNIT_FEET, 300,	UNIT_METERS, 50, 		9,  0},	// 39
-	{     4500, UNIT_FEET, 300,	UNIT_METERS, 50, 		9,  0},	// 40
+	{     9000, UNIT_FEET, 500,	UNIT_METERS, 200, 		9,  0},	// *37
+	{     7500, UNIT_FEET, 500,	UNIT_METERS, 200, 		9,  0},	// 38
+	{     6000, UNIT_FEET, 500,	UNIT_METERS, 200, 		9,  0},	// 39
+	{     4500, UNIT_FEET, 500,	UNIT_METERS, 200, 		9,  0},	// 40
 
-	{     3000, UNIT_FEET, 300,	UNIT_METERS, 50, 		10, 0},	// *41
+	{     3000, UNIT_FEET, 200,	UNIT_METERS, 50, 		10, 0},	// *41
 };
 
 #define MIN_ZOOMLEVEL_FOR_LOCATIONS	(6)
@@ -151,6 +148,8 @@ gchar* g_apszMapObjectTypeNames[] = {	// XXX: would be nice to remove this. alth
 	"misc-areas",
 	"urban-areas",
 };
+
+gchar* g_apszMapRenderTypeNames[] = {"lines", "polygons", "line-labels", "polygon-labels", "fill", "locations", "location-labels"};
 
 // ========================================================
 //  Init
@@ -295,6 +294,29 @@ guint32 map_get_zoomlevel_scale(const map_t* pMap)
 	return g_sZoomLevels[pMap->uZoomLevel-1].uScale;	// returns "5000" for 1:5000 scale
 }
 
+gdouble map_get_altitude(const map_t* pMap, EDistanceUnits eUnit)
+{
+	g_warning("broken function :)\n");
+
+	g_assert(eUnit == UNIT_MILES);
+
+	// How high are we off the ground?
+
+	// x = sqrt((SCALE*sqrt(1.25))^2  - (SCALE/2)^2)
+
+//	gdouble fScale = (gdouble)(g_sZoomLevels[pMap->uZoomLevel-1].uScale);
+
+	rendermetrics_t renderMetrics = {0};
+	map_get_render_metrics(pMap, &renderMetrics);
+
+	gdouble fBase = renderMetrics.fScreenLatitude;
+	gdouble fEyeToTopOfScreen = sqrt( WORLD_FEET_TO_DEGREES(1) + 1 );
+
+	gdouble fDistanceInDegrees = sqrt(((fBase * fEyeToTopOfScreen)*(fBase * fEyeToTopOfScreen)) - ((fBase/2.0)*(fBase/2.0)));
+
+	return WORLD_DEGREES_TO_MILES(fDistanceInDegrees);
+}
+
 gboolean map_can_zoom_in(const map_t* pMap)
 {
 	// can we increase zoom level?
@@ -396,7 +418,7 @@ void map_set_dimensions(map_t* pMap, const dimensions_t* pDimensions)
 //  Draw Functions
 // ========================================================
 
-void map_get_render_metrics(map_t* pMap, rendermetrics_t* pMetrics)
+void map_get_render_metrics(const map_t* pMap, rendermetrics_t* pMetrics)
 {
 	g_assert(pMetrics != NULL);
 
@@ -440,8 +462,6 @@ gboolean map_object_type_atoi(const gchar* pszName, gint* pnReturnObjectTypeID)
 
 gboolean map_layer_render_type_atoi(const gchar* pszName, gint* pnReturnRenderTypeID)
 {
-	gchar* g_apszMapRenderTypeNames[] = {"lines", "polygons", "line-labels", "polygon-labels", "fill", "locations", "location-labels"};
-
 	gint i;
 	for(i=0 ; i<G_N_ELEMENTS(g_apszMapRenderTypeNames) ; i++) {
 		if(strcmp(pszName, g_apszMapRenderTypeNames[i]) == 0) {
@@ -591,6 +611,14 @@ gboolean map_location_selection_remove(map_t* pMap, gint nLocationID)
 		}
 	}
 	return FALSE;	// removed
+}
+
+void map_get_visible_maprect(const map_t* pMap, maprect_t* pReturnMapRect)
+{
+	rendermetrics_t renderMetrics = {0};
+	map_get_render_metrics(pMap, &renderMetrics);
+
+	memcpy(pReturnMapRect, &(renderMetrics.rWorldBoundingBox), sizeof(maprect_t));
 }
 
 

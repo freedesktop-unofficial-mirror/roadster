@@ -1,3 +1,13 @@
+2005-10-10  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* data/layers.xml:
+	* src/map.c: Adjusting of zoom scales and styles.
+	* src/dc.c: Properly insert LOD3 table.
+	* src/import_tiger.c: Rivers only exist on LOD0.
+	* src/main.h: Add constant for middle mouse button.
+	* src/mainwindow.c: Make zoomscale widget instant.  Middle mouse button drags map regardless of tool.  Improvement of some web map URLs.
+	* src/util.c: Add zoomscale utility functions.
+
 2005-10-05  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/map_math.c:

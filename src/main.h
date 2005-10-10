@@ -32,6 +32,7 @@
 #define USE_GFREELIST
 
 #define MOUSE_BUTTON_LEFT				(1)		// These are X/GDK/GTK numbers, now with names.
+#define MOUSE_BUTTON_MIDDLE				(2)
 #define MOUSE_BUTTON_RIGHT				(3)
 
 //#define ENABLE_TIMING

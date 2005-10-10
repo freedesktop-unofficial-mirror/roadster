@@ -44,7 +44,6 @@ tooltip_t* tooltip_new()
 	gtk_frame_set_shadow_type(pFrame, GTK_SHADOW_IN);
 	gtk_container_add(GTK_CONTAINER(pNew->pWindow), GTK_WIDGET(pFrame));
 
-
 	// create label and add to frame
 	pNew->pLabel = GTK_LABEL(gtk_label_new("testing"));
 	gtk_container_add(GTK_CONTAINER(pFrame), GTK_WIDGET(pNew->pLabel));
@@ -86,5 +85,3 @@ static gboolean tooltip_on_mouse_motion(GtkWidget* pWidget, GdkEventMotion *__un
 	// in case the mouse makes its way onto the tooltip, hide it.
 	gtk_widget_hide(pWidget);
 }
-
-

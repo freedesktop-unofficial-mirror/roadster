@@ -327,15 +327,23 @@ void mainwindow_init_add_web_maps_menu_items()
 	typedef struct { gchar* pszName; gchar* pszURL; } web_map_url_t;
 
 	web_map_url_t aWebMapURLs[] = {
-		{"Google Maps", "http://maps.google.com/?ll={LAT}%2C{LON}&z={ZOOM_NUMBER_REVERSED}"},
-		{"Google Maps Satellite", "http://maps.google.com/?ll={LAT}%2C{LON}&t=k&z={ZOOM_NUMBER_REVERSED}"},
-		{"Google Maps Hybrid", "http://maps.google.com/?ll={LAT}%2C{LON}&t=h&z={ZOOM_NUMBER_REVERSED}"},
+		{"Google Maps Roads", "http://maps.google.com/?ll={LAT}%2C{LON}&spn={LAT_SPAN}%2C{LON_SPAN}"},
+		{"Google Maps Satellite", "http://maps.google.com/?ll={LAT}%2C{LON}&spn={LAT_SPAN}%2C{LON_SPAN}&t=k"},	// t=k means sat
+		{"Google Maps Hybrid", "http://maps.google.com/?ll={LAT}%2C{LON}&spn={LAT_SPAN}%2C{LON_SPAN}&t=h"},		// t=h means hybrid
 
 		// XXX: how do we specify zoom level in YMaps URL?
 		{"Yahoo! Maps", "http://maps.yahoo.com/maps_result?lat={LAT}&lon={LON}"},
+		
+		{"MSN Maps", "http://maps.msn.com/map.aspx?C={LAT}%2C{LON}&S=800%2C740&alts1={ALTITUDE_MILES}"},
 
-		// XXX: multimap zoomscales may not match ours
-		//{"Multimap", "http://www.multimap.com/p/browse.cgi?lon={LON}&lat={LAT}&scale={ZOOM_SCALE}"},
+		{"MSN Virtual Earth Roads", "http://virtualearth.msn.com/default.aspx?v=1&cp={LAT}|{LON}&lvl={ZOOM_1_TO_19}&style=r"},
+		{"MSN Virtual Earth Satellite", "http://virtualearth.msn.com/default.aspx?v=1&cp={LAT}|{LON}&lvl={ZOOM_1_TO_19}&style=a"},
+		{"MSN Virtual Earth Hybrid", "http://virtualearth.msn.com/default.aspx?v=1&cp={LAT}|{LON}&lvl={ZOOM_1_TO_19}&style=h"},
+
+		// Mapquest doesn't seem to accept LAT/LON params
+
+		// NOTE: multimap zoomscales may not match ours, so we're just hardcoding one for now
+		{"Multimap", "http://www.multimap.com/p/browse.cgi?lon={LON}&lat={LAT}&scale=10000"},
 	};
 	// Google Maps Directions:
 	// DIRS: http://maps.google.com/maps?saddr=42.358333+-71.060278+(boston)&daddr=40.714167+-74.006389+(new+york)
@@ -391,6 +399,9 @@ void mainwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomOutButton, GTK_BUTTON, "zoomoutbutton");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomOutMenuItem, GTK_MENU_ITEM, "zoomoutmenuitem");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pZoomScale, GTK_HSCALE, "zoomscale");
+
+	// make it instant-change using our hacky callback
+	g_signal_connect(G_OBJECT(g_MainWindow.pZoomScale), "change-value", G_CALLBACK(util_gtk_range_instant_set_on_value_changing_callback), NULL);
 
 	// Labels
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pPositionLabel, GTK_LABEL, "positionlabel");
@@ -771,6 +782,7 @@ void mainwindow_set_zoomlevel(gint nZoomLevel)
 //     g_signal_handlers_unblock_by_func(g_MainWindow.pZoomScale, mainwindow_on_zoomscale_value_changed, NULL);
 
 	mainwindow_update_zoom_buttons();
+//	g_print("nZoomLevel = %d, height = %f miles\n", nZoomLevel, map_get_altitude(g_MainWindow.pMap, UNIT_MILES));
 }
 
 // the range slider changed value
@@ -779,14 +791,16 @@ void mainwindow_on_zoomscale_value_changed(GtkRange *range, gpointer user_data)
 	gdouble fValue = gtk_range_get_value(range);
 	gint16 nValue = (gint16)fValue;
 
-	// update GUI
-	mainwindow_set_zoomlevel(nValue);
+	if(map_get_zoomlevel(g_MainWindow.pMap) != nValue) {
+		// update GUI
+		mainwindow_set_zoomlevel(nValue);
 
-	// also redraw immediately and add history item
-	mainwindow_draw_map(DRAWFLAG_GEOMETRY);
-	mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
+		// also redraw immediately and add history item
+		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
+		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 
-	mainwindow_add_history();
+		mainwindow_add_history();
+	}
 }
 
 //
@@ -1095,6 +1109,8 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			}
 
 			if(g_MainWindow.bDrawingZoomRect == TRUE) {
+				// Finished drawing a zoom-rect.  Zoom in (if the rect was past the minimum threshold).
+				
 				if((map_screenrect_width(&(g_MainWindow.rcZoomRect)) > ZOOM_TOOL_THRESHOLD) && (map_screenrect_height(&(g_MainWindow.rcZoomRect)) > ZOOM_TOOL_THRESHOLD)) {
 					map_zoom_to_screenrect(g_MainWindow.pMap, &(g_MainWindow.rcZoomRect));
 
@@ -1110,13 +1126,13 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 					// Since we're not redrawing the map, we need to erase the selection rectangle
 					mainwindow_draw_xor_rect(&(g_MainWindow.rcZoomRect));
 				}
-
 				// all done
 				g_MainWindow.bDrawingZoomRect = FALSE;
 			}
 
-			// end scrolling, if active
 			if(g_MainWindow.bScrolling == TRUE) {
+				// End scrolling
+
 				// NOTE: don't restore cursor (mouse could *still* be over screen edge)
 
 				g_MainWindow.bScrolling = FALSE;
@@ -1198,6 +1214,29 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			// Show popup!
 			//g_print("showing\n");
 			//gtk_menu_popup(pMenu, NULL, NULL, NULL, NULL, event->button, event->time);
+		}
+	}
+	else if(event->button == MOUSE_BUTTON_MIDDLE) {
+		if(event->type == GDK_BUTTON_PRESS) {
+			g_MainWindow.bMouseDragging = TRUE;
+			g_MainWindow.bMouseDragMovement = FALSE;
+			g_MainWindow.ptClickLocation.nX = nX;
+			g_MainWindow.ptClickLocation.nY = nY;
+		}
+		else if(event->type == GDK_BUTTON_RELEASE) {
+			if(g_MainWindow.bMouseDragging == TRUE) {
+				// restore cursor
+				GdkCursor* pCursor = gdk_cursor_new(GDK_LEFT_PTR);
+				gdk_window_set_cursor(GTK_WIDGET(g_MainWindow.pDrawingArea)->window, pCursor);
+				gdk_cursor_unref(pCursor);
+
+				g_MainWindow.bMouseDragging = FALSE;
+				if(g_MainWindow.bMouseDragMovement) {
+					mainwindow_cancel_draw_pretty_timeout();
+					mainwindow_draw_map(DRAWFLAG_ALL);
+					mainwindow_add_history();
+				}
+			}
 		}
 	}
 	map_hittest_maphit_free(g_MainWindow.pMap, pHitStruct);
@@ -1863,19 +1902,31 @@ static void mainwindow_on_web_url_clicked(GtkWidget *_unused, gchar* pszURLPatte
 	static util_str_replace_t apszReplacements[] = {
 		{"{LAT}", NULL},
 		{"{LON}", NULL},
-		{"{ZOOM_NUMBER}", NULL},
-		{"{ZOOM_NUMBER_REVERSED}", NULL},
-		{"{ZOOM_SCALE}", NULL}
+		{"{LAT_SPAN}", NULL},
+		{"{LON_SPAN}", NULL},
+		{"{ZOOM_SCALE}", NULL},
+		{"{ZOOM_1_TO_10}", NULL},
+		{"{ZOOM_1_TO_19}", NULL},
+		{"{ALTITUDE_MILES}", NULL},
 	};
 
 	mappoint_t ptCenter;
 	map_get_centerpoint(g_MainWindow.pMap, &ptCenter);
+	maprect_t rcVisible;
+	map_get_visible_maprect(g_MainWindow.pMap, &rcVisible);
 
-	apszReplacements[0].pszReplace = g_strdup_printf("%f", ptCenter.fLatitude);
-	apszReplacements[1].pszReplace = g_strdup_printf("%f", ptCenter.fLongitude);
-	apszReplacements[2].pszReplace = g_strdup_printf("%d", map_get_zoomlevel(g_MainWindow.pMap));
-	apszReplacements[3].pszReplace = g_strdup_printf("%d", MAX_ZOOM_LEVEL - map_get_zoomlevel(g_MainWindow.pMap));
+//	nAltitudeMiles = map_get_altitude(
+
+	gdouble fZoomPercent = util_get_percent_of_range(map_get_zoomlevel(g_MainWindow.pMap), MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL);
+
+	apszReplacements[0].pszReplace = util_format_gdouble(ptCenter.fLatitude);
+	apszReplacements[1].pszReplace = util_format_gdouble(ptCenter.fLongitude);
+	apszReplacements[2].pszReplace = g_strdup_printf("%f", rcVisible.B.fLatitude - rcVisible.A.fLatitude);
+	apszReplacements[3].pszReplace = g_strdup_printf("%f", rcVisible.B.fLongitude - rcVisible.A.fLongitude);
 	apszReplacements[4].pszReplace = g_strdup_printf("%d", map_get_zoomlevel_scale(g_MainWindow.pMap));
+	apszReplacements[5].pszReplace = g_strdup_printf("%d", util_get_int_at_percent_of_range(fZoomPercent, 1, 10));
+	apszReplacements[6].pszReplace = g_strdup_printf("%d", util_get_int_at_percent_of_range(fZoomPercent, 1, 19));
+//	apszReplacements[7].pszReplace = g_strdup_printf("%d", nAltitudeMiles);
 
 	// 
 	gchar* pszURL = util_str_replace_many(pszURLPattern, apszReplacements, G_N_ELEMENTS(apszReplacements));
