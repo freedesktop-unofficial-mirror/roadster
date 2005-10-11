@@ -1,3 +1,10 @@
+2005-10-11  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+	
+	* src/test_poly.c:
+	* src/test_poly.h: Added to test polygon point reduction algorithm and others.
+	* src/map_draw_gdk.c: Prepare for rectangle clipping.
+	* src/map_math.c: Add Douglas-Peucker point simplification algorithm.  Add point distance from line function.  Add in/out/partial rect overlap function.
+
 2005-10-10  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* data/layers.xml:

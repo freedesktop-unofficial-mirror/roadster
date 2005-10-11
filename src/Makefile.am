@@ -21,10 +21,12 @@ roadster_SOURCES = \
 	main.c\
 	db.c\
 	downloadmanager.c\
+	directionswindow.c\
 	gui.c\
 	mainwindow.c\
 	gotowindow.c\
 	map.c\
+	mapinfowindow.c\
 	map_draw_cairo.c\
 	map_draw_gdk.c\
 	map_history.c\
@@ -50,7 +52,8 @@ roadster_SOURCES = \
 	road.c\
 	animator.c\
 	gfreelist.c\
-	tooltipwindow.c
+	tooltipwindow.c\
+	test_poly.c
 
 roadster_LDADD = \
 	$(GNOME_LIBS) \

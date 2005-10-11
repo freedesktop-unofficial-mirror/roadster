@@ -1,5 +1,5 @@
 /***************************************************************************
- *            main.h
+ *            test_poly.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -21,30 +21,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef _MAIN_H_
-#define _MAIN_H_
+#ifndef _TEST_POLY_H_
+#define _TEST_POLY_H_
 
-//#define G_DISABLE_ASSERT
+#include <glade/glade.h>
 
-#define ENABLE_TEST_MODULES
-
-#include <gtk/gtk.h>
-
-#define USE_GNOME_VFS		// comment this out to get a faster single-threaded compile (can't import, though)
-#define USE_GFREELIST
-
-#define MOUSE_BUTTON_LEFT				(1)		// These are X/GDK/GTK numbers, now with names.
-#define MOUSE_BUTTON_MIDDLE				(2)
-#define MOUSE_BUTTON_RIGHT				(3)
-
-//#define ENABLE_TIMING
-
-typedef struct color {
-	gfloat fRed;
-	gfloat fGreen;
-	gfloat fBlue;
-	gfloat fAlpha;
-} color_t;
+void test_poly_init(GladeXML* pGladeXML);
 
 #endif
-

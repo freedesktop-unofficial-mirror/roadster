@@ -333,7 +333,7 @@ static gboolean map_hittest_locationselections(map_t* pMap, rendermetrics_t* pRe
 	return FALSE;
 }
 
-// Does the given point come close enough to the line segment to be considered a hit?
+
 static gboolean map_hittest_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint, gdouble* pfReturnPercentAlongLine)
 {
 	if(pHitPoint->fLatitude < (pPoint1->fLatitude - fMaxDistance) && pHitPoint->fLatitude < (pPoint2->fLatitude - fMaxDistance)) return FALSE;

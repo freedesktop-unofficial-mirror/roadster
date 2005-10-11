@@ -158,7 +158,7 @@ gchar* g_apszMapRenderTypeNames[] = {"lines", "polygons", "line-labels", "polygo
 // init the module
 void map_init(void)
 {
-	g_print("*********************************** %f\n", WORLD_FEET_PER_DEGREE);
+	//g_print("*********************************** %f\n", WORLD_FEET_PER_DEGREE);
 }
 
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)

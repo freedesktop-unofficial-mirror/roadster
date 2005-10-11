@@ -35,7 +35,12 @@
 #include "gotowindow.h"
 #include "importwindow.h"
 #include "searchwindow.h"
+#include "mapinfowindow.h"
 #include "locationeditwindow.h"
+
+#ifdef ENABLE_TEST_MODULES
+#include "test_poly.h"
+#endif
 
 void gui_init(void)
 {
@@ -43,6 +48,8 @@ void gui_init(void)
 	glade_xml_signal_autoconnect(pGladeXML);
 
 	// init all windows/dialogs
+	g_print("- initializing mapinfowindow\n");
+	mapinfowindow_init(pGladeXML);
 	g_print("- initializing mainwindow\n");
 	mainwindow_init(pGladeXML);
 	g_print("- initializing searchwindow\n");
@@ -51,6 +58,12 @@ void gui_init(void)
 	gotowindow_init(pGladeXML);
 	g_print("- initializing importwindow\n");
 	importwindow_init(pGladeXML);
+
+#ifdef ENABLE_TEST_MODULES
+	g_print("- initializing test_poly\n");
+	test_poly_init(pGladeXML);
+#endif
+
 	//datasetwindow_init(pGladeXML);
 	g_print("- initializing locationeditwindow\n");
 	locationeditwindow_init(pGladeXML);

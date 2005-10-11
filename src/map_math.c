@@ -23,6 +23,7 @@
 
 #include <gtk/gtk.h>
 #include "map.h"
+#include "map_math.h"
 
 // ========================================================
 //  Coordinate Conversion Functions
@@ -63,6 +64,20 @@ void map_windowpoint_to_mappoint(map_t* pMap, screenpoint_t* pScreenPoint, mappo
 	pMapPoint->fLongitude = pMap->MapCenter.fLongitude + map_pixels_to_degrees(pMap, nPixelDeltaX, pMap->uZoomLevel);
 	// reverse the X, clicking above
 	pMapPoint->fLatitude = pMap->MapCenter.fLatitude - map_pixels_to_degrees(pMap, nPixelDeltaY, pMap->uZoomLevel);
+}
+
+EOverlapType map_rect_a_overlap_type_with_rect_b(const maprect_t* pA, const maprect_t* pB)
+{
+	// First, quickly determine if there is no overlap
+	if(map_rects_overlap(pA,pB) == FALSE) return OVERLAP_NONE;
+
+	if(pA->A.fLatitude < pB->A.fLatitude) return OVERLAP_PARTIAL;
+	if(pA->B.fLatitude > pB->B.fLatitude) return OVERLAP_PARTIAL;
+
+	if(pA->A.fLongitude < pB->A.fLongitude) return OVERLAP_PARTIAL;
+	if(pA->B.fLongitude > pB->B.fLongitude) return OVERLAP_PARTIAL;
+
+	return OVERLAP_FULL;
 }
 
 gboolean map_rects_overlap(const maprect_t* p1, const maprect_t* p2)
@@ -157,6 +172,169 @@ gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2)
 gboolean map_math_maprects_equal(maprect_t* pA, maprect_t* pB)
 {
 	return map_points_equal(&(pA->A), &(pB->A)) && map_points_equal(&(pA->B), &(pB->B));
+}
+
+//
+// clipping a map polygon (array of mappoints) to a maprect
+//
+typedef enum { EDGE_NORTH, EDGE_SOUTH, EDGE_EAST, EDGE_WEST, EDGE_FIRST=0, EDGE_LAST=3 } ERectEdge;
+
+// static map_math_clip_line_to_worldrect_edge_recursive(mappoint_t* pA, mappoint_t* pB, maprect_t* pRect, ERectEdge eEdge, GArray* pOutput)
+// {
+//
+// }
+
+gboolean map_math_mappoint_in_maprect(const mappoint_t* pPoint, const maprect_t* pRect)
+{
+	if(pPoint->fLatitude < pRect->A.fLatitude) return FALSE;
+	if(pPoint->fLatitude > pRect->B.fLatitude) return FALSE;
+	if(pPoint->fLongitude < pRect->A.fLongitude) return FALSE;
+	if(pPoint->fLongitude > pRect->B.fLongitude) return FALSE;
+	return TRUE;
+}
+
+void map_math_clip_pointstring_to_worldrect(GArray* pMapPointsArray, maprect_t* pRect, GArray* pOutput)
+{
+	gint nLen = pMapPointsArray->len;
+	if(nLen <= 2) return;
+
+	mappoint_t* pA = &g_array_index(pMapPointsArray, mappoint_t, 0);
+	mappoint_t* pB = NULL;
+
+	gboolean bPointAIsInside = map_math_mappoint_in_maprect(pA, pRect);
+
+	gint i;
+	for(i=1 ; i<pMapPointsArray->len ; i++) {
+		gint iEdge;
+		for(iEdge=EDGE_FIRST ; iEdge<=EDGE_LAST ; iEdge++) {
+			switch(iEdge) {
+			case EDGE_NORTH:
+				break;
+			case EDGE_SOUTH:
+				break;
+			case EDGE_EAST:
+				break;
+			case EDGE_WEST:
+				break;
+			}
+		}
+	}
+}
+
+void static map_math_simplify_pointstring_recursive(const GArray* pInput, gint8* pabInclude, gdouble fTolerance, gint iFirst, gint iLast)
+{
+	if(iFirst+1 >= iLast) return;	// no points between first and last?
+
+	mappoint_t* pA = &g_array_index(pInput, mappoint_t, iFirst);
+	mappoint_t* pB = &g_array_index(pInput, mappoint_t, iLast);
+
+	// Init to bad values
+	gint iFarthestIndex = -1;
+	gdouble fBiggestDistanceSquared = 0.0;
+
+	// Of all points between A and B, which is farthest from the line AB?
+	mappoint_t* pPoint;
+	gint i;
+	for(i=(iFirst+1) ; i<=(iLast-1) ; i++) {
+		pPoint = &g_array_index(pInput, mappoint_t, i);
+		gdouble fDistanceSquared = map_math_point_distance_squared_from_line(pPoint, pA, pB);
+
+		if(fDistanceSquared > fBiggestDistanceSquared) {
+			fBiggestDistanceSquared = fDistanceSquared;
+			iFarthestIndex = i;
+		}
+	}
+	if(fBiggestDistanceSquared > (fTolerance * fTolerance) && (iFarthestIndex != -1)) {	// add last test just in case fTolerance == 0.0
+		// Mark for inclusion
+		pabInclude[iFarthestIndex] = 1;
+
+		map_math_simplify_pointstring_recursive(pInput, pabInclude, fTolerance, iFirst, iFarthestIndex);
+		map_math_simplify_pointstring_recursive(pInput, pabInclude, fTolerance, iFarthestIndex, iLast);
+	}
+}
+
+void map_math_simplify_pointstring(const GArray* pInput, gdouble fTolerance, GArray* pOutput)
+{
+	if(pInput->len < 2) return;
+
+	gint8* pabInclude = g_new0(gint8, pInput->len + 20);
+
+	// Mark first and last points
+	pabInclude[0] = 1;
+	pabInclude[pInput->len-1] = 1;
+
+	map_math_simplify_pointstring_recursive(pInput, pabInclude, fTolerance, 0, pInput->len-1);  
+
+	//
+	// cleanup
+	//
+	mappoint_t* pPoint;
+	gint i;
+	for(i=0 ; i<pInput->len ; i++) {
+		pPoint = &g_array_index(pInput, mappoint_t, i);
+		if(pabInclude[i] == 1) {
+			g_array_append_val(pOutput, *pPoint);
+		}
+	}
+	g_free(pabInclude);
+}
+
+// Does the given point come close enough to the line segment to be considered a hit?
+gdouble map_math_point_distance_squared_from_line(mappoint_t* pHitPoint, mappoint_t* pPoint1, mappoint_t* pPoint2)
+{
+	// Some bad ASCII art demonstrating the situation:
+	//
+	//             / (u)
+	//          /  |
+	//       /     |
+	// (0,0) =====(a)========== (v)
+
+	// v is the translated-to-origin vector of line
+	// u is the translated-to-origin vector of the hitpoint
+	// a is the closest point on v to the end of u (the hit point)
+
+	//
+	// 1. Convert p1->p2 vector into a vector (v) that is assumed to come out of the origin (0,0)
+	//
+	mappoint_t v;
+	v.fLatitude = pPoint2->fLatitude - pPoint1->fLatitude;	// 10->90 becomes 0->80 (just store 80)
+	v.fLongitude = pPoint2->fLongitude - pPoint1->fLongitude;
+
+	gdouble fLengthV = sqrt((v.fLatitude*v.fLatitude) + (v.fLongitude*v.fLongitude));
+	if(fLengthV == 0.0) return FALSE;	// bad data: a line segment with no length?
+
+	//
+	// 2. Make a unit vector out of v (meaning same direction but length=1) by dividing v by v's length
+	//
+	mappoint_t unitv;
+	unitv.fLatitude = v.fLatitude / fLengthV;
+	unitv.fLongitude = v.fLongitude / fLengthV;	// unitv is now a unit (=1.0) length v
+
+	//
+	// 3. Translate the hitpoint in the same way we translated v
+	//
+	mappoint_t u;
+	u.fLatitude = pHitPoint->fLatitude - pPoint1->fLatitude;
+	u.fLongitude = pHitPoint->fLongitude - pPoint1->fLongitude;
+
+	//
+	// 4. Use the dot product of (unitv) and (u) to find (a), the point along (v) that is closest to (u). see diagram above.
+	//
+	gdouble fLengthAlongV = (unitv.fLatitude * u.fLatitude) + (unitv.fLongitude * u.fLongitude);
+
+	mappoint_t a;
+	a.fLatitude = v.fLatitude * (fLengthAlongV / fLengthV);	// multiply each component by the percentage
+	a.fLongitude = v.fLongitude * (fLengthAlongV / fLengthV);
+	// NOTE: (a) is *not* where it actually hit on the *map*.  don't draw this point!  we'd have to translate it back away from the origin.
+
+	//
+	// 5. Calculate the distance from the end of (u) to (a).  If it's less than the fMaxDistance, it's a hit.
+	//
+	gdouble fRise = u.fLatitude - a.fLatitude;
+	gdouble fRun = u.fLongitude - a.fLongitude;
+	gdouble fDistanceSquared = fRise*fRise + fRun*fRun;	// compare squared distances. same results but without the sqrt.
+
+	return fDistanceSquared;
 }
 
 

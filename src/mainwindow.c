@@ -48,6 +48,7 @@
 #include "glyph.h"
 #include "animator.h"
 #include "map_history.h"
+#include "mapinfowindow.h"
 
 #include "tooltipwindow.h"
 
@@ -447,7 +448,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "window_state_event", G_CALLBACK(mainwindow_on_window_state_change), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "key_press_event", G_CALLBACK(mainwindow_on_key_press), NULL);
 	g_signal_connect(G_OBJECT(g_MainWindow.pWindow), "key_release_event", G_CALLBACK(mainwindow_on_key_release), NULL);
-	
+
 	// Drawing area
 	g_MainWindow.pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());	
 
@@ -494,6 +495,8 @@ void mainwindow_init(GladeXML* pGladeXML)
 	// XXX: move map to starting location... for now it's (0,0)
 	mainwindow_add_history();
 	mainwindow_update_zoom_buttons();	// make sure buttons are grayed out
+
+	mapinfowindow_update(g_MainWindow.pMap);
 }
 
 gboolean mainwindow_locationset_list_is_separator_callback(GtkTreeModel *_unused, GtkTreeIter *pIter, gpointer __unused)

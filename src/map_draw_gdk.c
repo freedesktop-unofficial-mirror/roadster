@@ -38,6 +38,7 @@
 #include "db.h"
 #include "road.h"
 #include "map_style.h"
+#include "map_math.h"
 #include "locationset.h"
 #include "location.h"
 #include "scenemanager.h"
@@ -50,6 +51,13 @@ static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetri
 
 static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
+
+typedef struct {
+	GdkPixmap* pPixmap;
+	GdkGC* pGC;
+	maplayerstyle_t* pLayerStyle;
+	rendermetrics_t* pRenderMetrics;
+} gdk_draw_context_t;
 
 //static void map_draw_gdk_tracks(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
 
@@ -147,68 +155,6 @@ void map_draw_gdk(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetric
 	TIMER_END(maptimer, "END RENDER MAP (gdk)");
 }
 
-static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
-{
-	mappoint_t* pPoint;
-	road_t* pRoad;
-	gint iString;
-	gint iPoint;
-
-	if(pLayerStyle->clrPrimary.fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
-	if(pRoadsArray->len == 0) return;
-
-	GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
-
-	GdkGCValues gcValues;
-	if(pLayerStyle->pGlyphFill != NULL) {
-		// Instead of filling with a color, fill with a tiled image
-		gdk_gc_get_values(pGC, &gcValues);
-		gdk_gc_set_fill(pGC, GDK_TILED);
-		gdk_gc_set_tile(pGC, glyph_get_pixmap(pLayerStyle->pGlyphFill, pMap->pTargetWidget));
-		
-		// This makes the fill image scroll with the map, instead of staying still
-		gdk_gc_set_ts_origin(pGC, SCALE_X(pRenderMetrics, pRenderMetrics->fScreenLongitude), SCALE_Y(pRenderMetrics, pRenderMetrics->fScreenLatitude));
-	}
-	else {
-		// Simple color fill
-		map_draw_gdk_set_color(pGC, &(pLayerStyle->clrPrimary));
-	}
-
-	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
-		pRoad = g_ptr_array_index(pRoadsArray, iString);
-
-		if(!map_rects_overlap(&(pRoad->rWorldBoundingBox), &(pRenderMetrics->rWorldBoundingBox))) {
-			continue;
-		}
-
-		if(pRoad->pMapPointsArray->len < 3) {
-			//g_warning("not drawing polygon with < 3 points\n");
-			continue;
-		}
-
-		if(pRoad->pMapPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
-			//g_warning("not drawing polygon with > %d points\n", MAX_GDK_LINE_SEGMENTS);
-			continue;
-		}
-
-		GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
-
-		for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
-			pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
-
-			aPoints[iPoint].x = pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
-			aPoints[iPoint].y = pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
-		}
-
-		gdk_draw_polygon(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)],
-			TRUE, aPoints, pRoad->pMapPointsArray->len);
-	}
-	if(pLayerStyle->pGlyphFill != NULL) {
-		// Restore fill style
-		gdk_gc_set_values(pGC, &gcValues, GDK_GC_FILL);
-	}
-}
-
 // useful for filling the screen with a color.  not much else.
 static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle)
 {
@@ -238,15 +184,119 @@ static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetri
 	}
 }
 
+// 
+static void map_draw_gdk_polygons(const GArray* pMapPointsArray, const gdk_draw_context_t* pContext)
+{
+	// Copy all points into this array.  Yuuup this is slow. :)
+	GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
+	mappoint_t* pPoint;
+
+	gint iPoint;
+	for(iPoint=0 ; iPoint<pMapPointsArray->len ; iPoint++) {
+		pPoint = &g_array_index(pMapPointsArray, mappoint_t, iPoint);
+
+		aPoints[iPoint].x = pContext->pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pContext->pRenderMetrics, pPoint->fLongitude);
+		aPoints[iPoint].y = pContext->pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pContext->pRenderMetrics, pPoint->fLatitude);
+	}
+
+	gdk_draw_polygon(pContext->pPixmap, pContext->pGC, TRUE, aPoints, pMapPointsArray->len);
+}
+
+static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
+{
+	mappoint_t* pPoint;
+	road_t* pRoad;
+	gint iString;
+	gint iPoint;
+
+	if(pLayerStyle->clrPrimary.fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
+	if(pRoadsArray->len == 0) return;
+
+	GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
+
+	GdkGCValues gcValues;
+	if(pLayerStyle->pGlyphFill != NULL) {
+		// Instead of filling with a color, fill with a tiled image
+		gdk_gc_get_values(pGC, &gcValues);
+		gdk_gc_set_fill(pGC, GDK_TILED);
+		gdk_gc_set_tile(pGC, glyph_get_pixmap(pLayerStyle->pGlyphFill, pMap->pTargetWidget));
+		
+		// This makes the fill image scroll with the map, instead of staying still
+		gdk_gc_set_ts_origin(pGC, SCALE_X(pRenderMetrics, pRenderMetrics->fScreenLongitude), SCALE_Y(pRenderMetrics, pRenderMetrics->fScreenLatitude));
+	}
+	else {
+		// Simple color fill
+		map_draw_gdk_set_color(pGC, &(pLayerStyle->clrPrimary));
+	}
+
+	gdk_draw_context_t context;
+	context.pPixmap = pPixmap;
+	context.pGC = pGC;
+	context.pLayerStyle = pLayerStyle;
+	context.pRenderMetrics = pRenderMetrics;
+
+	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
+		pRoad = g_ptr_array_index(pRoadsArray, iString);
+
+		EOverlapType eOverlapType = map_rect_a_overlap_type_with_rect_b(&(pRoad->rWorldBoundingBox), &(pRenderMetrics->rWorldBoundingBox));
+		if(eOverlapType == OVERLAP_NONE) {
+			continue;
+		}
+
+		// XXX: should we remove this?
+		if(pRoad->pMapPointsArray->len < 3) {
+			//g_warning("not drawing polygon with < 3 points\n");
+			continue;
+		}
+
+		if(pRoad->pMapPointsArray->len > MAX_GDK_LINE_SEGMENTS) {
+			//g_warning("not drawing polygon with > %d points\n", MAX_GDK_LINE_SEGMENTS);
+			continue;
+		}
+
+		if(eOverlapType == OVERLAP_PARTIAL) {
+			// draw clipped
+			// XXX: Currently no clipping, just draw normally
+			map_draw_gdk_polygons(pRoad->pMapPointsArray, &context);
+		}
+		else {
+			// draw normally
+			map_draw_gdk_polygons(pRoad->pMapPointsArray, &context);
+		}
+	}
+	if(pLayerStyle->pGlyphFill != NULL) {
+		// Restore fill style
+		gdk_gc_set_values(pGC, &gcValues, GDK_GC_FILL);
+	}
+}
+
+static void map_draw_gdk_lines(const GArray* pMapPointsArray, const gdk_draw_context_t* pContext)
+{
+	// Copy all points into this array.  Yuuup this is slow. :)
+	GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
+	mappoint_t* pPoint;
+
+	gint iPoint;
+	for(iPoint=0 ; iPoint<pMapPointsArray->len ; iPoint++) {
+		pPoint = &g_array_index(pMapPointsArray, mappoint_t, iPoint);
+
+		aPoints[iPoint].x = pContext->pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pContext->pRenderMetrics, pPoint->fLongitude);
+		aPoints[iPoint].y = pContext->pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pContext->pRenderMetrics, pPoint->fLatitude);
+	}
+	
+	gdk_draw_lines(pContext->pPixmap, pContext->pGC, aPoints, pMapPointsArray->len);
+}
+
 static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
 {
 	road_t* pRoad;
-	mappoint_t* pPoint;
 	gint iString;
 	gint iPoint;
 
 	if(pLayerStyle->fLineWidth <= 0.0) return;			// Don't draw invisible lines
 	if(pLayerStyle->clrPrimary.fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
+
+	GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
 
 	// Translate generic cap style into GDK constant
 	gint nCapStyle;
@@ -278,10 +328,17 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 
 	map_draw_gdk_set_color(pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], &(pLayerStyle->clrPrimary));
 
+	gdk_draw_context_t context;
+	context.pPixmap = pPixmap;
+	context.pGC = pGC;
+	context.pLayerStyle = pLayerStyle;
+	context.pRenderMetrics = pRenderMetrics;
+
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
-		if(!map_rects_overlap(&(pRoad->rWorldBoundingBox), &(pRenderMetrics->rWorldBoundingBox))) {
+		EOverlapType eOverlapType = map_rect_a_overlap_type_with_rect_b(&(pRoad->rWorldBoundingBox), &(pRenderMetrics->rWorldBoundingBox));
+		if(eOverlapType == OVERLAP_NONE) {
 			continue;
 		}
 
@@ -295,17 +352,14 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 			continue;
 		}
 
-		// Copy all points into this array.  Yuuup this is slow. :)
-		GdkPoint aPoints[MAX_GDK_LINE_SEGMENTS];
-
-		for(iPoint=0 ; iPoint<pRoad->pMapPointsArray->len ; iPoint++) {
-			pPoint = &g_array_index(pRoad->pMapPointsArray, mappoint_t, iPoint);
-
-			aPoints[iPoint].x = pLayerStyle->nPixelOffsetX + (gint)SCALE_X(pRenderMetrics, pPoint->fLongitude);
-			aPoints[iPoint].y = pLayerStyle->nPixelOffsetY + (gint)SCALE_Y(pRenderMetrics, pPoint->fLatitude);
+		if(eOverlapType == OVERLAP_PARTIAL) {
+			// draw clipped
+			map_draw_gdk_lines(pRoad->pMapPointsArray, &context);
 		}
-
-		gdk_draw_lines(pPixmap, pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], aPoints, pRoad->pMapPointsArray->len);
+		else {
+			// draw directly
+			map_draw_gdk_lines(pRoad->pMapPointsArray, &context);
+		}
 	}
 }
 
