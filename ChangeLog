@@ -1,3 +1,8 @@
+2005-10-13  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/directionswindow.c: 
+	* src/directionswindow.h: Added.
+
 2005-10-12  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/test_poly.c: Add checkbox to hide original line.

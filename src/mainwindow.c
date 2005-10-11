@@ -451,6 +451,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 
 	// Drawing area
 	g_MainWindow.pDrawingArea = GTK_DRAWING_AREA(gtk_drawing_area_new());	
+	gtk_widget_set_double_buffered(GTK_WIDGET(g_MainWindow.pDrawingArea), FALSE);
 
 	// Pack drawing area into application window
 	gtk_box_pack_end(GTK_BOX(g_MainWindow.pContentBox), GTK_WIDGET(g_MainWindow.pDrawingArea),
