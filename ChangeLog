@@ -1,3 +1,9 @@
+2005-10-12  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/test_poly.c: Add checkbox to hide original line.
+	* src/import_tiger.c: Fix cleanup code (remove memory leak?)
+	* src/util.c: Add util_g_free_with_param, a generic g_free-like callback that takes an (unused) user-data param.
+
 2005-10-11  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 	
 	* src/test_poly.c:

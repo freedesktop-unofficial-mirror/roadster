@@ -540,3 +540,9 @@ gchar* util_format_gdouble(gdouble d)
 	g_ascii_dtostr(achBuffer, 20, d);
 	return g_strdup(achBuffer);
 }
+
+void util_g_free_with_param(gpointer pMemory, gpointer _unused)
+{
+	g_assert(pMemory != NULL);
+	g_free(pMemory);
+}

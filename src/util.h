@@ -87,5 +87,6 @@ gdouble util_get_percent_of_range(gint nMiddle, gint nA, gint nB);
 
 gchar* util_format_gdouble(gdouble d);
 
+void util_g_free_with_param(gpointer pMemory, gpointer _unused);
 
 #endif

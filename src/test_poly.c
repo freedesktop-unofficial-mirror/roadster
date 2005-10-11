@@ -19,14 +19,14 @@ struct {
 	GtkButton* pClearButton;
 	GtkDrawingArea* pDrawingArea;
 	GtkLabel* pLabel;
+	GtkCheckButton* pHideDrawingCheckButton;
 	
 	GArray* pPointsArray;
 } g_Test_Poly;
 
-static gboolean on_time_to_update(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data);
-static void test_poly_draw();
-static gboolean on_mouse_button_click(GtkWidget* w, GdkEventButton *event);
-static gboolean on_clear_clicked(GtkWidget* w, GdkEventButton *event);
+static gboolean test_poly_on_time_to_update(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data);
+static gboolean test_poly_on_mouse_button_click(GtkWidget* w, GdkEventButton *event);
+static gboolean test_poly_on_clearbutton_clicked(GtkWidget* w, GdkEventButton *event);
 
 void test_poly_init(GladeXML* pGladeXML)
 {
@@ -36,22 +36,23 @@ void test_poly_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_Test_Poly.pClearButton, GTK_BUTTON, "test_poly_clear_button");
 	GLADE_LINK_WIDGET(pGladeXML, g_Test_Poly.pLabel, GTK_LABEL, "test_polylabel");
 	GLADE_LINK_WIDGET(pGladeXML, g_Test_Poly.pDrawingArea, GTK_DRAWING_AREA, "test_polydrawingarea");
+	GLADE_LINK_WIDGET(pGladeXML, g_Test_Poly.pHideDrawingCheckButton, GTK_CHECK_BUTTON, "test_polyhidecheck");
 
 	g_Test_Poly.pPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 
 	// Drawing area
 	gtk_widget_set_double_buffered(GTK_WIDGET(g_Test_Poly.pDrawingArea), FALSE);
 	gtk_widget_add_events(GTK_WIDGET(g_Test_Poly.pDrawingArea), GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
-	g_signal_connect(G_OBJECT(g_Test_Poly.pDrawingArea), "expose-event", G_CALLBACK(on_time_to_update), NULL);
-	g_signal_connect(G_OBJECT(g_Test_Poly.pDrawingArea), "button_press_event", G_CALLBACK(on_mouse_button_click), NULL);
+	g_signal_connect(G_OBJECT(g_Test_Poly.pDrawingArea), "expose-event", G_CALLBACK(test_poly_on_time_to_update), NULL);
+	g_signal_connect(G_OBJECT(g_Test_Poly.pDrawingArea), "button_press_event", G_CALLBACK(test_poly_on_mouse_button_click), NULL);
 
 	// Scale
-	g_signal_connect(G_OBJECT(g_Test_Poly.pScale), "value-changed", G_CALLBACK(on_time_to_update), NULL);
+	g_signal_connect(G_OBJECT(g_Test_Poly.pScale), "value-changed", G_CALLBACK(test_poly_on_time_to_update), NULL);
 	// make it instant-change using our hacky callback
 	//g_signal_connect(G_OBJECT(g_Test_Poly.pScale), "change-value", G_CALLBACK(util_gtk_range_instant_set_on_value_changing_callback), NULL);
 
 	// "Clear" button
-	g_signal_connect(G_OBJECT(g_Test_Poly.pClearButton), "clicked", G_CALLBACK(on_clear_clicked), NULL);
+	g_signal_connect(G_OBJECT(g_Test_Poly.pClearButton), "clicked", G_CALLBACK(test_poly_on_clearbutton_clicked), NULL);
 
 	// don't delete window on X, just hide it
 	g_signal_connect(G_OBJECT(g_Test_Poly.pWindow), "delete_event", G_CALLBACK(gtk_widget_hide), NULL);
@@ -62,13 +63,22 @@ void test_poly_show(GtkMenuItem *menuitem, gpointer user_data)
 	gtk_widget_show(GTK_WIDGET(g_Test_Poly.pWindow));
 }
 
-static gboolean on_clear_clicked(GtkWidget* w, GdkEventButton *event)
+//
+// callbacks etc.
+//
+static gboolean test_poly_on_clearbutton_clicked(GtkWidget* w, GdkEventButton *event)
 {
 	g_array_remove_range(g_Test_Poly.pPointsArray, 0, g_Test_Poly.pPointsArray->len);
 	gtk_widget_queue_draw(GTK_WIDGET(g_Test_Poly.pDrawingArea));
+	return TRUE;
 }
 
-static gboolean on_mouse_button_click(GtkWidget* w, GdkEventButton *event)
+gboolean test_poly_on_hidecheck_toggled(GtkWidget* w, GdkEventButton *event)
+{
+	gtk_widget_queue_draw(GTK_WIDGET(g_Test_Poly.pDrawingArea));
+}
+
+static gboolean test_poly_on_mouse_button_click(GtkWidget* w, GdkEventButton *event)
 {
 	gint nX, nY;
 	gdk_window_get_pointer(w->window, &nX, &nY, NULL);
@@ -81,10 +91,11 @@ static gboolean on_mouse_button_click(GtkWidget* w, GdkEventButton *event)
 	point.fLatitude = (gdouble)nY / (gdouble)nHeight;
 	g_array_append_val(g_Test_Poly.pPointsArray, point);
 
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(g_Test_Poly.pHideDrawingCheckButton), FALSE);
 	gtk_widget_queue_draw(GTK_WIDGET(g_Test_Poly.pDrawingArea));
 }
 
-void test_poly_draw_array(cairo_t* pCairo, GArray* pArray)
+static void test_poly_draw_array(cairo_t* pCairo, GArray* pArray)
 {
 	if(pArray->len >= 1) {
 		mappoint_t* pPoint;
@@ -103,18 +114,16 @@ void test_poly_draw_array(cairo_t* pCairo, GArray* pArray)
 	}
 }
 
-static gboolean on_time_to_update(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data)
+static gboolean test_poly_on_time_to_update(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data)
 {
-	Display* dpy;
-	Drawable drawable;
-	dpy = gdk_x11_drawable_get_xdisplay(GTK_WIDGET(g_Test_Poly.pDrawingArea)->window);
+	Display* dpy = gdk_x11_drawable_get_xdisplay(GTK_WIDGET(g_Test_Poly.pDrawingArea)->window);
 	Visual *visual = DefaultVisual (dpy, DefaultScreen (dpy));
+	Drawable drawable = gdk_x11_drawable_get_xid(GTK_WIDGET(g_Test_Poly.pDrawingArea)->window);
 	gint width, height;
-	drawable = gdk_x11_drawable_get_xid(GTK_WIDGET(g_Test_Poly.pDrawingArea)->window);
 	gdk_drawable_get_size (GTK_WIDGET(g_Test_Poly.pDrawingArea)->window, &width, &height);
 	cairo_surface_t *pSurface = cairo_xlib_surface_create (dpy, drawable, visual, width, height);
 
-	gdouble fValue = gtk_range_get_value(g_Test_Poly.pScale);
+	gdouble fValue = gtk_range_get_value(GTK_RANGE(g_Test_Poly.pScale));
 
 	cairo_t* pCairo = cairo_create (pSurface);
 
@@ -125,13 +134,15 @@ static gboolean on_time_to_update(GtkWidget *pDrawingArea, GdkEventExpose *event
 	cairo_fill(pCairo);
 
 	// Draw lines
-	cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_ROUND);
-	cairo_save(pCairo);
-	cairo_set_line_width(pCairo, 0.02);
-	cairo_set_source_rgba(pCairo, 1.0, 0.0, 0.0, 1.0);
-	test_poly_draw_array(pCairo, g_Test_Poly.pPointsArray);
-	cairo_stroke(pCairo);
-	cairo_restore(pCairo);
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_Test_Poly.pHideDrawingCheckButton)) == FALSE) {
+		cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_ROUND);
+		cairo_save(pCairo);
+		cairo_set_line_width(pCairo, 0.02);
+		cairo_set_source_rgba(pCairo, 1.0, 0.0, 0.0, 1.0);
+		test_poly_draw_array(pCairo, g_Test_Poly.pPointsArray);
+		cairo_stroke(pCairo);
+		cairo_restore(pCairo);
+	}
 
 	cairo_save(pCairo);
 	GArray* pSimplified = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
@@ -156,54 +167,3 @@ static gboolean on_time_to_update(GtkWidget *pDrawingArea, GdkEventExpose *event
 	g_array_free(pSimplified, TRUE);
 	return TRUE;
 }
-
-// static void paint (GtkWidget      *widget,GdkEventExpose *eev,gpointer        data)
-// {
-//   gint width, height;
-//   gint i;
-//   cairo_t *cr;
-//
-//   width  = widget->allocation.width;
-//   height = widget->allocation.height;
-//
-//   cr = gdk_cairo_create (widget->window);
-//
-//     /* clear background */
-//     cairo_set_source_rgb (cr, 1,1,1);
-//     cairo_paint (cr);
-//
-//
-//     cairo_select_font_face (cr, "Sans", CAIRO_FONT_SLANT_NORMAL,
-//                                         CAIRO_FONT_WEIGHT_BOLD);
-//
-//     /* enclosing in a save/restore pair since we alter the
-//      * font size
-//      */
-//     cairo_save (cr);
-//       cairo_set_font_size (cr, 40);
-//       cairo_move_to (cr, 40, 60);
-//       cairo_set_source_rgb (cr, 0,0,0);
-//       cairo_show_text (cr, "Hello World");
-//     cairo_restore (cr);
-//
-//     cairo_set_source_rgb (cr, 1,0,0);
-//     cairo_set_font_size (cr, 20);
-//     cairo_move_to (cr, 50, 100);
-//     cairo_show_text (cr, "greetings from gtk and cairo");
-//
-//     cairo_set_source_rgb (cr, 0,0,1);
-//
-//     cairo_move_to (cr, 0, 150);
-//     for (i=0; i< width/10; i++)
-//       {
-//         cairo_rel_line_to (cr, 5,  10);
-//         cairo_rel_line_to (cr, 5, -10);
-//       }
-//     cairo_stroke (cr);
-//
-//   cairo_destroy (cr);
-// }
-//
-// static gboolean on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data)
-// {
-// }

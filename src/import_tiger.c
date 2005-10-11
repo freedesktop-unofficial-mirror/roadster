@@ -103,6 +103,13 @@ typedef struct tiger_record_rt2
 	GPtrArray* pPointsArray;
 } tiger_record_rt2_t;
 
+void callback_free_rt2(gpointer p)
+{
+	tiger_record_rt2_t* pRT2 = (tiger_record_rt2_t*)p;
+	g_ptr_array_foreach(pRT2->pPointsArray, util_g_free_with_param, NULL);
+	g_free(pRT2);
+}
+
 #define TIGER_LANDMARK_NAME_LEN (30)
 typedef struct tiger_record_rt7
 {
@@ -125,6 +132,30 @@ typedef struct tiger_rt1_link
 	gint nPointBTZID;	// the unique # for the rt1's PointB
 } tiger_rt1_link_t;
 
+typedef struct tiger_record_rti
+{
+	// store a list of TLIDs for a polygonID
+	gint nPOLYID;	// index
+	GPtrArray* pRT1LinksArray;
+} tiger_record_rti_t;
+
+void callback_free_rti(gpointer p)
+{
+	tiger_record_rti_t* pRTi = (tiger_record_rti_t*)p;
+	g_ptr_array_foreach(pRTi->pRT1LinksArray, util_g_free_with_param, NULL);
+	g_free(pRTi);
+}
+
+#define TIGER_CITY_NAME_LEN 	(60)
+#define TIGER_FIPS55_LEN		(5)
+typedef struct tiger_record_rtc
+{
+	// store a list of city names
+	gint nFIPS55;	// index
+	char achName[TIGER_CITY_NAME_LEN + 1];	// note the +1!!
+	gint nCityID;					// a database ID, stored here after it is inserted
+} tiger_record_rtc_t;
+
 typedef struct tiger_import_process {
 	gchar* pszFileDescription;
 
@@ -137,23 +168,6 @@ typedef struct tiger_import_process {
 
 	GPtrArray* pBoundaryRT1s;
 } tiger_import_process_t;
-
-typedef struct tiger_record_rti
-{
-	// store a list of TLIDs for a polygonID
-	gint nPOLYID;	// index
-	GPtrArray* pRT1LinksArray;
-} tiger_record_rti_t;
-
-#define TIGER_CITY_NAME_LEN 	(60)
-#define TIGER_FIPS55_LEN		(5)
-typedef struct tiger_record_rtc
-{
-	// store a list of city names
-	gint nFIPS55;	// index
-	char achName[TIGER_CITY_NAME_LEN + 1];	// note the +1!!
-	gint nCityID;					// a database ID, stored here after it is inserted
-} tiger_record_rtc_t;
 
 // #define MAP_OBJECT_TYPE_NONE                    (0)
 // #define MAP_OBJECT_TYPE_MINORROAD               (1)
@@ -1303,7 +1317,7 @@ static gboolean import_tiger_from_buffers(
 	importProcess.pBoundaryRT1s = g_ptr_array_new();
 
 	g_print("parsing RT1\n");
-	importProcess.pTableRT1 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	importProcess.pTableRT1 = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
 	import_tiger_parse_table_1(pBufferRT1, nLengthRT1, importProcess.pTableRT1, importProcess.pBoundaryRT1s);
 	g_print("RT1: %d records\n", g_hash_table_size(importProcess.pTableRT1));
 
@@ -1311,7 +1325,7 @@ static gboolean import_tiger_from_buffers(
 	importwindow_progress_pulse();
 
 	g_print("parsing RT2\n");
-	importProcess.pTableRT2 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	importProcess.pTableRT2 = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, callback_free_rt2);
 	import_tiger_parse_table_2(pBufferRT2, nLengthRT2, importProcess.pTableRT2);
 	g_print("RT2: %d records\n", g_hash_table_size(importProcess.pTableRT2));
 
@@ -1319,7 +1333,7 @@ static gboolean import_tiger_from_buffers(
 	importwindow_progress_pulse();
 
 	g_print("parsing RT7\n");
-	importProcess.pTableRT7 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	importProcess.pTableRT7 = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
 	import_tiger_parse_table_7(pBufferRT7, nLengthRT7, importProcess.pTableRT7);
 	g_print("RT7: %d records\n", g_hash_table_size(importProcess.pTableRT7));
 
@@ -1327,7 +1341,7 @@ static gboolean import_tiger_from_buffers(
 	importwindow_progress_pulse();
 
 	g_print("parsing RT8\n");
-	importProcess.pTableRT8 = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	importProcess.pTableRT8 = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
 	import_tiger_parse_table_8(pBufferRT8, nLengthRT8, importProcess.pTableRT8);
 	g_print("RT8: %d records\n", g_hash_table_size(importProcess.pTableRT8));
 
@@ -1335,12 +1349,12 @@ static gboolean import_tiger_from_buffers(
 	importwindow_progress_pulse();
 
 	g_print("parsing RTc\n");
-	importProcess.pTableRTc = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	importProcess.pTableRTc = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, g_free);
 	import_tiger_parse_table_c(pBufferRTc, nLengthRTc, importProcess.pTableRTc);
 	g_print("RTc: %d records\n", g_hash_table_size(importProcess.pTableRTc));
 
 	g_print("parsing RTi\n");
-	importProcess.pTableRTi = g_hash_table_new_full(g_int_hash, g_int_equal, g_free, NULL);
+	importProcess.pTableRTi = g_hash_table_new_full(g_int_hash, g_int_equal, NULL, callback_free_rti);
 	import_tiger_parse_table_i(pBufferRTi, nLengthRTi, importProcess.pTableRTi);
 	g_print("RTi: %d records\n", g_hash_table_size(importProcess.pTableRTi));
 
@@ -1385,11 +1399,12 @@ g_print("cleaning up\n");
 	g_hash_table_destroy(importProcess.pTableRT7);
 	g_hash_table_destroy(importProcess.pTableRT8);
 	g_hash_table_destroy(importProcess.pTableRTc);
+	
 	// XXX: this call sometimes segfaults:
-	g_warning("leaking some memory due to unsolved bug in import.  just restart roadster after/between imports ;)\n");
-	//g_hash_table_destroy(importProcess.pTableRTi);
-	g_free(importProcess.pszFileDescription);
+	//g_warning("leaking some memory due to unsolved bug in import.  just restart roadster after/between imports ;)\n");
+	g_hash_table_destroy(importProcess.pTableRTi);
 
+	g_free(importProcess.pszFileDescription);
 	return TRUE;
 }
 

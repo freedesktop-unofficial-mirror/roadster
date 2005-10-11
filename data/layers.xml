@@ -110,7 +110,7 @@
         	<property zoom-level="1" name="line-width" value="1" />
         	<property zoom-level="2" name="line-width" value="1" />
         	<property zoom-level="3" name="line-width" value="1" />
-        	<property zoom-level="4" name="line-width" value="2" />
+        	<property zoom-level="4" name="line-width" value="1" />
         	<property zoom-level="5" name="line-width" value="2" />
             <property zoom-level="1-5" name="line-cap" value="square" />
         
@@ -123,10 +123,7 @@
         </layer>
         <layer data-source="minor-highways" draw-type="lines">
             <!-- outer color line in minor highways -->
-        	<property zoom-level="1" name="line-width" value="2" />
-        	<property zoom-level="2" name="line-width" value="2" />
-        	<property zoom-level="3" name="line-width" value="3" />
-        	<property zoom-level="4" name="line-width" value="4" />
+        	<property zoom-level="4" name="line-width" value="3" />
         	<property zoom-level="5" name="line-width" value="4" />
         	<property zoom-level="1-5" name="color" value="#DdAe31ff" />
         	
@@ -142,12 +139,14 @@
             <!-- major road top -->
             <property zoom-level="4-5" name="line-width" value="1" />
             <property zoom-level="4-5" name="line-cap" value="square" />
+            <property zoom-level="4-5" name="color" value="#EFE384FF" />
+
             <property zoom-level="6" name="line-width" value="4" />
             <property zoom-level="7" name="line-width" value="6" />
             <property zoom-level="8" name="line-width" value="8" />
             <property zoom-level="9" name="line-width" value="14" />
             <property zoom-level="10" name="line-width" value="24" />
-            <property zoom-level="3-10" name="color" value="#FFF384FF" />
+            <property zoom-level="6-10" name="color" value="#FFF384FF" />
         </layer>
         <layer data-source="minor-highway-ramps" draw-type="lines">
             <!-- minor highway ramp top -->
@@ -178,8 +177,9 @@
         
         <layer data-source="major-roads" draw-type="lines">
             <!-- major roads bottom -->
-        	<property zoom-level="4-5" name="line-width" value="3" />
-            <property zoom-level="4-5" name="color" value="#d5d5b0ff" />
+<!--             <property zoom-level="4-5" name="line-width" value="3" />    -->
+<!--             <property zoom-level="4-5" name="color" value="#e5e5c0ff" /> -->
+
         	<property zoom-level="6" name="line-width" value="6" />
         	<property zoom-level="7" name="line-width" value="8" />
         	<property zoom-level="8" name="line-width" value="10" />
