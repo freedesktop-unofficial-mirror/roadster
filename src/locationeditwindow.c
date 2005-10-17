@@ -110,6 +110,8 @@ void locationeditwindow_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_LocationEditWindow.pLocationSetComboBox, GTK_COMBO_BOX, "locationsetcombobox");
 	GLADE_LINK_WIDGET(pGladeXML, g_LocationEditWindow.pLocationAddressTextView, GTK_TEXT_VIEW, "locationaddresstextview");
 
+	g_object_set(G_OBJECT(g_LocationEditWindow.pLocationSetComboBox), "has-frame", FALSE, NULL); 
+
 	GLADE_LINK_WIDGET(pGladeXML, g_LocationEditWindow.pAttributeExpander, GTK_EXPANDER, "attributeexpander");
 	gtk_expander_set_use_markup(g_LocationEditWindow.pAttributeExpander, TRUE);
 

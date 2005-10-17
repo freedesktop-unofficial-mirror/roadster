@@ -1,3 +1,19 @@
+2005-10-17  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* configure.ac: Added -Wall compiler option (show all warnings).
+	* src/map_draw_cairo.c: The return of Cairo!  Now drawing from tile data and using bounding box overlap tests.
+	* src/map_hittest.c: The return of hittesting!
+	* src/db.c: Remove dead code.
+	* src/downloadmanager.c: Properly return a value from a GnomeVFS callback.
+	* src/import_tiger.c: Switch from GPtrArrays to GArrays for points.
+	* src/main.c: Properly include libintl.h
+	* src/map.c: Cleanups.  Dead code removal.
+	* src/map_draw_gdk.c: Add random road segment color option for debugging.
+	* src/map_math.c: Added polygon clipping and line stitching.
+	* src/map_tilemanager.c: Do basic line stitching at load time.
+	* src/mainwindow.c: Cleanups.  Move some code to util.c
+	* src/util.c: Receive some code from mainwindow.c
+
 2005-10-12  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/mapinfowindow.c: 

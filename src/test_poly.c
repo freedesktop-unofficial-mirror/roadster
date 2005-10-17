@@ -20,6 +20,7 @@ struct {
 	GtkDrawingArea* pDrawingArea;
 	GtkLabel* pLabel;
 	GtkCheckButton* pHideDrawingCheckButton;
+	GtkCheckButton* pClipCheckButton;
 	
 	GArray* pPointsArray;
 } g_Test_Poly;
@@ -37,6 +38,7 @@ void test_poly_init(GladeXML* pGladeXML)
 	GLADE_LINK_WIDGET(pGladeXML, g_Test_Poly.pLabel, GTK_LABEL, "test_polylabel");
 	GLADE_LINK_WIDGET(pGladeXML, g_Test_Poly.pDrawingArea, GTK_DRAWING_AREA, "test_polydrawingarea");
 	GLADE_LINK_WIDGET(pGladeXML, g_Test_Poly.pHideDrawingCheckButton, GTK_CHECK_BUTTON, "test_polyhidecheck");
+	GLADE_LINK_WIDGET(pGladeXML, g_Test_Poly.pClipCheckButton, GTK_CHECK_BUTTON, "test_poly_clip");
 
 	g_Test_Poly.pPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 
@@ -73,7 +75,7 @@ static gboolean test_poly_on_clearbutton_clicked(GtkWidget* w, GdkEventButton *e
 	return TRUE;
 }
 
-gboolean test_poly_on_hidecheck_toggled(GtkWidget* w, GdkEventButton *event)
+gboolean test_poly_on_time_to_queue_draw(GtkWidget* w, GdkEventButton *event)
 {
 	gtk_widget_queue_draw(GTK_WIDGET(g_Test_Poly.pDrawingArea));
 }
@@ -133,25 +135,57 @@ static gboolean test_poly_on_time_to_update(GtkWidget *pDrawingArea, GdkEventExp
 	cairo_rectangle(pCairo, 0.0, 0.0, 1.0, 1.0);
 	cairo_fill(pCairo);
 
+	GArray* pSimplified = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
+
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_Test_Poly.pClipCheckButton)) == TRUE) {
+		maprect_t rcClipper;
+		rcClipper.A.fLatitude = rcClipper.A.fLongitude = 0.25;
+		rcClipper.B.fLatitude = rcClipper.B.fLongitude = 0.75;
+
+
+		if(g_Test_Poly.pPointsArray->len > 0) {
+			GArray* pClipped = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
+			mappoint_t ptFirst = g_array_index(g_Test_Poly.pPointsArray, mappoint_t, 0);
+			g_array_append_val(g_Test_Poly.pPointsArray, ptFirst);
+				map_math_clip_pointstring_to_worldrect(g_Test_Poly.pPointsArray, &rcClipper, pClipped);
+			g_array_remove_index(g_Test_Poly.pPointsArray, g_Test_Poly.pPointsArray->len-1);
+
+			// Simplify
+			map_math_simplify_pointstring(pClipped, fValue, pSimplified);
+
+			g_array_free(pClipped, TRUE);
+		}
+
+		// Draw clip rectangle
+		cairo_save(pCairo);
+		cairo_set_source_rgba(pCairo, 0.0, 0.0, 0.0, 1.0);
+		cairo_set_line_width(pCairo, 0.005);
+		cairo_rectangle(pCairo, rcClipper.A.fLongitude, rcClipper.A.fLatitude, (rcClipper.B.fLongitude - rcClipper.A.fLongitude), (rcClipper.B.fLatitude - rcClipper.A.fLatitude));
+		cairo_stroke(pCairo);
+		cairo_restore(pCairo);
+	}
+	else {
+		// Simplify
+		map_math_simplify_pointstring(g_Test_Poly.pPointsArray, fValue, pSimplified);
+	}
+
+	// Draw pSimplified filled
+	cairo_save(pCairo);
+	cairo_set_source_rgba(pCairo, 0.0, 1.0, 0.0, 1.0);
+	test_poly_draw_array(pCairo, pSimplified);
+	cairo_fill(pCairo);
+	cairo_restore(pCairo);
+
 	// Draw lines
 	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_Test_Poly.pHideDrawingCheckButton)) == FALSE) {
-		cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_ROUND);
 		cairo_save(pCairo);
+		cairo_set_line_join(pCairo, CAIRO_LINE_JOIN_ROUND);
 		cairo_set_line_width(pCairo, 0.02);
 		cairo_set_source_rgba(pCairo, 1.0, 0.0, 0.0, 1.0);
 		test_poly_draw_array(pCairo, g_Test_Poly.pPointsArray);
 		cairo_stroke(pCairo);
 		cairo_restore(pCairo);
 	}
-
-	cairo_save(pCairo);
-	GArray* pSimplified = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
-	map_math_simplify_pointstring(g_Test_Poly.pPointsArray, fValue, pSimplified);
-	cairo_set_line_width(pCairo, 0.01);
-	cairo_set_source_rgba(pCairo, 0.0, 1.0, 0.0, 0.5);
-	test_poly_draw_array(pCairo, pSimplified);
-	cairo_fill(pCairo);
-	cairo_restore(pCairo);
 
 	cairo_destroy(pCairo);
 

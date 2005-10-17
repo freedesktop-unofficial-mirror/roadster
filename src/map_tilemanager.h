@@ -41,5 +41,6 @@ maptilemanager_t* map_tilemanager_new();
 
 // returns GArray containing maptile_t types 
 GPtrArray* map_tilemanager_load_tiles_for_worldrect(maptilemanager_t* pTileManager, maprect_t* pWorldRect, gint nLOD);
+void map_tilemanager_free_tile_list(maptilemanager_t* pTileManager, GPtrArray* pTiles);
 
 #endif

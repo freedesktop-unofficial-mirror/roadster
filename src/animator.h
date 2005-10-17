@@ -36,6 +36,7 @@ typedef struct animator {
 
 animator_t* animator_new(EAnimationType eAnimationType, gdouble fAnimationTimeInSeconds);
 gdouble animator_get_progress(animator_t* pAnimator);
+gboolean animator_is_done(animator_t* pAnimator);
 void animator_destroy(animator_t* pAnimator);
 
 #endif

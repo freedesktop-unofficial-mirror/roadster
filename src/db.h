@@ -84,7 +84,7 @@ void db_enable_keys(void);
 void db_disable_keys(void);
 
 gboolean db_insert_city(const gchar* pszName, gint nStateID, gint* pnReturnCityID);
-gboolean db_insert_road(gint nLOD, gint nRoadNameID, gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GPtrArray* pPointsArray, gint* pReturnID);
+gboolean db_insert_road(gint nLOD, gint nRoadNameID, gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GArray* pPointsArray, gint* pReturnID);
 
 gboolean db_city_get_id(const gchar* pszName, gint nStateID, gint* pnReturnID);
 gboolean db_state_get_id(const gchar* pszName, gint* pnReturnID);

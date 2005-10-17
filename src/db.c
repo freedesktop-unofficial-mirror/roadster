@@ -232,30 +232,6 @@ void db_free_escaped_string(gchar* pszString)
 	g_free(pszString);
 }
 
-static guint db_count_table_rows(const gchar* pszTable)
-{
-	if(!db_is_connected()) return 0;
-
-	MYSQL_RES* pResultSet;
-	MYSQL_ROW aRow;
-	gchar azQuery[MAX_SQLBUFFER_LEN];
-	guint uRows = 0;
-
-	// count rows
-	g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "SELECT COUNT(*) FROM %s;", pszTable);
-	if(mysql_query(g_pDB->pMySQLConnection, azQuery) != MYSQL_RESULT_SUCCESS) {
-		g_message("db_count_table_rows query failed: %s\n", mysql_error(g_pDB->pMySQLConnection));
-		return 0;
-	}
-	if((pResultSet = MYSQL_GET_RESULT(g_pDB->pMySQLConnection)) != NULL) {
-		if((aRow = mysql_fetch_row(pResultSet)) != NULL) {
-			uRows = atoi(aRow[0]);
-		}
-		mysql_free_result(pResultSet);
-	}
-	return uRows;
-}
-
 /******************************************************
 ** data inserting
 ******************************************************/
@@ -280,7 +256,7 @@ static gboolean db_insert(const gchar* pszSQL, gint* pnReturnRowsInserted)
 	return FALSE;
 }
 
-gboolean db_insert_road(gint nLOD, gint nRoadNameID, gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GPtrArray* pPointsArray, gint* pReturnID)
+gboolean db_insert_road(gint nLOD, gint nRoadNameID, gint nLayerType, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, gint nCityLeftID, gint nCityRightID, const gchar* pszZIPCodeLeft, const gchar* pszZIPCodeRight, GArray* pPointsArray, gint* pReturnID)
 {
 //	g_assert(pReturnID != NULL);
 	if(!db_is_connected()) return FALSE;
@@ -290,7 +266,7 @@ gboolean db_insert_road(gint nLOD, gint nRoadNameID, gint nLayerType, gint nAddr
 	gint nCount = 0;
 	gint i;
 	for(i=0 ; i < pPointsArray->len ;i++) {
-		mappoint_t* pPoint = g_ptr_array_index(pPointsArray, i);
+		mappoint_t* pPoint = &g_array_index(pPointsArray, mappoint_t, i);
 
 		gchar azNewest[40];
 
@@ -699,3 +675,29 @@ void db_create_tables()
 //         " INDEX (LocalFileName))",
 //         NULL);
 }
+
+#ifdef ROADSTER_DEAD_CODE
+// static guint db_count_table_rows(const gchar* pszTable)
+// {
+//     if(!db_is_connected()) return 0;
+//
+//     MYSQL_RES* pResultSet;
+//     MYSQL_ROW aRow;
+//     gchar azQuery[MAX_SQLBUFFER_LEN];
+//     guint uRows = 0;
+//
+//     // count rows
+//     g_snprintf(azQuery, MAX_SQLBUFFER_LEN, "SELECT COUNT(*) FROM %s;", pszTable);
+//     if(mysql_query(g_pDB->pMySQLConnection, azQuery) != MYSQL_RESULT_SUCCESS) {
+//         g_message("db_count_table_rows query failed: %s\n", mysql_error(g_pDB->pMySQLConnection));
+//         return 0;
+//     }
+//     if((pResultSet = MYSQL_GET_RESULT(g_pDB->pMySQLConnection)) != NULL) {
+//         if((aRow = mysql_fetch_row(pResultSet)) != NULL) {
+//             uRows = atoi(aRow[0]);
+//         }
+//         mysql_free_result(pResultSet);
+//     }
+//     return uRows;
+// }
+#endif

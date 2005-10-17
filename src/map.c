@@ -24,12 +24,16 @@
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
 #include <math.h>
+#include <string.h>
 
 #include "main.h"
 #include "map_style.h"
 #include "map_tilemanager.h"
+#include "map_math.h"
 #include "gui.h"
 #include "map.h"
+#include "map_draw_gdk.h"
+#include "map_draw_cairo.h"
 #include "mainwindow.h"
 #include "util.h"
 #include "db.h"
@@ -68,11 +72,7 @@
 
 /* Prototypes */
 static void map_init_location_hash(map_t* pMap);
-
-static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID);
-
-static void map_data_clear(map_t* pMap);
-void map_get_render_metrics(const map_t* pMap, rendermetrics_t* pMetrics);
+//static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID);
 
 gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2);
 
@@ -88,20 +88,20 @@ zoomlevel_t g_sZoomLevels[NUM_ZOOM_LEVELS] = {
 	{ 28000000, UNIT_MILES,500,UNIT_KILOMETERS,500, 	1, 3},	// 7
 	{ 21000000, UNIT_MILES,500,UNIT_KILOMETERS,500, 	1, 3},	// 8
 
-	{ 14000000, UNIT_MILES,10,	UNIT_KILOMETERS,12, 	2, 2},	// *9
-	{ 11600000, UNIT_MILES,10,	UNIT_KILOMETERS,12, 	2, 2},	// 10
-	{  9200000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	2, 2},	// 11
-	{  6800000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	2, 2},	// 12
+	{ 14000000, UNIT_MILES,10,	UNIT_KILOMETERS,12, 	2, 3},	// *9
+	{ 11600000, UNIT_MILES,10,	UNIT_KILOMETERS,12, 	2, 3},	// 10
+	{  9200000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	2, 3},	// 11
+	{  6800000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	2, 3},	// 12
 
 	{  4400000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	3, 2},	// *13
 	{  3850000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	3, 2},	// 14
 	{  3300000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	3, 2},	// 15
 	{  2750000, UNIT_MILES, 5,	UNIT_KILOMETERS, 7, 	3, 2},	// 16
 
-	{  2200000, UNIT_MILES,20,	UNIT_KILOMETERS,15, 	4, 1},	// *17
-	{  1832250, UNIT_MILES,20,	UNIT_KILOMETERS,15, 	4, 1},	// 18
-	{  1464500, UNIT_MILES,20,	UNIT_KILOMETERS,15, 	4, 1},	// 19
-	{  1100000, UNIT_MILES,20,	UNIT_KILOMETERS,15, 	4, 1},	// 20
+	{  2200000, UNIT_MILES,20,	UNIT_KILOMETERS,15, 	4, 2},	// *17
+	{  1832250, UNIT_MILES,20,	UNIT_KILOMETERS,15, 	4, 2},	// 18
+	{  1464500, UNIT_MILES,20,	UNIT_KILOMETERS,15, 	4, 2},	// 19
+	{  1100000, UNIT_MILES,20,	UNIT_KILOMETERS,15, 	4, 2},	// 20
 
 	{   729000, UNIT_MILES,10,	UNIT_KILOMETERS, 8, 	5, 1},	// *21
 	{   607500, UNIT_MILES,10,	UNIT_KILOMETERS, 8, 	5, 1},	// 22
@@ -213,14 +213,21 @@ void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags)
 
 	// Load geometry
 	TIMER_BEGIN(loadtimer, "--- BEGIN ALL DB LOAD");
-//	map_data_clear(pMap);
-	GPtrArray* pTileArray = map_tilemanager_load_tiles_for_worldrect(pMap->pTileManager, &(pRenderMetrics->rWorldBoundingBox), pRenderMetrics->nLevelOfDetail);
+
+	if(pMap->pLastActiveTilesArray != NULL) {
+		map_tilemanager_free_tile_list(pMap->pTileManager, pMap->pLastActiveTilesArray);
+	}
+	GPtrArray* pTilesArray = map_tilemanager_load_tiles_for_worldrect(pMap->pTileManager, &(pRenderMetrics->rWorldBoundingBox), pRenderMetrics->nLevelOfDetail);
+
+	// save this list for hit testing
+	pMap->pLastActiveTilesArray = pTilesArray;
+
 	TIMER_END(loadtimer, "--- END ALL DB LOAD");
 
 	scenemanager_clear(pMap->pSceneManager);
 	scenemanager_set_screen_dimensions(pMap->pSceneManager, pRenderMetrics->nWindowWidth, pRenderMetrics->nWindowHeight);
 
-	gint nRenderMode = RENDERMODE_FAST; //RENDERMODE_FAST; // RENDERMODE_PRETTY
+	gint nRenderMode = RENDERMODE_FAST; //RENDERMODE_PRETTY; // 
 
 #ifdef ENABLE_LABELS_WHILE_DRAGGING
 	nDrawFlags |= DRAWFLAG_LABELS;	// always turn on labels
@@ -234,15 +241,15 @@ void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags)
 	if(nRenderMode == RENDERMODE_FAST) {
 		// 
 		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
-			map_draw_gdk(pMap, pTileArray, pRenderMetrics, pTargetPixmap, DRAWFLAG_GEOMETRY);
+			map_draw_gdk(pMap, pTilesArray, pRenderMetrics, pTargetPixmap, DRAWFLAG_GEOMETRY);
 			nDrawFlags &= ~DRAWFLAG_GEOMETRY;
 		}
 
 		// Call cairo for finishing the scene
-		map_draw_cairo(pMap, pTileArray, pRenderMetrics, pTargetPixmap, nDrawFlags);
+		map_draw_cairo(pMap, pTilesArray, pRenderMetrics, pTargetPixmap, nDrawFlags);
 	}
 	else {	// nRenderMode == RENDERMODE_PRETTY
-		map_draw_cairo(pMap, pTileArray, pRenderMetrics, pTargetPixmap, nDrawFlags);
+		map_draw_cairo(pMap, pTilesArray, pRenderMetrics, pTargetPixmap, nDrawFlags);
 	}
 
 #ifdef ENABLE_SCENEMANAGER_DEBUG_TEST
@@ -251,8 +258,11 @@ void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags)
 #endif
 
 	gtk_widget_queue_draw(pMap->pTargetWidget);
+}
 
-	g_ptr_array_free(pTileArray, TRUE);
+void map_draw_xor_rect(map_t* pMap, GdkDrawable* pTargetDrawable, screenrect_t* pRect)
+{
+	map_draw_gdk_xor_rect(pMap, pTargetDrawable, pRect);
 }
 
 // ========================================================
@@ -289,7 +299,7 @@ guint16 map_get_zoomlevel(const map_t* pMap)
 	return pMap->uZoomLevel;	// between MIN_ZOOM_LEVEL and MAX_ZOOM_LEVEL
 }
 
-guint32 map_get_zoomlevel_scale(const map_t* pMap)
+guint32 map_get_scale(const map_t* pMap)
 {
 	return g_sZoomLevels[pMap->uZoomLevel-1].uScale;	// returns "5000" for 1:5000 scale
 }
@@ -335,9 +345,9 @@ void map_center_on_windowpoint(map_t* pMap, guint16 uX, guint16 uY)
 	gint16 nPixelDeltaY = uY - (pMap->MapDimensions.uHeight / 2);
 
 	// Convert pixels to world coordinates
-	gdouble fWorldDeltaX = map_pixels_to_degrees(pMap, nPixelDeltaX, pMap->uZoomLevel);
+	gdouble fWorldDeltaX = map_math_pixels_to_degrees_at_scale(nPixelDeltaX, map_get_scale(pMap));
 	// reverse the X, clicking above
-	gdouble fWorldDeltaY = -map_pixels_to_degrees(pMap, nPixelDeltaY, pMap->uZoomLevel);
+	gdouble fWorldDeltaY = -map_math_pixels_to_degrees_at_scale(nPixelDeltaY, map_get_scale(pMap));
 
 //	g_message("panning %d,%d pixels (%.10f,%.10f world coords)\n", nPixelDeltaX, nPixelDeltaY, fWorldDeltaX, fWorldDeltaY);
 
@@ -354,16 +364,15 @@ void map_zoom_to_screenrect(map_t* pMap, const screenrect_t* pRect)
 	map_get_screenrect_centerpoint(pRect, &ptCenter);
 	map_center_on_windowpoint(pMap, ptCenter.nX, ptCenter.nY);
 	//g_print("box centerpoint = %d,%d\n", ptCenter.nX, ptCenter.nY);
-	
+
 	// calculate size of rectangle in degrees
-	gdouble fBoxLongitude = map_pixels_to_degrees(pMap, map_screenrect_width(pRect), pMap->uZoomLevel); 
-	gdouble fBoxLatitude = map_pixels_to_degrees(pMap, map_screenrect_height(pRect), pMap->uZoomLevel); 
+	gdouble fBoxLongitude = map_math_pixels_to_degrees_at_scale(map_screenrect_width(pRect), map_get_scale(pMap));
+	gdouble fBoxLatitude = map_math_pixels_to_degrees_at_scale(map_screenrect_height(pRect), map_get_scale(pMap));
 	//g_print("box size pixels = %d,%d\n", map_screenrect_width(pRect), map_screenrect_height(pRect));
 	//g_print("box size = %f,%f\n", fBoxLongitude, fBoxLatitude);
 
 	// go from zoomed all the way to all the way out, looking for a rectangle
 	// that is wide & tall enough to show all of pRect
-	gboolean bFound = FALSE;
 	gint nZoomLevel;
 	for(nZoomLevel = MAX_ZOOM_LEVEL ; nZoomLevel >= MIN_ZOOM_LEVEL ; nZoomLevel--) {
 		pMap->uZoomLevel = nZoomLevel;
@@ -433,8 +442,8 @@ void map_get_render_metrics(const map_t* pMap, rendermetrics_t* pMetrics)
 	//
 	// Calculate how many world degrees we'll be drawing
 	//
-	pMetrics->fScreenLatitude = map_pixels_to_degrees(pMap, pMap->MapDimensions.uHeight, pMetrics->nZoomLevel);
-	pMetrics->fScreenLongitude = map_pixels_to_degrees(pMap, pMap->MapDimensions.uWidth, pMetrics->nZoomLevel);
+	pMetrics->fScreenLatitude = map_math_pixels_to_degrees_at_scale(pMap->MapDimensions.uHeight, map_get_scale(pMap));
+	pMetrics->fScreenLongitude = map_math_pixels_to_degrees_at_scale(pMap->MapDimensions.uWidth, map_get_scale(pMap));
 
 	// The world bounding box (expressed in lat/lon) of the data we will be drawing
 	pMetrics->rWorldBoundingBox.A.fLongitude = pMap->MapCenter.fLongitude - pMetrics->fScreenLongitude/2;
@@ -520,31 +529,6 @@ static void map_init_location_hash(map_t* pMap)
 	pMap->pLocationArrayHashTable = g_hash_table_new_full(g_int_hash, g_int_equal, 
 								g_free, 				/* key destroy function */
 								map_callback_free_locations_array);	/* value destroy function */
-}
-
-static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID)
-{
-	GPtrArray* pLocationsArray;
-	pLocationsArray = g_hash_table_lookup(pMap->pLocationArrayHashTable, &nLocationSetID);
-	if(pLocationsArray != NULL) {
-		// found existing array
-		//g_print("existing for set %d\n", nLocationSetID);
-	}
-	else {
-		//g_print("new for set %d\n", nLocationSetID);
-
-		// need a new array
-		pLocationsArray = g_ptr_array_new();
-		g_assert(pLocationsArray != NULL);
-
-		gint* pKey = g_malloc(sizeof(gint));
-		*pKey = nLocationSetID;
-		g_hash_table_insert(pMap->pLocationArrayHashTable, pKey, pLocationsArray);
-	}
-
-	// add location to the array of locations!
-	g_ptr_array_add(pLocationsArray, pLocation);
-	//g_print("pLocationsArray->len = %d\n", pLocationsArray->len);
 }
 
 // ========================================================
@@ -678,6 +662,31 @@ static gboolean map_enhance_linestring(GPtrArray* pSourceArray, GPtrArray* pDest
 	// add last point
 	g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, pSourceArray->len-1));
 //g_print("pDestArray->len = %d\n", pDestArray->len);
+}
+
+static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID)
+{
+	GPtrArray* pLocationsArray;
+	pLocationsArray = g_hash_table_lookup(pMap->pLocationArrayHashTable, &nLocationSetID);
+	if(pLocationsArray != NULL) {
+		// found existing array
+		//g_print("existing for set %d\n", nLocationSetID);
+	}
+	else {
+		//g_print("new for set %d\n", nLocationSetID);
+
+		// need a new array
+		pLocationsArray = g_ptr_array_new();
+		g_assert(pLocationsArray != NULL);
+
+		gint* pKey = g_malloc(sizeof(gint));
+		*pKey = nLocationSetID;
+		g_hash_table_insert(pMap->pLocationArrayHashTable, pKey, pLocationsArray);
+	}
+
+	// add location to the array of locations!
+	g_ptr_array_add(pLocationsArray, pLocation);
+	//g_print("pLocationsArray->len = %d\n", pLocationsArray->len);
 }
 */
 #endif

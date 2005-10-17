@@ -546,3 +546,66 @@ void util_g_free_with_param(gpointer pMemory, gpointer _unused)
 	g_assert(pMemory != NULL);
 	g_free(pMemory);
 }
+
+EDirection util_match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorderSize)
+{
+	EDirection eDirection;
+
+	// Corner hit targets are L shaped and 1/3 of the two borders it touches
+	gint nXCorner = nWidth/3;
+	gint nYCorner = nHeight/3;
+
+	// LEFT EDGE?
+	if(nX <= nBorderSize) {
+		if(nY <= nYCorner) {
+			eDirection = DIRECTION_NW;
+		}
+		else if((nY+nYCorner) >= nHeight) {
+			eDirection = DIRECTION_SW;
+		}
+		else {
+			eDirection = DIRECTION_W;
+		}
+	}
+	// RIGHT EDGE?
+	else if((nX+nBorderSize) >= nWidth) {
+		if(nY <= nYCorner) {
+			eDirection = DIRECTION_NE;
+		}
+		else if((nY+nYCorner) >= nHeight) {
+			eDirection = DIRECTION_SE;
+		}
+		else {
+			eDirection = DIRECTION_E;
+		}
+	}
+	// TOP?
+	else if(nY <= nBorderSize) {
+		if(nX <= nXCorner) {
+			eDirection = DIRECTION_NW;
+		}
+		else if((nX+nXCorner) >= nWidth) {
+			eDirection = DIRECTION_NE;
+		}
+		else {
+			eDirection = DIRECTION_N;
+		}
+	}
+	// BOTTOM?
+	else if((nY+nBorderSize) >= nHeight) {
+		if(nX <= nXCorner) {
+			eDirection = DIRECTION_SW;
+		}
+		else if((nX+nXCorner) >= nWidth) {
+			eDirection = DIRECTION_SE;
+		}
+		else {
+			eDirection = DIRECTION_S;
+		}
+	}
+	// center.
+	else {
+		eDirection = DIRECTION_NONE;
+	}
+	return eDirection;
+}

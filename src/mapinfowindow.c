@@ -108,7 +108,7 @@ void mapinfowindow_update(const map_t* pMap)
 	gint nNewStateID = 0;
 	gint nNewCityID = 0;
 
-	gint nZoomScale = map_get_zoomlevel_scale(pMap);
+	gint nZoomScale = map_get_scale(pMap);
 
 	// Step 2. Set button text and drop-down menus
 

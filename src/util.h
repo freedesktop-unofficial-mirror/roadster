@@ -49,6 +49,10 @@ gboolean util_parse_hex_color(const gchar* pszString, void* pReturnColor);
 #define is_even(x)		(((x) & 1) == 0)
 #define is_odd(x)		(((x) & 1) == 1)
 
+typedef enum {
+	DIRECTION_NONE, DIRECTION_N, DIRECTION_NE, DIRECTION_E, DIRECTION_SE, DIRECTION_S, DIRECTION_SW, DIRECTION_W, DIRECTION_NW
+} EDirection;
+
 void util_close_parent_window(GtkWidget* pWidget, gpointer data);
 void util_open_uri(const char* pszURI);
 
@@ -88,5 +92,7 @@ gdouble util_get_percent_of_range(gint nMiddle, gint nA, gint nB);
 gchar* util_format_gdouble(gdouble d);
 
 void util_g_free_with_param(gpointer pMemory, gpointer _unused);
+
+EDirection util_match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorderSize);
 
 #endif

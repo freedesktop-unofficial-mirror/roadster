@@ -212,6 +212,7 @@ typedef struct {
 //	maplayer_data_t	*apLayerData[ MAP_NUM_OBJECT_TYPES + 1 ];
 
 	maptilemanager_t* pTileManager;
+	GPtrArray* pLastActiveTilesArray;	// holds currently visible tiles at correct LOD (they're owned by tile manager)
 
 	// Locationsets
 	GHashTable		*pLocationArrayHashTable;
@@ -276,7 +277,7 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget);
 
 // Gets and Sets
 guint16 map_get_zoomlevel(const map_t* pMap);
-guint32 map_get_zoomlevel_scale(const map_t* pMap);
+guint32 map_get_scale(const map_t* pMap);
 
 gboolean map_can_zoom_in(const map_t* pMap);
 gboolean map_can_zoom_out(const map_t* pMap);
@@ -309,7 +310,11 @@ GdkPixmap* map_get_pixmap(map_t* pMap);
 void map_release_pixmap(map_t* pMap);
 
 void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags);
+void map_draw_xor_rect(map_t* pMap, GdkDrawable* pTargetDrawable, screenrect_t* pRect);
+
 void map_add_track(map_t* pMap, gint hTrack);
+
+void map_get_render_metrics(const map_t* pMap, rendermetrics_t* pMetrics);
 
 gboolean map_location_selection_add(map_t* pMap, gint nLocationID);
 gboolean map_location_selection_remove(map_t* pMap, gint nLocationID);

@@ -26,12 +26,13 @@
 
 #include <glade/glade.h>
 #include "map.h"
+#include "util.h"
 
 G_BEGIN_DECLS
 
 void mainwindow_init(GladeXML* pGladeXML);
 void mainwindow_draw_map(gint nDrawFlags);
-GtkWidget* mainwindow_get_window(void);
+// GtkWidget* mainwindow_get_window(void);
 
 // Visibility
 void mainwindow_show(void);
@@ -75,10 +76,6 @@ void mainwindow_map_get_centerpoint(mappoint_t* pPoint);
 void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint);
 
 void mainwindow_add_history();
-
-typedef enum {
-	DIRECTION_NONE, DIRECTION_N, DIRECTION_NE, DIRECTION_E, DIRECTION_SE, DIRECTION_S, DIRECTION_SW, DIRECTION_W, DIRECTION_NW
-} EDirection;
 
 void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels);
 

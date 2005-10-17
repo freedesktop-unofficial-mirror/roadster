@@ -31,6 +31,7 @@ G_BEGIN_DECLS
 
 void locationeditwindow_init(GladeXML* pGladeXML);
 void locationeditwindow_hide(void);
+void locationeditwindow_show_for_new(gint nDefaultLocationSetID);
 
 G_END_DECLS
 

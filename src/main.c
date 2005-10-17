@@ -25,11 +25,16 @@
 #  include <config.h>
 #endif
 
+#ifdef ENABLE_NLS
+#	include <libintl.h>
+#endif
+
 #include <gtk/gtk.h>
 #include "main.h"
 #include "gui.h"
 #include "db.h"
 #include "map.h"
+#include "map_style.h"
 #include "gpsclient.h"
 #include "locationset.h"
 #include "location.h"
@@ -151,7 +156,7 @@ gboolean main_init(void)
 	db_init();
 
 	g_print("connecting to db\n");
-	gboolean bConnected = db_connect(NULL, NULL, NULL, "");
+	db_connect(NULL, NULL, NULL, "");	// Connect to internal DB
 
 	g_print("creating database tables\n");
 	db_create_tables();

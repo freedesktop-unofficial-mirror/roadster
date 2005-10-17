@@ -29,7 +29,8 @@
 typedef enum {
 	MAP_HITTYPE_LOCATION,
 	MAP_HITTYPE_ROAD,
-	
+	MAP_HITTYPE_POLYGON,
+
 	// the following all use LocationSelectionHit in the union below
 	MAP_HITTYPE_LOCATIONSELECTION,	// hit somewhere on a locationselection graphic (info balloon)
 	MAP_HITTYPE_LOCATIONSELECTION_CLOSE,	// hit locationselection graphic close graphic (info balloon [X])
@@ -48,9 +49,13 @@ typedef struct {
 		} LocationHit;
 
 		struct {
-			gint nRoadID;
+			gint nRoadID;	// XXX: change to nMapObjectID
 			mappoint_t ClosestPoint;
-		} RoadHit;
+		} RoadHit;			// XXX: Change to LineHit
+
+		struct {
+			gint nMapObjectID;
+		} PolygonHit;
 
 		struct {
 			gint nLocationID;

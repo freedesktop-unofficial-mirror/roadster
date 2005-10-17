@@ -39,6 +39,7 @@
 #include "gotowindow.h"
 #include "db.h"
 #include "map.h"
+#include "map_math.h"
 #include "map_hittest.h"
 #include "map_style.h"
 #include "importwindow.h"
@@ -49,8 +50,8 @@
 #include "animator.h"
 #include "map_history.h"
 #include "mapinfowindow.h"
-
 #include "tooltipwindow.h"
+#include "locationeditwindow.h"
 
 #define PROGRAM_NAME			"Roadster"
 #define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
@@ -164,7 +165,10 @@ struct {
 
 struct {
 	gint nCursor;
-} g_aDirectionCursors[] = {GDK_LEFT_PTR, GDK_TOP_SIDE, GDK_TOP_RIGHT_CORNER, GDK_RIGHT_SIDE, GDK_BOTTOM_RIGHT_CORNER, GDK_BOTTOM_SIDE, GDK_BOTTOM_LEFT_CORNER, GDK_LEFT_SIDE, GDK_TOP_LEFT_CORNER};
+} g_aDirectionCursors[] = {{GDK_LEFT_PTR}, 
+{GDK_TOP_SIDE}, 
+{GDK_TOP_RIGHT_CORNER}, 
+{GDK_RIGHT_SIDE}, {GDK_BOTTOM_RIGHT_CORNER}, {GDK_BOTTOM_SIDE}, {GDK_BOTTOM_LEFT_CORNER}, {GDK_LEFT_SIDE}, {GDK_TOP_LEFT_CORNER}};
 
 struct {
 	GtkWindow* pWindow;
@@ -302,9 +306,9 @@ void* mainwindow_set_busy(void)
 	return pCursor;
 }
 
-void mainwindow_draw_xor_rect(screenrect_t* pRect)
+void mainwindow_draw_selection_rect(screenrect_t* pRect)
 {
-	map_draw_gdk_xor_rect(g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea)->window, pRect);
+	map_draw_xor_rect(g_MainWindow.pMap, GTK_WIDGET(g_MainWindow.pDrawingArea)->window, pRect);
 }
 
 void mainwindow_set_not_busy(void** ppCursor)
@@ -334,7 +338,7 @@ void mainwindow_init_add_web_maps_menu_items()
 
 		// XXX: how do we specify zoom level in YMaps URL?
 		{"Yahoo! Maps", "http://maps.yahoo.com/maps_result?lat={LAT}&lon={LON}"},
-		
+
 		{"MSN Maps", "http://maps.msn.com/map.aspx?C={LAT}%2C{LON}&S=800%2C740&alts1={ALTITUDE_MILES}"},
 
 		{"MSN Virtual Earth Roads", "http://virtualearth.msn.com/default.aspx?v=1&cp={LAT}|{LON}&lvl={ZOOM_1_TO_19}&style=r"},
@@ -375,9 +379,6 @@ void mainwindow_init_add_web_maps_menu_items()
 
 void mainwindow_init(GladeXML* pGladeXML)
 {
-	GtkCellRenderer* pCellRenderer;
-  	GtkTreeViewColumn* pColumn;
-
 	// Window / Container Widgets
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pWindow, GTK_WINDOW, "mainwindow");
 	GLADE_LINK_WIDGET(pGladeXML, g_MainWindow.pToolbar, GTK_HBOX, "maintoolbar");
@@ -702,7 +703,7 @@ gboolean mainwindow_get_statusbar_visible(void)
 
 void mainwindow_statusbar_update_zoomscale(void)
 {
-	gchar* pszNew = g_strdup_printf("1:%d", map_get_zoomlevel_scale(g_MainWindow.pMap));
+	gchar* pszNew = g_strdup_printf("1:%d", map_get_scale(g_MainWindow.pMap));
 	mainwindow_set_statusbar_zoomscale(pszNew);
 	g_free(pszNew);
 }
@@ -735,10 +736,10 @@ gboolean mainwindow_get_sidebox_visible(void)
 	return GTK_WIDGET_VISIBLE(g_MainWindow.pSidebox);
 }
 
-GtkWidget* mainwindow_get_window(void)
-{
-	return GTK_WIDGET(g_MainWindow.pWindow);
-}
+// GtkWidget* mainwindow_get_window(void)
+// {
+//     return GTK_WIDGET(g_MainWindow.pWindow);
+// }
 
 void mainwindow_toggle_fullscreen(void)
 {
@@ -954,70 +955,6 @@ void mainwindow_on_reloadglyphsmenuitem_activate(GtkMenuItem *menuitem, gpointer
 	mainwindow_draw_map(DRAWFLAG_ALL);
 }
 
-
-EDirection match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorderSize)
-{
-	EDirection eDirection;
-
-	// Corner hit targets are L shaped and 1/3 of the two borders it touches
-	gint nXCorner = nWidth/3;
-	gint nYCorner = nHeight/3;
-
-	// LEFT EDGE?
-	if(nX <= nBorderSize) {
-		if(nY <= nYCorner) {
-			eDirection = DIRECTION_NW;
-		}
-		else if((nY+nYCorner) >= nHeight) {
-			eDirection = DIRECTION_SW;
-		}
-		else {
-			eDirection = DIRECTION_W;
-		}
-	}
-	// RIGHT EDGE?
-	else if((nX+nBorderSize) >= nWidth) {
-		if(nY <= nYCorner) {
-			eDirection = DIRECTION_NE;
-		}
-		else if((nY+nYCorner) >= nHeight) {
-			eDirection = DIRECTION_SE;
-		}
-		else {
-			eDirection = DIRECTION_E;
-		}
-	}
-	// TOP?
-	else if(nY <= nBorderSize) {
-		if(nX <= nXCorner) {
-			eDirection = DIRECTION_NW;
-		}
-		else if((nX+nXCorner) >= nWidth) {
-			eDirection = DIRECTION_NE;
-		}
-		else {
-			eDirection = DIRECTION_N;
-		}
-	}
-	// BOTTOM?
-	else if((nY+nBorderSize) >= nHeight) {
-		if(nX <= nXCorner) {
-			eDirection = DIRECTION_SW;
-		}
-		else if((nX+nXCorner) >= nWidth) {
-			eDirection = DIRECTION_SE;
-		}
-		else {
-			eDirection = DIRECTION_S;
-		}
-	}
-	// center.
-	else {
-		eDirection = DIRECTION_NONE;
-	}
-	return eDirection;
-}
-
 static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *event)
 {
 	gint nX, nY;
@@ -1025,10 +962,6 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 
 	gint nWidth = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.width;
 	gint nHeight = GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height;
-
-	// nX and nY clipped to screen
-	gint nClippedX = (nX < 0) ? 0 : (nX > nWidth) ? nWidth : nX;
-	gint nClippedY = (nY < 0) ? 0 : (nY > nHeight) ? nHeight : nY;
 
 	EDirection eScrollDirection = DIRECTION_NONE;
 
@@ -1047,7 +980,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			tooltip_hide(g_MainWindow.pTooltip);
 
 			// Is it at a border?
-			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+			eScrollDirection = util_match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 			if(eScrollDirection != DIRECTION_NONE) {
 				// begin a scroll
 				GdkCursor* pCursor = gdk_cursor_new(g_aDirectionCursors[eScrollDirection].nCursor);
@@ -1128,7 +1061,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 				}
 				else {
 					// Since we're not redrawing the map, we need to erase the selection rectangle
-					mainwindow_draw_xor_rect(&(g_MainWindow.rcZoomRect));
+					mainwindow_draw_selection_rect(&(g_MainWindow.rcZoomRect));
 				}
 				// all done
 				g_MainWindow.bDrawingZoomRect = FALSE;
@@ -1174,7 +1107,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 		}
 		else if(event->type == GDK_2BUTTON_PRESS) {
 			// can only double-click in the middle (not on a scroll border)
-			eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+			eScrollDirection = util_match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 			if(eScrollDirection == DIRECTION_NONE) {
 				animator_destroy(g_MainWindow.pAnimator);
 
@@ -1193,7 +1126,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 	else if (event->button == MOUSE_BUTTON_RIGHT) {
 		// single right-click?
 		if(event->type == GDK_BUTTON_PRESS) {
-			GtkMenu* pMenu = g_MainWindow.pMapPopupMenu;	// default to generic map popup
+			//GtkMenu* pMenu = g_MainWindow.pMapPopupMenu;	// default to generic map popup
 
 			if(pHitStruct != NULL) {
 				if(pHitStruct->eHitType == MAP_HITTYPE_LOCATION) {
@@ -1294,7 +1227,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		g_MainWindow.ptClickLocation.nY = nY;
 	}
 	else if(g_MainWindow.bScrolling) {
-		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+		EDirection eScrollDirection = util_match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
 		// update cursor
 		nCursor = g_aDirectionCursors[eScrollDirection].nCursor;
@@ -1304,18 +1237,18 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 	}
 	else if(g_MainWindow.bDrawingZoomRect) {
 		//g_print("updating rect\n");
-		mainwindow_draw_xor_rect(&g_MainWindow.rcZoomRect);	// erase old rect (XOR operator rocks!)
+		mainwindow_draw_selection_rect(&g_MainWindow.rcZoomRect);	// erase old rect (XOR operator rocks!)
 
 		g_MainWindow.rcZoomRect.B.nX = nClippedX;
 		g_MainWindow.rcZoomRect.B.nY = nClippedY;
 
-		mainwindow_draw_xor_rect(&g_MainWindow.rcZoomRect);	// draw new rect
+		mainwindow_draw_selection_rect(&g_MainWindow.rcZoomRect);	// draw new rect
 	}
 	else {
 		// If not dragging or scrolling, user is just moving mouse around.
 		// Update tooltip and mouse cursor based on what we're pointing at.
 
-		EDirection eScrollDirection = match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
+		EDirection eScrollDirection = util_match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
 		if(eScrollDirection == DIRECTION_NONE) {
 			// get mouse position on screen
@@ -1393,12 +1326,14 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 static gboolean mainwindow_on_enter_notify(GtkWidget* w, GdkEventCrossing *event)
 {
 	// mouse entered our window.  nothing to do (we'll respond to mouse motion)
+	return FALSE; 	// propagate further
 }
 
 static gboolean mainwindow_on_leave_notify(GtkWidget* w, GdkEventCrossing *event)
 {
 	// mouse left our window
 	tooltip_hide(g_MainWindow.pTooltip);
+	return FALSE; 	// propagate further
 }
 
 // Respond to mouse scroll wheel
@@ -1419,6 +1354,7 @@ static gboolean mainwindow_on_mouse_scroll(GtkWidget* w, GdkEventScroll *event)
 		mainwindow_draw_map(DRAWFLAG_GEOMETRY);
 		mainwindow_set_draw_pretty_timeout(DRAW_PRETTY_ZOOM_TIMEOUT_MS);
 	}
+	return FALSE; 	// propagate further
 }
 
 static gboolean mainwindow_on_key_press(GtkWidget *widget, GdkEventKey *pEvent, gpointer user_data)
@@ -1433,16 +1369,16 @@ static gboolean mainwindow_on_key_press(GtkWidget *widget, GdkEventKey *pEvent, 
 	else if(pEvent->keyval == GDK_Escape) {
 		if(g_MainWindow.bDrawingZoomRect == TRUE) {
 			// cancel zoom-rect
-			mainwindow_draw_xor_rect(&(g_MainWindow.rcZoomRect));
+			mainwindow_draw_selection_rect(&(g_MainWindow.rcZoomRect));
 			g_MainWindow.bDrawingZoomRect = FALSE;
 		}
 	}
-	return FALSE;
+	return FALSE; 	// propagate further
 }
 static gboolean mainwindow_on_key_release(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	//g_print("key_release\n");
-	return FALSE;
+	return FALSE; 	// propagate further
 }
 
 static gboolean mainwindow_on_window_state_change(GtkWidget *_unused, GdkEventKey *pEvent, gpointer __unused)
@@ -1451,6 +1387,7 @@ static gboolean mainwindow_on_window_state_change(GtkWidget *_unused, GdkEventKe
 	g_signal_handlers_block_by_func(g_MainWindow.pViewFullscreenMenuItem, mainwindow_on_fullscreenmenuitem_activate, NULL);
 	gtk_check_menu_item_set_active(g_MainWindow.pViewFullscreenMenuItem, util_gtk_window_is_fullscreen(g_MainWindow.pWindow));
 	g_signal_handlers_unblock_by_func(g_MainWindow.pViewFullscreenMenuItem, mainwindow_on_fullscreenmenuitem_activate, NULL);
+	return FALSE; 	// propagate further
 }
 
 static void mainwindow_begin_import_geography_data(void)
@@ -1585,22 +1522,22 @@ static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpo
 /*
 ** GPS Functions
 */
-gboolean mainwindow_on_gps_show_position_toggled(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_gps_show_position_toggled(GtkWidget* _unused, gpointer* __unused)
 {
 
 }
 
-gboolean mainwindow_on_gps_keep_position_centered_toggled(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_gps_keep_position_centered_toggled(GtkWidget* _unused, gpointer* __unused)
 {
 
 }
 
-gboolean mainwindow_on_gps_show_trail_toggled(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_gps_show_trail_toggled(GtkWidget* _unused, gpointer* __unused)
 {
 
 }
 
-gboolean mainwindow_on_gps_stick_to_roads_toggled(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_gps_stick_to_roads_toggled(GtkWidget* _unused, gpointer* __unused)
 {
 
 }
@@ -1734,10 +1671,8 @@ static void mainwindow_map_center_on_windowpoint(gint nX, gint nY)
 	gint16 nPixelDeltaY = nY - (GTK_WIDGET(g_MainWindow.pDrawingArea)->allocation.height / 2);
 
 	// Convert pixels to world coordinates
-	gint nZoomLevel = map_get_zoomlevel(g_MainWindow.pMap);
-	double fWorldDeltaX = map_pixels_to_degrees(g_MainWindow.pMap, nPixelDeltaX, nZoomLevel);
-	// reverse the X, clicking above
-	double fWorldDeltaY = -map_pixels_to_degrees(g_MainWindow.pMap, nPixelDeltaY, nZoomLevel);
+	double fWorldDeltaX = map_math_pixels_to_degrees_at_scale(nPixelDeltaX, map_get_scale(g_MainWindow.pMap));
+	double fWorldDeltaY = -map_math_pixels_to_degrees_at_scale(nPixelDeltaY, map_get_scale(g_MainWindow.pMap));
 
 	mappoint_t pt;
 	map_get_centerpoint(g_MainWindow.pMap, &pt);
@@ -1766,7 +1701,7 @@ void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint)
 
 	if(map_points_equal(pPoint, &centerPoint)) return;
 
-	if(map_get_distance_in_pixels(g_MainWindow.pMap, pPoint, &centerPoint) < MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS) {
+//     if(map_get_distance_in_pixels(g_MainWindow.pMap, pPoint, &centerPoint) < MAX_DISTANCE_FOR_AUTO_SLIDE_IN_PIXELS) {
 		g_MainWindow.bSliding = TRUE;
 		g_MainWindow.pAnimator = animator_new(ANIMATIONTYPE_FAST_THEN_SLIDE, SLIDE_TIME_IN_SECONDS_AUTO);
 
@@ -1777,11 +1712,11 @@ void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint)
 		// set endpoint
 		g_MainWindow.ptSlideEndLocation.fLatitude = pPoint->fLatitude;
 		g_MainWindow.ptSlideEndLocation.fLongitude = pPoint->fLongitude;
-	}
-	else {
-		mainwindow_map_center_on_mappoint(pPoint);	// Too far-- don't slide.  Jump instead.
-		mainwindow_add_history();					// The slide timeout would have done this when the slide was over
-	}
+//     }
+//     else {
+//         mainwindow_map_center_on_mappoint(pPoint);  // Too far-- don't slide.  Jump instead.
+//         mainwindow_add_history();                   // The slide timeout would have done this when the slide was over
+//     }
 }
 
 // used by searchwindow and this window
@@ -1927,7 +1862,7 @@ static void mainwindow_on_web_url_clicked(GtkWidget *_unused, gchar* pszURLPatte
 	apszReplacements[1].pszReplace = util_format_gdouble(ptCenter.fLongitude);
 	apszReplacements[2].pszReplace = g_strdup_printf("%f", rcVisible.B.fLatitude - rcVisible.A.fLatitude);
 	apszReplacements[3].pszReplace = g_strdup_printf("%f", rcVisible.B.fLongitude - rcVisible.A.fLongitude);
-	apszReplacements[4].pszReplace = g_strdup_printf("%d", map_get_zoomlevel_scale(g_MainWindow.pMap));
+	apszReplacements[4].pszReplace = g_strdup_printf("%d", map_get_scale(g_MainWindow.pMap));
 	apszReplacements[5].pszReplace = g_strdup_printf("%d", util_get_int_at_percent_of_range(fZoomPercent, 1, 10));
 	apszReplacements[6].pszReplace = g_strdup_printf("%d", util_get_int_at_percent_of_range(fZoomPercent, 1, 19));
 //	apszReplacements[7].pszReplace = g_strdup_printf("%d", nAltitudeMiles);

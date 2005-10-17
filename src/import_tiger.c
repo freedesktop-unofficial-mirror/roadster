@@ -100,13 +100,13 @@ typedef struct tiger_record_rt2
 {
 	gint nTLID;		// index- TLID links a complete chain together
 
-	GPtrArray* pPointsArray;
+	GArray* pPointsArray;
 } tiger_record_rt2_t;
 
 void callback_free_rt2(gpointer p)
 {
 	tiger_record_rt2_t* pRT2 = (tiger_record_rt2_t*)p;
-	g_ptr_array_foreach(pRT2->pPointsArray, util_g_free_with_param, NULL);
+	g_array_free(pRT2->pPointsArray, TRUE);
 	g_free(pRT2);
 }
 
@@ -142,7 +142,7 @@ typedef struct tiger_record_rti
 void callback_free_rti(gpointer p)
 {
 	tiger_record_rti_t* pRTi = (tiger_record_rti_t*)p;
-	g_ptr_array_foreach(pRTi->pRT1LinksArray, util_g_free_with_param, NULL);
+	g_ptr_array_free(pRTi->pRT1LinksArray, TRUE);	// XXX: double check that RTi doesn't own these?
 	g_free(pRTi);
 }
 
@@ -185,80 +185,88 @@ typedef struct tiger_import_process {
 
 gdouble g_afPolygonMinSizeAtLODs[MAP_NUM_LEVELS_OF_DETAIL] = {0, 0.001, 0.01};	// in world degrees
 
-gint g_aaObjectTypeDetailAtLODs[MAP_NUM_OBJECT_TYPES][MAP_NUM_LEVELS_OF_DETAIL] = {
-	{0,0,0,0},
-	{1,0,0,0},	// minor rd
-	{1,6,0,0},	// major rd
-	{1,6,12,0},	// hw
-	{1,3,0,0},	// hw ramp
-	{0,0,0,0},	// (unused)
-	{0,0,0,0},	// (unused)
-	{1,8,0,0},	// rail
-	{1,1,1,1},	// park
-	{2,0,0,0},	// river
-	{1,1,1,1},	// lake
-	{1,1,1,1},	// misc area
-	{1,1,1,1},	// urban area
+// tolerance for polygons at LOD1 = .004
+
+// 0.0 means no tolerance, object keeps all distinguishing points (all but multiple points in a straight line)
+// -1 means object type is always absent from this LOD
+gdouble g_afObjectTypeToleranceAtLODs[MAP_NUM_OBJECT_TYPES][MAP_NUM_LEVELS_OF_DETAIL] = {
+	{0,		0,		0,		0},	// XXX: get rid of this stupid 0 index!!
+
+	{0,		-1,		-1,		-1},	// minor rd
+	{0,		0.002,	-1,		-1},	// major rd
+	{0,		0.002,	0.008,	0.032},	// hw
+	{0,		0.002,	-1,		-1},	// hw ramp
+	{-1,	-1,		-1,		-1},	// (unused)
+	{-1,	-1,		-1,		-1},	// (unused)
+	{0.0,	0.001,	-1,		-1},	// rail
+	{0.0,	0.00115,0.02,	0.08},	// park
+	{0.0,	-1,		-1,		-1},	// river
+	{0.0,	0.00115,0.02,	0.08},	// lake
+	{0.0,	0.00115,0.02,	0.08},	// misc area
+	{0.0,	0.00115,0.02,	0.08},	// urban area
 };
+// 0.00115 seems perfect for 1:243000
+
+// Remember: LOW tolerance means MORE points
 
 gboolean object_type_exists_at_lod(gint nRecordType, gint nLOD)
 {
 	if(nRecordType < 0) {
-		g_warning("nRecordType = %d\n", nRecordType); 
+		g_warning("nRecordType = %d\n", nRecordType);
 	}
 	g_assert(nRecordType >= 0);
 	g_assert(nRecordType < MAP_NUM_OBJECT_TYPES);
 	g_assert(nLOD >= 0);
 	g_assert(nLOD <= 3);
-	return (g_aaObjectTypeDetailAtLODs[nRecordType][nLOD] > 0);
+	return (g_afObjectTypeToleranceAtLODs[nRecordType][nLOD] != -1.0);
 }
 
-gint object_type_detail_at_lod(gint nRecordType, gint nLOD)
+gdouble object_type_tolerance_at_lod(gint nRecordType, gint nLOD)
 {
 	g_assert(nRecordType >= 0);
 	g_assert(nRecordType < MAP_NUM_OBJECT_TYPES);
 	g_assert(nLOD >= 0);
 	g_assert(nLOD <= 3);
-	return (g_aaObjectTypeDetailAtLODs[nRecordType][nLOD]);
+	return (g_afObjectTypeToleranceAtLODs[nRecordType][nLOD]);
 }
 
-void reduce_object_detail_for_lod(gint nRecordType, gint nLOD, GPtrArray* pSourceArray, GPtrArray* pDestArray)
-{
-	g_assert(pSourceArray);
-	g_assert(pDestArray);
+// void reduce_object_detail_for_lod(gint nRecordType, gint nLOD, GPtrArray* pSourceArray, GPtrArray* pDestArray)
+// {
+//     g_assert(pSourceArray);
+//     g_assert(pDestArray);
+//
+//     if(!object_type_exists_at_lod(nRecordType, nLOD)) return;
+//
+//     gint nDetail = object_type_detail_at_lod(nRecordType, nLOD);
+//     g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, 0));
+//
+//     // our super-hacky algorithm just steps N points at a time
+//     gint i;
+//     for(i = nDetail ; i < (pSourceArray->len-1) ; i+=nDetail) {
+//         g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, i));
+//     }
+//     g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, pSourceArray->len-1));
+// }
 
-	if(!object_type_exists_at_lod(nRecordType, nLOD)) return;
-
-	gint nDetail = object_type_detail_at_lod(nRecordType, nLOD);
-	g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, 0));
-
-	// our super-hacky algorithm just steps N points at a time
-	gint i;
-	for(i = nDetail ; i < (pSourceArray->len-1) ; i+=nDetail) {
-		g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, i));
-	}
-	g_ptr_array_add(pDestArray, g_ptr_array_index(pSourceArray, pSourceArray->len-1));
-}
-
-void util_bounding_box_of_points_array(GPtrArray* pPointsArray, maprect_t* pReturnRect)
-{
-	pReturnRect->A.fLatitude = MAX_LATITUDE;	// init to worst possible values
-	pReturnRect->A.fLongitude = MAX_LONGITUDE;
-	
-	pReturnRect->B.fLatitude = MIN_LATITUDE;
-	pReturnRect->B.fLongitude = MIN_LONGITUDE;
-
-	gint i;
-	for(i=0 ; i<pPointsArray->len ; i++) {
-		mappoint_t* pPoint = g_ptr_array_index(pPointsArray, i);
-
-		pReturnRect->A.fLatitude = min(pReturnRect->A.fLatitude, pPoint->fLatitude);
-		pReturnRect->A.fLongitude = min(pReturnRect->A.fLongitude, pPoint->fLongitude);
-
-		pReturnRect->B.fLatitude = max(pReturnRect->B.fLatitude, pPoint->fLatitude);
-		pReturnRect->B.fLongitude = max(pReturnRect->B.fLongitude, pPoint->fLongitude);
-	}
-}
+// void util_bounding_box_of_points_array(GPtrArray* pPointsArray, maprect_t* pReturnRect)
+// {
+//     pReturnRect->A.fLatitude = MAX_LATITUDE;    // init to worst possible values
+//     pReturnRect->A.fLongitude = MAX_LONGITUDE;
+//
+//     pReturnRect->B.fLatitude = MIN_LATITUDE;
+//     pReturnRect->B.fLongitude = MIN_LONGITUDE;
+//
+//     gint i;
+//     for(i=0 ; i<pPointsArray->len ; i++) {
+//         mappoint_t* pPoint = g_ptr_array_index(pPointsArray, i);
+//
+//         pReturnRect->A.fLatitude = min(pReturnRect->A.fLatitude, pPoint->fLatitude);
+//         pReturnRect->A.fLongitude = min(pReturnRect->A.fLongitude, pPoint->fLongitude);
+//
+//         pReturnRect->B.fLatitude = max(pReturnRect->B.fLatitude, pPoint->fLatitude);
+//         pReturnRect->B.fLongitude = max(pReturnRect->B.fLongitude, pPoint->fLongitude);
+//     }
+// }
 
 static gboolean import_tiger_read_lat(gint8* pBuffer, gdouble* pValue)
 {
@@ -441,12 +449,6 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 			*pValue = MAP_OBJECT_TYPE_PARK;
 			return TRUE;
 		}
-		else {
-			*pValue = MAP_OBJECT_TYPE_MISC_AREA;
-			return TRUE;
-		}
-
-		// TODO: Add 'misc areas' to get all this stuff?
 		/*
 		D21 Apartment building
 		D24 Marina
@@ -455,18 +457,21 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 		D31 Hospital
 		D36 Jail
 		D37 Fed. Penitentiary / state prison
-		
+
 		D4* educational
 		D43 schools/university
 		D44 religious church/synagogue
-		
+
 		D5* transportation
 		D51 airport
 		D52 train station
 		D53 bus terminal
 		D54 marine terminal
-
 		*/
+		else {
+			*pValue = MAP_OBJECT_TYPE_MISC_AREA;
+			return TRUE;
+		}
 	}
 	else if(chFeatureClass == 'E') {		// topographic
 		/*
@@ -477,14 +482,7 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 //		g_print("found topographic (E%c%c)\n", chCode, chSubCode);
 	}
 	else if(chFeatureClass == 'H') { 	// water
-
 		if(chCode == '0') {
-			// generic unknown water ...
-			// this includes charles river (cambridge/boston ma)
-			// but they are badly formed for some reason?
-//			*pValue = MAP_OBJECT_TYPE_LAKE;
-//			return TRUE;
-//			return FALSE;
 			if(chSubCode == '1') {
 				// these need to be stitched by lat/lon
 				//*pValue = MAP_OBJECT_TYPE_LAKE;	// shoreline of perennial water feature
@@ -504,25 +502,23 @@ static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
 			return TRUE;
 		}
 		else if(chCode == '5') { 	// ocean
-			if(chSubCode == '1') {
-				*pValue = MAP_OBJECT_TYPE_LAKE;	// bay, estuary, gulf or sound
-				return TRUE;				
-			}
-			else {
-//				*pValue = MAP_OBJECT_TYPE_LAKE;
-//				return TRUE;
-				//~ *pValue = MAP_OBJECT_TYPE_OCEAN;
-				//~ return TRUE;
-			}
+//             if(chSubCode == '1') {
+//                 *pValue = MAP_OBJECT_TYPE_LAKE; // bay, estuary, gulf or sound
+//                 return TRUE;
+//             }
+//             else {
+// //              *pValue = MAP_OBJECT_TYPE_LAKE;
+// //              return TRUE;
+//                 //~ *pValue = MAP_OBJECT_TYPE_OCEAN;
+//                 //~ return TRUE;
+//             }
 		}
 		else if(chCode == '6') { 	// water-filled gravel pit
-			g_print("found code H6: water filled gravel pit!\n");
-			//~ *pValue = MAP_OBJECT_TYPE_LAKE;
-			//~ return TRUE;
+			g_debug("found code H6: water filled gravel pit!");
+			//*pValue = MAP_OBJECT_TYPE_LAKE;
+			//return TRUE;
 		}
 	}
-	//~ *pValue = MAP_OBJECT_TYPE_TRAIL;
-	//~ return TRUE;
 	*pValue = MAP_OBJECT_TYPE_NONE;
 	return FALSE;
 }
@@ -652,7 +648,7 @@ static gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTa
 			// create new one and add it
 			pRecord = g_new0(tiger_record_rt2_t, 1);
 			pRecord->nTLID = nTLID;
-			pRecord->pPointsArray = g_ptr_array_new();
+			pRecord->pPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 
 			// add to table
 			g_hash_table_insert(pTable, &pRecord->nTLID, pRecord);
@@ -669,11 +665,7 @@ static gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTa
 			if(point.fLatitude == 0.0 && point.fLongitude == 0.0) {
 				break;
 			}
-			mappoint_t* pNewPoint = g_new0(mappoint_t, 1);
-			pNewPoint->fLatitude = point.fLatitude;
-			pNewPoint->fLongitude = point.fLongitude;
-
-			g_ptr_array_add(pRecord->pPointsArray, pNewPoint);
+			g_array_append_val(pRecord->pPointsArray, point);
 		}
 	}
 	return TRUE;
@@ -857,43 +849,23 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 	static int nCallCount=0; nCallCount++;
 	if((nCallCount%CALLBACKS_PER_PULSE) == 0) importwindow_progress_pulse();
 	
-	GPtrArray* pTempPointsArray = g_ptr_array_new();
+	GArray* pTempPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 	tiger_import_process_t* pImportProcess = (tiger_import_process_t*)user_data;
 	tiger_record_rt1_t* pRecordRT1 = (tiger_record_rt1_t*)value;
 	// lookup table2 record by TLID
 	tiger_record_rt2_t* pRecordRT2 = g_hash_table_lookup(pImportProcess->pTableRT2, &pRecordRT1->nTLID);
 
 	// add RT1's point A, (optionally) add all points from RT2, then add RT1's point B
-	g_ptr_array_add(pTempPointsArray, &pRecordRT1->PointA);
+	g_array_append_val(pTempPointsArray, pRecordRT1->PointA);
 	if(pRecordRT2 != NULL) {
 		// append all points from pRecordRT2->pPointsArray to pTempPointsArray
 		gint i;
 		for(i=0 ; i<pRecordRT2->pPointsArray->len ; i++) {
-			g_ptr_array_add(pTempPointsArray, g_ptr_array_index(pRecordRT2->pPointsArray, i));		
+			mappoint_t* p = &g_array_index(pRecordRT2->pPointsArray, mappoint_t, i);
+			g_array_append_val(pTempPointsArray, *p);
 		}
 	}
-	g_ptr_array_add(pTempPointsArray, &pRecordRT1->PointB);
-
-	//
-	// Change rivers into lakes if they are circular (why doesn't this work here?)
-	//
-//     if(pRecordRT1->nRecordType == MAP_OBJECT_TYPE_RIVER) {
-//         if(((gint)(pRecordRT1->PointA.fLongitude * 1000.0)) == ((gint)(pRecordRT1->PointB.fLongitude * 1000.0)) &&
-//            ((gint)(pRecordRT1->PointA.fLatitude * 1000.0)) == ((gint)(pRecordRT1->PointB.fLatitude * 1000.0)))
-//         {
-//             if(pRecordRT1->PointA.fLongitude != pRecordRT1->PointB.fLongitude) {
-//                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->PointA.fLongitude, pRecordRT1->PointB.fLongitude);
-//             }
-//             if(pRecordRT1->PointA.fLatitude != pRecordRT1->PointB.fLatitude) {
-//                 g_print("OOPS: %20.20f != %20.20f\n", pRecordRT1->PointA.fLatitude, pRecordRT1->PointB.fLatitude);
-//             }
-//             g_print("converting circular river to lake: %s\n", pRecordRT1->achName);
-//             pRecordRT1->nRecordType = MAP_OBJECT_TYPE_LAKE;
-//         }
-//         else {
-// //          g_print("NOT converting river: %s (%f != %f)(%f != %f)\n", pRecordRT1->achName, pRecordRT1->PointA.fLongitude, pRecordRT1->PointB.fLongitude, pRecordRT1->PointA.fLatitude, pRecordRT1->PointB.fLatitude);
-//         }
-//     }
+	g_array_append_val(pTempPointsArray, pRecordRT1->PointB);
 
 	// use RT1's FIPS code to lookup related RTc record, which contains a CityID
 	gint nCityLeftID=0;
@@ -936,28 +908,42 @@ static void callback_save_rt1_chains(gpointer key, gpointer value, gpointer user
 			db_insert_roadname(pRecordRT1->achName, pRecordRT1->nRoadNameSuffixID, &nRoadNameID);
 		}
 
-		gint nLOD = MAP_LEVEL_OF_DETAIL_BEST;
-		db_insert_road(nLOD, nRoadNameID, pRecordRT1->nRecordType,
+		gint nLOD;
+		for(nLOD = MAP_LEVEL_OF_DETAIL_BEST ; nLOD <= MAP_LEVEL_OF_DETAIL_WORST ; nLOD++) {
+			if(!object_type_exists_at_lod(pRecordRT1->nRecordType, nLOD)) continue;
+
+			GArray* pReducedPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
+
+			gdouble fTolerance = object_type_tolerance_at_lod(pRecordRT1->nRecordType, nLOD);
+			map_math_simplify_pointstring(pTempPointsArray, fTolerance, pReducedPointsArray);
+
+			// Need 2 points to form a line
+			if(pReducedPointsArray->len >= 2) {
+				if(nLOD == MAP_LEVEL_OF_DETAIL_BEST) {
+					db_insert_road(nLOD, nRoadNameID, pRecordRT1->nRecordType,
 					   pRecordRT1->nAddressLeftStart, pRecordRT1->nAddressLeftEnd,
 					   pRecordRT1->nAddressRightStart, pRecordRT1->nAddressRightEnd,
 					   nCityLeftID, nCityRightID,
 					   azZIPCodeLeft, azZIPCodeRight,
-					   pTempPointsArray, NULL);
+					   pReducedPointsArray, NULL);
+					
+				}
+				else {
+					db_insert_road(nLOD, nRoadNameID, pRecordRT1->nRecordType, 0, 0, 0, 0, 0, 0, NULL, NULL,
+								   pReducedPointsArray, NULL);
+				}
 
-		for(nLOD = MAP_LEVEL_OF_DETAIL_BEST+1 ; nLOD <= MAP_LEVEL_OF_DETAIL_WORST ; nLOD++) {
-			GPtrArray* pReducedPointsArray = g_ptr_array_new();
-
-			reduce_object_detail_for_lod(pRecordRT1->nRecordType, nLOD, pTempPointsArray, pReducedPointsArray);
-			if(pReducedPointsArray->len > 0) {
-				g_assert(pReducedPointsArray->len >= 2);
-
-				db_insert_road(nLOD, nRoadNameID, pRecordRT1->nRecordType, 0, 0, 0, 0, 0, 0, NULL, NULL, 
-							   pReducedPointsArray, NULL);
+				if(pReducedPointsArray->len < pTempPointsArray->len) {
+					g_debug("line %s reduced from %d to %d points at LOD %d", pRecordRT1->achName, pTempPointsArray->len, pReducedPointsArray->len, nLOD);
+				}
 			}
-			g_ptr_array_free(pReducedPointsArray, TRUE);
+			else {
+				g_warning("line %s reduced to %d points", pRecordRT1->achName, pReducedPointsArray->len);
+			}
+			g_array_free(pReducedPointsArray, TRUE);
 		}
 	}
-	g_ptr_array_free(pTempPointsArray, TRUE);
+	g_array_free(pTempPointsArray, TRUE);
 }
 
 typedef enum {
@@ -965,7 +951,7 @@ typedef enum {
 	ORDER_BACKWARD
 } EOrder;
 
-static void tiger_util_add_RT1_points_to_array(tiger_import_process_t* pImportProcess, gint nTLID, GPtrArray* pPointsArray, EOrder eOrder)
+static void tiger_util_add_RT1_points_to_array(tiger_import_process_t* pImportProcess, gint nTLID, GArray* pPointsArray, EOrder eOrder)
 {
 	g_assert(pImportProcess != NULL);
 	g_assert(pImportProcess->pTableRT1 != NULL);
@@ -979,25 +965,27 @@ static void tiger_util_add_RT1_points_to_array(tiger_import_process_t* pImportPr
 	tiger_record_rt2_t* pRecordRT2 = g_hash_table_lookup(pImportProcess->pTableRT2, &pRecordRT1->nTLID);
 
 	if(eOrder == ORDER_FORWARD) {
-		g_ptr_array_add(pPointsArray, &pRecordRT1->PointA);
+		g_array_append_val(pPointsArray, pRecordRT1->PointA);
 		if(pRecordRT2 != NULL) {
 			// append all points from pRecordRT2->pPointsArray
 			gint i;
 			for(i=0 ; i<pRecordRT2->pPointsArray->len ; i++) {
-				g_ptr_array_add(pPointsArray, g_ptr_array_index(pRecordRT2->pPointsArray, i));
+				mappoint_t* p = &g_array_index(pRecordRT2->pPointsArray, mappoint_t, i);
+				g_array_append_val(pPointsArray, *p);
 			}
 		}
-		g_ptr_array_add(pPointsArray, &pRecordRT1->PointB);
+		g_array_append_val(pPointsArray, pRecordRT1->PointB);
 	} else {
-		g_ptr_array_add(pPointsArray, &pRecordRT1->PointB);
+		g_array_append_val(pPointsArray, pRecordRT1->PointB);
 		if(pRecordRT2 != NULL) {
 			// append all points from pRecordRT2->pPointsArray in REVERSE order
 			gint i;
 			for(i=pRecordRT2->pPointsArray->len-1 ; i>=0 ; i--) {
-				g_ptr_array_add(pPointsArray, g_ptr_array_index(pRecordRT2->pPointsArray, i));		
+				mappoint_t* p = &g_array_index(pRecordRT2->pPointsArray, mappoint_t, i);
+				g_array_append_val(pPointsArray, *p);
 			}
 		}
-		g_ptr_array_add(pPointsArray, &pRecordRT1->PointA);
+		g_array_append_val(pPointsArray, pRecordRT1->PointA);
 	}
 }
 
@@ -1041,10 +1029,10 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 	g_assert(pRecordRTi->pRT1LinksArray != NULL);
 	g_assert(pRecordRTi->pRT1LinksArray->len >= 1);
 
-	GPtrArray* pTempPointsArray = NULL;
+	GArray* pTempPointsArray = NULL;
 	// create a temp array to hold the points for this polygon (in order)
 	g_assert(pTempPointsArray == NULL);
-	pTempPointsArray = g_ptr_array_new();
+	pTempPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 
 	// start with the RT1Link at index 0 (and remove it)
 	tiger_rt1_link_t* pCurrentRT1Link = g_ptr_array_index(pRecordRTi->pRT1LinksArray, 0);
@@ -1117,17 +1105,32 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 	g_assert(pCurrentRT1Link != NULL);
 	g_free(pCurrentRT1Link);
 
-	// save this polygon
-	if(pTempPointsArray->len > 3) {	// takes 3 to make a polygon
-		mappoint_t* p1 = g_ptr_array_index(pTempPointsArray, 0);
-		mappoint_t* p2 = g_ptr_array_index(pTempPointsArray, pTempPointsArray->len-1);
+	//
+	// IMPORTANT: Remove last point!
+	//  A) It's the same as first, so there's no reason to store it.
+	//  B) It lets us use 'map_math_simplify_pointstring' which doesn't work on closed polygons.
+	//
+	// NOTE: We copy the last point to the first when loading this polygon
+	//
+	mappoint_t* p1 = &g_array_index(pTempPointsArray, mappoint_t, 0);
+	mappoint_t* p2 = &g_array_index(pTempPointsArray, mappoint_t, pTempPointsArray->len-1);
 
-		if(p1->fLatitude != p2->fLatitude || p1->fLongitude != p2->fLongitude) {
-			g_print("Found a polygon that doesn't loop %s\n", pRecordRT7->achName);
-		}
+	if(p1->fLatitude != p2->fLatitude || p1->fLongitude != p2->fLongitude) {
+		g_warning("Found a polygon that doesn't loop %s\n", pRecordRT7->achName);
+	}
+
+	pTempPointsArray->len--;
+
+	// save this polygon
+	if(pTempPointsArray->len >= 3) {	// takes 3 to make a polygon
 
 		// insert record
 		if(pRecordRT7->nRecordType != MAP_OBJECT_TYPE_NONE) {
+			if(pRecordRT7->nRecordType == MAP_OBJECT_TYPE_RIVER) {
+				pRecordRT7->nRecordType = MAP_OBJECT_TYPE_LAKE;
+				g_debug("river => lake");
+			}
+
 			gint nRoadNameID = 0;
 			if(pRecordRT7->achName[0] != '\0') {
 				//g_printf("inserting area name %s\n", pRecordRT7->achName);
@@ -1135,37 +1138,36 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 			}
 
 			// Write LOD 0
-			gint nLOD = MAP_LEVEL_OF_DETAIL_BEST;
-			db_insert_road(nLOD, nRoadNameID, pRecordRT7->nRecordType, 0, 0, 0, 0, 0, 0, "", "", 
-						   pTempPointsArray, NULL);
+			gint nLOD;
+			for(nLOD = MAP_LEVEL_OF_DETAIL_BEST ; nLOD <= MAP_LEVEL_OF_DETAIL_WORST ; nLOD++) {
+				if(!object_type_exists_at_lod(pRecordRT7->nRecordType, nLOD)) continue;
 
-			// Write higher LODs
-			maprect_t rc;
-			util_bounding_box_of_points_array(pTempPointsArray, &rc);
-			gdouble fWidth = rc.B.fLongitude - rc.A.fLongitude;
-			gdouble fHeight = rc.B.fLatitude - rc.A.fLatitude;
+				GArray* pReducedPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 
-			for(nLOD = MAP_LEVEL_OF_DETAIL_BEST+1 ; nLOD <= MAP_LEVEL_OF_DETAIL_WORST ; nLOD++) {
-				if((fWidth < g_afPolygonMinSizeAtLODs[nLOD]) || (fHeight < g_afPolygonMinSizeAtLODs[nLOD])) {
-					g_print("object exluded at LOD %d\n", nLOD);
-					break;	// not visible (nor at higher LODs, so break instead of continue)
+				gdouble fTolerance = object_type_tolerance_at_lod(pRecordRT7->nRecordType, nLOD);
+				map_math_simplify_pointstring(pTempPointsArray, fTolerance, pReducedPointsArray);
+
+				// Need three points to form a polygon
+				if(pReducedPointsArray->len >= 3) {
+					if(nLOD == MAP_LEVEL_OF_DETAIL_BEST) {
+						db_insert_road(nLOD, nRoadNameID, pRecordRT7->nRecordType, 0, 0, 0, 0, 0, 0, "", "", 
+									   pReducedPointsArray, NULL);
+					}
+					else {
+						db_insert_road(nLOD, nRoadNameID, pRecordRT7->nRecordType, 0, 0, 0, 0, 0, 0, NULL, NULL,
+									   pReducedPointsArray, NULL);
+					}
+					g_debug("%s reduced from %d to %d points at LOD %d\n", pRecordRT7->achName, pTempPointsArray->len, pReducedPointsArray->len, nLOD);
 				}
-				
-				GPtrArray* pReducedPointsArray = g_ptr_array_new();
-
-				reduce_object_detail_for_lod(pRecordRT7->nRecordType, nLOD, pTempPointsArray, pReducedPointsArray);
-				if(pReducedPointsArray->len > 0) {
-					g_assert(pReducedPointsArray->len >= 2);
-
-					db_insert_road(nLOD, nRoadNameID, pRecordRT7->nRecordType, 0, 0, 0, 0, 0, 0, NULL, NULL, 
-								   pReducedPointsArray, NULL);
+				else {
+					g_debug("%s had %d and was excluded at LOD %d\n", pRecordRT7->achName, pTempPointsArray->len, nLOD);
+					//g_debug("%s reduced from %d to %d points\n", pRecordRT7->achName, pTempPointsArray->len, pReducedPointsArray->len);
 				}
-				g_ptr_array_free(pReducedPointsArray, TRUE);
+				g_array_free(pReducedPointsArray, TRUE);
 			}
-
 		}
 	}
-	g_ptr_array_free(pTempPointsArray, TRUE);
+	g_array_free(pTempPointsArray, TRUE);
 
 	// we SHOULD have used all RT1 links up!
 	if(pRecordRTi->pRT1LinksArray->len > 0) {

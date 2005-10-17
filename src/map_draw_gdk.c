@@ -24,6 +24,8 @@
 #define MAX_GDK_LINE_SEGMENTS (2000)
 
 //#define ENABLE_MAP_GRAYSCALE_HACK 	// just a little test.  black and white might be good for something
+//#define ENABLE_CLIPPER_SHRINK_RECT_TEST	// NOTE: even with this on, objects won't be clipped unless they cross the real screen border
+//#define ENABLE_RANDOM_ROAD_COLORS
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
@@ -105,9 +107,6 @@ void map_draw_gdk(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetric
 	// 2. Drawing
 	if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 		gint i;
-
-		// 2.1. Draw Background
-//		map_draw_gdk_background(pMap, pPixmap);
 
 		gint nStyleZoomLevel = g_sZoomLevels[pRenderMetrics->nZoomLevel-1].nStyleZoomLevel;
 
@@ -204,10 +203,7 @@ static void map_draw_gdk_polygons(const GArray* pMapPointsArray, const gdk_draw_
 
 static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
 {
-	mappoint_t* pPoint;
 	road_t* pRoad;
-	gint iString;
-	gint iPoint;
 
 	if(pLayerStyle->clrPrimary.fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
 	if(pRoadsArray->len == 0) return;
@@ -235,6 +231,7 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 	context.pLayerStyle = pLayerStyle;
 	context.pRenderMetrics = pRenderMetrics;
 
+	gint iString;
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
@@ -256,8 +253,10 @@ static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, renderm
 
 		if(eOverlapType == OVERLAP_PARTIAL) {
 			// draw clipped
-			// XXX: Currently no clipping, just draw normally
-			map_draw_gdk_polygons(pRoad->pMapPointsArray, &context);
+       		GArray* pClipped = g_array_sized_new(FALSE, FALSE, sizeof(mappoint_t), pRoad->pMapPointsArray->len + 20);	// it's rarely more than a few extra points
+			map_math_clip_pointstring_to_worldrect(pRoad->pMapPointsArray, &(pRenderMetrics->rWorldBoundingBox), pClipped);
+			map_draw_gdk_polygons(pClipped, &context);
+			g_array_free(pClipped, TRUE);
 		}
 		else {
 			// draw normally
@@ -337,6 +336,8 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
 		pRoad = g_ptr_array_index(pRoadsArray, iString);
 
+
+
 		EOverlapType eOverlapType = map_rect_a_overlap_type_with_rect_b(&(pRoad->rWorldBoundingBox), &(pRenderMetrics->rWorldBoundingBox));
 		if(eOverlapType == OVERLAP_NONE) {
 			continue;
@@ -352,8 +353,13 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 			continue;
 		}
 
+#ifdef ENABLE_RANDOM_ROAD_COLORS
+		color_t clr;
+		util_random_color(&clr);
+		map_draw_gdk_set_color(pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)], &clr);
+#endif
 		if(eOverlapType == OVERLAP_PARTIAL) {
-			// draw clipped
+			// TODO: draw clipped
 			map_draw_gdk_lines(pRoad->pMapPointsArray, &context);
 		}
 		else {

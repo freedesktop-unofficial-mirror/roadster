@@ -41,6 +41,9 @@ typedef struct {
 void glyph_init();
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight);
 glyph_t* glyph_load(const gchar* pszName);
+
+void glyph_reload_all(void);
+
 GdkPixbuf* glyph_get_pixbuf(const glyph_t* pGlyph);
 GdkPixmap* glyph_get_pixmap(glyph_t* pGlyph, GtkWidget* pTargetWidget);
 //void glyph_draw_centered(cairo_t* pCairo, gint nGlyphHandle, gdouble fX, gdouble fY);

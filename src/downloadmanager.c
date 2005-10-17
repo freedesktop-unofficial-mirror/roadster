@@ -144,6 +144,8 @@ static gint _downloadmanager_gnome_vfs_progress_callback(GnomeVFSAsyncHandle *pH
 		_downloadmanager_move_pending_to_active(pDownloadManager);
 	}
 	// XXX: what other statuses messages do we care about?  (failed?)
+
+	return 1;	// XXX: added a return value without testing-- is this the right value?
 }
 
 static gboolean _downloadmanager_begin_download(download_t* pDownload)

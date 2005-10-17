@@ -26,6 +26,7 @@
 
 G_BEGIN_DECLS
 
+void search_city_init();
 void search_city_execute(const gchar* pszSentence);
 
 G_END_DECLS

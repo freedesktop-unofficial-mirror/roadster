@@ -26,15 +26,20 @@
 #include "map.h"
 #include "map_hittest.h"
 #include "map_math.h"
+#include "map_style.h"
 #include "road.h"
 #include "location.h"
 #include "locationset.h"
-
 
 static gboolean map_hittest_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint, gdouble* pfReturnPercentAlongLine);
 static ESide map_hittest_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pClosestPointOnLine, mappoint_t* pHitPoint);
 static gboolean map_hittest_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 static gboolean map_hittest_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
+
+static gboolean map_hittest_layer_lines(GPtrArray* pRoadsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
+static gboolean map_hittest_layer_polygons(GPtrArray* pMapObjectArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
+
+#define EXTRA_CLICKABLE_ROAD_IN_PIXELS	(3)
 
 // ========================================================
 //  Hit Testing
@@ -42,43 +47,79 @@ static gboolean map_hittest_locationsets(map_t* pMap, rendermetrics_t* pRenderMe
 
 gboolean map_hittest(map_t* pMap, mappoint_t* pMapPoint, maphit_t** ppReturnStruct)
 {
-#if 0	// GGGGGGGGGGGGGGGG
 	rendermetrics_t rendermetrics;
 	map_get_render_metrics(pMap, &rendermetrics);
 
-	if(map_hittest_locationselections(pMap, &rendermetrics, pMap->pLocationSelectionArray, pMapPoint, ppReturnStruct)) {
-		return TRUE;
-	}
+	GPtrArray* pTiles = pMap->pLastActiveTilesArray;
+	g_return_val_if_fail(pTiles != NULL, FALSE);
 
-	if(map_hittest_locationsets(pMap, &rendermetrics, pMapPoint, ppReturnStruct)) {
-		return TRUE;
-	}
+//     if(map_hittest_locationselections(pMap, &rendermetrics, pMap->pLocationSelectionArray, pMapPoint, ppReturnStruct)) {
+//         return TRUE;
+//     }
+//
+//     if(map_hittest_locationsets(pMap, &rendermetrics, pMapPoint, ppReturnStruct)) {
+//         return TRUE;
+//     }
+
+	gint nStyleZoomLevel = g_sZoomLevels[ map_get_zoomlevel(pMap) -1 ].nStyleZoomLevel;
 
 	// Test things in the REVERSE order they are drawn (otherwise we'll match things that have been painted-over)
 	gint i;
-	for(i=G_N_ELEMENTS(layerdraworder)-1 ; i>=0 ; i--) {
-		if(layerdraworder[i].eSubLayerRenderType != SUBLAYER_RENDERTYPE_LINES) continue;
+	for(i=0 ; i<pMap->pLayersArray->len ; i++) {
+		maplayer_t* pLayer = g_ptr_array_index(pMap->pLayersArray, i);
+		maplayerstyle_t* pLayerStyle = pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1];
 
-		gint nLayer = layerdraworder[i].nLayer;
+		if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINES) {
+			gdouble fLineWidth = pLayerStyle->fLineWidth;
+	
+			// XXX: hack, map_pixels should really take a floating point instead.
+			gdouble fMaxDistance = map_math_pixels_to_degrees_at_scale(1, map_get_scale(pMap)) * ((fLineWidth/2) + EXTRA_CLICKABLE_ROAD_IN_PIXELS);  // half width on each side
 
-		// use width from whichever layer it's wider in
-		gdouble fLineWidth = max(g_aLayers[nLayer]->Style.aSubLayers[0].afLineWidths[pMap->uZoomLevel-1],
-					 g_aLayers[nLayer]->Style.aSubLayers[1].afLineWidths[pMap->uZoomLevel-1]);
+			gint iTile;
+			for(iTile=0 ; iTile < pTiles->len ; iTile++) {
+				maptile_t* pTile = g_ptr_array_index(pTiles, iTile);
 
-#define EXTRA_CLICKABLE_ROAD_IN_PIXELS	(3)
-
-		// make thin roads a little easier to hit
-		// fLineWidth = max(fLineWidth, MIN_ROAD_HIT_TARGET_WIDTH);
-
-		// XXX: hack, map_pixels should really take a floating point instead.
-		gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->uZoomLevel) * ((fLineWidth/2) + EXTRA_CLICKABLE_ROAD_IN_PIXELS);  // half width on each side
-
-		if(map_hittest_layer_roads(pMap->apLayerData[nLayer]->pRoadsArray, fMaxDistance, pMapPoint, ppReturnStruct)) {
-			return TRUE;
+				if(map_hittest_layer_lines(pTile->apMapObjectArrays[pLayer->nDataSource],
+										   fMaxDistance,
+										   pMapPoint,
+										   ppReturnStruct))
+				{
+					return TRUE;
+				}
+			}
 		}
-		// otherwise try next layer...
+		else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGONS) {
+			gint iTile;
+			for(iTile=0 ; iTile < pTiles->len ; iTile++) {
+				maptile_t* pTile = g_ptr_array_index(pTiles, iTile);
+
+				if(map_hittest_layer_polygons(pTile->apMapObjectArrays[pLayer->nDataSource],
+											  pMapPoint,
+											  ppReturnStruct))
+				{
+					return TRUE;
+				}
+			}
+		}
 	}
-#endif
+//     gint i;
+//     for(i=G_N_ELEMENTS(layerdraworder)-1 ; i>=0 ; i--) {
+//         if(layerdraworder[i].eSubLayerRenderType != SUBLAYER_RENDERTYPE_LINES) continue;
+//
+//         gint nLayer = layerdraworder[i].nLayer;
+//
+//         // use width from whichever layer it's wider in
+//         gdouble fLineWidth = max(g_aLayers[nLayer]->Style.aSubLayers[0].afLineWidths[pMap->uZoomLevel-1],
+//                      g_aLayers[nLayer]->Style.aSubLayers[1].afLineWidths[pMap->uZoomLevel-1]);
+//
+//         // XXX: hack, map_pixels should really take a floating point instead.
+//         gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->uZoomLevel) * ((fLineWidth/2) + EXTRA_CLICKABLE_ROAD_IN_PIXELS);  // half width on each side
+//
+//         if(map_hittest_layer_lines(pMap->apLayerData[nLayer]->pRoadsArray, fMaxDistance, pMapPoint, ppReturnStruct)) {
+//             return TRUE;
+//         }
+//         // otherwise try next layer...
+//     }
 	return FALSE;
 }
 
@@ -96,7 +137,7 @@ void map_hittest_maphit_free(map_t* pMap, maphit_t* pHitStruct)
 	g_free(pHitStruct);
 }
 
-static gboolean map_hittest_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
+static gboolean map_hittest_layer_lines(GPtrArray* pMapObjectArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
 {
 	g_assert(ppReturnStruct != NULL);
 	g_assert(*ppReturnStruct == NULL);	// pointer to null pointer
@@ -110,9 +151,11 @@ static gboolean map_hittest_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDist
 
 	// Loop through line strings, order doesn't matter here since they're all on the same level.
 	gint iString;
-	for(iString=0 ; iString<pRoadsArray->len ; iString++) {
-		road_t* pRoad = g_ptr_array_index(pRoadsArray, iString);
+	for(iString=0 ; iString<pMapObjectArray->len ; iString++) {
+		road_t* pRoad = g_ptr_array_index(pMapObjectArray, iString);
 		if(pRoad->pMapPointsArray->len < 2) continue;
+		// Can't do bounding box test on lines (unless we expand the box by fMaxDistance pixels)
+		//if(!map_math_mappoint_in_maprect(pHitPoint, &(pRoad->rWorldBoundingBox))) continue;
 
 		// start on 1 so we can do -1 trick below
 		gint iPoint;
@@ -166,6 +209,37 @@ static gboolean map_hittest_layer_roads(GPtrArray* pRoadsArray, gdouble fMaxDist
 	return FALSE;
 }
 
+static gboolean map_hittest_layer_polygons(GPtrArray* pMapObjectArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
+{
+	g_assert(ppReturnStruct != NULL);
+	g_assert(*ppReturnStruct == NULL);	// pointer to null pointer
+
+	/* this is helpful for testing with the g_print()s in map_hit_test_line() */
+/*         mappoint_t p1 = {2,2};                */
+/*         mappoint_t p2 = {-10,10};             */
+/*         mappoint_t p3 = {0,10};               */
+/*         map_hit_test_line(&p1, &p2, &p3, 20); */
+/*         return FALSE;                         */
+
+	// Loop through line strings, order doesn't matter here since they're all on the same level.
+	gint iString;
+	for(iString=0 ; iString<pMapObjectArray->len ; iString++) {
+		road_t* pRoad = g_ptr_array_index(pMapObjectArray, iString);
+		if(pRoad->pMapPointsArray->len < 2) continue;
+		if(!map_math_mappoint_in_maprect(pHitPoint, &(pRoad->rWorldBoundingBox))) continue;
+
+		if(map_math_mappoint_in_polygon(pHitPoint, pRoad->pMapPointsArray)) {
+			maphit_t* pHitStruct = g_new0(maphit_t, 1);
+			pHitStruct->pszText = g_strdup("polygon hit");
+			pHitStruct->eHitType = MAP_HITTYPE_POLYGON;
+			
+			*ppReturnStruct = pHitStruct;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 static ESide map_hittest_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pClosestPointOnLine, mappoint_t* pHitPoint)
 {
 	// make a translated-to-origin *perpendicular* vector of the line (points to the "left" of the line when walking from point 1 to 2)
@@ -204,7 +278,7 @@ static ESide map_hittest_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2
 // hit test all locations
 static gboolean map_hittest_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
 {
-	gdouble fMaxDistance = map_pixels_to_degrees(pMap, 1, pMap->uZoomLevel) * 3;	// XXX: don't hardcode distance :)
+	gdouble fMaxDistance = map_math_pixels_to_degrees_at_scale(1, map_get_scale(pMap)) * 3;	// XXX: don't hardcode distance :)
 
 	const GPtrArray* pLocationSetsArray = locationset_get_array();
 	gint i;
@@ -336,8 +410,8 @@ static gboolean map_hittest_locationselections(map_t* pMap, rendermetrics_t* pRe
 
 static gboolean map_hittest_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint, gdouble* pfReturnPercentAlongLine)
 {
-	if(pHitPoint->fLatitude < (pPoint1->fLatitude - fMaxDistance) && pHitPoint->fLatitude < (pPoint2->fLatitude - fMaxDistance)) return FALSE;
-	if(pHitPoint->fLongitude < (pPoint1->fLongitude - fMaxDistance) && pHitPoint->fLongitude < (pPoint2->fLongitude - fMaxDistance)) return FALSE;
+//	if(pHitPoint->fLatitude < (pPoint1->fLatitude - fMaxDistance) && pHitPoint->fLatitude < (pPoint2->fLatitude - fMaxDistance)) return FALSE;
+//	if(pHitPoint->fLongitude < (pPoint1->fLongitude - fMaxDistance) && pHitPoint->fLongitude < (pPoint2->fLongitude - fMaxDistance)) return FALSE;
 
 	// Some bad ASCII art demonstrating the situation:
 	//

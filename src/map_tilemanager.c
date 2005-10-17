@@ -24,8 +24,12 @@
 #include <gtk/gtk.h>
 #include "util.h"
 #include "map_tilemanager.h"
+#include "map_math.h"
 #include "db.h"
 #include "road.h"
+
+#define ENABLE_ADD_FINAL_POLYGON_POINT
+#define ENABLE_RUN_TIME_ROAD_STITCHING
 
 // Prototypes
 static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* pRect, gint nLOD);
@@ -47,6 +51,7 @@ struct {
 maptilemanager_t* map_tilemanager_new()
 {
 	maptilemanager_t* pNew = g_new0(maptilemanager_t, 1);
+	g_assert(pNew);
 	
 	gint i;
 	for(i=0 ; i<MAP_NUM_LEVELS_OF_DETAIL ; i++) {
@@ -55,6 +60,7 @@ maptilemanager_t* map_tilemanager_new()
 	return pNew;
 }
 
+// Returns a newly allocated GPtrArray which must be freed by calling map_tilemanager_free_tile_list()
 GPtrArray* map_tilemanager_load_tiles_for_worldrect(maptilemanager_t* pTileManager, maprect_t* pRect, gint nLOD)
 {
 	//
@@ -148,11 +154,20 @@ GPtrArray* map_tilemanager_load_tiles_for_worldrect(maptilemanager_t* pTileManag
 	return pTileArray;
 }
 
+void map_tilemanager_free_tile_list(maptilemanager_t* pTileManager, GPtrArray* pTiles)
+{
+	g_ptr_array_free(pTiles, TRUE);
+}
+
+//
+// Private
+//
 static maptile_t* map_tilemanager_tile_new(maptilemanager_t* pTileManager, maprect_t* pRect, gint nLOD)
 {
 	//g_print("New tile for (%f,%f),(%f,%f)\n", pRect->A.fLongitude, pRect->A.fLatitude, pRect->B.fLongitude, pRect->B.fLatitude);
 
 	maptile_t* pNewTile = g_new0(maptile_t, 1);
+	g_assert(pNewTile);
 	memcpy(&(pNewTile->rcWorldBoundingBox), pRect, sizeof(maprect_t));
 
 	gint i;
@@ -190,6 +205,15 @@ static maptile_t* map_tilemanager_tile_cache_lookup(maptilemanager_t* pTileManag
 	return NULL;
 }
 
+gboolean map_object_type_is_polygon(gint nType)
+{
+	// XXX: do this more robustly
+	return (nType == MAP_OBJECT_TYPE_PARK || 
+			nType == MAP_OBJECT_TYPE_LAKE ||
+			nType == MAP_OBJECT_TYPE_MISC_AREA || 
+			nType == MAP_OBJECT_TYPE_URBAN_AREA);
+}
+
 static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* pRect, gint nLOD)
 {
 	db_resultset_t* pResultSet = NULL;
@@ -203,11 +227,12 @@ static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* 
 	gchar azCoord1[20], azCoord2[20], azCoord3[20], azCoord4[20], azCoord5[20], azCoord6[20], azCoord7[20], azCoord8[20];
 	gchar* pszSQL;
 	pszSQL = g_strdup_printf(
-		"SELECT 0 AS ID, %s.TypeID, AsBinary(%s.Coordinates), RoadName.Name, RoadName.SuffixID %s"
+		"SELECT 0 AS ID, %s.TypeID, AsBinary(%s.Coordinates), RoadName.Name, RoadName.SuffixID %s, RoadNameID"
 		" FROM %s "
 		" LEFT JOIN RoadName ON (%s.RoadNameID=RoadName.ID)"
 		" WHERE"
-		" MBRIntersects(GeomFromText('Polygon((%s %s,%s %s,%s %s,%s %s,%s %s))'), Coordinates)",
+		" MBRIntersects(GeomFromText('Polygon((%s %s,%s %s,%s %s,%s %s,%s %s))'), Coordinates)"
+		" ORDER BY TypeID, RoadNameID, X(StartPoint(Coordinates))",		// XXX: add sorting by MBR x or y?
 
 		//pszRoadTableName,	 no ID column 
 		pszRoadTableName, pszRoadTableName,
@@ -235,6 +260,10 @@ static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* 
 
 	TIMER_SHOW(mytimer, "after query");
 
+	road_t* pPreviousRoad = NULL;
+	gint nPreviousRoadNameID = 0;
+	gint nPreviousRoadTypeID = 0;
+
 	guint32 uRowCount = 0;
 	if(pResultSet) {
 		while((aRow = db_fetch_row(pResultSet))) {
@@ -249,6 +278,7 @@ static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* 
 			// aRow[6] is road address left end
 			// aRow[7] is road address right start 
 			// aRow[8] is road address right end
+			// aRow[9] is road name id
 
 			// Get layer type that this belongs on
 			gint nTypeID = atoi(aRow[1]);
@@ -257,9 +287,35 @@ static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* 
 				continue;
 			}
 
-			//road_t* pNewRoad = NULL;
-			//road_alloc(&pNewRoad);
+			// XXX: perhaps let the wkb parser create the array (at the perfect size)
+			GArray* pPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
+			maprect_t rcBoundingBox;
+			db_parse_wkb_linestring(aRow[2], pPointsArray, &rcBoundingBox);
+
+			gint nRoadNameID = atoi(aRow[1]);
+
+#ifdef ENABLE_RUN_TIME_ROAD_STITCHING
+			// Check if we can stitch this road segment onto previous road
+			if(pPreviousRoad != NULL) {
+				if(nRoadNameID == nPreviousRoadNameID && nTypeID == nPreviousRoadTypeID) {
+					if(map_math_try_connect_linestrings(pPreviousRoad->pMapPointsArray, pPointsArray)) {
+						// Success!
+
+						// update bounding box for object
+						map_util_bounding_box_union(&(pPreviousRoad->rWorldBoundingBox), &(rcBoundingBox));
+
+						g_array_free(pPointsArray, TRUE);
+						continue;
+					}
+				}
+			}
+#endif
+			// Otherwise add a new road segment
 			road_t* pNewRoad = g_new0(road_t, 1);
+			g_assert(pNewRoad);
+
+			pNewRoad->pMapPointsArray = pPointsArray;
+			pNewRoad->rWorldBoundingBox = rcBoundingBox;
 
 			// Build name by adding suffix, if one is present
 			if(aRow[3] != NULL && aRow[4] != NULL) {
@@ -277,9 +333,13 @@ static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* 
 				pNewRoad->nAddressRightEnd = atoi(aRow[8]);
 			}
 
-			// perhaps let the wkb parser create the array (at the perfect size)
-			pNewRoad->pMapPointsArray = g_array_new(FALSE, FALSE, sizeof(road_t));
-			db_parse_wkb_linestring(aRow[2], pNewRoad->pMapPointsArray, &(pNewRoad->rWorldBoundingBox));
+			// add first point to the end to complete the polygon
+#ifdef ENABLE_ADD_FINAL_POLYGON_POINT
+			if(map_object_type_is_polygon(nTypeID)) {
+				mappoint_t p = g_array_index(pNewRoad->pMapPointsArray, mappoint_t, 0);
+				g_array_append_val(pNewRoad->pMapPointsArray, p);
+			}
+#endif
 
 #ifdef ENABLE_RIVER_TO_LAKE_LOADTIME_HACK	// XXX: combine this and above hack and you get lakes with squiggly edges. whoops. :)
 			if(nTypeID == MAP_OBJECT_TYPE_RIVER) {
@@ -291,6 +351,10 @@ static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* 
 				}
 			}
 #endif
+
+			pPreviousRoad = pNewRoad;
+			nPreviousRoadNameID = nRoadNameID;
+			nPreviousRoadTypeID = nTypeID;
 
 			// Add this item to layer's list of pointstrings
 			g_ptr_array_add(pTile->apMapObjectArrays[nTypeID], pNewRoad);

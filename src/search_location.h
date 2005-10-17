@@ -26,6 +26,7 @@
 
 G_BEGIN_DECLS
 
+void search_location_init();
 void search_location_execute(const gchar* pszSentence);
 
 G_END_DECLS
