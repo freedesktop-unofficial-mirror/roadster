@@ -232,7 +232,9 @@ static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* 
 		" LEFT JOIN RoadName ON (%s.RoadNameID=RoadName.ID)"
 		" WHERE"
 		" MBRIntersects(GeomFromText('Polygon((%s %s,%s %s,%s %s,%s %s,%s %s))'), Coordinates)"
-		" ORDER BY TypeID, RoadNameID, X(StartPoint(Coordinates))",		// XXX: add sorting by MBR x or y?
+
+		// this improves our lazy stitching success rate
+		" ORDER BY TypeID, RoadNameID, X(StartPoint(Coordinates))",
 
 		//pszRoadTableName,	 no ID column 
 		pszRoadTableName, pszRoadTableName,

@@ -29,4 +29,6 @@
 void map_draw_gdk(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetrics, GdkPixmap* pPixmap, gint nDrawFlags);
 void map_draw_gdk_xor_rect(map_t* pMap, GdkDrawable* pTargetDrawable, screenrect_t* pRect);
 
+void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle);
+
 #endif

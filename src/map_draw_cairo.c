@@ -71,6 +71,8 @@ static void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetr
 //static void map_draw_cairo_locationset(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
 //static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionArray);
 
+static void map_draw_cairo_layer_fill(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle);
+
 // Draw labels for a single line/polygon
 static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel);
 static void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, maprect_t* pBoundingRect, const gchar* pszLabel);
@@ -96,6 +98,11 @@ void map_draw_text_underline(cairo_t* pCairo, gdouble fLabelWidth)
 	cairo_rel_move_to(pCairo, -(fLabelWidth+2), -UNDERLINE_RELIEF);
 }
 
+void map_draw_cairo_set_rgb(cairo_t* pCairo, color_t* pColor)
+{
+	cairo_set_source_rgba(pCairo, pColor->fRed, pColor->fGreen, pColor->fBlue, 1.0);
+}
+
 void map_draw_cairo_set_rgba(cairo_t* pCairo, color_t* pColor)
 {
 	cairo_set_source_rgba(pCairo, pColor->fRed, pColor->fGreen, pColor->fBlue, pColor->fAlpha);
@@ -115,6 +122,8 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 	cairo_surface_t *pSurface = cairo_xlib_surface_create (dpy, drawable, visual, width, height);
 	cairo_t* pCairo = cairo_create (pSurface);
 
+//    cairo_set_antialias(pCairo, CAIRO_ANTIALIAS_GRAY);	// CAIRO_ANTIALIAS_DEFAULT, CAIRO_ANTIALIAS_NONE, CAIRO_ANTIALIAS_GRAY, CAIRO_ANTIALIAS_SUBPIXEL
+
 #ifdef ENABLE_DRAW_MAP_SCALE
 
 #	define MAP_SCALE_WIDTH		(55)	// these are just estimates
@@ -131,12 +140,7 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 	// 2.1. Settings for all rendering
 	cairo_set_fill_rule(pCairo, CAIRO_FILL_RULE_WINDING);
 
-	// 2.2. Draw Background
-	if(nDrawFlags & DRAWFLAG_GEOMETRY) {
-		map_draw_cairo_background(pMap, pCairo);
-	}
-
-	// 2.3. Render Layers
+	// 2.2. Render Layers
 	if(pMap->pLayersArray->len == 0) {
 		map_draw_cairo_message(pMap, pCairo, "The style XML file couldn't be loaded");
 	}
@@ -156,10 +160,6 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 												 pTile->apMapObjectArrays[pLayer->nDataSource],               // data
 												 pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);       // style
 					}
-
-//                     map_draw_cairo_layer_roads(pMap, pCairo, pRenderMetrics,
-//                                                pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
-//                                                pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);
 				}
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_POLYGONS) {
@@ -171,9 +171,6 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 												 pTile->apMapObjectArrays[pLayer->nDataSource],               // data
 												 pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);       // style
 					}
-//                     map_draw_cairo_layer_polygons(pMap, pCairo, pRenderMetrics,
-//                                                   pMap->apLayerData[pLayer->nDataSource]->pRoadsArray,
-//                                                   pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);
 				}
 			}
 			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_LINE_LABELS) {
@@ -198,6 +195,11 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 					}
 				}
 			}
+			else if(pLayer->nDrawType == MAP_LAYER_RENDERTYPE_FILL) {
+				if(nDrawFlags & DRAWFLAG_GEOMETRY) {
+					map_draw_cairo_layer_fill(pMap, pCairo, pRenderMetrics, pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);       // style
+				}
+			}
 		}
 	}
 
@@ -220,6 +222,28 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 	TIMER_END(maptimer, "END RENDER MAP (cairo)");
 }
 
+// ==============================================
+// Begin map_draw_cairo_* functions
+// ==============================================
+
+// useful for filling the screen with a color.  not much else.
+void map_draw_cairo_layer_fill(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle)
+{
+	if(pLayerStyle->pGlyphFill != NULL) {
+	}
+	else {
+		// Simple color fill
+		map_draw_cairo_set_rgb(pCairo, &(pLayerStyle->clrPrimary));
+	}
+
+	cairo_rectangle(pCairo, 0,0,pMap->MapDimensions.uWidth, pMap->MapDimensions.uHeight);
+	cairo_fill(pCairo);
+
+	if(pLayerStyle->pGlyphFill != NULL) {
+		// Restore fill style
+	}
+}
+
 // When there are no layers defined, we call this to show an error message in-window
 void map_draw_cairo_message(map_t* pMap, cairo_t *pCairo, gchar* pszMessage)
 {
@@ -237,21 +261,6 @@ void map_draw_cairo_message(map_t* pMap, cairo_t *pCairo, gchar* pszMessage)
 		// Draw centered
 		cairo_move_to(pCairo, (pMap->MapDimensions.uWidth/2) - (extents.width/2), (pMap->MapDimensions.uHeight/2) + (extents.height/2));
 		cairo_show_text(pCairo, pszMessage);
-	cairo_restore(pCairo);
-}
-
-// ==============================================
-// Begin map_draw_cairo_* functions
-// ==============================================
-
-// Background
-static void map_draw_cairo_background(map_t* pMap, cairo_t *pCairo)
-{
-	// XXX: Don't hardcode background color
-	cairo_save(pCairo);
-		cairo_set_source_rgb (pCairo, 239/255.0, 239/255.0, 230/255.0);
-		cairo_rectangle(pCairo, 0, 0, pMap->MapDimensions.uWidth, pMap->MapDimensions.uHeight);
-		cairo_fill(pCairo);
 	cairo_restore(pCairo);
 }
 

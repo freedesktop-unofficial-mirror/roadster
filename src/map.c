@@ -227,8 +227,6 @@ void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags)
 	scenemanager_clear(pMap->pSceneManager);
 	scenemanager_set_screen_dimensions(pMap->pSceneManager, pRenderMetrics->nWindowWidth, pRenderMetrics->nWindowHeight);
 
-	gint nRenderMode = RENDERMODE_FAST; //RENDERMODE_PRETTY; // 
-
 #ifdef ENABLE_LABELS_WHILE_DRAGGING
 	nDrawFlags |= DRAWFLAG_LABELS;	// always turn on labels
 #endif
@@ -238,7 +236,7 @@ void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags)
 	scenemanager_claim_polygon(pMap->pSceneManager, aPoints, 4);
 #endif
 
-	if(nRenderMode == RENDERMODE_FAST) {
+	if(pMap->bAntiAliased == FALSE) {
 		// 
 		if(nDrawFlags & DRAWFLAG_GEOMETRY) {
 			map_draw_gdk(pMap, pTilesArray, pRenderMetrics, pTargetPixmap, DRAWFLAG_GEOMETRY);
@@ -248,7 +246,7 @@ void map_draw(map_t* pMap, GdkPixmap* pTargetPixmap, gint nDrawFlags)
 		// Call cairo for finishing the scene
 		map_draw_cairo(pMap, pTilesArray, pRenderMetrics, pTargetPixmap, nDrawFlags);
 	}
-	else {	// nRenderMode == RENDERMODE_PRETTY
+	else {
 		map_draw_cairo(pMap, pTilesArray, pRenderMetrics, pTargetPixmap, nDrawFlags);
 	}
 
@@ -605,6 +603,15 @@ void map_get_visible_maprect(const map_t* pMap, maprect_t* pReturnMapRect)
 	memcpy(pReturnMapRect, &(renderMetrics.rWorldBoundingBox), sizeof(maprect_t));
 }
 
+gboolean map_get_antialiased(const map_t* pMap)
+{
+	return pMap->bAntiAliased;
+}
+
+void map_set_antialiased(map_t* pMap, gboolean bAntiAliased)
+{
+	pMap->bAntiAliased = bAntiAliased;
+}
 
 #ifdef ROADSTER_DEAD_CODE
 /*

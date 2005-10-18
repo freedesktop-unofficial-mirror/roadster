@@ -1,3 +1,10 @@
+2005-10-18  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/mainwindow.c:
+	* src/map.c:
+	* src/map_draw_cairo.c: Add Debug menu toggle for GDK/Cairo.
+	* src/map_draw_gdk.c: Remove dead code.
+
 2005-10-17  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* configure.ac: Added -Wall compiler option (show all warnings).

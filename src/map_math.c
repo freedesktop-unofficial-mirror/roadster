@@ -166,9 +166,15 @@ gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2
 	return sqrt((fDeltaX*fDeltaX) + (fDeltaY*fDeltaY));
 }
 
+#define POINTS_EQUAL_ERROR	(0.0002)
+
 gboolean map_points_equal(mappoint_t* p1, mappoint_t* p2)
 {
-	return( p1->fLatitude == p2->fLatitude && p1->fLongitude == p2->fLongitude);
+	return( 
+		ABS(p1->fLatitude - p2->fLatitude) < POINTS_EQUAL_ERROR &&
+		ABS(p1->fLongitude - p2->fLongitude) < POINTS_EQUAL_ERROR);
+
+	//return( p1->fLatitude == p2->fLatitude && p1->fLongitude == p2->fLongitude);
 }
 
 gboolean map_math_maprects_equal(maprect_t* pA, maprect_t* pB)

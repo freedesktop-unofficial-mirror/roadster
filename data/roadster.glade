@@ -1474,7 +1474,7 @@ Notes:</property>
 		      <property name="use_underline">True</property>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10326">
+			<widget class="GtkImage" id="image10356">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -1507,7 +1507,7 @@ Notes:</property>
 		      <property name="use_underline">True</property>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10327">
+			<widget class="GtkImage" id="image10357">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-save-as</property>
 			  <property name="icon_size">1</property>
@@ -1534,7 +1534,7 @@ Notes:</property>
 		      <accelerator key="Q" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10328">
+			<widget class="GtkImage" id="image10358">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-quit</property>
 			  <property name="icon_size">1</property>
@@ -1705,7 +1705,7 @@ Notes:</property>
 		      <accelerator key="Left" modifiers="GDK_MOD1_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10329">
+			<widget class="GtkImage" id="image10359">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-go-back</property>
 			  <property name="icon_size">1</property>
@@ -1728,7 +1728,7 @@ Notes:</property>
 		      <accelerator key="Right" modifiers="GDK_MOD1_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10330">
+			<widget class="GtkImage" id="image10360">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-media-forward</property>
 			  <property name="icon_size">1</property>
@@ -1788,7 +1788,7 @@ Notes:</property>
 		      <accelerator key="F9" modifiers="0" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10331">
+			<widget class="GtkImage" id="image10361">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-refresh</property>
 			  <property name="icon_size">1</property>
@@ -1836,7 +1836,7 @@ Notes:</property>
 		      <signal name="activate" handler="mainwindow_on_aboutmenuitem_activate" last_modification_time="Sat, 12 Mar 2005 06:48:18 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10332">
+			<widget class="GtkImage" id="image10362">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-about</property>
 			  <property name="icon_size">1</property>
@@ -1888,7 +1888,7 @@ Notes:</property>
 		      <signal name="activate" handler="mainwindow_on_import_maps_activate" last_modification_time="Fri, 04 Mar 2005 04:28:20 GMT"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10333">
+			<widget class="GtkImage" id="image10363">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-open</property>
 			  <property name="icon_size">1</property>
@@ -1908,12 +1908,13 @@ Notes:</property>
 		  </child>
 
 		  <child>
-		    <widget class="GtkCheckMenuItem" id="use_cairo_rendering1">
+		    <widget class="GtkCheckMenuItem" id="use_aa_rendering1">
 		      <property name="visible">True</property>
-		      <property name="label" translatable="yes">Use Cairo Rendering</property>
+		      <property name="label" translatable="yes">Use Anti-Aliased Rendering</property>
 		      <property name="use_underline">True</property>
 		      <property name="active">False</property>
-		      <signal name="activate" handler="map_on_use_cairo_rendering_activate" last_modification_time="Tue, 18 Oct 2005 01:13:24 GMT"/>
+		      <signal name="activate" handler="mainwindow_on_use_aa_rendering_activate" last_modification_time="Tue, 18 Oct 2005 05:54:13 GMT"/>
+		      <accelerator key="F4" modifiers="0" signal="activate"/>
 		    </widget>
 		  </child>
 
@@ -1932,7 +1933,7 @@ Notes:</property>
 		      <accelerator key="F5" modifiers="0" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10334">
+			<widget class="GtkImage" id="image10364">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-refresh</property>
 			  <property name="icon_size">1</property>
@@ -1954,7 +1955,7 @@ Notes:</property>
 		      <accelerator key="F6" modifiers="0" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10335">
+			<widget class="GtkImage" id="image10365">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-refresh</property>
 			  <property name="icon_size">1</property>
@@ -1991,7 +1992,7 @@ Notes:</property>
 		      <accelerator key="g" modifiers="GDK_CONTROL_MASK" signal="activate"/>
 
 		      <child internal-child="image">
-			<widget class="GtkImage" id="image10336">
+			<widget class="GtkImage" id="image10366">
 			  <property name="visible">True</property>
 			  <property name="stock">gtk-jump-to</property>
 			  <property name="icon_size">1</property>

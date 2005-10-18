@@ -1880,6 +1880,12 @@ static void mainwindow_on_web_url_clicked(GtkWidget *_unused, gchar* pszURLPatte
 	}
 }
 
+void mainwindow_on_use_aa_rendering_activate(GtkMenuItem *menuitem, gpointer user_data)
+{
+	map_set_antialiased(g_MainWindow.pMap, !map_get_antialiased(g_MainWindow.pMap));
+	mainwindow_draw_map(DRAWFLAG_ALL);
+}
+
 #ifdef ROADSTER_DEAD_CODE
 /*
 static gboolean on_searchbox_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data)

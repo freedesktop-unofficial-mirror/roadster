@@ -207,6 +207,8 @@ typedef struct {
 	GtkWidget*		pTargetWidget;
 	scenemanager_t* pSceneManager;
 
+	gboolean bAntiAliased;
+
 	// data
 	GArray			*pTracksArray;
 //	maplayer_data_t	*apLayerData[ MAP_NUM_OBJECT_TYPES + 1 ];
@@ -333,5 +335,8 @@ void map_get_screenrect_centerpoint(const screenrect_t* pRect, screenpoint_t* pP
 
 void map_get_visible_maprect(const map_t* pMap, maprect_t* pReturnMapRect);
 gdouble map_get_altitude(const map_t* pMap, EDistanceUnits eUnit);
+
+gboolean map_get_antialiased(const map_t* pMap);
+void map_set_antialiased(map_t* pMap, gboolean bAntiAliased);
 
 #endif
