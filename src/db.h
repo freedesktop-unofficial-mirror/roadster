@@ -89,6 +89,8 @@ gboolean db_insert_road(gint nLOD, gint nRoadNameID, gint nLayerType, gint nAddr
 gboolean db_city_get_id(const gchar* pszName, gint nStateID, gint* pnReturnID);
 gboolean db_state_get_id(const gchar* pszName, gint* pnReturnID);
 
+gboolean db_city_get_name(gint nCityID, gchar** ppszReturnName);
+
 void db_lock(void);
 void db_unlock(void);
 

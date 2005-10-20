@@ -1,3 +1,27 @@
+For preview release:
+
+=== REQUIRED ===
+x Hide sidebar by default
+x Hide all tabs but Results
+x Remove Tooltips
+o Remove Road Search no longer works with just "Main St"
+o Choose logo
+o Tile generator
+o Tile parser
+o Tile cache needs to free tiles
+o Remove Debug menu
+
+=== OPTIONAL ===
+o Better toolbar icons for mouse tools
+o Better mouse cursor for zoom tool
+o River sexifier
+o Polygon stitcher for importer
+o Map makeover
+o Road icons (highway, etc.)
+o Switch to sqlite
+
+======================================
+
 State boundaries:
  http://www.census.gov/geo/cob/bdy/st/st00ascii/
 

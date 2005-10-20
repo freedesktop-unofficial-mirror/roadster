@@ -401,6 +401,29 @@ gboolean db_city_get_id(const gchar* pszName, gint nStateID, gint* pnReturnID)
 	return FALSE;
 }
 
+gboolean db_city_get_name(gint nCityID, gchar** ppszReturnName)
+{
+	g_assert(ppszReturnName != NULL);
+
+	// create SQL
+	gchar* pszSQL = g_strdup_printf("SELECT City.Name FROM City WHERE ID='%d';", nCityID);
+
+	// try query
+	db_resultset_t* pResultSet = NULL;
+	db_row_t aRow;
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+	// get result?
+	if(pResultSet) {
+		if((aRow = db_fetch_row(pResultSet)) != NULL) {
+			*ppszReturnName = g_strdup(aRow[0]);
+		}
+		db_free_result(pResultSet);
+		return TRUE;
+	}
+	return FALSE;
+}
+
 gboolean db_insert_city(const gchar* pszName, gint nStateID, gint* pnReturnCityID)
 {
 	gint nCityID = 0;

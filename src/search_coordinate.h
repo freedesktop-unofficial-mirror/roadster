@@ -1,5 +1,5 @@
 /***************************************************************************
- *            searchwindow.h
+ *            search_coordinate.h
  *
  *  Copyright  2005  Ian McIntosh
  *  ian_mcintosh@linuxadvocate.org
@@ -20,28 +20,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-
-#ifndef _SEARCHWINDOW_H
-#define _SEARCHWINDOW_H
+ 
+#ifndef _SEARCH_COORDINATE_H
+#define _SEARCH_COORDINATE_H
 
 G_BEGIN_DECLS
 
-#include <gtk/gtk.h>
-#include <glade/glade.h>
-#include "search.h"
-#include "map.h"
-#include "glyph.h"
-//#include "gpsclient.h"
-
-#define SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH	(24)
-#define SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT	(24)
-
-void searchwindow_init(GladeXML* pGladeXML);
-
-void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText, glyph_t* pGlyph, const mappoint_t* pPoint, gint nZoomLevel);
-
-void searchwindow_clear_results(void);
+void search_coordinate_init();
+void search_coordinate_execute(const gchar* pszSentence);
 
 G_END_DECLS
 
-#endif /* _SEARCHWINDOW_H */
+#endif /* _SEARCH_COORDINATE_H */

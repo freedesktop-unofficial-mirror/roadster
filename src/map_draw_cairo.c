@@ -66,7 +66,6 @@ static void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rende
 static void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
 
 // Draw a single line/polygon/point
-static void map_draw_cairo_background(map_t* pMap, cairo_t *pCairo);
 static void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray);
 //static void map_draw_cairo_locationset(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
 //static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionArray);
@@ -121,6 +120,7 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 	gdk_drawable_get_size (pPixmap, &width, &height);
 	cairo_surface_t *pSurface = cairo_xlib_surface_create (dpy, drawable, visual, width, height);
 	cairo_t* pCairo = cairo_create (pSurface);
+	cairo_set_miter_limit(pCairo, 10);
 
 //    cairo_set_antialias(pCairo, CAIRO_ANTIALIAS_GRAY);	// CAIRO_ANTIALIAS_DEFAULT, CAIRO_ANTIALIAS_NONE, CAIRO_ANTIALIAS_GRAY, CAIRO_ANTIALIAS_SUBPIXEL
 

@@ -228,7 +228,7 @@ void searchwindow_on_findbutton_clicked(GtkWidget *pWidget, gpointer* p)
 }
 
 // add a result row to the list
-void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText, glyph_t* pGlyph, mappoint_t* pPoint, gint nZoomLevel)
+void searchwindow_add_result(ESearchResultType eResultType, const gchar* pszText, glyph_t* pGlyph, const mappoint_t* pPoint, gint nZoomLevel)
 {
 	GtkTreeIter iter;
 

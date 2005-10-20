@@ -66,6 +66,7 @@ gboolean util_gtk_window_is_fullscreen(GtkWindow* pWindow);
 gboolean util_gtk_window_set_fullscreen(GtkWindow* pWindow, gboolean bFullscreen);
 
 gboolean util_gtk_range_instant_set_on_value_changing_callback(GtkRange *range, GtkScrollType scroll, gdouble value, gpointer user_data);
+const gchar* util_gtk_menu_item_get_label_text(GtkMenuItem* pMenuItem);
 
 // if glib < 2.6
 #if(!GLIB_CHECK_VERSION(2,6,0))

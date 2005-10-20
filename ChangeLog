@@ -1,3 +1,13 @@
+2005-10-20  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* roadster.spec: Added RPM .spec file contributed by Ofer Achler.
+	* src/search_coordinate.c: Added file to allow pasting/typing text containing lat and lon coordinates into search box.  (Currently not implemented!)
+	* src/search.c: Init and use search_coordinate stuff.
+	* src/mainwindow.c: Disable hittesting related to tooltip for preview release.  Make GPS checkboxes insensitive when 'show position on map' is off.
+	* src/db.c: Add db_city_get_name(id)
+	* src/map_draw_cairo.c: Add miter limit.
+	* src/mapinfowindow.c: Improve a lot.  May not make it into the preview release though.
+
 2005-10-18  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/mainwindow.c:

@@ -242,6 +242,12 @@ void util_gtk_widget_set_visible(GtkWidget* pWidget, gboolean bVisible)
 	}
 }
 
+const gchar* util_gtk_menu_item_get_label_text(GtkMenuItem* pMenuItem)
+{
+	GtkLabel* pLabel = GTK_LABEL(GTK_BIN(pMenuItem)->child);
+	return gtk_label_get_text(pLabel);
+}
+
 #if(!GLIB_CHECK_VERSION(2,6,0))
 
 // This one 

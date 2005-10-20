@@ -58,6 +58,8 @@
 #define PROGRAM_DESCRIPTION		"Mapping for everyone!"
 #define WEBSITE_URL				"http://linuxadvocate.org/projects/roadster"
 
+//#define ENABLE_MAP_TOOLTIP
+
 #define MAP_STYLE_FILENAME 		("layers.xml")
 
 // how long after stopping various movements should we redraw in high-quality mode
@@ -557,10 +559,11 @@ void mainwindow_refresh_locationset_list()
 
 	// Fill locationset list with live data
 	const GPtrArray* pLocationSetArray = locationset_get_array();
-	gint i;
+	g_debug("%d locationsets", pLocationSetArray->len);
 
 	gtk_list_store_clear(g_MainWindow.pLocationSetsListStore);
 
+	gint i;
 	for(i=0 ; i<pLocationSetArray->len ; i++) {
 		locationset_t* pLocationSet = g_ptr_array_index(pLocationSetArray, i);
 
@@ -627,8 +630,9 @@ void mainwindow_set_draw_pretty_timeout(gint nTimeoutInMilliseconds)
 	g_MainWindow.nDrawPrettyTimeoutID = g_timeout_add(nTimeoutInMilliseconds, mainwindow_on_draw_pretty_timeout, NULL);
 	g_assert(g_MainWindow.nDrawPrettyTimeoutID != 0);
 }
+
 //
-// the "scroll" timeout
+// the scroll timeout
 //
 void mainwindow_scroll_direction(EDirection eScrollDirection, gint nPixels)
 {
@@ -1159,6 +1163,7 @@ static gboolean mainwindow_on_mouse_button_click(GtkWidget* w, GdkEventButton *e
 			g_MainWindow.bMouseDragMovement = FALSE;
 			g_MainWindow.ptClickLocation.nX = nX;
 			g_MainWindow.ptClickLocation.nY = nY;
+			tooltip_hide(g_MainWindow.pTooltip);
 		}
 		else if(event->type == GDK_BUTTON_RELEASE) {
 			if(g_MainWindow.bMouseDragging == TRUE) {
@@ -1251,6 +1256,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 		EDirection eScrollDirection = util_match_border(nX, nY, nWidth, nHeight, BORDER_SCROLL_CLICK_TARGET_SIZE);
 
 		if(eScrollDirection == DIRECTION_NONE) {
+#ifdef ENABLE_MAP_TOOLTIP
 			// get mouse position on screen
 			screenpoint_t screenpoint;
 			screenpoint.nX = nX;
@@ -1307,6 +1313,7 @@ static gboolean mainwindow_on_mouse_motion(GtkWidget* w, GdkEventMotion *event)
 				// no hit. hide the tooltip
 				tooltip_hide(g_MainWindow.pTooltip);
 			}
+#endif
 		}
 		else {
 			nCursor = g_aDirectionCursors[eScrollDirection].nCursor;
@@ -1503,20 +1510,22 @@ static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfi
 	return TRUE;
 }
 
-static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpose *event, gpointer data)
+static gboolean mainwindow_on_expose_event(GtkWidget *_unused, GdkEventExpose *pEvent, gpointer __unused)
 {
-	GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.pMap);
+    if(pEvent->count > 0) return FALSE;
 
-	// Copy relevant portion of off-screen bitmap to window
-	gdk_draw_drawable(GTK_WIDGET(g_MainWindow.pDrawingArea)->window,
-                      GTK_WIDGET(g_MainWindow.pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.pDrawingArea)],
-                      pMapPixmap,
-                      event->area.x, event->area.y,
-                      event->area.x, event->area.y,
-                      event->area.width, event->area.height);
+    GdkPixmap* pMapPixmap = map_get_pixmap(g_MainWindow.pMap);
 
-	map_release_pixmap(g_MainWindow.pMap);
-	return FALSE;
+    // Copy relevant portion of off-screen bitmap to window
+    gdk_draw_drawable(GTK_WIDGET(g_MainWindow.pDrawingArea)->window,
+			   GTK_WIDGET(g_MainWindow.pDrawingArea)->style->fg_gc[GTK_WIDGET_STATE(g_MainWindow.pDrawingArea)],
+			   pMapPixmap,
+			   pEvent->area.x, pEvent->area.y,
+			   pEvent->area.x, pEvent->area.y,
+			   pEvent->area.width, pEvent->area.height);
+
+    map_release_pixmap(g_MainWindow.pMap);
+    return FALSE;
 }
 
 /*
@@ -1524,7 +1533,10 @@ static gboolean mainwindow_on_expose_event(GtkWidget *pDrawingArea, GdkEventExpo
 */
 void mainwindow_on_gps_show_position_toggled(GtkWidget* _unused, gpointer* __unused)
 {
-
+	gboolean bShowPosition = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.GPS.pShowPositionCheckButton));
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.GPS.pKeepPositionCenteredCheckButton), bShowPosition == TRUE);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.GPS.pShowTrailCheckButton), bShowPosition == TRUE);
+	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.GPS.pStickToRoadsCheckButton), FALSE);	// XXX: for now.
 }
 
 void mainwindow_on_gps_keep_position_centered_toggled(GtkWidget* _unused, gpointer* __unused)

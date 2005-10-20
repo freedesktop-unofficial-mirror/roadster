@@ -29,6 +29,7 @@
 #include "search_road.h"
 #include "search_location.h"
 #include "search_city.h"
+#include "search_coordinate.h"
 
 // functions
 
@@ -37,6 +38,7 @@ void search_init()
 	search_road_init();
 	search_location_init();
 	search_city_init();
+	search_coordinate_init();
 }
 
 // functions common to all searches
@@ -114,6 +116,7 @@ void search_all(const gchar* pszSentence)
 	search_city_execute(pszCleanedSentence);
 	search_location_execute(pszCleanedSentence);
 	search_road_execute(pszCleanedSentence);
+	search_coordinate_execute(pszCleanedSentence);
 	
 	TIMER_END(search, "END SearchAll");
 

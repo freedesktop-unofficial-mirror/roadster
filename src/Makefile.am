@@ -46,6 +46,7 @@ roadster_SOURCES = \
 	search_road.c\
 	search_location.c\
 	search_city.c\
+	search_coordinate.c\
 	search.c\
 	scenemanager.c\
 	glyph.c\

@@ -52,7 +52,6 @@ typedef struct {
 #define SEARCH_RESULT_COUNT_LIMIT		(400)		// how many rows to get from DB
 #define MAX_QUERY 						(4000)
 
-
 static glyph_t* g_SearchResultTypeRoadGlyph = NULL;
 
 void search_road_init()

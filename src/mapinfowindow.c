@@ -32,6 +32,13 @@
 #include "util.h"
 #include "db.h"
 
+#define MSG_NO_COUNTRY 	("<i>Select Country</i>")
+#define MSG_NO_STATE	("<i>Select State</i>")
+#define MSG_NO_CITY		("<i>Select City</i>")
+#define MSG_COUNTRY 	("<b>%s</b>")
+#define MSG_STATE		("<b>%s</b>")
+#define MSG_CITY		("<b>%s</b>")
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -54,35 +61,23 @@ struct {
 	gint nCurrentCityID;
 } g_MapInfoWindow = {0};
 
+static void mapinfowindow_on_country_chosen(GtkMenuItem* pMenuItem, gint nCountryID);
+static void mapinfowindow_on_state_chosen(GtkMenuItem* pMenuItem, gint nStateID);
+static void mapinfowindow_on_city_chosen(GtkMenuItem* pMenuItem, gint nCityID);
+
+static void mapinfowindow_on_state_button_clicked(GtkWidget* _unused, gpointer __unused);
+static void mapinfowindow_on_city_button_clicked(GtkWidget* _unused, gpointer __unused);
+static void mapinfowindow_on_country_button_clicked(GtkWidget* _unused, gpointer __unused);
+
+static void mapinfowindow_load_countries();
 static void mapinfowindow_load_cities(gint nStateID);
 static void mapinfowindow_load_states(gint nCountryID);
-
-static void mapinfowindow_on_country_button_clicked(GtkWidget* _unused, gpointer __unused)
-{
-	if(g_MapInfoWindow.nCurrentCountryID != 0) {
-		g_debug("recentering on countryID %d", g_MapInfoWindow.nCurrentCountryID);
-	}
-}
-
-static void mapinfowindow_on_state_button_clicked(GtkWidget* _unused, gpointer __unused)
-{
-	if(g_MapInfoWindow.nCurrentStateID != 0) {
-		g_debug("recentering on StateID %d", g_MapInfoWindow.nCurrentStateID);
-	}
-}
-
-static void mapinfowindow_on_city_button_clicked(GtkWidget* _unused, gpointer __unused)
-{
-	if(g_MapInfoWindow.nCurrentCityID != 0) {
-		g_debug("recentering on cityID %d", g_MapInfoWindow.nCurrentCityID);
-	}
-}
 
 void mapinfowindow_init(GladeXML* pGladeXML)
 {
 	GLADE_LINK_WIDGET(pGladeXML, g_MapInfoWindow.pCountryButton, GTK_MENU_TOOL_BUTTON, "countrybutton");
 	GLADE_LINK_WIDGET(pGladeXML, g_MapInfoWindow.pStateButton, GTK_MENU_TOOL_BUTTON, "statebutton");
-    GLADE_LINK_WIDGET(pGladeXML, g_MapInfoWindow.pCityButton, GTK_MENU_TOOL_BUTTON, "citybutton");
+	GLADE_LINK_WIDGET(pGladeXML, g_MapInfoWindow.pCityButton, GTK_MENU_TOOL_BUTTON, "citybutton");
 
 	g_MapInfoWindow.pCountryLabel = GTK_LABEL(gtk_label_new(""));	gtk_widget_show(GTK_WIDGET(g_MapInfoWindow.pCountryLabel));
 	g_MapInfoWindow.pStateLabel = GTK_LABEL(gtk_label_new(""));	gtk_widget_show(GTK_WIDGET(g_MapInfoWindow.pStateLabel));
@@ -99,6 +94,8 @@ void mapinfowindow_init(GladeXML* pGladeXML)
 	g_MapInfoWindow.nCurrentCountryID = -1;	//
 	g_MapInfoWindow.nCurrentStateID = -1;
 	g_MapInfoWindow.nCurrentCityID = -1;
+
+	mapinfowindow_load_countries();
 }
 
 void mapinfowindow_update(const map_t* pMap)
@@ -108,7 +105,7 @@ void mapinfowindow_update(const map_t* pMap)
 	gint nNewStateID = 0;
 	gint nNewCityID = 0;
 
-	gint nZoomScale = map_get_scale(pMap);
+//	gint nZoomScale = map_get_scale(pMap);
 
 	// Step 2. Set button text and drop-down menus
 
@@ -119,14 +116,14 @@ void mapinfowindow_update(const map_t* pMap)
 		// If we are now too high up to have a country selected, we clear the country label and
 		// hide the state list (of course, the state is 0 too, so 
 		if(nNewCountryID == 0) {
-			gtk_label_set_markup(g_MapInfoWindow.pCountryLabel, "<i>Country</i>");
+			gtk_label_set_markup(g_MapInfoWindow.pCountryLabel, MSG_NO_COUNTRY);
 
 			// hide state list
 			gtk_widget_hide(GTK_WIDGET(g_MapInfoWindow.pStateButton));
 		}
 		else {
 			// XXX: Set new country button text
-			gchar* pszLabel = g_strdup_printf("<b>%s</b>", "United States");
+			gchar* pszLabel = g_strdup_printf(MSG_COUNTRY, "United States");
 			gtk_label_set_markup(g_MapInfoWindow.pCountryLabel, pszLabel);
 			g_free(pszLabel);
 	
@@ -141,7 +138,7 @@ void mapinfowindow_update(const map_t* pMap)
 	//
 	if(nNewStateID != g_MapInfoWindow.nCurrentStateID) {
 		if(nNewStateID == 0) {
-			gtk_label_set_markup(g_MapInfoWindow.pStateLabel, "<i>State</i>");
+			gtk_label_set_markup(g_MapInfoWindow.pStateLabel, MSG_NO_STATE);
 
 			// hide city list
 			gtk_widget_hide(GTK_WIDGET(g_MapInfoWindow.pCityButton));
@@ -162,60 +159,34 @@ void mapinfowindow_update(const map_t* pMap)
 	if(nNewCityID != g_MapInfoWindow.nCurrentCityID) {
 		if(nNewCityID == 0) {
 			// XXX: Set new city button text
-			gtk_label_set_markup(g_MapInfoWindow.pCityLabel, "<i>City</i>");
-		}
-		else {
-			// XXX: Set new city button text
-			gtk_label_set_markup(g_MapInfoWindow.pCityLabel, "<b>City</b>");
+			gtk_label_set_markup(g_MapInfoWindow.pCityLabel, MSG_NO_CITY);
 		}
 		g_MapInfoWindow.nCurrentCityID = nNewCityID;
 	}
 }
 
-static void mapinfowindow_on_city_chosen(GtkWidget* _unused, gint nCityID)
+static void mapinfowindow_load_countries()
 {
-	g_debug("centering on CityID %d", nCityID);
-}
-
-static void mapinfowindow_on_state_chosen(GtkWidget* _unused, gint nStateID)
-{
-	g_debug("centering on nStateID %d", nStateID);
-}
-
-static void mapinfowindow_load_cities(gint nStateID)
-{
-	db_resultset_t* pResultSet = NULL;
-	db_row_t aRow;
-
-	//
-	// Load up all cities for this state
-	//
-	gchar* pszSQL = g_strdup_printf("SELECT City.ID, City.Name FROM City WHERE StateID=%d ORDER BY Name ASC;", nStateID);
-	db_query(pszSQL, &pResultSet);
-	g_free(pszSQL);
-	if(pResultSet == NULL) return;
-
 	// New menu
-	if(g_MapInfoWindow.pCityMenu) {
-		gtk_widget_destroy(GTK_WIDGET(g_MapInfoWindow.pCityMenu));
+	if(g_MapInfoWindow.pCountryMenu) {
+		gtk_widget_destroy(GTK_WIDGET(g_MapInfoWindow.pCountryMenu));
 	}
-	g_MapInfoWindow.pCityMenu = GTK_MENU(gtk_menu_new());
+	g_MapInfoWindow.pCountryMenu = GTK_MENU(gtk_menu_new());
+	
+	// LOAD AND LOOP
+	{
+		gchar* pszCountryName = "United States";
+		gint nID = 1;
 
-	// Fill menu
-	while((aRow = db_fetch_row(pResultSet)) != NULL) {
-		gint nCityID = atoi(aRow[0]);
-		gchar* pszName = aRow[1];
+		GtkMenuItem* pNewMenuItem = GTK_MENU_ITEM(gtk_menu_item_new_with_mnemonic(pszCountryName));
+		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_country_chosen, (gpointer)nID);
 
-		GtkMenuItem* pNewMenuItem = GTK_MENU_ITEM(gtk_menu_item_new_with_mnemonic(pszName));
-		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_city_chosen, (gpointer)nCityID);
-
-		gtk_menu_shell_append(GTK_MENU_SHELL(g_MapInfoWindow.pCityMenu), GTK_WIDGET(pNewMenuItem));
+		gtk_menu_shell_append(GTK_MENU_SHELL(g_MapInfoWindow.pCountryMenu), GTK_WIDGET(pNewMenuItem));
 	}
-	db_free_result(pResultSet);
 
 	// Install new menu
-	gtk_widget_show_all(GTK_WIDGET(g_MapInfoWindow.pCityMenu));
-	gtk_menu_tool_button_set_menu(g_MapInfoWindow.pCityButton, GTK_WIDGET(g_MapInfoWindow.pCityMenu));
+	gtk_widget_show_all(GTK_WIDGET(g_MapInfoWindow.pCountryMenu));
+	gtk_menu_tool_button_set_menu(g_MapInfoWindow.pCountryButton, GTK_WIDGET(g_MapInfoWindow.pCountryMenu));
 }
 
 static void mapinfowindow_load_states(gint nCountryID)
@@ -229,7 +200,7 @@ static void mapinfowindow_load_states(gint nCountryID)
 	gchar* pszSQL = g_strdup_printf("SELECT State.ID, State.Name FROM State WHERE CountryID=%d ORDER BY Name ASC;", nCountryID);
 	db_query(pszSQL, &pResultSet);
 	g_free(pszSQL);
-	if(pResultSet == NULL) return;
+	g_return_if_fail(pResultSet != NULL);
 
 	// New menu
 	if(g_MapInfoWindow.pStateMenu) {
@@ -242,9 +213,9 @@ static void mapinfowindow_load_states(gint nCountryID)
 		gint nID = atoi(aRow[0]);
 		gchar* pszName = aRow[1];
 
+		// Add new menu item
 		GtkMenuItem* pNewMenuItem = GTK_MENU_ITEM(gtk_menu_item_new_with_mnemonic(pszName));
 		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_state_chosen, (gpointer)nID);
-
 		gtk_menu_shell_append(GTK_MENU_SHELL(g_MapInfoWindow.pStateMenu), GTK_WIDGET(pNewMenuItem));
 	}
 	db_free_result(pResultSet);
@@ -252,4 +223,126 @@ static void mapinfowindow_load_states(gint nCountryID)
 	// Install new menu
 	gtk_widget_show_all(GTK_WIDGET(g_MapInfoWindow.pStateMenu));
 	gtk_menu_tool_button_set_menu(g_MapInfoWindow.pStateButton, GTK_WIDGET(g_MapInfoWindow.pStateMenu));
+}
+
+static void mapinfowindow_load_cities(gint nStateID)
+{
+	db_resultset_t* pResultSet = NULL;
+	db_row_t aRow;
+
+	//
+	// Load up all cities for this state
+	//
+	gchar* pszSQL = g_strdup_printf("SELECT City.ID, City.Name FROM City WHERE StateID=%d ORDER BY Name ASC;", nStateID);
+	db_query(pszSQL, &pResultSet);
+	g_free(pszSQL);
+	g_return_if_fail(pResultSet != NULL);
+
+	// New menu
+	if(g_MapInfoWindow.pCityMenu) {
+		gtk_widget_destroy(GTK_WIDGET(g_MapInfoWindow.pCityMenu));
+	}
+	g_MapInfoWindow.pCityMenu = GTK_MENU(gtk_menu_new());
+
+	// Fill menu
+	while((aRow = db_fetch_row(pResultSet)) != NULL) {
+		gint nCityID = atoi(aRow[0]);
+		gchar* pszName = aRow[1];
+
+		// Add new menu item
+		GtkMenuItem* pNewMenuItem = GTK_MENU_ITEM(gtk_menu_item_new_with_mnemonic(pszName));
+		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_city_chosen, (gpointer)nCityID);
+		gtk_menu_shell_append(GTK_MENU_SHELL(g_MapInfoWindow.pCityMenu), GTK_WIDGET(pNewMenuItem));
+	}
+	db_free_result(pResultSet);
+
+	// Install new menu
+	gtk_widget_show_all(GTK_WIDGET(g_MapInfoWindow.pCityMenu));
+	gtk_menu_tool_button_set_menu(g_MapInfoWindow.pCityButton, GTK_WIDGET(g_MapInfoWindow.pCityMenu));
+}
+
+//
+// Country
+//
+void mapinfowindow_select_country(gint nCountryID, const gchar* pszCountryMarkup)
+{
+	g_debug("recentering on countryID %d", nCountryID);
+	g_MapInfoWindow.nCurrentCountryID = nCountryID;
+
+	g_debug("clearing selection on state list");
+	gtk_label_set_markup(g_MapInfoWindow.pStateLabel, MSG_NO_STATE);
+	g_MapInfoWindow.nCurrentStateID = 0;
+
+	// Configure state and city buttons
+	mapinfowindow_load_states(nCountryID);
+	util_gtk_widget_set_visible(GTK_WIDGET(g_MapInfoWindow.pCityButton), FALSE);
+}
+
+static void mapinfowindow_on_country_button_clicked(GtkWidget* _unused, gpointer __unused)
+{
+	// re-zoom to the current country
+	mapinfowindow_select_country(g_MapInfoWindow.nCurrentCountryID, gtk_label_get_label(g_MapInfoWindow.pCountryLabel));
+}
+
+static void mapinfowindow_on_country_chosen(GtkMenuItem* pMenuItem, gint nCountryID)
+{
+	// zoom to selected country
+	gchar* pszName = g_strdup_printf(MSG_COUNTRY, util_gtk_menu_item_get_label_text(pMenuItem));
+	mapinfowindow_select_country(nCountryID, pszName);
+	g_free(pszName);
+}
+
+//
+// State
+//
+void mapinfowindow_select_state(gint nStateID, const gchar* pszStateMarkup)
+{
+	g_debug("recentering on StateID %d", g_MapInfoWindow.nCurrentStateID);
+	g_MapInfoWindow.nCurrentStateID = nStateID;
+	gtk_label_set_markup(g_MapInfoWindow.pStateLabel, pszStateMarkup);
+
+	g_debug("clearing selection on city list");
+	gtk_label_set_markup(g_MapInfoWindow.pCityLabel, MSG_NO_CITY);
+	g_MapInfoWindow.nCurrentCityID = 0;
+
+	if(nStateID != 0) {
+		// Show city button with a new list
+		g_debug("loading cities for nStateID %d", nStateID);
+		mapinfowindow_load_cities(nStateID);
+		util_gtk_widget_set_visible(GTK_WIDGET(g_MapInfoWindow.pCityButton), TRUE);
+	}
+}
+
+static void mapinfowindow_on_state_button_clicked(GtkWidget* _unused, gpointer __unused)
+{
+	// Just re-set selected state
+	mapinfowindow_select_state(g_MapInfoWindow.nCurrentStateID, gtk_label_get_label(g_MapInfoWindow.pStateLabel));
+}
+
+static void mapinfowindow_on_state_chosen(GtkMenuItem* pMenuItem, gint nStateID)
+{
+	gchar* pszName = g_strdup_printf(MSG_STATE, util_gtk_menu_item_get_label_text(pMenuItem));
+	mapinfowindow_select_state(nStateID, pszName);
+	g_free(pszName);
+}
+
+//
+// City
+//
+static void mapinfowindow_on_city_button_clicked(GtkWidget* _unused, gpointer __unused)
+{
+	if(g_MapInfoWindow.nCurrentCityID != 0) {
+		g_debug("recentering on cityID %d", g_MapInfoWindow.nCurrentCityID);
+	}
+}
+
+static void mapinfowindow_on_city_chosen(GtkMenuItem* pMenuItem, gint nCityID)
+{
+	// Set new button text
+	gchar* pszName = g_strdup_printf(MSG_CITY, util_gtk_menu_item_get_label_text(pMenuItem));
+	gtk_label_set_markup(g_MapInfoWindow.pCityLabel, pszName);
+	g_free(pszName);
+
+	g_MapInfoWindow.nCurrentCityID = nCityID;
+	g_debug("centering on CityID %d", nCityID);
 }

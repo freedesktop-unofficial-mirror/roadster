@@ -25,7 +25,8 @@
 #define _SEARCH_H
 
 typedef enum {
-	SEARCH_RESULT_TYPE_COUNTRY = 0,		// in order of importance (for search results)
+	SEARCH_RESULT_TYPE_COORDINATE,	// in order of importance (for search results)
+	SEARCH_RESULT_TYPE_COUNTRY,
 	SEARCH_RESULT_TYPE_STATE,
 	SEARCH_RESULT_TYPE_CITY,
 	SEARCH_RESULT_TYPE_LOCATION,
