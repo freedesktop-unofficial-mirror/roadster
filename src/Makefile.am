@@ -52,7 +52,6 @@ roadster_SOURCES = \
 	glyph.c\
 	road.c\
 	animator.c\
-	gfreelist.c\
 	tooltipwindow.c\
 	test_poly.c
 

@@ -25,7 +25,6 @@
 #define _MAP_H_
 
 #include <math.h>
-#include "gfreelist.h"
 
 //
 // Map Object Types
@@ -220,7 +219,6 @@ typedef struct {
 	GHashTable		*pLocationArrayHashTable;
 
 	GPtrArray		*pLocationSelectionArray;
-	GFreeList		*pLocationSelectionAllocator;
 
 	GdkPixmap* pPixmap;
 

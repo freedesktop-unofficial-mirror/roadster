@@ -195,7 +195,6 @@ gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget)
 
 	// init POI selection
 	pMap->pLocationSelectionArray = g_ptr_array_new();
-	pMap->pLocationSelectionAllocator = g_free_list_new(sizeof(locationselection_t), 100);
 
 	// save it
 	*ppMap = pMap;
@@ -563,8 +562,7 @@ gboolean map_location_selection_add(map_t* pMap, gint nLocationID)
 	}
 
 	// create a new locationselection_t and initialize it
-	locationselection_t* pNew = g_free_list_alloc(pMap->pLocationSelectionAllocator);
-
+	locationselection_t* pNew = g_new0(locationselection_t, 1);
 	pNew->nLocationID = nLocationID;
 	pNew->pAttributesArray = g_ptr_array_new();
 
