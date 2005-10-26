@@ -1,6 +1,11 @@
 2005-10-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/road.c:
+	* src/road.h: Remove hardcoded road suffix list.
+
+2005-10-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/road.c:
 	* src/util.c:
 	* data/road-suffix-list.txt: Moved list of road suffixes to data file.
 
