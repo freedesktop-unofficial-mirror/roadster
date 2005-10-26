@@ -39,6 +39,7 @@ G_BEGIN_DECLS
 
 void search_init();
 void search_clean_string(gchar* p);
+void search_all(const gchar* pszSentence);
 
 gboolean search_address_number_atoi(const gchar* pszText, gint* pnReturn);
 

@@ -21,6 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of directionswindow.c:
+ - This is the bar across the top of the map, visible only when user is following generated directions (XXX: unimplemented)
+ - Show step-by-step directions with various info for each step
+ - Allow user to view each turn by clicking on the line, etc.
+*/
+
 #include <gtk/gtk.h>
 #include <glib-object.h>
 #include <glade/glade.h>
@@ -28,5 +35,3 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-
-

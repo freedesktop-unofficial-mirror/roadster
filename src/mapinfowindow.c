@@ -22,9 +22,12 @@
  */
 
 /*
-	This is the bar containing current [Country] [State] [City] buttons
+Purpose of mapinfowindow.c:
+ - This is the bar containing current [Country] [State] [City] buttons
+ - Allow user to quickly zoom out to country/state/city level
 */
 
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 #include "map.h"

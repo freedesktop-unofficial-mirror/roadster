@@ -21,6 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of animator.c:
+ - Return a number between 0.0 and 1.0 based on the current time
+ - Makes it easy to animate something over time using various functions (linear, parabolic, etc.)
+*/
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif

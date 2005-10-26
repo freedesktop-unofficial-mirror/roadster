@@ -72,7 +72,7 @@ void mainwindow_statusbar_update_position(void);
 
 // Map
 void mainwindow_map_center_on_mappoint(mappoint_t* pPoint);
-void mainwindow_map_get_centerpoint(mappoint_t* pPoint);
+void mainwindow_get_centerpoint(mappoint_t* pPoint);
 void mainwindow_map_slide_to_mappoint(mappoint_t* pPoint);
 
 void mainwindow_add_history();

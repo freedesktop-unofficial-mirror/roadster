@@ -21,11 +21,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include "main.h"
 #include "map.h"
 #include "location.h"
 #include "db.h"
+
+gboolean location_lookup_attribute_name(const gchar* pszName, gint* pnReturnID);
 
 struct {
 	GMemChunk* pLocationChunkAllocator;
@@ -130,8 +133,8 @@ gboolean location_lookup_attribute_name(const gchar* pszName, gint* pnReturnID)
 	g_free(pszSQL);
 	db_free_escaped_string(pszSafeName);
 
-	db_row_t aRow;
-	if(aRow = db_fetch_row(pResultSet)) {
+	db_row_t aRow = db_fetch_row(pResultSet);
+	if(aRow != NULL) {
 		if(pnReturnID) {
 			*pnReturnID = atoi(aRow[0]);
 		}

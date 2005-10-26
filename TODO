@@ -4,21 +4,24 @@ For preview release:
 x Hide sidebar by default
 x Hide all tabs but Results
 x Remove Tooltips
-o Remove Road Search no longer works with just "Main St"
+
 o Choose logo
+o Tile cache needs to free tiles
 o Tile generator
 o Tile parser
-o Tile cache needs to free tiles
+o Make road search no longer works with just "Main St"
 o Remove Debug menu
 
 === OPTIONAL ===
-o Better toolbar icons for mouse tools
-o Better mouse cursor for zoom tool
+o Coordinate search type
+o Fix multi-segment line labeler
 o River sexifier
 o Polygon stitcher for importer
 o Map makeover
-o Road icons (highway, etc.)
+o Map road icons (highway, etc.)
 o Switch to sqlite
+o Better toolbar icons for mouse tools
+o Better mouse cursor for zoom tool
 
 ======================================
 

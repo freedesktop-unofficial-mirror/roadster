@@ -66,7 +66,7 @@ static void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rende
 static void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
 
 // Draw a single line/polygon/point
-static void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray);
+//static void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray);
 //static void map_draw_cairo_locationset(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
 //static void map_draw_cairo_locationselection(map_t* pMap, cairo_t *pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionArray);
 
@@ -470,9 +470,9 @@ void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t
 	cairo_fill(pCairo);
 }
 
+/*
 void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray)
 {
-/*
 	gdouble fRadius = map_degrees_to_pixels(pMap, 0.0007, map_get_zoomlevel(pMap));
 	gboolean bAddition = FALSE;
 
@@ -511,8 +511,8 @@ void map_draw_cairo_layer_points(map_t* pMap, cairo_t* pCairo, rendermetrics_t* 
 //		cairo_fill(pCairo);
 
 	cairo_restore(pCairo);
-*/
 }
+*/
 
 #define ROAD_MAX_SEGMENTS 		(200)
 #define DRAW_LABEL_BUFFER_LEN	(200)
@@ -673,6 +673,9 @@ static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, 
 //
 // Draw a label along a multi-point line
 //
+
+#ifdef ROADSTER_DEAD_CODE
+/*
 static gint map_draw_cairo_road_label_position_sort(gconstpointer pA, gconstpointer pB)
 {
 	labelposition_t *pPosA = *(labelposition_t **)pA;
@@ -681,6 +684,8 @@ static gint map_draw_cairo_road_label_position_sort(gconstpointer pA, gconstpoin
 	if(pPosA->fScore > pPosB->fScore) return -1;
 	return 1;
 }
+*/
+#endif
 
 static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel)
 {

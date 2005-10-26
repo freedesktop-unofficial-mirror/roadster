@@ -1,3 +1,31 @@
+/***************************************************************************
+ *            test_poly.c
+ *
+ *  Copyright  2005  Ian McIntosh
+ *  ian_mcintosh@linuxadvocate.org
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+/*
+Purpose of test_poly.c:
+ - This is the debug window for testing polygon related utility functions.
+*/
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -9,6 +37,7 @@
 
 #include "gui.h"
 #include "map.h"
+#include "map_math.h"
 #include "util.h"
 
 struct {
@@ -78,6 +107,7 @@ static gboolean test_poly_on_clearbutton_clicked(GtkWidget* w, GdkEventButton *e
 gboolean test_poly_on_time_to_queue_draw(GtkWidget* w, GdkEventButton *event)
 {
 	gtk_widget_queue_draw(GTK_WIDGET(g_Test_Poly.pDrawingArea));
+	return FALSE;
 }
 
 static gboolean test_poly_on_mouse_button_click(GtkWidget* w, GdkEventButton *event)
@@ -95,6 +125,7 @@ static gboolean test_poly_on_mouse_button_click(GtkWidget* w, GdkEventButton *ev
 
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(g_Test_Poly.pHideDrawingCheckButton), FALSE);
 	gtk_widget_queue_draw(GTK_WIDGET(g_Test_Poly.pDrawingArea));
+	return FALSE;
 }
 
 static void test_poly_draw_array(cairo_t* pCairo, GArray* pArray)

@@ -21,6 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include "searchwindow.h"
 #include "search.h"
@@ -132,7 +133,7 @@ void search_city_on_words(gchar** aWords, gint nWordCount)
 			// [2] State.CountryID
 			nCount++;
 
-			gint nCountryID = atoi(aRow[2]);
+			//gint nCountryID = atoi(aRow[2]);
 
 			mappoint_t point = {0,0};
 

@@ -21,6 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of road.c:
+ - Convert from road suffix names (eg. "st") to numbers for storing to DB
+ - Convert from numbers to suffix names for display
+ - Convert from direction (N, NW, W, etc.) prefix/suffix to numbers and back (XXX: not yet implemented)
+*/
+
 #include <gtk/gtk.h>
 #include "road.h"
 #include "util.h"

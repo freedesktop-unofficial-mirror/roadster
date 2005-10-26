@@ -21,6 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of tooltipwindow.c:
+ - Make it easy to display a 'tooltip' (really a GtkWindow) with text (XXX: add images, etc?)
+ - Make it easy to make the tooltip follow the mouse cursor
+*/
+
 #include <gtk/gtk.h>
 
 #include "main.h"
@@ -84,4 +90,5 @@ static gboolean tooltip_on_mouse_motion(GtkWidget* pWidget, GdkEventMotion *__un
 {
 	// in case the mouse makes its way onto the tooltip, hide it.
 	gtk_widget_hide(pWidget);
+	return FALSE;
 }

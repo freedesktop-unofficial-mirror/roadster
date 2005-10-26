@@ -21,9 +21,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of search_road.c:
+ - Match search string against road map objects (XXX: and other map objects?)
+*/
+
 #include <gtk/gtk.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "main.h"
 #include "db.h"
@@ -477,7 +483,6 @@ void search_road_filter_result(
 		const gchar* pszZIPLeft, const gchar* pszZIPRight,
 		GArray* pMapPointsArray)
 {
-	gint nRoadID = 0;
 	gchar azBuffer[BUFFER_SIZE];
 
 	mappoint_t ptAddress = {0};

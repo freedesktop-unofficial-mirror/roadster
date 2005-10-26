@@ -21,6 +21,9 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
 
 #include "main.h"
@@ -198,6 +201,8 @@ gboolean util_parse_hex_color(const gchar* pszString, void* pvReturnColor)
 	pReturnColor->fBlue = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
 	azBuffer[0] = *p++; azBuffer[1] = *p++;
 	pReturnColor->fAlpha = (gfloat)strtol(azBuffer, NULL, 16)/255.0;
+
+	return TRUE;
 }
 
 void util_random_color(void* p)
@@ -415,14 +420,14 @@ gchar* util_str_replace_many(const gchar* pszSource, util_str_replace_t* aReplac
 gboolean util_gtk_window_is_fullscreen(GtkWindow* pWindow)
 {
     GdkWindow* pTopLevelGDKWindow = gdk_window_get_toplevel(GTK_WIDGET(pWindow)->window);
-	g_return_if_fail(pTopLevelGDKWindow != NULL);
+	g_return_val_if_fail(pTopLevelGDKWindow != NULL, FALSE);
 
 	GdkWindowState windowstate = gdk_window_get_state(pTopLevelGDKWindow);
 
 	return((windowstate & GDK_WINDOW_STATE_FULLSCREEN) > 0);
 }
 
-gboolean util_gtk_window_set_fullscreen(GtkWindow* pWindow, gboolean bFullscreen)
+void util_gtk_window_set_fullscreen(GtkWindow* pWindow, gboolean bFullscreen)
 {
 	GdkWindow* pTopLevelGDKWindow = gdk_window_get_toplevel(GTK_WIDGET(pWindow)->window);
 	g_return_if_fail(pTopLevelGDKWindow != NULL);
@@ -661,11 +666,11 @@ gboolean util_load_array_of_string_vectors(const gchar* pszPath, GArray** ppRetu
 	gint i;
 	for(i=0 ; i<nNumLines ; i++) {
 		if(apszLines[i][0] == '\0') {
-			g_debug("skipping blank line");
+			//g_debug("skipping blank line");
 			continue;
 		}
 		if(apszLines[i][0] == '#') {
-			g_debug("skipping comment line");
+			//g_debug("skipping comment line");
 			continue;
 		}
 

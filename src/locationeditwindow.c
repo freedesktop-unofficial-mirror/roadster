@@ -73,6 +73,8 @@ void locationeditwindow_show_for_edit(gint nLocationID);
 gboolean locationeditwindow_set_expander_label(gpointer _unused);
 
 // When an 'entry' is created to do in-place editing in a tree, we want to attach this "insert-text" hander to it.
+#ifdef ROADSTER_DEAD_CODE
+/*
 static void callback_install_insert_text_callback_on_entry(GtkCellRenderer *pCellRenderer, GtkCellEditable *pEditable, const gchar *pszTreePath, gpointer pUserData)
 {
 	if(GTK_IS_ENTRY(pEditable)) {
@@ -82,6 +84,8 @@ static void callback_install_insert_text_callback_on_entry(GtkCellRenderer *pCel
 		g_signal_connect(G_OBJECT(GTK_COMBO_BOX_ENTRY(pEditable)), "insert-text", G_CALLBACK(pUserData), NULL);
 	}
 }
+*/
+#endif
 
 // Save the results of in-place cell editing
 static void callback_store_attribute_editing(GtkCellRendererText *pCell, const gchar *pszTreePath, const gchar *pszNewValue, gpointer *pUserData)

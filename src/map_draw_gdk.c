@@ -48,9 +48,10 @@
 //static void map_draw_gdk_background(map_t* pMap, GdkPixmap* pPixmap);
 static void map_draw_gdk_layer_polygons(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
 static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
+static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle);
 
-static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
-static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
+//static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics);
+//static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, locationset_t* pLocationSet, GPtrArray* pLocationsArray);
 
 typedef struct {
 	GdkPixmap* pPixmap;
@@ -153,7 +154,7 @@ void map_draw_gdk(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetric
 }
 
 // useful for filling the screen with a color.  not much else.
-void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle)
+static void map_draw_gdk_layer_fill(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle)
 {
 	GdkGC* pGC = pMap->pTargetWidget->style->fg_gc[GTK_WIDGET_STATE(pMap->pTargetWidget)];
 
@@ -288,7 +289,6 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 {
 	road_t* pRoad;
 	gint iString;
-	gint iPoint;
 
 	if(pLayerStyle->fLineWidth <= 0.0) return;			// Don't draw invisible lines
 	if(pLayerStyle->clrPrimary.fAlpha == 0.0) return;	// invisible?  (not that we respect it in gdk drawing anyway)
@@ -366,6 +366,8 @@ static void map_draw_gdk_layer_lines(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 }
 
 // Draw all locations from sets marked visible
+#ifdef ROADSTER_DEAD_CODE
+/*
 static void map_draw_gdk_locations(map_t* pMap, GdkPixmap* pPixmap, rendermetrics_t* pRenderMetrics)
 {
 	const GPtrArray* pLocationSetsArray = locationset_get_array();
@@ -416,3 +418,5 @@ static void map_draw_gdk_locationset(map_t* pMap, GdkPixmap* pPixmap, rendermetr
 		}
 	}
 }
+*/
+#endif

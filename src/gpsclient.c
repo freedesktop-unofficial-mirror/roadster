@@ -21,6 +21,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of gpsclient.c:
+ - Provide a sanitized interface to GPSD.
+*/
+
 #define HAVE_GPSD		// XXX: this should come from configure.ac
 
 #include <gtk/gtk.h>

@@ -21,6 +21,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of glyph.c:
+ - Load images in various formats
+ - Provide these images in various formats for the rest of the app (currently pixmap, pixbuf)
+ - Be able to reload all images without invalidating the pointers we previously returned 
+*/
+
+#include <string.h>
 #include <gtk/gtk.h>
 #include <cairo.h>
 
@@ -112,14 +120,14 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 		g_free(pszFilePath);
 
 		if(pNewPixbuf != NULL) {
-			g_print("loaded image '%s' as %s with size (%d,%d)\n", pszName, apszExtensions[iExtension], gdk_pixbuf_get_width(pNewPixbuf), gdk_pixbuf_get_height(pNewPixbuf));
+			//g_debug("loaded image '%s' as %s with size (%d,%d)\n", pszName, apszExtensions[iExtension], gdk_pixbuf_get_width(pNewPixbuf), gdk_pixbuf_get_height(pNewPixbuf));
 			break;	// got it!
 		}
 	}
 
 	// Create a fake pixbuf if not found
 	if(pNewPixbuf == NULL) {
-		g_print("unabled to load image '%s'\n", pszName);
+		g_warning("unabled to load image '%s'\n", pszName);
 
 		if(nMaxWidth == -1) {
 			pNewPixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, 16, 16);
@@ -142,7 +150,7 @@ glyph_t* glyph_load(const gchar* pszName)
 
 	glyph_t* pExistingGlyph = NULL;
 	if(glyph_find_by_attributes(pszName, -1, -1, &pExistingGlyph)) {
-		g_print("Found in cache '%s'\n", pszName);
+		//g_debug("Found in cache '%s'\n", pszName);
 		pExistingGlyph->nReferenceCount++;
 		return pExistingGlyph;
 	}
@@ -170,7 +178,7 @@ glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeigh
 
 	glyph_t* pExistingGlyph = NULL;
 	if(glyph_find_by_attributes(pszName, nMaxWidth, nMaxHeight, &pExistingGlyph)) {
-		g_print("Found in cache '%s'\n", pszName);
+		//g_debug("Found in cache '%s'\n", pszName);
 		pExistingGlyph->nReferenceCount++;
 		return pExistingGlyph;
 	}

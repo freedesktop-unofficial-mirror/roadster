@@ -53,7 +53,7 @@ void search_coordinate_init()
 
 void search_coordinate_execute(const gchar* pszSentence)
 {
-	mappoint_t ptResult = {0};
+	//mappoint_t ptResult = {0};
 
 	// Goals:
 	// Make sure never to match something that could likely be a road or POI search!

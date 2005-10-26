@@ -21,6 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of map_tilemanager.c:
+ - Load tiles of map data
+ - Cache tiles
+*/
+
 #include <gtk/gtk.h>
 #include "util.h"
 #include "map_tilemanager.h"

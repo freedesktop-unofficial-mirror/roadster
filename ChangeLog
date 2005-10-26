@@ -1,5 +1,9 @@
 2005-10-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
+	* src/*: Fix all compiler warnings that showed up after adding -Wall.
+
+2005-10-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
 	* src/road.c:
 	* src/road.h: Remove hardcoded road suffix list.
 

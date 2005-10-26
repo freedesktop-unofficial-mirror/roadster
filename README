@@ -1,2 +1,51 @@
 See http://cairographics.org/Roadster/BuildingIt for notes on building.
 
+Main:
+- main.c
+
+Windows:
+- directionswindow.c
+- importwindow.c (will be deleted when importing moves to external app)
+- gotowindow.c
+- locationeditwindow.c
+- mainwindow.c
+- mapinfowindow.c
+- tooltipwindow.c
+- searchwindow.c
+- gui.c
+
+Import (moving to external app):
+- import.c
+ - import_tiger.c
+
+Map:
+- map.c
+ - map_draw_cairo.c
+ - map_draw_gdk.c
+ - map_tilemanager.c
+- map_style.c
+- map_history.c
+- map_hittest.c
+- map_math.c
+
+Search:
+- search.c
+ - search_city.c
+ - search_coordinate.c
+ - search_location.c
+ - search_road.c
+
+Other / Utility:
+- util.c
+- animator.c
+- db.c
+- downloadmanager.c
+- glyph.c
+- gpsclient.c
+- location.c
+- locationset.c
+- road.c
+- scenemanager.c
+
+Debug (not included in release build):
+- test_poly.c

@@ -21,6 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/*
+Purpose of searchwindow.c:
+ - This is the search box in the toolbar and the search results list in the sidebar
+ - Process searches, fill results list, and respond to selections on results list!
+*/
+
 #include <gtk/gtk.h>
 #include <glib-object.h>
 #include <glade/glade.h>
@@ -121,9 +127,6 @@ void searchwindow_init(GladeXML* pGladeXML)
 
 //	util_gtk_entry_add_hint_text(g_SearchWindow.pSearchEntry, "type place or address");
 	util_gtk_entry_add_hint_text(g_SearchWindow.pSearchLocationEntry, "near here");
-
-	g_SearchWindow.pSearchComboBoxEntry;
-	GtkComboBoxEntry a;
 }
 
 void searchwindow_clear_results(void)

@@ -21,9 +21,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-// Purpose:
-// A general purpose, easy to use, asyncronous download manager.   Hand it URLs,
-// and it calls your callback function when it's done.  It's that simple!
+/*
+Purpose of downloadmanager.c:
+ - A general purpose, easy to use, asyncronous download manager.
+ - Hand it URLs, and it calls your callback function when it's done.
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
