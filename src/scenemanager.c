@@ -22,7 +22,7 @@
  */
 
 /*
-Goals:
+Purpose of scenemanager.c:
  - Keep text labels and other screen objects from overlapping
  - Prevent the same text from showing up too often (currently not more than once)
 */

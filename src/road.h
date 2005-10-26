@@ -26,6 +26,8 @@
 
 #include "map.h"
 
+void road_init();
+
 typedef struct {
 	GArray* pMapPointsArray;
 
@@ -40,8 +42,8 @@ typedef struct {
 
 // ESuffixLength
 typedef enum {
-	ROAD_SUFFIX_LENGTH_SHORT,
-	ROAD_SUFFIX_LENGTH_LONG
+	ROAD_SUFFIX_LENGTH_LONG,
+	ROAD_SUFFIX_LENGTH_SHORT
 } ESuffixLength;
 
 enum ERoadNameSuffix {			// these can't change once stored in DB

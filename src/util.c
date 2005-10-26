@@ -21,6 +21,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
+
 #include "main.h"
 #include "util.h"
 
@@ -614,4 +616,91 @@ EDirection util_match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint n
 		eDirection = DIRECTION_NONE;
 	}
 	return eDirection;
+}
+
+// Load a \n separated list of \t separated names as a GArray of gchar* vectors... :)
+gboolean util_load_array_of_string_vectors(const gchar* pszPath, GArray** ppReturnArray, gint nMinVectorLength)
+{
+	g_assert(pszPath != NULL);
+	g_assert(ppReturnArray != NULL);
+	g_assert(*ppReturnArray == NULL);	// require pointer to NULL pointer
+
+	//
+	// 1. Load entire file into memory.  XXX: Better to load one line at a time?
+	//
+	gchar* pszFileContent = NULL;
+	if(gnome_vfs_read_entire_file(pszPath, NULL, &pszFileContent) != GNOME_VFS_OK) {
+		return FALSE;
+	}
+
+	//
+	// 2. Split into lines.
+	//
+	gchar** apszLines = g_strsplit(pszFileContent, "\n", -1);		// -1 = no maximum
+	gint nNumLines = g_strv_length(apszLines);
+
+	//
+	// 3. Create array and add 0 element
+	//
+	GArray* pNewArray = g_array_sized_new(FALSE, FALSE, sizeof(gchar**), nNumLines);
+
+	{
+		// Make the first nMinVectorLength indexes point to "" and the last NULL
+		gchar** apszFirst = g_malloc(sizeof(gchar*) * (nMinVectorLength+1));
+		gint iVector;
+		for(iVector=0 ; iVector<nMinVectorLength ; iVector++) {
+			apszFirst[iVector] = g_strdup("");	// Just so we don't mix allocated and static strings
+		}
+		apszFirst[nMinVectorLength] = NULL;
+		g_array_append_val(pNewArray, apszFirst);
+	}
+
+	//
+	// 4. Add one NULL-terminated char* vector per row
+	//
+	gint i;
+	for(i=0 ; i<nNumLines ; i++) {
+		if(apszLines[i][0] == '\0') {
+			g_debug("skipping blank line");
+			continue;
+		}
+		if(apszLines[i][0] == '#') {
+			g_debug("skipping comment line");
+			continue;
+		}
+
+		gchar** apszWords = g_strsplit(apszLines[i], "\t", -1);
+		if(g_strv_length(apszWords) < nMinVectorLength) {
+			g_error("line %d contains fewer than %d words", i+1, nMinVectorLength);
+		}
+		g_array_append_val(pNewArray, apszWords);
+	}
+
+	//
+	// 5. Cleanup and return.
+	//
+	g_strfreev(apszLines);
+	g_free(pszFileContent);
+
+	*ppReturnArray = pNewArray;
+	return TRUE;
+}
+
+gboolean util_find_string_in_string_vector(const gchar* pszSearch, const gchar** apszVector, gint* pnReturnIndex)
+{
+	g_assert(pszSearch != NULL);
+	g_assert(apszVector != NULL);
+
+	gint i=0;
+	while(apszVector[i] != NULL) {
+		if(g_ascii_strcasecmp(pszSearch, apszVector[i]) == 0) {
+			if(pnReturnIndex != NULL) {
+				g_assert(*pnReturnIndex == -1);		// require either NULL or pointer to (gint)-1
+				*pnReturnIndex = i;
+			}
+			return TRUE;
+		}
+		i++;
+	}
+	return FALSE;
 }

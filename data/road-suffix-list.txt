@@ -1,0 +1,41 @@
+# format is: tab separated list with 'Proper Name' then 'Short Name' then alternatives (used only during import)
+# lines are numbered starting at 1, with 0 being "no suffix".  lines starting with # are ignored.
+Road	Rd
+Street	St
+Drive	Dr
+Boulevard	Blv	Blvd	
+Avenue	Ave	Av
+Circle	Crl	Cir
+Square	Sq
+Path	Pth
+Way	Wy
+Plaza	Plz
+Trail	Trl
+Lane	Ln
+Crossing	Xing
+Place	Pl
+Court	Ct
+Turnpike	Tpke
+Terrace	Ter
+Row	Row
+Parkway	Pky
+Bridge	Brg
+Highway	Hwy
+Run	Run
+Pass	Pass
+Freeway	Fwy
+Alley	Aly
+Crescent	Cres
+Tunnel	Tunl
+Walk	Walk
+Terrace	Trce
+Branch	Br
+Cove	Cv
+Bypass	Byp
+Loop	Loop
+Spur	Spur
+Ramp	Ramp
+Pike	Pike
+Grade	Grd
+Route	Rte
+Arc	Arc

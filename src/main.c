@@ -32,6 +32,7 @@
 #include <gtk/gtk.h>
 #include "main.h"
 #include "gui.h"
+#include "road.h"
 #include "db.h"
 #include "map.h"
 #include "map_style.h"
@@ -140,6 +141,9 @@ gboolean main_init(void)
 	gnome_vfs_make_directory(pszApplicationDir, 0700);
 	g_free(pszApplicationDir);
 #endif
+
+	g_print("initializing road\n");
+	road_init();
 
 	g_print("initializing map styles\n");
 	map_style_init();

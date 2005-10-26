@@ -1,3 +1,9 @@
+2005-10-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
+
+	* src/road.c:
+	* src/util.c:
+	* data/road-suffix-list.txt: Moved list of road suffixes to data file.
+
 2005-10-25  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/map.c: Switch from gfreelist to g_new and g_free for the list of selected POI (currently not really used).
