@@ -56,7 +56,7 @@
 #define PROGRAM_NAME			"Roadster"
 #define PROGRAM_COPYRIGHT		"Copyright (c) 2005 Ian McIntosh"
 #define PROGRAM_DESCRIPTION		"Mapping for everyone!"
-#define WEBSITE_URL				"http://linuxadvocate.org/projects/roadster"
+#define WEBSITE_URL				"http://cairographics.org/roadster/"
 
 //#define ENABLE_MAP_TOOLTIP
 

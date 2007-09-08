@@ -1,5 +1,9 @@
 2007-09-08 Jeff Garrett <jeff@jgarrett.org>
 
+	* src/mainwindow.c: Update website URL to point to the cairo wiki
+
+2007-09-08 Jeff Garrett <jeff@jgarrett.org>
+
 	* src/import.c: Check TIGER filenames have the correct case
 
 2007-09-08 Jeff Garrett <jeff@jgarrett.org>
