@@ -37,27 +37,18 @@
 struct {
 	GPtrArray* pLocationSetArray;	// an array of locationsets
 	GHashTable* pLocationSetHash;	// stores pointers to locationsets, indexed by ID
-
-	GMemChunk* pLocationSetChunkAllocator;	// allocs locationset_t objects
 } g_LocationSet;
 
 void locationset_init()
 {
 	g_LocationSet.pLocationSetArray = g_ptr_array_new();
 	g_LocationSet.pLocationSetHash = g_hash_table_new(g_int_hash, g_int_equal);
-
-	// create memory allocator
-	g_LocationSet.pLocationSetChunkAllocator = g_mem_chunk_new("ROADSTER locationsets",
-			sizeof(locationset_t), sizeof(locationset_t) * 20, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_LocationSet.pLocationSetChunkAllocator != NULL);
 }
 
 // get a new locationset struct from the allocator
 static gboolean locationset_alloc(locationset_t** ppReturn)
 {
-	g_return_val_if_fail(g_LocationSet.pLocationSetChunkAllocator != NULL, FALSE);
-
-	locationset_t* pNew = g_mem_chunk_alloc0(g_LocationSet.pLocationSetChunkAllocator);
+	locationset_t* pNew = g_slice_new0(locationset_t);
 
 	// set defaults
 	pNew->bVisible = TRUE;
@@ -153,7 +144,7 @@ static void locationset_free(locationset_t* pLocationSet)
 	locationset_clear(pLocationSet);
 
 	// give back to allocator
-	g_mem_chunk_free(g_LocationSet.pLocationSetChunkAllocator, pLocationSet);
+	g_slice_free(locationset_t, pLocationSet);
 }
 
 static void locationset_clear_all_locations(void)

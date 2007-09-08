@@ -31,14 +31,10 @@
 gboolean location_lookup_attribute_name(const gchar* pszName, gint* pnReturnID);
 
 struct {
-	GMemChunk* pLocationChunkAllocator;
 } g_Location;
 
 void location_init()
 {
-	g_Location.pLocationChunkAllocator = g_mem_chunk_new("ROADSTER locations",
-			sizeof(location_t), sizeof(location_t) * 1000, G_ALLOC_AND_FREE);
-	g_return_if_fail(g_Location.pLocationChunkAllocator != NULL);
 }
 
 // get a new point struct from the allocator
@@ -46,9 +42,8 @@ gboolean location_alloc(location_t** ppLocation)
 {
 	g_return_val_if_fail(ppLocation != NULL, FALSE);
 	g_return_val_if_fail(*ppLocation == NULL, FALSE);	// must be a pointer to a NULL pointer
-	g_return_val_if_fail(g_Location.pLocationChunkAllocator != NULL, FALSE);
 
-	location_t* pNew = g_mem_chunk_alloc0(g_Location.pLocationChunkAllocator);
+	location_t* pNew = g_slice_new0(location_t);
 	if(pNew) {
 		*ppLocation = pNew;
 		return TRUE;
@@ -60,12 +55,11 @@ gboolean location_alloc(location_t** ppLocation)
 void location_free(location_t* pLocation)
 {
 	g_return_if_fail(pLocation != NULL);
-	g_return_if_fail(g_Location.pLocationChunkAllocator != NULL);
 
 	g_free(pLocation->pszName);
 
 	// give back to allocator
-	g_mem_chunk_free(g_Location.pLocationChunkAllocator, pLocation);
+	g_slice_free(location_t, pLocation);
 }
 
 gboolean location_insert(gint nLocationSetID, mappoint_t* pPoint, gint* pnReturnID)

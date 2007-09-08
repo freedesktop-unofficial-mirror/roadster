@@ -1,5 +1,10 @@
 2007-09-08 Jeff Garrett <jeff@jgarrett.org>
 
+	* src/location.c:
+	* src/locationset.c: Remove (deprecated) GMemChunk
+
+2007-09-08 Jeff Garrett <jeff@jgarrett.org>
+
 	* src/main.c: Add configuration for external MySQL server
 	* configure.ac:
 	* src/db.c: Remove MySQL embedded server
