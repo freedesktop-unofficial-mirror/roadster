@@ -92,8 +92,7 @@ else
     AC_MSG_CHECKING(MySQL libraries)
     MYSQL_VERSION=`${mysqlconfig} --version`
 
-    MYSQL_LIBS="`${mysqlconfig} --libmysqld-libs` -lmygcc -lsupc++"
-    AC_DEFINE([HAVE_MYSQL_EMBED], [1], [Have embedded MySQL])
+    MYSQL_LIBS=`${mysqlconfig} --libs`
 
     AC_MSG_RESULT($MYSQL_LIBS)
     AC_MSG_CHECKING(mysql includes)

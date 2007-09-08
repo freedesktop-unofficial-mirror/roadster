@@ -22,12 +22,7 @@
  */
 
 #include <mysql.h>
-
-#define HAVE_MYSQL_EMBED
-
-#ifdef HAVE_MYSQL_EMBED
-# include <mysql_embed.h>
-#endif
+#include <glib.h>
 
 #include <stdlib.h>
 #include <gtk/gtk.h>
@@ -68,18 +63,8 @@ db_connection_t* g_pDB = NULL;
 // call once on program start-up
 void db_init()
 {
-#ifdef HAVE_MYSQL_EMBED
-	gchar* pszDataDir = g_strdup_printf("%s/.roadster/data", g_get_home_dir());
-	gchar* pszSetDataDirCommand = g_strdup_printf("--datadir=%s", pszDataDir);
 	gchar* pszSetQueryCacheSize = g_strdup_printf("--query-cache-size=%dMB", 40);
 	gchar* pszKeyBufferSize	= g_strdup_printf("--key-buffer-size=%dMB", 32);
-
-#ifdef USE_GNOME_VFS
-	// Create directory if it doesn't exist
-	if(GNOME_VFS_OK != gnome_vfs_make_directory(pszDataDir, 0700)) {
-		// no big deal, probably already exists (should we check?)
-	}
-#endif
 
 	gchar* apszServerOptions[] = {
 		"",	// program name -- unused
@@ -97,29 +82,20 @@ void db_init()
 		"--ft-stopword-file=''",	// non-existant stopword file. we don't want ANY stopwords (words that are ignored)
 
 		// Misc options
-		pszKeyBufferSize,
-		pszSetDataDirCommand
+		pszKeyBufferSize
 	};
 
-	// Initialize the embedded server
-	// NOTE: if not linked with libmysqld, this call will do nothing (but will succeed)
  	if(mysql_server_init(G_N_ELEMENTS(apszServerOptions), apszServerOptions, NULL) != 0) {
 		return;
 	}
-	g_free(pszDataDir);
-	g_free(pszSetDataDirCommand);
 	g_free(pszSetQueryCacheSize);
 	g_free(pszKeyBufferSize);
-#endif
 }
 
 // call once on program shut-down
 void db_deinit()
 {
-#ifdef HAVE_MYSQL_EMBED
-	// Close embedded server if present
 	mysql_server_end();
-#endif
 }
 
 gboolean db_query(const gchar* pszSQL, db_resultset_t** ppResultSet)

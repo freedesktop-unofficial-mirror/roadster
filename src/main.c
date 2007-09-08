@@ -132,6 +132,12 @@ void main_debug_insert_test_data()
 
 gboolean main_init(void)
 {
+	char *db_host = NULL, *db_user = NULL;
+	char *db_passwd = NULL, *db_dbname = NULL;
+	GKeyFile *keyfile;
+
+	char *conffile = g_strdup_printf("%s/.roadster/roadster.conf", g_get_home_dir());
+
 #ifdef USE_GNOME_VFS
 	if(!gnome_vfs_init()) {	
 		g_warning("gnome_vfs_init failed\n");
@@ -159,8 +165,16 @@ gboolean main_init(void)
 	g_print("initializing db\n");
 	db_init();
 
+	keyfile = g_key_file_new();
+	if (g_key_file_load_from_file(keyfile, conffile, G_KEY_FILE_NONE, NULL))
+	{
+		db_host   = g_key_file_get_string(keyfile, "mysql", "host", NULL);
+		db_user   = g_key_file_get_string(keyfile, "mysql", "user", NULL);
+		db_passwd = g_key_file_get_string(keyfile, "mysql", "passwordd", NULL);
+		db_dbname = g_key_file_get_string(keyfile, "mysql", "database", NULL);
+	}
 	g_print("connecting to db\n");
-	db_connect(NULL, NULL, NULL, "");	// Connect to internal DB
+	db_connect(db_host, db_user, db_passwd, db_dbname);
 
 	g_print("creating database tables\n");
 	db_create_tables();

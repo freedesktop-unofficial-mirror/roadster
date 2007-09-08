@@ -1,3 +1,9 @@
+2007-09-08 Jeff Garrett <jeff@jgarrett.org>
+
+	* src/main.c: Add configuration for external MySQL server
+	* configure.ac:
+	* src/db.c: Remove MySQL embedded server
+
 2005-10-26  Ian McIntosh  <ian_mcintosh@linuxadvocate.org>
 
 	* src/*: Fix all compiler warnings that showed up after adding -Wall.
