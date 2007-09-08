@@ -60,7 +60,7 @@ gboolean import_from_uri(const gchar* pszURI)
 
 	g_return_val_if_fail(pszFileBaseName != NULL, FALSE);
 	// does it look like a tgr file name (tgr00000.zip) ?
-	if(strlen(pszFileBaseName) == 12 && g_str_has_prefix(pszFileBaseName, "tgr") && g_str_has_suffix(pszFileBaseName, ".zip")) {
+	if(strlen(pszFileBaseName) == 12 && g_str_has_prefix(pszFileBaseName, "TGR") && g_str_has_suffix(pszFileBaseName, ".ZIP")) {
 		importwindow_log_append("Importing TIGER file %s", info.name);	// NOTE: no "\n" so we can add ...
 		gchar buf[6];
 		memcpy(buf, &pszFileBaseName[3], 5);
