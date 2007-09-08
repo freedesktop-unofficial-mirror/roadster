@@ -68,9 +68,9 @@ static void mapinfowindow_on_country_chosen(GtkMenuItem* pMenuItem, gint nCountr
 static void mapinfowindow_on_state_chosen(GtkMenuItem* pMenuItem, gint nStateID);
 static void mapinfowindow_on_city_chosen(GtkMenuItem* pMenuItem, gint nCityID);
 
-static void mapinfowindow_on_state_button_clicked(GtkWidget* _unused, gpointer __unused);
-static void mapinfowindow_on_city_button_clicked(GtkWidget* _unused, gpointer __unused);
-static void mapinfowindow_on_country_button_clicked(GtkWidget* _unused, gpointer __unused);
+static void mapinfowindow_on_state_button_clicked(GtkWidget* _unused, gpointer unused);
+static void mapinfowindow_on_city_button_clicked(GtkWidget* _unused, gpointer unused);
+static void mapinfowindow_on_country_button_clicked(GtkWidget* _unused, gpointer unused);
 
 static void mapinfowindow_load_countries();
 static void mapinfowindow_load_cities(gint nStateID);
@@ -281,7 +281,7 @@ void mapinfowindow_select_country(gint nCountryID, const gchar* pszCountryMarkup
 	util_gtk_widget_set_visible(GTK_WIDGET(g_MapInfoWindow.pCityButton), FALSE);
 }
 
-static void mapinfowindow_on_country_button_clicked(GtkWidget* _unused, gpointer __unused)
+static void mapinfowindow_on_country_button_clicked(GtkWidget* _unused, gpointer unused)
 {
 	// re-zoom to the current country
 	mapinfowindow_select_country(g_MapInfoWindow.nCurrentCountryID, gtk_label_get_label(g_MapInfoWindow.pCountryLabel));
@@ -316,7 +316,7 @@ void mapinfowindow_select_state(gint nStateID, const gchar* pszStateMarkup)
 	}
 }
 
-static void mapinfowindow_on_state_button_clicked(GtkWidget* _unused, gpointer __unused)
+static void mapinfowindow_on_state_button_clicked(GtkWidget* _unused, gpointer unused)
 {
 	// Just re-set selected state
 	mapinfowindow_select_state(g_MapInfoWindow.nCurrentStateID, gtk_label_get_label(g_MapInfoWindow.pStateLabel));
@@ -332,7 +332,7 @@ static void mapinfowindow_on_state_chosen(GtkMenuItem* pMenuItem, gint nStateID)
 //
 // City
 //
-static void mapinfowindow_on_city_button_clicked(GtkWidget* _unused, gpointer __unused)
+static void mapinfowindow_on_city_button_clicked(GtkWidget* _unused, gpointer unused)
 {
 	if(g_MapInfoWindow.nCurrentCityID != 0) {
 		g_debug("recentering on cityID %d", g_MapInfoWindow.nCurrentCityID);

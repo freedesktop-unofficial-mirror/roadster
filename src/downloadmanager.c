@@ -97,7 +97,7 @@ static void _downloadmanager_move_pending_to_active(downloadmanager_t* pDownload
 	}
 }
 
-// static void _downloader_gnome_vfs_close_callback(GnomeVFSAsyncHandle *_unused, GnomeVFSResult __unused, gpointer ___unused)
+// static void _downloader_gnome_vfs_close_callback(GnomeVFSAsyncHandle *_unused, GnomeVFSResult unused, gpointer ___unused)
 // {
 //     //g_print("downloader: a file has been closed\n");
 // }

@@ -65,7 +65,7 @@ struct {
 static void locationeditwindow_set_title();
 //static void locationeditwindow_nameentry_insert_text(GtkEditable *pEditable, gchar *pszNewText, gint nNewTextLen, gint *pPosition, gpointer pUserData);
 static void locationeditwindow_configure_attribute_list();
-static void locationeditwindow_something_changed_callback(GtkEditable *_unused, gpointer __unused);
+static void locationeditwindow_something_changed_callback(GtkEditable *_unused, gpointer unused);
 
 void locationeditwindow_show_for_new(gint nDefaultLocationSetID);
 void locationeditwindow_show_for_edit(gint nLocationID);
@@ -277,14 +277,14 @@ static void locationeditwindow_set_title()
 
 // Widget Callbacks
 
-static void locationeditwindow_something_changed_callback(GtkEditable *_unused, gpointer __unused)
+static void locationeditwindow_something_changed_callback(GtkEditable *_unused, gpointer unused)
 {
 	// NOTE: This callback is shared by several widgets
 	g_LocationEditWindow.bModified = TRUE;
 	locationeditwindow_set_title();
 }
 
-void locationeditwindow_on_attributeexpander_activate(GtkExpander *_unused, gpointer __unused)
+void locationeditwindow_on_attributeexpander_activate(GtkExpander *_unused, gpointer unused)
 {
 	// HACK: doesn't work when called directly (gets wrong value from expander?) so call it later
 	g_idle_add(locationeditwindow_set_expander_label, NULL);

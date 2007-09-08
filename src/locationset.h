@@ -32,7 +32,7 @@ G_BEGIN_DECLS
 // typedef struct locationsetstyle {
 //     // icon?
 //     // color?
-//     int __unused;
+//     int unused;
 // } locationsetstyle_t;
 
 // a set of locations (eg. "Coffee Shops")

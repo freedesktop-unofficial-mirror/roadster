@@ -86,7 +86,7 @@ void tooltip_hide(tooltip_t* pTooltip)
 	gtk_widget_hide(GTK_WIDGET(pTooltip->pWindow));
 }
 
-static gboolean tooltip_on_mouse_motion(GtkWidget* pWidget, GdkEventMotion *__unused)
+static gboolean tooltip_on_mouse_motion(GtkWidget* pWidget, GdkEventMotion *unused)
 {
 	// in case the mouse makes its way onto the tooltip, hide it.
 	gtk_widget_hide(pWidget);

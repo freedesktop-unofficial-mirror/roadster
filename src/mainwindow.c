@@ -503,7 +503,7 @@ void mainwindow_init(GladeXML* pGladeXML)
 	mapinfowindow_update(g_MainWindow.pMap);
 }
 
-gboolean mainwindow_locationset_list_is_separator_callback(GtkTreeModel *_unused, GtkTreeIter *pIter, gpointer __unused)
+gboolean mainwindow_locationset_list_is_separator_callback(GtkTreeModel *_unused, GtkTreeIter *pIter, gpointer unused)
 {
 	gint nLocationSetID;
 	gtk_tree_model_get(GTK_TREE_MODEL(g_MainWindow.pLocationSetsListStore), pIter, LOCATIONSETLIST_COLUMN_ID, &nLocationSetID, -1);
@@ -1388,7 +1388,7 @@ static gboolean mainwindow_on_key_release(GtkWidget *widget, GdkEventKey *event,
 	return FALSE; 	// propagate further
 }
 
-static gboolean mainwindow_on_window_state_change(GtkWidget *_unused, GdkEventKey *pEvent, gpointer __unused)
+static gboolean mainwindow_on_window_state_change(GtkWidget *_unused, GdkEventKey *pEvent, gpointer unused)
 {
 	// Set the menu's check without calling the signal handler
 	g_signal_handlers_block_by_func(g_MainWindow.pViewFullscreenMenuItem, mainwindow_on_fullscreenmenuitem_activate, NULL);
@@ -1510,7 +1510,7 @@ static gint mainwindow_on_configure_event(GtkWidget *pDrawingArea, GdkEventConfi
 	return TRUE;
 }
 
-static gboolean mainwindow_on_expose_event(GtkWidget *_unused, GdkEventExpose *pEvent, gpointer __unused)
+static gboolean mainwindow_on_expose_event(GtkWidget *_unused, GdkEventExpose *pEvent, gpointer unused)
 {
     if(pEvent->count > 0) return FALSE;
 
@@ -1531,7 +1531,7 @@ static gboolean mainwindow_on_expose_event(GtkWidget *_unused, GdkEventExpose *p
 /*
 ** GPS Functions
 */
-void mainwindow_on_gps_show_position_toggled(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_gps_show_position_toggled(GtkWidget* _unused, gpointer* unused)
 {
 	gboolean bShowPosition = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(g_MainWindow.GPS.pShowPositionCheckButton));
 	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.GPS.pKeepPositionCenteredCheckButton), bShowPosition == TRUE);
@@ -1539,22 +1539,22 @@ void mainwindow_on_gps_show_position_toggled(GtkWidget* _unused, gpointer* __unu
 	gtk_widget_set_sensitive(GTK_WIDGET(g_MainWindow.GPS.pStickToRoadsCheckButton), FALSE);	// XXX: for now.
 }
 
-void mainwindow_on_gps_keep_position_centered_toggled(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_gps_keep_position_centered_toggled(GtkWidget* _unused, gpointer* unused)
 {
 
 }
 
-void mainwindow_on_gps_show_trail_toggled(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_gps_show_trail_toggled(GtkWidget* _unused, gpointer* unused)
 {
 
 }
 
-void mainwindow_on_gps_stick_to_roads_toggled(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_gps_stick_to_roads_toggled(GtkWidget* _unused, gpointer* unused)
 {
 
 }
 
-static gboolean mainwindow_on_gps_redraw_timeout(gpointer __unused)
+static gboolean mainwindow_on_gps_redraw_timeout(gpointer unused)
 {
 	// NOTE: we're setting tooltips on the image's
 	GtkWidget* pWidget = gtk_widget_get_parent(GTK_WIDGET(g_MainWindow.pStatusbarGPSIcon));
@@ -1766,14 +1766,14 @@ void mainwindow_go_to_current_history_item()
 	mainwindow_draw_map(DRAWFLAG_ALL);
 }
 
-void mainwindow_on_backbutton_clicked(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_backbutton_clicked(GtkWidget* _unused, gpointer* unused)
 {
 	map_history_go_back(g_MainWindow.pMapHistory);
 	mainwindow_go_to_current_history_item();
 	mainwindow_update_forward_back_buttons();
 }
 
-void mainwindow_on_forwardbutton_clicked(GtkWidget* _unused, gpointer* __unused)
+void mainwindow_on_forwardbutton_clicked(GtkWidget* _unused, gpointer* unused)
 {
 	map_history_go_forward(g_MainWindow.pMapHistory);
 	mainwindow_go_to_current_history_item();
@@ -1831,7 +1831,7 @@ static void mainwindow_on_locationset_visible_checkbox_clicked(GtkCellRendererTo
 }
 
 
-void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* __unused)
+void mainwindow_on_addpointmenuitem_activate(GtkWidget *_unused, gpointer* unused)
 {
 	mappoint_t point;
 	map_windowpoint_to_mappoint(g_MainWindow.pMap, &g_MainWindow.ptClickLocation, &point);

@@ -50,7 +50,7 @@ void scenemanager_set_screen_dimensions(scenemanager_t* pSceneManager, gint nWin
 	pSceneManager->nWindowHeight = nWindowHeight;
 }
 
-gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* __unused_pScreenLocation, gint nFlags)
+gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gchar* pszLabel, GdkPoint* unused_pScreenLocation, gint nFlags)
 {
 #ifdef ENABLE_NO_DUPLICATE_LABELS
 	g_assert(pSceneManager != NULL);
