@@ -593,8 +593,8 @@ static gboolean import_tiger_parse_table_1(gchar* pBuffer, gint nLength, GHashTa
 		import_tiger_read_string(&pLine[20-1], TIGER_CHAIN_NAME_LEN, &pRecord->achName[0]);
 
 		// columns 141-145 and 146-150 are FIPS55 codes which link this road to a city
-		import_tiger_read_int(&pLine[141-1], TIGER_FIPS55_LEN, &pRecord->nFIPS55Left);
-		import_tiger_read_int(&pLine[146-1], TIGER_FIPS55_LEN, &pRecord->nFIPS55Right);
+		import_tiger_read_int(&pLine[161-1], TIGER_FIPS55_LEN, &pRecord->nFIPS55Left);
+		import_tiger_read_int(&pLine[166-1], TIGER_FIPS55_LEN, &pRecord->nFIPS55Right);
 
 		// Read suffix name and convert it to an integer
 		gchar achType[5];
@@ -740,7 +740,7 @@ static gboolean import_tiger_parse_table_c(gint8* pBuffer, gint nLength, GHashTa
 
 		// We only want Entity Type M (??)
 		char chEntityType = pLine[25-1];
-		if(chEntityType != 'M') continue;
+		if(chEntityType != 'P') continue;
 
 		tiger_record_rtc_t* pRecord;
 		pRecord = g_new0(tiger_record_rtc_t, 1);

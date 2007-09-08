@@ -1,5 +1,9 @@
 2007-09-08 Jeff Garrett <jeff@jgarrett.org>
 
+	* src/import_tiger.c: Use places instead of primary county subdivisions
+
+2007-09-08 Jeff Garrett <jeff@jgarrett.org>
+
 	* src/location.c:
 	* src/locationset.c: Remove (deprecated) GMemChunk
 
