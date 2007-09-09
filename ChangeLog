@@ -1,3 +1,7 @@
+2007-09-09 Jeff Garrett <jeff@jgarrett.org>
+
+	* src/main.c: Fix typo in database configuration file parse
+
 2007-09-08 Jeff Garrett <jeff@jgarrett.org>
 
 	* src/downloadmanager.c:

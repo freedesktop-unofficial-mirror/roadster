@@ -170,7 +170,7 @@ gboolean main_init(void)
 	{
 		db_host   = g_key_file_get_string(keyfile, "mysql", "host", NULL);
 		db_user   = g_key_file_get_string(keyfile, "mysql", "user", NULL);
-		db_passwd = g_key_file_get_string(keyfile, "mysql", "passwordd", NULL);
+		db_passwd = g_key_file_get_string(keyfile, "mysql", "password", NULL);
 		db_dbname = g_key_file_get_string(keyfile, "mysql", "database", NULL);
 	}
 	g_print("connecting to db\n");
