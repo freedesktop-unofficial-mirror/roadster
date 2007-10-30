@@ -53,7 +53,8 @@ roadster_SOURCES = \
 	road.c\
 	animator.c\
 	tooltipwindow.c\
-	test_poly.c
+	test_poly.c\
+	tiger.c
 
 roadster_LDADD = \
 	$(GNOME_LIBS) \

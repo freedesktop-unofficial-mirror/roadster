@@ -1,5 +1,14 @@
 2007-10-30 Jeff Garrett <jeff@jgarrett.org>
 
+        * data/Makefile.am:
+	* data/tiger-states.txt: Add list of TIGER states
+	* src/Makefile.am
+	* src/import_tiger.c
+	* src/tiger.c
+	* src/tiger.h: Use list of TIGER states instead of hard-coded array
+
+2007-10-30 Jeff Garrett <jeff@jgarrett.org>
+
 	* src/import_tiger.c: Allow remote URIs in import_tiger_from_uri
 
 2007-09-09 Jeff Garrett <jeff@jgarrett.org>

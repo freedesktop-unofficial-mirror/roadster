@@ -31,6 +31,7 @@
 #include "import_tiger.h"
 #include "importwindow.h"
 #include "road.h"
+#include "tiger.h"
 
 #ifdef USE_GNOME_VFS
 #include <gnome-vfs-2.0/libgnomevfs/gnome-vfs.h>
@@ -54,13 +55,6 @@
 
 #define ROWS_PER_PULSE						(18000)		// call import_progress_pulse() after this many rows parsed
 #define CALLBACKS_PER_PULSE					(30)		// call " after this many iterations over hash tables (writing to DB)
-
-typedef struct {
-	gchar* pszCode;
-	gchar* pszName;
-} state_t;
-
-extern state_t g_aStates[79];
 
 gint g_nStateID = 0;		// this is set during import process
 
@@ -1276,9 +1270,12 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 	// did we read all files?
 	if(bSuccess) {
 		gint nStateID = (nTigerSetNumber / 1000);	// int division (eg. turn 25017 into 25)
-		if(nStateID < G_N_ELEMENTS(g_aStates)) {
+		GHashTable *states = tiger_get_states();
+		struct tiger_state *st;
+		if ((st = g_hash_table_lookup(states, &nStateID)))
+		{
 			gint nCountryID = 1;	// USA is #1 *gag*
-			db_insert_state(g_aStates[nStateID].pszName, g_aStates[nStateID].pszCode, nCountryID, &g_nStateID);
+			db_insert_state(st->name, st->abbrev, nCountryID, &g_nStateID);
 		}
 
 		g_assert(G_N_ELEMENTS(apszExtensions) == 7);
@@ -1428,73 +1425,3 @@ static void debug_print_string(char* str, gint len)
 	g_print("\n");
 }
 #endif
-
-state_t g_aStates[79] = {
-			{"", 	""},	// NOTE: these are in the proper order to line up with the TIGER data's FIPS code.  don't mess with them. :)
-/* 1 */		{"AL", 	"Alabama"},
-/* 2 */		{"AK", 	"Alaska"},
-/* 3 */		{"", 	""},	// unused
-/* 4 */		{"AZ", 	"Arizona"},
-/* 5 */		{"AR", 	"Arkansas"},
-/* 6 */		{"CA", 	"California"},
-/* 7 */		{"", 	""},
-/* 8 */		{"CO", 	"Colorado"},
-/* 9 */		{"CT", 	"Connecticut"},
-/* 10 */	{"DE", 	"Delaware"},
-/* 11 */	{"DC", 	"District of Columbia"},
-/* 12 */	{"FL", 	"Florida"},
-/* 13 */	{"GA", 	"Georgia"},
-/* 14 */	{"", 	""},
-/* 15 */	{"HI", 	"Hawaii"},
-/* 16 */	{"ID", 	"Idaho"},
-/* 17 */	{"IL", 	"Illinois"},
-/* 18 */	{"IN", 	"Indiana"},
-/* 19 */	{"IA", 	"Iowa"},
-/* 20 */	{"KS", 	"Kansas"},
-/* 21 */	{"KY", 	"Kentucky"},
-/* 22 */	{"LA", 	"Louisiana"},
-/* 23 */	{"ME", 	"Maine"},
-/* 24 */	{"MD", 	"Maryland"},
-/* 25 */	{"MA", 	"Massachusetts"},
-/* 26 */	{"MI", 	"Michigan"},
-/* 27 */	{"MN", 	"Minnesota"},
-/* 28 */	{"MS", 	"Mississippi"},
-/* 29 */	{"MO", 	"Missouri"},
-/* 30 */	{"MT", 	"Montana"},
-/* 31 */	{"NE", 	"Nebraska"},
-/* 32 */	{"NV", 	"Nevade"},
-/* 33 */	{"NH", 	"New Hampshire"},
-/* 34 */	{"NJ", 	"New Jersey"},
-/* 35 */	{"NM", 	"New Mexico"},
-/* 36 */	{"NY", 	"New York"},
-/* 37 */	{"NC", 	"North Carolina"},
-/* 38 */	{"ND", 	"North Dakota"},
-/* 39 */	{"OH", 	"Ohio"},
-/* 40 */	{"OK", 	"Oklahoma"},
-/* 41 */	{"OR", 	"Oregon"},
-/* 42 */	{"PA", 	"Pennsylvania"},
-/* 43 */	{"", 	""},
-/* 44 */	{"RI", 	"Rhode Island"},
-/* 45 */	{"SC", 	"South Carolina"},
-/* 46 */	{"SD", 	"South Dakota"},
-/* 47 */	{"TN", 	"Tennessee"},
-/* 48 */	{"TX", 	"Texas"},
-/* 49 */	{"UT", 	"Utah"},
-/* 50 */	{"VT", 	"Vermont"},
-/* 51 */	{"VA", 	"Virginia"},
-/* 52 */	{"", 	""},
-/* 53 */	{"WA", 	"Washington"},
-/* 54 */	{"WV", 	"West Virginia"},
-/* 55 */	{"WI", 	"Wisconsin"},
-/* 56 */	{"WY", 	"Wyoming"},
-/* 57-59 */	{"", 	""},{"", 	""},{"", 	""},
-/* 60 */	{"AS", 	"American Samoa"},
-/* 61-65 */	{"", 	""},{"", 	""},{"", 	""},{"", 	""},{"", 	""},
-/* 66 */	{"GU", 	"Guam"},
-/* 67-68 */	{"", 	""}, {"", 	""},
-/* 69 */	{"MP", 	"Northern Mariana Islands"},
-/* 70-71 */	{"", 	""},{"", 	""},
-/* 72 */	{"PR", 	"Puerto Rico"},
-/* 73-77 */	{"", 	""},{"", 	""},{"", 	""},{"", 	""},{"", 	""},
-/* 78 */	{"VI", 	"Virgin Islands"},
-};
