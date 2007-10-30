@@ -1193,18 +1193,23 @@ gboolean import_tiger_from_uri(const gchar* pszURI, gint nTigerSetNumber)
 
 	importwindow_progress_pulse();
 
+	//
+	// Make a temporary directory
+	//
+	gchar* pszTempDir = g_strdup_printf("%s/roadster", g_get_tmp_dir());
+	gnome_vfs_make_directory(pszTempDir, 0700);
+	gchar* pszLocalFileUri  = g_strdup_printf("file:///%s/tiger.zip", pszTempDir);
+
 	// convert from "file:///path/to/file" to "/path/to/file" (only works on local files)
-	gchar* pszLocalFilePath = gnome_vfs_get_local_path_from_uri(pszURI);
+	gchar* pszLocalFilePath = gnome_vfs_get_local_path_from_uri(pszLocalFileUri);
 	if(pszLocalFilePath == NULL) {
 		g_warning("import_tiger_from_uri: gnome_vfs_get_local_path_from_uri failed (not local?)\n");
 		return FALSE;
 	}
 	
-	//
-	// Make a temporary directory for ZIP file contents
-	//
-	gchar* pszTempDir = g_strdup_printf("%s/roadster", g_get_tmp_dir());
-	gnome_vfs_make_directory(pszTempDir, 0700);
+	GnomeVFSURI *src = gnome_vfs_uri_new(pszURI);
+	GnomeVFSURI *dst = gnome_vfs_uri_new(pszLocalFileUri);
+	gnome_vfs_xfer_uri(src, dst, GNOME_VFS_XFER_DEFAULT, GNOME_VFS_XFER_ERROR_MODE_ABORT, GNOME_VFS_XFER_OVERWRITE_MODE_REPLACE, NULL, NULL);
 
 	//
 	// Create unzip command line

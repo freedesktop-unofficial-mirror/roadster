@@ -1,3 +1,7 @@
+2007-10-30 Jeff Garrett <jeff@jgarrett.org>
+
+	* src/import_tiger.c: Allow remote URIs in import_tiger_from_uri
+
 2007-09-09 Jeff Garrett <jeff@jgarrett.org>
 
 	* src/main.c: Fix typo in database configuration file parse
