@@ -39,7 +39,7 @@ typedef struct {
 } glyph_t;
 
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight);
-glyph_t* glyph_load(const gchar* pszName);
+#define glyph_load(_name)	glyph_load_at_size(_name, -1, -1)
 
 void glyph_reload_all(void);
 

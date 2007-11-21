@@ -143,38 +143,6 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 	pNewGlyph->nHeight = gdk_pixbuf_get_height(pNewPixbuf);
 }
 
-// Load at image's default size
-glyph_t* glyph_load(const gchar* pszName)
-{
-	g_assert(pszName != NULL);
-
-	glyph_t* pExistingGlyph = NULL;
-
-	if (!g_pGlyphArray)
-		g_pGlyphArray = g_ptr_array_new();
-
-	if(glyph_find_by_attributes(pszName, -1, -1, &pExistingGlyph)) {
-		//g_debug("Found in cache '%s'\n", pszName);
-		pExistingGlyph->nReferenceCount++;
-		return pExistingGlyph;
-	}
-
-	// NOTE: We always return something!
-	glyph_t* pNewGlyph = g_new0(glyph_t, 1);
-	pNewGlyph->nReferenceCount = 1;
-
-	pNewGlyph->pszName = g_strdup(pszName);
-	pNewGlyph->nMaxWidth = -1;
-	pNewGlyph->nMaxHeight = -1;
-
-	// call internal function to fill the struct
-	_glyph_load_at_size_into_struct(pNewGlyph, pszName, -1, -1);
-
-	g_ptr_array_add(g_pGlyphArray, pNewGlyph);
-
-	return pNewGlyph;
-}
-
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
 {
 	g_assert(pszName != NULL);
