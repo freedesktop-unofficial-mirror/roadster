@@ -39,10 +39,6 @@ Purpose of glyph.c:
  */
 static GPtrArray* g_pGlyphArray;
 
-void glyph_init()
-{
-	g_pGlyphArray = g_ptr_array_new();
-}
 
 #define MAX_GLYPH_FILE_NAME_LEN		(30)
 
@@ -87,6 +83,10 @@ gboolean glyph_is_safe_file_name(const gchar* pszName)
 gboolean glyph_find_by_attributes(const gchar* pszName, gint nMaxWidth, gint nMaxHeight, glyph_t** ppReturnGlyph)
 {
 	gint i;
+
+	if (!g_pGlyphArray)
+		g_pGlyphArray = g_ptr_array_new();
+
 	for(i=0 ; i<g_pGlyphArray->len ; i++) {
 		glyph_t* pGlyph = g_ptr_array_index(g_pGlyphArray, i);
 		if(pGlyph->nMaxWidth == nMaxWidth && pGlyph->nMaxHeight == nMaxHeight && strcmp(pGlyph->pszName, pszName) == 0) {
@@ -146,10 +146,13 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 // Load at image's default size
 glyph_t* glyph_load(const gchar* pszName)
 {
-	g_assert(g_pGlyphArray != NULL);
 	g_assert(pszName != NULL);
 
 	glyph_t* pExistingGlyph = NULL;
+
+	if (!g_pGlyphArray)
+		g_pGlyphArray = g_ptr_array_new();
+
 	if(glyph_find_by_attributes(pszName, -1, -1, &pExistingGlyph)) {
 		//g_debug("Found in cache '%s'\n", pszName);
 		pExistingGlyph->nReferenceCount++;
@@ -174,10 +177,13 @@ glyph_t* glyph_load(const gchar* pszName)
 
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
 {
-	g_assert(g_pGlyphArray != NULL);
 	g_assert(pszName != NULL);
 
 	glyph_t* pExistingGlyph = NULL;
+
+	if (!g_pGlyphArray)
+		g_pGlyphArray = g_ptr_array_new();
+
 	if(glyph_find_by_attributes(pszName, nMaxWidth, nMaxHeight, &pExistingGlyph)) {
 		//g_debug("Found in cache '%s'\n", pszName);
 		pExistingGlyph->nReferenceCount++;
