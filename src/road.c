@@ -43,7 +43,7 @@ struct {
 	GArray* pRoadNameSuffixArray;	// an array of null-terminated vectors (an array of gchar* with the last being NULL)
 } g_Road = {0};
 
-void road_init()
+static void road_init()
 {
 	gchar* pszPath = g_strdup_printf(PACKAGE_SOURCE_DIR"/data/%s", ROAD_SUFFIX_LIST_FILE_NAME);
 	if(util_load_array_of_string_vectors(pszPath, &(g_Road.pRoadNameSuffixArray), ROAD_SUFFIX_LIST_MIN_WORDS) == FALSE) {
@@ -62,6 +62,9 @@ void road_init()
 
 const gchar* road_suffix_itoa(gint nSuffixID, ESuffixLength eSuffixLength)
 {
+	if (!g_Road)
+		road_init();
+
 	if(nSuffixID < g_Road.pRoadNameSuffixArray->len) {
 		//g_debug("looking up suffixID %d", nSuffixID);
 		gchar** apszWords = g_array_index(g_Road.pRoadNameSuffixArray, gchar**, nSuffixID);
@@ -75,6 +78,9 @@ const gchar* road_suffix_itoa(gint nSuffixID, ESuffixLength eSuffixLength)
 
 gboolean road_suffix_atoi(const gchar* pszSuffix, gint* pReturnSuffixID)
 {
+	if (!g_Road)
+		road_init();
+
 	g_assert(pszSuffix != NULL);
 	g_assert(pReturnSuffixID != NULL);
 

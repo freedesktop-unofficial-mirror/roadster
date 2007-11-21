@@ -148,9 +148,6 @@ gboolean main_init(void)
 	g_free(pszApplicationDir);
 #endif
 
-	g_print("initializing road\n");
-	road_init();
-
 	g_print("initializing map styles\n");
 	map_style_init();
 

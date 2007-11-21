@@ -26,8 +26,6 @@
 
 #include "map.h"
 
-void road_init();
-
 typedef struct {
 	GArray* pMapPointsArray;
 
