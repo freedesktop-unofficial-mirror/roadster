@@ -26,7 +26,7 @@
 
 #define TIGER_STATES_FILE	DATADIR "/tiger-states.txt"
 
-GHashTable *state_list;
+static GHashTable *state_list;
 
 
 GHashTable *tiger_get_states()
