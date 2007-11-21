@@ -272,7 +272,6 @@ typedef struct {
 // extern draworder_t layerdraworder[NUM_SUBLAYER_TO_DRAW];    //
 
 
-void map_init(void);
 gboolean map_new(map_t** ppMap, GtkWidget* pTargetWidget);
 
 // Gets and Sets

@@ -28,8 +28,6 @@
 
 #define GTK_PROCESS_MAINLOOP  while (gtk_events_pending ()) { gtk_main_iteration (); }
 
-#define SWAP(x, y)                   { (x) ^= (y) ^= (x) ^= (y); }
-
 void util_random_color(void* pColor);
 gboolean util_parse_hex_color(const gchar* pszString, void* pReturnColor);
 
@@ -94,8 +92,6 @@ gint util_get_int_at_percent_of_range(gdouble fPercent, gint nA, gint nB);
 gdouble util_get_percent_of_range(gint nMiddle, gint nA, gint nB);
 
 gchar* util_format_gdouble(gdouble d);
-
-void util_g_free_with_param(gpointer pMemory, gpointer _unused);
 
 EDirection util_match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorderSize);
 

@@ -30,12 +30,6 @@
 
 gboolean location_lookup_attribute_name(const gchar* pszName, gint* pnReturnID);
 
-struct {
-} g_Location;
-
-void location_init()
-{
-}
 
 // get a new point struct from the allocator
 gboolean location_alloc(location_t** ppLocation)

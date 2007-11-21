@@ -36,7 +36,6 @@
 void search_init()
 {
 	search_road_init();
-	search_location_init();
 	search_city_init();
 	search_coordinate_init();
 }

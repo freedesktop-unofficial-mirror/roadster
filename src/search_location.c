@@ -49,10 +49,6 @@
 void search_location_on_words(gchar** aWords, gint nWordCount);
 void search_location_filter_result(gint nLocationID, gint nLocationSetID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates);
 
-void search_location_init()
-{
-	
-}
 
 void search_location_execute(const gchar* pszSentence)
 {

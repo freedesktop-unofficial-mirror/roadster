@@ -554,12 +554,6 @@ gchar* util_format_gdouble(gdouble d)
 	return g_strdup(achBuffer);
 }
 
-void util_g_free_with_param(gpointer pMemory, gpointer _unused)
-{
-	g_assert(pMemory != NULL);
-	g_free(pMemory);
-}
-
 EDirection util_match_border(gint nX, gint nY, gint nWidth, gint nHeight, gint nBorderSize)
 {
 	EDirection eDirection;

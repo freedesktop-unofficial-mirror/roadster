@@ -153,8 +153,6 @@ gboolean main_init(void)
 
 	g_print("initializing map styles\n");
 	map_style_init();
-	g_print("initializing map\n");
-	map_init();
 
 	g_print("initializing gpsclient\n");
 	gpsclient_init();
@@ -197,9 +195,6 @@ gboolean main_init(void)
 
 	g_print("initializing search\n");
 	search_init();
-
-	g_print("initializing locations\n");
-	location_init();
 
 	g_print("initialization complete\n");
 	return TRUE;
