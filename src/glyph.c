@@ -34,13 +34,14 @@ Purpose of glyph.c:
 
 #include "glyph.h"
 
-struct {
-	GPtrArray* pGlyphArray;	// to store all glyphs we hand out
-} g_Glyph = {0};
+/*
+ * A cache of loaded glyphs
+ */
+static GPtrArray* g_pGlyphArray;
 
 void glyph_init()
 {
-	g_Glyph.pGlyphArray = g_ptr_array_new();
+	g_pGlyphArray = g_ptr_array_new();
 }
 
 #define MAX_GLYPH_FILE_NAME_LEN		(30)
@@ -86,8 +87,8 @@ gboolean glyph_is_safe_file_name(const gchar* pszName)
 gboolean glyph_find_by_attributes(const gchar* pszName, gint nMaxWidth, gint nMaxHeight, glyph_t** ppReturnGlyph)
 {
 	gint i;
-	for(i=0 ; i<g_Glyph.pGlyphArray->len ; i++) {
-		glyph_t* pGlyph = g_ptr_array_index(g_Glyph.pGlyphArray, i);
+	for(i=0 ; i<g_pGlyphArray->len ; i++) {
+		glyph_t* pGlyph = g_ptr_array_index(g_pGlyphArray, i);
 		if(pGlyph->nMaxWidth == nMaxWidth && pGlyph->nMaxHeight == nMaxHeight && strcmp(pGlyph->pszName, pszName) == 0) {
 			if(ppReturnGlyph) {
 				*ppReturnGlyph = pGlyph;
@@ -145,7 +146,7 @@ void _glyph_load_at_size_into_struct(glyph_t* pNewGlyph, const gchar* pszName, g
 // Load at image's default size
 glyph_t* glyph_load(const gchar* pszName)
 {
-	g_assert(g_Glyph.pGlyphArray != NULL);
+	g_assert(g_pGlyphArray != NULL);
 	g_assert(pszName != NULL);
 
 	glyph_t* pExistingGlyph = NULL;
@@ -166,14 +167,14 @@ glyph_t* glyph_load(const gchar* pszName)
 	// call internal function to fill the struct
 	_glyph_load_at_size_into_struct(pNewGlyph, pszName, -1, -1);
 
-	g_ptr_array_add(g_Glyph.pGlyphArray, pNewGlyph);
+	g_ptr_array_add(g_pGlyphArray, pNewGlyph);
 
 	return pNewGlyph;
 }
 
 glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeight)
 {
-	g_assert(g_Glyph.pGlyphArray != NULL);
+	g_assert(g_pGlyphArray != NULL);
 	g_assert(pszName != NULL);
 
 	glyph_t* pExistingGlyph = NULL;
@@ -194,7 +195,7 @@ glyph_t* glyph_load_at_size(const gchar* pszName, gint nMaxWidth, gint nMaxHeigh
 	// call internal function to fill the struct
 	_glyph_load_at_size_into_struct(pNewGlyph, pszName, nMaxWidth, nMaxHeight);
 
-	g_ptr_array_add(g_Glyph.pGlyphArray, pNewGlyph);
+	g_ptr_array_add(g_pGlyphArray, pNewGlyph);
 
 	return pNewGlyph;
 }
@@ -248,17 +249,17 @@ void glyph_free(glyph_t* pGlyph)
 void glyph_deinit(void)
 {
 	gint i;
-	for(i=0 ; i<g_Glyph.pGlyphArray->len ; i++) {
-		glyph_free(g_ptr_array_index(g_Glyph.pGlyphArray, i));
+	for(i=0 ; i<g_pGlyphArray->len ; i++) {
+		glyph_free(g_ptr_array_index(g_pGlyphArray, i));
 	}
-	g_ptr_array_free(g_Glyph.pGlyphArray, TRUE);
+	g_ptr_array_free(g_pGlyphArray, TRUE);
 }
 
 void glyph_reload_all(void)
 {
 	gint i;
-	for(i=0 ; i<g_Glyph.pGlyphArray->len ; i++) {
-		glyph_t* pGlyph = g_ptr_array_index(g_Glyph.pGlyphArray, i);
+	for(i=0 ; i<g_pGlyphArray->len ; i++) {
+		glyph_t* pGlyph = g_ptr_array_index(g_pGlyphArray, i);
 
 		gdk_pixbuf_unref(pGlyph->pPixbuf);	pGlyph->pPixbuf = NULL;
 		// the rest of the fields remain.
@@ -288,8 +289,8 @@ void glyph_reload_all(void)
 	svg_cairo_get_size(pNewGlyph->pCairoSVG, &(pNewGlyph->nWidth), &(pNewGlyph->nHeight));
 
 	// add it to array
-	gint nGlyphHandle = g_Glyph.pGlyphArray->len;  // next available slot
-	g_ptr_array_add(g_Glyph.pGlyphArray, pNewGlyph);
+	gint nGlyphHandle = g_pGlyphArray->len;  // next available slot
+	g_ptr_array_add(g_pGlyphArray, pNewGlyph);
 
 	return nGlyphHandle;
 
