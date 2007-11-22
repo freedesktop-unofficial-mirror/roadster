@@ -30,6 +30,7 @@
 #include "search_location.h"
 #include "search_city.h"
 #include "search_coordinate.h"
+#include "searchwindow.h"
 
 
 // functions common to all searches
@@ -92,8 +93,18 @@ gboolean search_address_number_atoi(const gchar* pszText, gint* pnReturn)
 	return TRUE;
 }
 
+static GList *(*search_functions[])(const char *) = {
+	search_city_execute,
+	search_location_execute,
+	search_road_execute,
+	search_coordinate_execute,
+};
+
 void search_all(const gchar* pszSentence)
 {
+	GList *p;
+	int i;
+
 	if(pszSentence[0] == 0) {
 		return;	// no results...
 	}
@@ -104,10 +115,21 @@ void search_all(const gchar* pszSentence)
 	search_clean_string(pszCleanedSentence);
 
 	// Search each object type
-	search_city_execute(pszCleanedSentence);
-	search_location_execute(pszCleanedSentence);
-	search_road_execute(pszCleanedSentence);
-	search_coordinate_execute(pszCleanedSentence);
+	for (i = 0; i < G_N_ELEMENTS(search_functions); i++)
+	{
+		GList *results = (search_functions[i])(pszCleanedSentence);
+		for (p = results; p; p = g_list_next(p))
+		{
+			struct search_result *hit = g_list_nth_data(p, 0);
+
+			searchwindow_add_result(hit->type, hit->text, hit->glyph, hit->point, hit->zoom_level);
+
+			g_free(hit->point);
+			g_free(hit->text);
+			g_free(hit);
+		}
+		g_list_free(results);
+	}
 	
 	TIMER_END(search, "END SearchAll");
 

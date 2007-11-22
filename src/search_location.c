@@ -46,17 +46,21 @@
 //	gint nWordCount;
 //} locationsearch_t;
 
-void search_location_on_words(gchar** aWords, gint nWordCount);
-void search_location_filter_result(gint nLocationID, gint nLocationSetID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates);
+GList *search_location_on_words(gchar** aWords, gint nWordCount, GList *ret);
+GList *search_location_filter_result(gint nLocationID, gint nLocationSetID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates, GList *ret);
 
 
-void search_location_execute(const gchar* pszSentence)
+GList *search_location_execute(const gchar* pszSentence)
 {
+	GList *ret = NULL;
+
 	// Create an array of the words
 	gchar** aaWords = g_strsplit(pszSentence, " ", 0);        // " " = delimeters, 0 = no max #
 	gint nWords = g_strv_length(aaWords);
-	search_location_on_words(aaWords, nWords);
+	ret = search_location_on_words(aaWords, nWords, ret);
 	g_strfreev(aaWords);    // free entire array of strings
+
+	return ret;
 }
 
 /*
@@ -88,9 +92,9 @@ WHERE
   Matches.LocationID = Location.ID	# join our list of Matches to Location to get needed data
 */
 
-void search_location_on_words(gchar** aWords, gint nWordCount)
+GList *search_location_on_words(gchar** aWords, gint nWordCount, GList *ret)
 {
-	if(nWordCount == 0) return;
+	if(nWordCount == 0) return ret;
 
 	gchar* pszInnerSelects = g_strdup("");
 	gint i;
@@ -170,7 +174,7 @@ void search_location_on_words(gchar** aWords, gint nWordCount)
 					gchar* pszLocationAddress = aRow[3];
 					db_parse_wkb_point(aRow[4], &pt);	// Parse coordinates
 
-					search_location_filter_result(nLocationID, nLocationSetID, pszLocationName, pszLocationAddress, &pt);
+					ret = search_location_filter_result(nLocationID, nLocationSetID, pszLocationName, pszLocationAddress, &pt, ret);
 				}
 			}
 			db_free_result(pResultSet);
@@ -183,9 +187,11 @@ void search_location_on_words(gchar** aWords, gint nWordCount)
 	else {
 		g_print("search failed\n");
 	}
+
+	return ret;
 }
 
-void search_location_filter_result(gint nLocationID, gint nLocationSetID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates)
+GList *search_location_filter_result(gint nLocationID, gint nLocationSetID, const gchar* pszName, const gchar* pszAddress, const mappoint_t* pCoordinates, GList *ret)
 {
 	gchar* pszResultText = g_strdup_printf("<b>%s</b>%s%s", pszName,
 					       (pszAddress == NULL || pszAddress[0] == '\0') ? "" : "\n",
@@ -197,9 +203,22 @@ void search_location_filter_result(gint nLocationID, gint nLocationSetID, const 
 	if(locationset_find_by_id(nLocationSetID, &pLocationSet)) {
 		pGlyph = pLocationSet->pGlyph;
 	}
-	searchwindow_add_result(SEARCH_RESULT_TYPE_LOCATION, pszResultText, pGlyph, pCoordinates, LOCATION_RESULT_SUGGESTED_ZOOMLEVEL);
 
-	g_free(pszResultText);
+	mappoint_t *point = g_new0(mappoint_t, 1);
+	*point = *pCoordinates;
+
+	struct search_result *hit = g_new0(struct search_result, 1);
+	*hit = (struct search_result) {
+		.type       = SEARCH_RESULT_TYPE_LOCATION,
+		.text       = pszResultText,
+		.glyph      = pGlyph,
+		.point      = pCoordinates,
+		.zoom_level = LOCATION_RESULT_SUGGESTED_ZOOMLEVEL,
+	};
+
+	ret = g_list_append(ret, hit);
+
+	return ret;
 }
 
 // 

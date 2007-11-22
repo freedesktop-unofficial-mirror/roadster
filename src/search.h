@@ -24,6 +24,9 @@
 #ifndef _SEARCH_H
 #define _SEARCH_H
 
+#include "glyph.h"
+#include "map.h"
+
 typedef enum {
 	SEARCH_RESULT_TYPE_COORDINATE,	// in order of importance (for search results)
 	SEARCH_RESULT_TYPE_COUNTRY,
@@ -36,6 +39,14 @@ typedef enum {
 } ESearchResultType;
 
 G_BEGIN_DECLS
+
+struct search_result {
+	ESearchResultType type;
+	char *text;
+	glyph_t *glyph;
+	mappoint_t *point;
+	int zoom_level;
+};
 
 void search_clean_string(gchar* p);
 void search_all(const gchar* pszSentence);

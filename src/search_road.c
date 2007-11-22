@@ -80,27 +80,32 @@ gboolean search_address_match_zipcode(const gchar* pszWord)
 
 // prototypes
 
-void search_road_on_words(gchar** aWords, gint nWordCount);
-void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch);
-void search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint nRoadSuffixID, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, const gchar* pszCityNameLeft, const gchar* pszCityNameRight, const gchar* pszStateNameLeft, const gchar* pszStateNameRight, const gchar* pszZIPLeft, const gchar* pszZIPRight, GArray* pMapPointsArray);
+GList *search_road_on_words(gchar** aWords, gint nWordCount, GList *ret);
+GList *search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch, GList *ret);
+GList *search_road_filter_result(const gchar* pszRoadName, gint nRoadNumber, gint nRoadSuffixID, gint nAddressLeftStart, gint nAddressLeftEnd, gint nAddressRightStart, gint nAddressRightEnd, const gchar* pszCityNameLeft, const gchar* pszCityNameRight, const gchar* pszStateNameLeft, const gchar* pszStateNameRight, const gchar* pszZIPLeft, const gchar* pszZIPRight, GArray* pMapPointsArray, GList *ret);
+GList *search_road_add_result(char *text, mappoint_t *pt, GList *ret);
 
 // functions
 
-void search_road_execute(const gchar* pszSentence)
+GList *search_road_execute(const gchar* pszSentence)
 {
+	GList *ret = NULL;
+
 	// Create an array of the words
 	gchar** aWords = g_strsplit(pszSentence," ", 0);	// " " = delimeters, 0 = no max #
 	gint nWordCount = g_strv_length(aWords);
 
 	if(nWordCount > 0) {
-		search_road_on_words(aWords, nWordCount);
+		ret = search_road_on_words(aWords, nWordCount, ret);
 	}
 
 	// cleanup
 	g_strfreev(aWords);	// free the array of strings	
+
+	return ret;
 }
 
-void search_road_on_words(gchar** aWords, gint nWordCount)
+GList *search_road_on_words(gchar** aWords, gint nWordCount, GList *ret)
 {
 	g_assert(nWordCount > 0);
 	roadsearch_t roadsearch = {0};
@@ -133,7 +138,7 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 	if(nRemainingWordCount == 0) {
 		// do a zip code search and return
 		g_print("TODO: zip code search\n");
-		return;
+		return ret;
 	}
 
 	// See if we can match a state name   XXX: We need to match multi-word state names
@@ -196,16 +201,19 @@ void search_road_on_words(gchar** aWords, gint nWordCount)
 
 	if(nRemainingWordCount > 0) {
 		roadsearch.pszRoadName = util_g_strjoinv_limit(" ", aWords, iFirst, iLast);
-		search_road_on_roadsearch_struct(&roadsearch);
+
+		ret = search_road_on_roadsearch_struct(&roadsearch, ret);
 	}
 	else {
 		// oops, no street name
 		//g_print("no street name found in search\n");
 	}
 	g_free(roadsearch.pszRoadName);
+
+	return ret;
 }
 
-void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
+GList *search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch, GList *ret)
 {
 	//
 	// Assemble the various optional clauses for the SQL statement
@@ -351,7 +359,7 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 				GArray* pMapPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 				maprect_t r;
 				db_parse_wkb_linestring(aRow[3], pMapPointsArray, &r);
-				search_road_filter_result(aRow[1], pRoadSearch->nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pMapPointsArray);
+				ret = search_road_filter_result(aRow[1], pRoadSearch->nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pMapPointsArray, ret);
 				//g_print("%03d: Road.ID='%s' RoadName.Name='%s', Suffix=%s, L:%s-%s, R:%s-%s\n", nCount, aRow[0], aRow[1], aRow[3], aRow[4], aRow[5], aRow[6], aRow[7]);
 
 				g_array_free(pMapPointsArray, TRUE);
@@ -363,6 +371,8 @@ void search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch)
 		g_print("road search failed\n");
 	}
 	g_free(pszQuery);
+
+	return ret;
 }
 
 // XXX: doesn't map.c have something like this? :)
@@ -469,14 +479,14 @@ static gint max4(gint a, gint b, gint c, gint d)
 // 		do we need to filter out records where each side matches some of the criteria but not all?
 //
 #define BUFFER_SIZE 200
-void search_road_filter_result(
+GList *search_road_filter_result(
 		const gchar* pszRoadName, gint nRoadNumber, gint nRoadSuffixID,
 		gint nAddressLeftStart, gint nAddressLeftEnd,
 		gint nAddressRightStart, gint nAddressRightEnd,
 		const gchar* pszCityNameLeft, const gchar* pszCityNameRight,
 		const gchar* pszStateNameLeft, const gchar* pszStateNameRight,
 		const gchar* pszZIPLeft, const gchar* pszZIPRight,
-		GArray* pMapPointsArray)
+		GArray* pMapPointsArray, GList *ret)
 {
 	gchar azBuffer[BUFFER_SIZE];
 
@@ -544,7 +554,8 @@ void search_road_filter_result(
 			// swap address to keep smaller number to the left
 			g_snprintf(azBuffer, BUFFER_SIZE, "%d-%d %s %s\n%s", nAddressLeftEnd, nAddressLeftStart, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
 		}
-*/		searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);		
+*/		
+		ret = search_road_add_result(azBuffer, &ptAddress, ret);		
 	}
 	else {	// else the search had a road number
 		// NOTE: we have to filter out results like "97-157" when searching for "124" because it's
@@ -569,7 +580,7 @@ void search_road_filter_result(
 					mappoint_array_walk_percentage(pMapPointsArray, fPercent, ROADSIDE_LEFT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
-				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);				
+				ret = search_road_add_result(azBuffer, &ptAddress, ret);				
 			}
 			else if(nRoadNumber >= nAddressLeftEnd && nRoadNumber <= nAddressLeftStart) {
 				// MATCH: left side backwards
@@ -585,7 +596,7 @@ void search_road_filter_result(
 					mappoint_array_walk_percentage(pMapPointsArray, (100.0 - fPercent), ROADSIDE_RIGHT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZLeft);
-				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
+				ret = search_road_add_result(azBuffer, &ptAddress, ret);
 			}
 		}
 
@@ -606,7 +617,7 @@ void search_road_filter_result(
 					mappoint_array_walk_percentage(pMapPointsArray, fPercent, ROADSIDE_RIGHT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
-				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
+				ret = search_road_add_result(azBuffer, &ptAddress, ret);
 			}
 			else if(nRoadNumber >= nAddressRightEnd && nRoadNumber <= nAddressRightStart) {
 				// MATCH: right side backwards
@@ -622,10 +633,31 @@ void search_road_filter_result(
 					mappoint_array_walk_percentage(pMapPointsArray, (100.0 - fPercent), ROADSIDE_LEFT, &ptAddress);
 				}
 				g_snprintf(azBuffer, BUFFER_SIZE, FORMAT_ROAD_RESULT_WITH_NUMBER, nRoadNumber, pszRoadName, road_suffix_itoa(nRoadSuffixID, ROAD_SUFFIX_LENGTH_LONG), pszCSZRight);
-				searchwindow_add_result(SEARCH_RESULT_TYPE_ROAD, azBuffer, g_SearchResultTypeRoadGlyph, &ptAddress, ROAD_RESULT_SUGGESTED_ZOOMLEVEL);
+				ret = search_road_add_result(azBuffer, &ptAddress, ret);
 			}
 		}
 	}
 	g_free(pszCSZLeft);
 	g_free(pszCSZRight);
+
+	return ret;
+}
+
+GList *search_road_add_result(char *text, mappoint_t *pt, GList *ret)
+{
+	mappoint_t *point = g_new0(mappoint_t, 1);
+	*point = *pt;
+
+	struct search_result *hit = g_new0(struct search_result, 1);
+	*hit = (struct search_result) {
+		.type       = SEARCH_RESULT_TYPE_ROAD,
+		.text       = g_strdup(text),
+		.glyph      = g_SearchResultTypeRoadGlyph,
+		.point      = point,
+		.zoom_level = ROAD_RESULT_SUGGESTED_ZOOMLEVEL,
+	};
+
+	ret = g_list_append(ret, hit);
+
+	return ret;
 }

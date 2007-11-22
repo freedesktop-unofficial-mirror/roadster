@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-void search_coordinate_execute(const gchar* pszSentence);
+GList *search_coordinate_execute(const gchar* pszSentence);
 
 G_END_DECLS
 

@@ -36,7 +36,7 @@
 
 #define FORMAT_COORDINATE_RESULT 	("<b>Lat:</b> %10.5f\n<b>Lon:</b> %10.5f")
 
-static void search_coordinate_add_result(const mappoint_t* pPoint);
+static GList *search_coordinate_add_result(const mappoint_t* pPoint, GList *ret);
 
 //
 // globals
@@ -47,7 +47,7 @@ static glyph_t* g_SearchResultTypeCoordinateGlyph = NULL;
 // Public API
 //
 
-void search_coordinate_execute(const gchar* pszSentence)
+GList *search_coordinate_execute(const gchar* pszSentence)
 {
 	//mappoint_t ptResult = {0};
 
@@ -71,12 +71,14 @@ void search_coordinate_execute(const gchar* pszSentence)
 
 	// Call only if we have a likely match!
 	//search_coordinate_add_result(&ptResult);
+
+	return NULL;
 }
 
 //
 // Private
 //
-static void search_coordinate_add_result(const mappoint_t* pPoint)
+static GList *search_coordinate_add_result(const mappoint_t* pPoint, GList *ret)
 {
 	if (!g_SearchResultTypeCoordinateGlyph)
 		g_SearchResultTypeCoordinateGlyph = glyph_load_at_size("search-result-type-coordinate",
@@ -84,6 +86,20 @@ static void search_coordinate_add_result(const mappoint_t* pPoint)
 		                                                       SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
 
 	gchar* pszBuffer = g_strdup_printf(FORMAT_COORDINATE_RESULT, pPoint->fLatitude, pPoint->fLongitude);
-	searchwindow_add_result(SEARCH_RESULT_TYPE_COORDINATE, pszBuffer, g_SearchResultTypeCoordinateGlyph, pPoint, COORDINATE_RESULT_SUGGESTED_ZOOMLEVEL);
-	g_free(pszBuffer);
+
+	mappoint_t *point = g_new0(mappoint_t, 1);
+	*point = *pPoint;
+
+	struct search_result *hit = g_new0(struct search_result, 1);
+	*hit = (struct search_result) {
+		.type       = SEARCH_RESULT_TYPE_COORDINATE,
+		.text       = pszBuffer,
+		.glyph      = g_SearchResultTypeCoordinateGlyph,
+		.point      = point,
+		.zoom_level = COORDINATE_RESULT_SUGGESTED_ZOOMLEVEL,
+	};
+
+	ret = g_list_append(ret, hit);
+
+	return ret;
 }

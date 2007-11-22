@@ -30,26 +30,30 @@
 
 #define CITY_RESULT_SUGGESTED_ZOOMLEVEL		(3)
 
-void search_city_on_words(gchar** aWords, gint nWordCount);
+GList *search_city_on_words(gchar** aWords, gint nWordCount, GList *ret);
 
 static glyph_t* g_SearchResultTypeCityGlyph = NULL;
 
 
-void search_city_execute(const gchar* pszSentence)
+GList *search_city_execute(const gchar* pszSentence)
 {
+	GList *ret = NULL;
+
 	// Create an array of the words
 	gchar** aWords = g_strsplit(pszSentence," ", 0);	// " " = delimeters, 0 = no max #
 	gint nWordCount = g_strv_length(aWords);
 
 	if(nWordCount > 0) {
-		search_city_on_words(aWords, nWordCount);
+		ret = search_city_on_words(aWords, nWordCount, ret);
 	}
 
 	// cleanup
 	g_strfreev(aWords);	// free the array of strings	
+
+	return ret;
 }
 
-void search_city_on_words(gchar** aWords, gint nWordCount)
+GList *search_city_on_words(gchar** aWords, gint nWordCount, GList *ret)
 {
 	g_assert(nWordCount > 0);
 
@@ -136,14 +140,24 @@ void search_city_on_words(gchar** aWords, gint nWordCount)
 
 			//gint nCountryID = atoi(aRow[2]);
 
-			mappoint_t point = {0,0};
+			mappoint_t *point = g_new0(mappoint_t, 1);
 
 			gchar* pszResultText = g_strdup_printf("<b>%s,\n%s</b>", aRow[0], aRow[1]);	// XXX: add country?
-			searchwindow_add_result(SEARCH_RESULT_TYPE_CITY, pszResultText, g_SearchResultTypeCityGlyph, &point, CITY_RESULT_SUGGESTED_ZOOMLEVEL);
-			g_free(pszResultText);
+
+			struct search_result *hit = g_new0(struct search_result, 1);
+			*hit = (struct search_result) {
+				.type       = SEARCH_RESULT_TYPE_CITY,
+				.text       = pszResultText,
+				.glyph      = g_SearchResultTypeCityGlyph,
+				.point      = point,
+				.zoom_level = CITY_RESULT_SUGGESTED_ZOOMLEVEL,
+			};
+			ret = g_list_append(ret, hit);
 		}
 		db_free_result(pResultSet);
 	}
 	//g_print("%d city results\n", nCount);
 	g_free(pszQuery);
+
+	return ret;
 }
