@@ -46,10 +46,6 @@ static glyph_t* g_SearchResultTypeCoordinateGlyph = NULL;
 //
 // Public API
 //
-void search_coordinate_init()
-{
-	g_SearchResultTypeCoordinateGlyph = glyph_load_at_size("search-result-type-coordinate", SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH, SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
-}
 
 void search_coordinate_execute(const gchar* pszSentence)
 {
@@ -82,6 +78,11 @@ void search_coordinate_execute(const gchar* pszSentence)
 //
 static void search_coordinate_add_result(const mappoint_t* pPoint)
 {
+	if (!g_SearchResultTypeCoordinateGlyph)
+		g_SearchResultTypeCoordinateGlyph = glyph_load_at_size("search-result-type-coordinate",
+		                                                       SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH,
+		                                                       SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
+
 	gchar* pszBuffer = g_strdup_printf(FORMAT_COORDINATE_RESULT, pPoint->fLatitude, pPoint->fLongitude);
 	searchwindow_add_result(SEARCH_RESULT_TYPE_COORDINATE, pszBuffer, g_SearchResultTypeCoordinateGlyph, pPoint, COORDINATE_RESULT_SUGGESTED_ZOOMLEVEL);
 	g_free(pszBuffer);

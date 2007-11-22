@@ -34,10 +34,6 @@ void search_city_on_words(gchar** aWords, gint nWordCount);
 
 static glyph_t* g_SearchResultTypeCityGlyph = NULL;
 
-void search_city_init()
-{
-	g_SearchResultTypeCityGlyph = glyph_load_at_size("search-result-type-city", SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH, SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
-}
 
 void search_city_execute(const gchar* pszSentence)
 {
@@ -58,6 +54,11 @@ void search_city_on_words(gchar** aWords, gint nWordCount)
 	g_assert(nWordCount > 0);
 
 	gint nStateID = 0;
+
+	if (!g_SearchResultTypeCityGlyph)
+		g_SearchResultTypeCityGlyph = glyph_load_at_size("search-result-type-city",
+		                                                 SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH,
+		                                                 SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
 
 	// index of first and last words of city name
 	gint iFirst = 0;

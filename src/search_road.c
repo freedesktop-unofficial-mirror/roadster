@@ -60,11 +60,6 @@ typedef struct {
 
 static glyph_t* g_SearchResultTypeRoadGlyph = NULL;
 
-void search_road_init()
-{
-	g_SearchResultTypeRoadGlyph = glyph_load_at_size("search-result-type-road", SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH, SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
-}
-
 
 //#define ROAD_MIN_LENGTH_FOR_WILDCARD_SEARCH	(4)	  wildcard search no longer used
 
@@ -486,6 +481,11 @@ void search_road_filter_result(
 	gchar azBuffer[BUFFER_SIZE];
 
 	mappoint_t ptAddress = {0};
+
+	if (!g_SearchResultTypeRoadGlyph)
+		g_SearchResultTypeRoadGlyph = glyph_load_at_size("search-result-type-road",
+		                                                 SEARCHWINDOW_SEARCH_RESULT_GLYPH_WIDTH,
+		                                                 SEARCHWINDOW_SEARCH_RESULT_GLYPH_HEIGHT);
 
 //     pszStateNameLeft = "(st)";
 //     pszStateNameRight = "(st)";

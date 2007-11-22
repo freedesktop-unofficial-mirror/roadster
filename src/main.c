@@ -187,9 +187,6 @@ gboolean main_init(void)
 
 	locationset_load_locationsets();	// needs glyph
 
-	g_print("initializing search\n");
-	search_init();
-
 	g_print("initialization complete\n");
 	return TRUE;
 }

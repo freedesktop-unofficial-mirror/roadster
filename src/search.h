@@ -37,7 +37,6 @@ typedef enum {
 
 G_BEGIN_DECLS
 
-void search_init();
 void search_clean_string(gchar* p);
 void search_all(const gchar* pszSentence);
 

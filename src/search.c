@@ -31,14 +31,6 @@
 #include "search_city.h"
 #include "search_coordinate.h"
 
-// functions
-
-void search_init()
-{
-	search_road_init();
-	search_city_init();
-	search_coordinate_init();
-}
 
 // functions common to all searches
 
