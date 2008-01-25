@@ -174,7 +174,9 @@ struct {
 
 struct {
 	GtkWindow* pWindow;
+#if !GTK_CHECK_VERSION(2,12,0)
 	GtkTooltips* pTooltips;
+#endif
 	GtkMenu* pMapPopupMenu;
 
 	// Toolbar
@@ -442,7 +444,9 @@ void mainwindow_init(GladeXML* pGladeXML)
 	mainwindow_init_add_web_maps_menu_items();
 
 	// Normal widget tooltips and our super-map-tooltip (tooltip.c)
+#if !GTK_CHECK_VERSION(2,12,0)
 	g_MainWindow.pTooltips		= gtk_tooltips_new();
+#endif
 	g_MainWindow.pTooltip 		= tooltip_new();
 
 
@@ -1584,8 +1588,12 @@ static gboolean mainwindow_on_gps_redraw_timeout(gpointer unused)
 
 		// update image and tooltip for GPS icon
 		util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_OK, GTK_ICON_SIZE_MENU);
+#if GTK_CHECK_VERSION(2,12,0)
+		gtk_widget_set_tooltip_text(pWidget, "A GPS device is present and active");
+#else
 		gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 				 "A GPS device is present and active", "");
+#endif
 
 		// update speed
 		gchar* pszSpeed = g_strdup_printf(SPEED_LABEL_FORMAT, pData->fSpeedInMilesPerHour);
@@ -1602,8 +1610,12 @@ static gboolean mainwindow_on_gps_redraw_timeout(gpointer unused)
 			// do NOT set speed to 0 if we drop the signal temporarily...
 			util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_CANCEL, GTK_ICON_SIZE_MENU);
 
+#if GTK_CHECK_VERSION(2,12,0)
+			gtk_widget_set_tooltip_text(pWidget, "A GPS device is present but unable to hear satellites");
+#else
 			gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 					 "A GPS device is present but unable to hear satellites", "");
+#endif
 		}
 		else {
 			// update speed, set to 0 (NOTE: we don't do this for "no signal" so we don't show 0 when a user temp. loses the signal)
@@ -1613,19 +1625,31 @@ static gboolean mainwindow_on_gps_redraw_timeout(gpointer unused)
 
 			if(pData->eStatus == GPS_STATUS_NO_DEVICE) {
 				util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_STOP, GTK_ICON_SIZE_MENU);
+#if GTK_CHECK_VERSION(2,12,0)
+				gtk_widget_set_tooltip_text(pWidget, "No GPS device is present");
+#else
 				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 						 "No GPS device is present", "");
+#endif
 			}
 			else if(pData->eStatus == GPS_STATUS_NO_GPSD) {
 				util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_STOP, GTK_ICON_SIZE_MENU);
+#if GTK_CHECK_VERSION(2,12,0)
+				gtk_widget_set_tooltip_text(pWidget, "Install package 'gpsd' to use a GPS device with Roadster");
+#else
 				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 						 "Install package 'gpsd' to use a GPS device with Roadster", "");
+#endif
 			}
 			else if(pData->eStatus == GPS_STATUS_NO_GPS_COMPILED_IN) {
 				util_set_image_to_stock(g_MainWindow.pStatusbarGPSIcon, GTK_STOCK_CANCEL, GTK_ICON_SIZE_MENU);
 
+#if GTK_CHECK_VERSION(2,12,0)
+				gtk_widget_set_tooltip_text(pWidget, "GPS support was not included in this version of Roadster");
+#else
 				gtk_tooltips_set_tip(GTK_TOOLTIPS(g_MainWindow.pTooltips), pWidget,
 						 "GPS support was not included in this version of Roadster", "");
+#endif
 			}
 			else {
 				g_assert_not_reached();
