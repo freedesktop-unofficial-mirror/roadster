@@ -1279,6 +1279,7 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 			{
 				gint nCountryID = 1;	// USA is #1 *gag*
 				db_insert_state(st->name, st->abbrev, nCountryID, &g_nStateID);
+				break;
 			}
 		}
 
