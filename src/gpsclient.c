@@ -27,8 +27,13 @@ Purpose of gpsclient.c:
 */
 
 #define HAVE_GPSD		// XXX: this should come from configure.ac
+#include "config.h"
 
 #include <gtk/gtk.h>
+
+#ifdef HAVE_GPSD_CONFIG_H
+#include <gpsd_config.h>
+#endif
 #include <gps.h>
 #include "main.h"
 #include "gpsclient.h"

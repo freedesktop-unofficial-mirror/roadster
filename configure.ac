@@ -115,6 +115,7 @@ AC_ARG_WITH(gpsd,
 
 CPPFLAGS="$CPPFLAGS -I${GPSD_PREFIX}/include"
 AC_CHECK_HEADERS(gps.h, , AC_MSG_ERROR([GPSD not found. Use --with-gpsd=prefix to specify the location of GPSD.]))
+AC_CHECK_HEADERS(gpsd_config.h)
 
 AC_SUBST(GPSD_PREFIX)
 GPSD_LIBS="-L${GPSD_PREFIX}/lib -lgps"
