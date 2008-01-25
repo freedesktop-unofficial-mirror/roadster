@@ -1270,12 +1270,16 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 	// did we read all files?
 	if(bSuccess) {
 		gint nStateID = (nTigerSetNumber / 1000);	// int division (eg. turn 25017 into 25)
-		GHashTable *states = tiger_get_states();
-		struct tiger_state *st;
-		if ((st = g_hash_table_lookup(states, &nStateID)))
+		GSList *states;
+		for (states = tiger_get_states(); states; states = g_slist_next(states))
 		{
-			gint nCountryID = 1;	// USA is #1 *gag*
-			db_insert_state(st->name, st->abbrev, nCountryID, &g_nStateID);
+			struct tiger_state *st = g_slist_nth_data(states, 0);
+
+			if (nStateID == atoi(st->fips_code))
+			{
+				gint nCountryID = 1;	// USA is #1 *gag*
+				db_insert_state(st->name, st->abbrev, nCountryID, &g_nStateID);
+			}
 		}
 
 		g_assert(G_N_ELEMENTS(apszExtensions) == 7);

@@ -26,10 +26,10 @@
 
 #define TIGER_STATES_FILE	DATADIR "/tiger-states.txt"
 
-static GHashTable *state_list;
+static GSList *state_list;
 
 
-GHashTable *tiger_get_states()
+GSList *tiger_get_states()
 {
 	gchar *contents, **lines, **iter, **tokens;
 	struct tiger_state *st;
@@ -44,8 +44,6 @@ GHashTable *tiger_get_states()
 		return NULL;
 	}
 
-	state_list = g_hash_table_new(g_int_hash, g_int_equal);
-
 	/* The data file of TIGER states is tab-delimited with fields
 	 * for the state FIPS code, the abbreviation, and the state name.
 	 */
@@ -56,11 +54,11 @@ GHashTable *tiger_get_states()
 		fips_code = g_new0(gint, 1);
 
 		tokens = g_strsplit(*iter, "\t", 0);
-		*fips_code = g_ascii_strtoull(tokens[0], NULL, 10);
-		st->abbrev = g_strdup(tokens[1]);
-		st->name   = g_strdup(tokens[2]);
+		st->fips_code = g_strdup(tokens[0]);
+		st->abbrev    = g_strdup(tokens[1]);
+		st->name      = g_strdup(tokens[2]);
 
-		g_hash_table_insert(state_list, fips_code, st);
+		state_list = g_slist_append(state_list, st);
 
 		g_strfreev(tokens);
 	}

@@ -26,11 +26,12 @@
 
 
 struct tiger_state {
+	gchar *fips_code;
 	gchar *name;
 	gchar *abbrev;
 };
 
 
-GHashTable *tiger_get_states();
+GSList *tiger_get_states();
 
 #endif
