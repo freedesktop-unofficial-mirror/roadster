@@ -48,20 +48,20 @@ gboolean import_from_uri(const gchar* pszURI)
 #ifdef USE_GNOME_VFS
 	gboolean bResult = FALSE;
 
-	GnomeVFSFileInfo info;
-	if(GNOME_VFS_OK != gnome_vfs_get_file_info(pszURI, &info, GNOME_VFS_FILE_INFO_DEFAULT)) {
+	importwindow_show();
+	GnomeVFSFileInfo *info = gnome_vfs_file_info_new();
+	if(GNOME_VFS_OK != gnome_vfs_get_file_info(pszURI, info, GNOME_VFS_FILE_INFO_DEFAULT)) {
 		importwindow_log_append("Couldn't read %s\n", pszURI);
 		return FALSE;
 	}
 
 //	func_progress_callback(0.0, pCallbackData);
 
-	gchar* pszFileBaseName = info.name;
-
+	gchar* pszFileBaseName = info->name;
 	g_return_val_if_fail(pszFileBaseName != NULL, FALSE);
 	// does it look like a tgr file name (tgr00000.zip) ?
 	if(strlen(pszFileBaseName) == 12 && g_str_has_prefix(pszFileBaseName, "TGR") && g_str_has_suffix(pszFileBaseName, ".ZIP")) {
-		importwindow_log_append("Importing TIGER file %s", info.name);	// NOTE: no "\n" so we can add ...
+		importwindow_log_append("Importing TIGER file %s", pszFileBaseName);	// NOTE: no "\n" so we can add ...
 		gchar buf[6];
 		memcpy(buf, &pszFileBaseName[3], 5);
 		buf[5] = '\0';
@@ -83,7 +83,7 @@ gboolean import_from_uri(const gchar* pszURI)
 //	g_free(pszFileBaseName);
 
 	// free file info
-	gnome_vfs_file_info_unref(&info);
+	gnome_vfs_file_info_unref(info);
 
 //	func_progress_callback(1.0, pCallbackData);
 	return bResult;

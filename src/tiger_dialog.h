@@ -1,6 +1,6 @@
 /*
- * tiger.h
- * TIGER helper functions
+ * tiger_dialog.h
+ * Allows selection of TIGER files for downloading
  *
  * Copyright 2007 Jeff Garrett <jeff@jgarrett.org>
  *
@@ -19,26 +19,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __TIGER_H
-#define __TIGER_H
+#ifndef __TIGER_DIALOG_H
+#define __TIGER_DIALOG_H
 
-#include <glib.h>
-
-
-struct tiger_state {
-	gchar *fips_code;
-	gchar *name;
-	gchar *abbrev;
-};
-
-struct tiger_county {
-	char *fips_code;      /* 5-digit FIPS */
-	char *name;
-	char *state_abbrev;
-};
+#include <gtk/gtk.h>
+#include <glade/glade.h>
 
 
-GSList *tiger_get_states();
-GSList *tiger_get_counties(gchar *state_abbrev);
+/* GUI callbacks */
+void tiger_dialog_menushow(gpointer user_data, GtkMenuItem *menuitem);
+void tiger_dialog_comboinit(GtkComboBox *combobox, gpointer user_data);
+void tiger_dialog_selectstate(gpointer user_data, GtkComboBox *combobox);
+void tiger_dialog_import(gpointer user_data, gint response, GtkDialog *dialog);
 
 #endif

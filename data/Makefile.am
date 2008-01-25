@@ -15,7 +15,7 @@ styledir = $(pkgdatadir)
 style_DATA = layers.xml search-result-type-city.svg search-result-type-road.svg
 
 tigerdir = $(pkgdatadir)
-tiger_DATA = tiger-states.txt
+tiger_DATA = tiger-states.txt tiger-counties.txt
 
 install-data-local:
 

@@ -25,8 +25,10 @@
 
 
 #define TIGER_STATES_FILE	DATADIR "/tiger-states.txt"
+#define TIGER_COUNTIES_FILE	DATADIR "/tiger-counties.txt"
 
 static GSList *state_list;
+static GHashTable *county_list;
 
 
 GSList *tiger_get_states()
@@ -66,4 +68,40 @@ GSList *tiger_get_states()
 	g_free(contents);
 
 	return state_list;
+}
+
+GSList *tiger_get_counties(gchar *state_abbrev)
+{
+	gchar *contents, **lines, **iter, **tokens;
+
+	if (county_list)
+		return g_hash_table_lookup(county_list, state_abbrev);
+
+	county_list = g_hash_table_new(g_str_hash, g_str_equal);
+	if (!g_file_get_contents(TIGER_COUNTIES_FILE, &contents, NULL, NULL))
+	{
+		g_warning("Cannot read TIGER counties file %s\n", TIGER_COUNTIES_FILE);
+		return NULL;
+	}
+
+	lines = g_strsplit(contents, "\n", 0);
+	for (iter = lines; iter && **iter; iter++)
+	{
+		struct tiger_county *ct = g_new0(struct tiger_county, 1);
+
+		tokens = g_strsplit(*iter, "\t", 0);
+		ct->fips_code    = g_strdup(tokens[0]);
+		ct->state_abbrev = g_strdup(tokens[1]);
+		ct->name         = g_strdup(tokens[2]);
+
+		GSList *list = g_hash_table_lookup(county_list, ct->state_abbrev);
+		list = g_slist_append(list, ct);
+		g_hash_table_insert(county_list, ct->state_abbrev, list);
+
+		g_strfreev(tokens);
+	}
+	g_strfreev(lines);
+	g_free(contents);
+
+	return g_hash_table_lookup(county_list, state_abbrev);
 }
