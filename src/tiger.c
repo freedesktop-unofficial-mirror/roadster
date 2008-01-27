@@ -70,7 +70,7 @@ GSList *tiger_get_states()
 	return state_list;
 }
 
-GSList *tiger_get_counties(gchar *state_abbrev)
+GSList *tiger_get_counties(const char *state_abbrev)
 {
 	gchar *contents, **lines, **iter, **tokens;
 

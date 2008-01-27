@@ -36,12 +36,12 @@
 
 #define FORMAT_COORDINATE_RESULT 	("<b>Lat:</b> %10.5f\n<b>Lon:</b> %10.5f")
 
-static GList *search_coordinate_add_result(const mappoint_t* pPoint, GList *ret);
+//static GList *search_coordinate_add_result(const mappoint_t* pPoint, GList *ret);
 
 //
 // globals
 //
-static glyph_t* g_SearchResultTypeCoordinateGlyph = NULL;
+//static glyph_t* g_SearchResultTypeCoordinateGlyph = NULL;
 
 //
 // Public API
@@ -78,6 +78,7 @@ GList *search_coordinate_execute(const gchar* pszSentence)
 //
 // Private
 //
+#if 0
 static GList *search_coordinate_add_result(const mappoint_t* pPoint, GList *ret)
 {
 	if (!g_SearchResultTypeCoordinateGlyph)
@@ -103,3 +104,4 @@ static GList *search_coordinate_add_result(const mappoint_t* pPoint, GList *ret)
 
 	return ret;
 }
+#endif

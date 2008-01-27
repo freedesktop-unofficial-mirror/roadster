@@ -358,7 +358,7 @@ GList *search_road_on_roadsearch_struct(const roadsearch_t* pRoadSearch, GList *
 
 				GArray* pMapPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 				maprect_t r;
-				db_parse_wkb_linestring(aRow[3], pMapPointsArray, &r);
+				db_parse_wkb_linestring((gint8 *)aRow[3], pMapPointsArray, &r);
 				ret = search_road_filter_result(aRow[1], pRoadSearch->nNumber, atoi(aRow[2]), atoi(aRow[4]), atoi(aRow[5]), atoi(aRow[6]), atoi(aRow[7]), aRow[8], aRow[9], aRow[10], aRow[11], aRow[12], aRow[13], pMapPointsArray, ret);
 				//g_print("%03d: Road.ID='%s' RoadName.Name='%s', Suffix=%s, L:%s-%s, R:%s-%s\n", nCount, aRow[0], aRow[1], aRow[3], aRow[4], aRow[5], aRow[6], aRow[7]);
 

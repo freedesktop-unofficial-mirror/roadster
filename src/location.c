@@ -176,7 +176,7 @@ gboolean location_load(gint nLocationID, mappoint_t* pReturnCoordinates, gint* p
 			*pnReturnLocationSetID = atoi(aRow[0]);
 		}
 		if(pReturnCoordinates != NULL) {
-			db_parse_wkb_point(aRow[1], pReturnCoordinates);
+			db_parse_wkb_point((gint8 *)aRow[1], pReturnCoordinates);
 		}
 		db_free_result(pResultSet);
 		return TRUE;

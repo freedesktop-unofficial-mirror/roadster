@@ -22,6 +22,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <stdlib.h>
 #include "map.h"
 #include "map_math.h"
 
@@ -158,7 +159,7 @@ gdouble map_get_distance_in_meters(mappoint_t* pA, mappoint_t* pB)
 	return fAOB_Rad * RADIUS_OF_WORLD_IN_METERS;
 }
 
-gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2)
+gdouble map_get_straight_line_distance_in_degrees(const mappoint_t* p1, const mappoint_t* p2)
 {
 	gdouble fDeltaX = ((p2->fLongitude) - (p1->fLongitude));
 	gdouble fDeltaY = ((p2->fLatitude) - (p1->fLatitude));

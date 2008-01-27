@@ -182,7 +182,7 @@ static void mapinfowindow_load_countries()
 		gint nID = 1;
 
 		GtkMenuItem* pNewMenuItem = GTK_MENU_ITEM(gtk_menu_item_new_with_mnemonic(pszCountryName));
-		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_country_chosen, (gpointer)nID);
+		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_country_chosen, GINT_TO_POINTER(nID));
 
 		gtk_menu_shell_append(GTK_MENU_SHELL(g_MapInfoWindow.pCountryMenu), GTK_WIDGET(pNewMenuItem));
 	}
@@ -218,7 +218,7 @@ static void mapinfowindow_load_states(gint nCountryID)
 
 		// Add new menu item
 		GtkMenuItem* pNewMenuItem = GTK_MENU_ITEM(gtk_menu_item_new_with_mnemonic(pszName));
-		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_state_chosen, (gpointer)nID);
+		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_state_chosen, GINT_TO_POINTER(nID));
 		gtk_menu_shell_append(GTK_MENU_SHELL(g_MapInfoWindow.pStateMenu), GTK_WIDGET(pNewMenuItem));
 	}
 	db_free_result(pResultSet);
@@ -254,7 +254,7 @@ static void mapinfowindow_load_cities(gint nStateID)
 
 		// Add new menu item
 		GtkMenuItem* pNewMenuItem = GTK_MENU_ITEM(gtk_menu_item_new_with_mnemonic(pszName));
-		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_city_chosen, (gpointer)nCityID);
+		g_signal_connect(G_OBJECT(pNewMenuItem), "activate", (GCallback)mapinfowindow_on_city_chosen, GINT_TO_POINTER(nCityID));
 		gtk_menu_shell_append(GTK_MENU_SHELL(g_MapInfoWindow.pCityMenu), GTK_WIDGET(pNewMenuItem));
 	}
 	db_free_result(pResultSet);

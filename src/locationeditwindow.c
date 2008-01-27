@@ -90,7 +90,7 @@ static void callback_install_insert_text_callback_on_entry(GtkCellRenderer *pCel
 // Save the results of in-place cell editing
 static void callback_store_attribute_editing(GtkCellRendererText *pCell, const gchar *pszTreePath, const gchar *pszNewValue, gpointer *pUserData)
 {
-	gint nColumn = (gint)(pUserData);
+	gint nColumn = GPOINTER_TO_INT(pUserData);
 
 	GtkTreeIter iter;
 	GtkTreePath* pPath = gtk_tree_path_new_from_string(pszTreePath);

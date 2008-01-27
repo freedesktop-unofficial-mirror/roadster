@@ -23,6 +23,7 @@
 
 #include <gtk/gtk.h>
 #include <math.h>
+#include <stdlib.h>
 #include "map.h"
 #include "map_hittest.h"
 #include "map_math.h"
@@ -33,8 +34,8 @@
 
 static gboolean map_hittest_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint, gdouble* pfReturnPercentAlongLine);
 static ESide map_hittest_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pClosestPointOnLine, mappoint_t* pHitPoint);
-static gboolean map_hittest_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
-static gboolean map_hittest_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
+//static gboolean map_hittest_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
+//static gboolean map_hittest_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 
 static gboolean map_hittest_layer_lines(GPtrArray* pRoadsArray, gdouble fMaxDistance, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
 static gboolean map_hittest_layer_polygons(GPtrArray* pMapObjectArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct);
@@ -276,9 +277,10 @@ static ESide map_hittest_side_test_line(mappoint_t* pPoint1, mappoint_t* pPoint2
 }
 
 // hit test all locations
+#if 0
 static gboolean map_hittest_locationsets(map_t* pMap, rendermetrics_t* pRenderMetrics, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
 {
-	gdouble fMaxDistance = map_math_pixels_to_degrees_at_scale(1, map_get_scale(pMap)) * 3;	// XXX: don't hardcode distance :)
+	//gdouble fMaxDistance = map_math_pixels_to_degrees_at_scale(1, map_get_scale(pMap)) * 3;	// XXX: don't hardcode distance :)
 
 	const GPtrArray* pLocationSetsArray = locationset_get_array();
 	gint i;
@@ -302,8 +304,10 @@ static gboolean map_hittest_locationsets(map_t* pMap, rendermetrics_t* pRenderMe
 	}
 	return FALSE;
 }
+#endif
 
 // hit-test an array of locations
+#if 0
 static gboolean map_hittest_locations(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationsArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
 {
 	gint i;
@@ -351,7 +355,9 @@ static gboolean map_hittest_locations(map_t* pMap, rendermetrics_t* pRenderMetri
 	}
 	return FALSE;
 }
+#endif
 
+#if 0
 static gboolean map_hittest_locationselections(map_t* pMap, rendermetrics_t* pRenderMetrics, GPtrArray* pLocationSelectionArray, mappoint_t* pHitPoint, maphit_t** ppReturnStruct)
 {
 	screenpoint_t screenpoint;
@@ -406,6 +412,7 @@ static gboolean map_hittest_locationselections(map_t* pMap, rendermetrics_t* pRe
 	}
 	return FALSE;
 }
+#endif
 
 
 static gboolean map_hittest_line(mappoint_t* pPoint1, mappoint_t* pPoint2, mappoint_t* pHitPoint, gdouble fMaxDistance, mappoint_t* pReturnClosestPoint, gdouble* pfReturnPercentAlongLine)

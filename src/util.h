@@ -67,7 +67,7 @@ gboolean util_gtk_range_instant_set_on_value_changing_callback(GtkRange *range, 
 const gchar* util_gtk_menu_item_get_label_text(GtkMenuItem* pMenuItem);
 
 gboolean util_load_array_of_string_vectors(const gchar* pszPath, GArray** ppReturnArray, gint nMinNamesPerRow);
-gboolean util_find_string_in_string_vector(const gchar* pszSearch, const gchar** apszVector, gint* pnReturnIndex);
+gboolean util_find_string_in_string_vector(const gchar* pszSearch, gchar** apszVector, gint* pnReturnIndex);
 
 // if glib < 2.6
 #if(!GLIB_CHECK_VERSION(2,6,0))

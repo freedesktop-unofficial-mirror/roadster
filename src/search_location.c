@@ -172,7 +172,7 @@ GList *search_location_on_words(gchar** aWords, gint nWordCount, GList *ret)
 					gint nLocationSetID = atoi(aRow[1]);
 					gchar* pszLocationName = aRow[2];
 					gchar* pszLocationAddress = aRow[3];
-					db_parse_wkb_point(aRow[4], &pt);	// Parse coordinates
+					db_parse_wkb_point((gint8 *)aRow[4], &pt);	// Parse coordinates
 
 					ret = search_location_filter_result(nLocationID, nLocationSetID, pszLocationName, pszLocationAddress, &pt, ret);
 				}
@@ -212,7 +212,7 @@ GList *search_location_filter_result(gint nLocationID, gint nLocationSetID, cons
 		.type       = SEARCH_RESULT_TYPE_LOCATION,
 		.text       = pszResultText,
 		.glyph      = pGlyph,
-		.point      = pCoordinates,
+		.point      = point,
 		.zoom_level = LOCATION_RESULT_SUGGESTED_ZOOMLEVEL,
 	};
 

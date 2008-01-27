@@ -26,9 +26,11 @@
 #include <cairo.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <string.h>
 #include "main.h"
 #include "glyph.h"
 #include "map_style.h"
+#include "util.h"
 
 #define MIN_STYLE_LEVEL (1)
 #define MAX_STYLE_LEVEL	(10)
@@ -46,8 +48,8 @@ static void map_style_parse_layer(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode)
 static void map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer_t *pLayer, xmlNodePtr pNode);
 
 // Debugging
-static void map_style_print_layer(maplayer_t *layer);
-static void map_style_print_color(color_t *color);
+//static void map_style_print_layer(maplayer_t *layer);
+//static void map_style_print_color(color_t *color);
 
 //
 // Functions
@@ -213,7 +215,7 @@ static gchar* get_attribute_value(const xmlDocPtr pDoc, const xmlAttrPtr pAttrib
 	g_assert(pAttribute != NULL);
 
 	// allocate a new glib string for this value.  free xmllib string.
-	gchar* pszTmp = xmlNodeListGetString(pDoc, pAttribute->xmlChildrenNode, 1);
+	gchar* pszTmp = (char *)xmlNodeListGetString(pDoc, pAttribute->xmlChildrenNode, 1);
 	gchar* pszValue = g_strdup((pszTmp) ? pszTmp : "");
 	xmlFree(pszTmp);
 	return pszValue;
@@ -269,7 +271,7 @@ static void map_style_parse_file(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pParent
 	if(pParentNode->type == XML_ELEMENT_NODE) {
 		xmlNodePtr pChildNode = NULL;
 		for(EACH_CHILD_OF_NODE(pChildNode, pParentNode)) {
-			if(strcmp(pChildNode->name, "layers") == 0) {
+			if(strcmp((char *)pChildNode->name, "layers") == 0) {
 				map_style_parse_layers(pMap, pDoc, pChildNode);
 			}
 		}
@@ -288,7 +290,7 @@ static void map_style_parse_layers(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pPare
 	// iterate over "layer" objects
 	for(EACH_CHILD_OF_NODE(pChildNode, pParentNode)) {
 	//for(pChildNode = pParentNode->children; pChildNode != NULL; pChildNode = pChildNode->next) {
-		if(pChildNode->type == XML_ELEMENT_NODE && strcmp(pChildNode->name, "layer") == 0) {
+		if(pChildNode->type == XML_ELEMENT_NODE && strcmp((char *)pChildNode->name, "layer") == 0) {
 			map_style_parse_layer(pMap, pDoc, pChildNode);
 		}
 	}
@@ -301,22 +303,22 @@ static void map_style_parse_layer(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode)
 	g_assert(pNode != NULL);
 
 	xmlAttrPtr pAttribute = NULL;
-	gint i;
+	//gint i;
 
 	// create new layer
 	maplayer_t *pLayer = map_style_new_layer();
 
 	// read attributes of the 'layer' node
 	for(EACH_ATTRIBUTE_OF_NODE(pAttribute, pNode)) {
-		if(strcmp(pAttribute->name, "data-source") == 0) {
-			gchar* pszDataSource = xmlNodeListGetString(pDoc, pAttribute->xmlChildrenNode, 1);
+		if(strcmp((char *)pAttribute->name, "data-source") == 0) {
+			gchar* pszDataSource = (char *)xmlNodeListGetString(pDoc, pAttribute->xmlChildrenNode, 1);
 
 			if(!map_object_type_atoi(pszDataSource, &(pLayer->nDataSource))) {
 				g_error("bad data source name %s\n", pszDataSource);
 			}
 		}
-		else if(strcmp(pAttribute->name, "draw-type") == 0) {
-			gchar* pszDrawType = xmlNodeListGetString(pDoc, pAttribute->xmlChildrenNode, 1);
+		else if(strcmp((char *)pAttribute->name, "draw-type") == 0) {
+			gchar* pszDrawType = (char *)xmlNodeListGetString(pDoc, pAttribute->xmlChildrenNode, 1);
 
 			if(!map_layer_render_type_atoi(pszDrawType, &(pLayer->nDrawType))) {
 				g_error("bad layer draw type name %s\n", pszDrawType);
@@ -327,7 +329,7 @@ static void map_style_parse_layer(map_t* pMap, xmlDocPtr pDoc, xmlNodePtr pNode)
 	// read children of the 'layer' node
 	xmlNodePtr pChild = NULL;
 	for(EACH_CHILD_OF_NODE(pChild, pNode)) {
-		if(strcmp(pChild->name, "property") == 0) {
+		if(strcmp((char *)pChild->name, "property") == 0) {
 			map_style_parse_layer_property(pMap, pDoc, pLayer, pChild);
 		}
 	}
@@ -351,15 +353,15 @@ static void map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer
 	// Read 'name', 'value', and 'level' attributes of this property
 	xmlAttrPtr pAttribute = NULL;
 	for(EACH_ATTRIBUTE_OF_NODE(pAttribute, pNode)) {
-		if(strcmp(pAttribute->name, "name") == 0) {
+		if(strcmp((char *)pAttribute->name, "name") == 0) {
 			g_free(pszName);
 			pszName = get_attribute_value(pDoc, pAttribute);
 		}
-		else if(strcmp(pAttribute->name, "value") == 0) {
+		else if(strcmp((char *)pAttribute->name, "value") == 0) {
 			g_free(pszValue);
 			pszValue = get_attribute_value(pDoc, pAttribute);
 		}
-		else if((strcmp(pAttribute->name, "zoom-level") == 0) || (strcmp(pAttribute->name, "zoom-levels") == 0)) {
+		else if((strcmp((char *)pAttribute->name, "zoom-level") == 0) || (strcmp((char *)pAttribute->name, "zoom-levels") == 0)) {
 			g_free(pszZoomLevel);
 			pszZoomLevel = get_attribute_value(pDoc, pAttribute);
 		}
@@ -471,11 +473,13 @@ static void map_style_parse_layer_property(map_t* pMap, xmlDocPtr pDoc, maplayer
 /******************************************************************
  * map_style_print_* functions for debugging
  *****************************************************************/
+#if 0
 static void map_style_print_color(color_t* pColor)
 {
 	g_assert(pColor != NULL);
 	g_print("color: %3.2f, %3.2f, %3.2f, %3.2f\n", pColor->fRed, pColor->fGreen, pColor->fBlue, pColor->fAlpha);
 }
+#endif
 
 /*
   	color_t clrPrimary;	// Color used for polygon fill or line stroke
@@ -496,6 +500,7 @@ static void map_style_print_color(color_t* pColor)
 	color_t clrHalo;
 */
 
+#if 0
 static void map_style_print_layer(maplayer_t *pLayer)
 {
 	g_assert(pLayer != NULL);
@@ -512,3 +517,4 @@ static void map_style_print_layer(maplayer_t *pLayer)
 		//g_print("  dash style: %d\n", pStyle->nDashStyle);
 	}
 }
+#endif

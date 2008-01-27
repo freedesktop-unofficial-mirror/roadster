@@ -45,7 +45,7 @@ gboolean scenemanager_can_draw_label_at(scenemanager_t* pSceneManager, const gch
 gboolean scenemanager_can_draw_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints, gint nFlags);
 gboolean scenemanager_can_draw_rectangle(scenemanager_t* pSceneManager, GdkRectangle* pRect, gint nFlags);
 
-void scenemanager_claim_label(scenemanager_t* pSceneManager, const gchar* pszLabel);
+void scenemanager_claim_label(scenemanager_t* pSceneManager, gchar* pszLabel);
 void scenemanager_claim_polygon(scenemanager_t* pSceneManager, GdkPoint *pPoints, gint nNumPoints);
 void scenemanager_claim_rectangle(scenemanager_t* pSceneManager, GdkRectangle* pRect);
 

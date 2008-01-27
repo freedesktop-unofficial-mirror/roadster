@@ -152,6 +152,8 @@ static gint _downloadmanager_gnome_vfs_progress_callback(GnomeVFSAsyncHandle *pH
 
 static gboolean _downloadmanager_begin_download(download_t* pDownload)
 {
+	GList *pSrcList = NULL, *pDestList = NULL;
+
 	g_assert(pDownload != NULL);
 	//g_print("downloader: beginning download of %s\n", pDownload->pszRemoteFilePath);
 
@@ -167,10 +169,10 @@ static gboolean _downloadmanager_begin_download(download_t* pDownload)
 	//g_print("downloader: using temp file '%s'\n", pDownload->pszLocalFilePath);
 
 	GnomeVFSURI* pSrcURI = gnome_vfs_uri_new(pDownload->pszRemoteFilePath);
-	GList* pSrcList = g_list_prepend(pSrcList, pSrcURI);
+	pSrcList = g_list_prepend(pSrcList, pSrcURI);
 
 	GnomeVFSURI* pDestURI = gnome_vfs_uri_new(pDownload->pszLocalFilePath);
-	GList* pDestList = g_list_prepend(pDestList, pDestURI);
+	pDestList = g_list_prepend(pDestList, pDestURI);
 
 	GnomeVFSResult res = gnome_vfs_async_xfer(&(pDownload->pGnomeVFSHandle),
                                              pSrcList, pDestList,

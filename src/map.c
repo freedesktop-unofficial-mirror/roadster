@@ -74,7 +74,7 @@
 static void map_init_location_hash(map_t* pMap);
 //static void map_store_location(map_t* pMap, location_t* pLocation, gint nLocationSetID);
 
-gdouble map_get_straight_line_distance_in_degrees(mappoint_t* p1, mappoint_t* p2);
+gdouble map_get_straight_line_distance_in_degrees(const mappoint_t* p1, const mappoint_t* p2);
 
 // Each zoomlevel has a scale (XXX: this should really be in an XML file)
 zoomlevel_t g_sZoomLevels[NUM_ZOOM_LEVELS] = {

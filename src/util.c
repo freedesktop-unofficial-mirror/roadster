@@ -685,7 +685,7 @@ gboolean util_load_array_of_string_vectors(const gchar* pszPath, GArray** ppRetu
 	return TRUE;
 }
 
-gboolean util_find_string_in_string_vector(const gchar* pszSearch, const gchar** apszVector, gint* pnReturnIndex)
+gboolean util_find_string_in_string_vector(const gchar* pszSearch, gchar** apszVector, gint* pnReturnIndex)
 {
 	g_assert(pszSearch != NULL);
 	g_assert(apszVector != NULL);

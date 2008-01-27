@@ -39,6 +39,6 @@ struct tiger_county {
 
 
 GSList *tiger_get_states();
-GSList *tiger_get_counties(gchar *state_abbrev);
+GSList *tiger_get_counties(const char *state_abbrev);
 
 #endif

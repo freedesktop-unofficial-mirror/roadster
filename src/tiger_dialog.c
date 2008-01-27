@@ -63,7 +63,7 @@ void tiger_dialog_comboinit(GtkComboBox *combobox, gpointer user_data)
 	gtk_combo_box_set_model(combobox, GTK_TREE_MODEL(liststore));
 
 	/* Set up the cell renderers */
-	GtkCellRendererText *cell = gtk_cell_renderer_text_new();
+	GtkCellRenderer *cell = gtk_cell_renderer_text_new();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combobox),
 	                           GTK_CELL_RENDERER(cell), TRUE);
 	/* Column 0 of the list is the state name */
@@ -92,18 +92,18 @@ void tiger_dialog_selectstate(gpointer user_data, GtkComboBox *combobox)
 
 	GValue abbrev = {0};
 	gtk_tree_model_get_value(model, &iter, 2, &abbrev);
-	gchar *state_abbrev = g_value_get_string(&abbrev);
+	const gchar *state_abbrev = g_value_get_string(&abbrev);
 
 	GSList *counties = tiger_get_counties(state_abbrev);
 
-	GtkListStore *store = gtk_tree_view_get_model(county_view);
+	GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(county_view));
 	if (!store)
 	{
 		store = gtk_list_store_new(3, G_TYPE_STRING,
 		                           G_TYPE_STRING, G_TYPE_STRING);
 		gtk_tree_view_set_model(county_view, GTK_TREE_MODEL(store));
 
-		GtkCellRendererText *cell = gtk_cell_renderer_text_new();
+		GtkCellRenderer *cell = gtk_cell_renderer_text_new();
 		gtk_tree_view_insert_column_with_attributes(county_view, 0, "County", cell, "text", 0, NULL);
 
 		GtkTreeSelection *sel = gtk_tree_view_get_selection(county_view);
@@ -137,12 +137,12 @@ void tiger_dialog_import(gpointer user_data, gint response, GtkDialog *dialog)
 	GtkTreeSelection *sel = gtk_tree_view_get_selection(county_view);
 
 	GtkTreeModel *model;
-	GSList *paths = gtk_tree_selection_get_selected_rows(sel, &model);
+	GList *paths = gtk_tree_selection_get_selected_rows(sel, &model);
 
-	for (; paths; paths = g_slist_next(paths))
+	for (; paths; paths = g_list_next(paths))
 	{
 		GtkTreeIter iter;
-		gtk_tree_model_get_iter(model, &iter, g_slist_nth_data(paths, 0));
+		gtk_tree_model_get_iter(model, &iter, g_list_nth_data(paths, 0));
 
 		GValue tmp = {0};
 
@@ -158,4 +158,7 @@ void tiger_dialog_import(gpointer user_data, gint response, GtkDialog *dialog)
 		g_warning("Import from %s", uri);
 		import_from_uri(uri);
 	}
+
+	g_list_foreach(paths, (GFunc)gtk_tree_path_free, NULL);
+	g_list_free(paths);
 }

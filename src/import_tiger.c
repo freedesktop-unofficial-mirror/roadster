@@ -26,7 +26,11 @@
 
 #include <string.h>
 
+#include <glib.h>
+#include <gdk/gdk.h>
+#include "db.h"
 #include "main.h"
+#include "map_math.h"
 #include "util.h"
 #include "import_tiger.h"
 #include "importwindow.h"
@@ -262,7 +266,7 @@ gdouble object_type_tolerance_at_lod(gint nRecordType, gint nLOD)
 //     }
 // }
 
-static gboolean import_tiger_read_lat(gint8* pBuffer, gdouble* pValue)
+static gboolean import_tiger_read_lat(char* pBuffer, gdouble* pValue)
 {
 	// 0,1,2,3
 	// - 1 2 . 1 2 3 4 5 6
@@ -304,9 +308,9 @@ static gboolean import_tiger_read_lon(char* pBuffer, gdouble* pValue)
 }
 
 
-static gboolean import_tiger_read_int(gint8* pBuffer, gint nLen, gint32* pValue)
+static gboolean import_tiger_read_int(char* pBuffer, gint nLen, gint32* pValue)
 {
-	gint8 buffer[11];
+	char buffer[11];
 	g_assert(nLen <= 10);
 	memcpy(buffer, pBuffer, nLen);
 	buffer[nLen] = '\0';
@@ -315,9 +319,9 @@ static gboolean import_tiger_read_int(gint8* pBuffer, gint nLen, gint32* pValue)
 	return TRUE;
 }
 
-static gboolean import_tiger_read_address(gint8* pBuffer, gint nLen, gint32* pValue)
+static gboolean import_tiger_read_address(char* pBuffer, gint nLen, gint32* pValue)
 {
-	gint8 buffer[15];
+	char buffer[15];
 	g_assert(nLen <= 14);
 	memcpy(buffer, pBuffer, nLen);
 	buffer[nLen] = '\0';
@@ -351,7 +355,7 @@ static gboolean import_tiger_read_string(char* pBuffer, gint nLen, char* pValue)
 
 	// trim whitespace
 	nLen--;
-	gint8* p = &pValue[nLen];	// last non-null char
+	char* p = &pValue[nLen];	// last non-null char
 	while(nLen >= 0 && *p == ' ') {
 		*p = '\0';
 		p--;
@@ -362,7 +366,7 @@ static gboolean import_tiger_read_string(char* pBuffer, gint nLen, char* pValue)
 
 // NOTE: This function can return MAP_OBJECT_TYPE_NONE.  Lines of this type shouldn't be saved, but they
 // might be used for polygons, so we have to keep them in memory.
-static gboolean import_tiger_read_layer_type(gint8* pBuffer, gint* pValue)
+static gboolean import_tiger_read_layer_type(char* pBuffer, gint* pValue)
 {
 	//g_print("%c%c%c\n", *(pBuffer), *(pBuffer+1), *(pBuffer+2));
 	gchar chFeatureClass 	= *(pBuffer+0);
@@ -626,7 +630,7 @@ if(achType[0] != '\0' && pRecord->nRoadNameSuffixID == ROAD_SUFFIX_NONE) {
 	return TRUE;
 }
 
-static gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_2(char* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
 	for(i=0 ; i<=(nLength-TIGER_RT2_LINE_LENGTH) ; i+=TIGER_RT2_LINE_LENGTH) {
@@ -665,7 +669,7 @@ static gboolean import_tiger_parse_table_2(gint8* pBuffer, gint nLength, GHashTa
 	return TRUE;
 }
 
-static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_7(char* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
 	for(i=0 ; i<=(nLength-TIGER_RT7_LINE_LENGTH) ; i+=TIGER_RT7_LINE_LENGTH) {
@@ -699,7 +703,7 @@ static gboolean import_tiger_parse_table_7(gint8* pBuffer, gint nLength, GHashTa
 	return TRUE;
 }
 
-static gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_8(char* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
 	for(i=0 ; i<=(nLength-TIGER_RT8_LINE_LENGTH) ; i+=TIGER_RT8_LINE_LENGTH) {
@@ -724,7 +728,7 @@ static gboolean import_tiger_parse_table_8(gint8* pBuffer, gint nLength, GHashTa
 	return TRUE;
 }
 
-static gboolean import_tiger_parse_table_c(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_c(char* pBuffer, gint nLength, GHashTable *pTable)
 {
 	gint i;
 	for(i=0 ; i<=(nLength-TIGER_RTc_LINE_LENGTH) ; i+=TIGER_RTc_LINE_LENGTH) {
@@ -752,7 +756,7 @@ g_print("record c: FIPS55=%d NAME=%s\n", pRecord->nFIPS55, pRecord->achName);
 }
 
 
-static gboolean import_tiger_parse_table_i(gint8* pBuffer, gint nLength, GHashTable *pTable)
+static gboolean import_tiger_parse_table_i(char* pBuffer, gint nLength, GHashTable *pTable)
 {
 	//
 	// Gather RTi records (chainID,TZID-A,TZID-B) and index them by POLYGON ID in the given hash table
@@ -1178,7 +1182,7 @@ static void callback_save_rti_polygons(gpointer key, gpointer value, gpointer us
 //
 //
 static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint nTigerSetNumber);
-static gboolean import_tiger_from_buffers(gint8* pBufferMET, gint nLengthMET, gint8* pBufferRT1, gint nLengthRT1, gint8* pBufferRT2, gint nLengthRT2,	gint8* pBufferRT7, gint nLengthRT7,	gint8* pBufferRT8, gint nLengthRT8, gint8* pBufferRTc, gint nLengthRTc, gint8* pBufferRTi, gint nLengthRTi);
+static gboolean import_tiger_from_buffers(char* pBufferMET, gint nLengthMET, char* pBufferRT1, gint nLengthRT1, char* pBufferRT2, gint nLengthRT2,	char* pBufferRT7, gint nLengthRT7,	char* pBufferRT8, gint nLengthRT8, char* pBufferRTc, gint nLengthRTc, char* pBufferRTi, gint nLengthRTi);
 
 gboolean import_tiger_from_uri(const gchar* pszURI, gint nTigerSetNumber)
 {
@@ -1252,7 +1256,7 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 	gchar* pszFilePath;
 
 	gchar* apszExtensions[7] = {"MET", "RT1", "RT2", "RT7", "RT8", "RTC", "RTI"};	
-	gint8* apBuffers[G_N_ELEMENTS(apszExtensions)] = {0};
+	char* apBuffers[G_N_ELEMENTS(apszExtensions)] = {0};
 	gint nSizes[G_N_ELEMENTS(apszExtensions)] = {0};
 
 	// open, read, and delete (unlink) each file
@@ -1294,13 +1298,13 @@ static gboolean import_tiger_from_directory(const gchar* pszDirectoryPath, gint 
 }
 
 static gboolean import_tiger_from_buffers(
-	gint8* pBufferMET, gint nLengthMET,
-	gint8* pBufferRT1, gint nLengthRT1,
-	gint8* pBufferRT2, gint nLengthRT2,
-	gint8* pBufferRT7, gint nLengthRT7,
-	gint8* pBufferRT8, gint nLengthRT8,
-	gint8* pBufferRTc, gint nLengthRTc,
-	gint8* pBufferRTi, gint nLengthRTi)
+	char* pBufferMET, gint nLengthMET,
+	char* pBufferRT1, gint nLengthRT1,
+	char* pBufferRT2, gint nLengthRT2,
+	char* pBufferRT7, gint nLengthRT7,
+	char* pBufferRT8, gint nLengthRT8,
+	char* pBufferRTc, gint nLengthRTc,
+	char* pBufferRTi, gint nLengthRTi)
 {
 	//	g_hash_table_lookup
 //	g_assert(func_progress_callback != NULL);

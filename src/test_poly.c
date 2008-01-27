@@ -30,6 +30,7 @@ Purpose of test_poly.c:
 #  include <config.h>
 #endif
 
+#include <gdk/gdkx.h>
 #include <gtk/gtk.h>
 #include <glade/glade.h>
 #include <cairo.h>

@@ -73,7 +73,7 @@ static void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, re
 static void map_draw_cairo_layer_fill(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, maplayerstyle_t* pLayerStyle);
 
 // Draw labels for a single line/polygon
-static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel);
+static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, gchar* pszLabel);
 static void map_draw_cairo_polygon_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, maprect_t* pBoundingRect, const gchar* pszLabel);
 
 // Draw map extras
@@ -530,7 +530,7 @@ typedef struct labelposition {
 //
 // Draw a label along a 2-point line
 //
-static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel)
+static void map_draw_cairo_road_label_one_segment(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, gchar* pszLabel)
 {
 	// get permission to draw this label
 	if(FALSE == scenemanager_can_draw_label_at(pMap->pSceneManager, pszLabel, NULL, SCENEMANAGER_FLAG_PARTLY_ON_SCREEN)) {
@@ -687,7 +687,7 @@ static gint map_draw_cairo_road_label_position_sort(gconstpointer pA, gconstpoin
 */
 #endif
 
-static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, const gchar* pszLabel)
+static void map_draw_cairo_road_label(map_t* pMap, cairo_t *pCairo, maplayerstyle_t* pLayerStyle, rendermetrics_t* pRenderMetrics, GArray* pMapPointsArray, gchar* pszLabel)
 {
 	if(pMapPointsArray->len < 2) return;
 

@@ -145,7 +145,7 @@ gboolean scenemanager_can_draw_rectangle(scenemanager_t* pSceneManager, GdkRecta
 	return bOK;
 }
 
-void scenemanager_claim_label(scenemanager_t* pSceneManager, const gchar* pszLabel)
+void scenemanager_claim_label(scenemanager_t* pSceneManager, gchar* pszLabel)
 {
 #ifdef ENABLE_NO_DUPLICATE_LABELS
 	g_assert(pSceneManager != NULL);

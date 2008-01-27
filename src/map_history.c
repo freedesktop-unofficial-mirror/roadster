@@ -22,6 +22,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <string.h>
 #include "main.h"
 #include "map.h"
 #include "map_history.h"
@@ -94,6 +95,8 @@ gboolean map_history_go_forward(maphistory_t* pHistory)
 		map_history_debug_print(pHistory);
 		return TRUE;
 	}
+
+	return FALSE;
 }
 
 gboolean map_history_go_back(maphistory_t* pHistory)
@@ -103,6 +106,8 @@ gboolean map_history_go_back(maphistory_t* pHistory)
 		map_history_debug_print(pHistory);
 		return TRUE;
 	}
+
+	return FALSE;
 }
 
 void map_history_get_current(maphistory_t* pHistory, mappoint_t* pReturnPoint, gint* pnReturnZoomLevel)

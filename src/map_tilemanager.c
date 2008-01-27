@@ -28,6 +28,8 @@ Purpose of map_tilemanager.c:
 */
 
 #include <gtk/gtk.h>
+#include <stdlib.h>
+#include <string.h>
 #include "util.h"
 #include "map_tilemanager.h"
 #include "map_math.h"
@@ -298,7 +300,7 @@ static void _map_tilemanager_tile_load_map_objects(maptile_t* pTile, maprect_t* 
 			// XXX: perhaps let the wkb parser create the array (at the perfect size)
 			GArray* pPointsArray = g_array_new(FALSE, FALSE, sizeof(mappoint_t));
 			maprect_t rcBoundingBox;
-			db_parse_wkb_linestring(aRow[2], pPointsArray, &rcBoundingBox);
+			db_parse_wkb_linestring((gint8*)aRow[2], pPointsArray, &rcBoundingBox);
 
 			gint nRoadNameID = atoi(aRow[1]);
 
