@@ -60,8 +60,8 @@
 #include "util.h"
 
 // Draw whole layers
-static void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
-static void map_draw_cairo_layer_lines(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
+static void map_draw_cairo_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
+static void map_draw_cairo_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
 static void map_draw_cairo_layer_road_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
 static void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle);
 
@@ -156,7 +156,7 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 					gint iTile;
 					for(iTile=0 ; iTile < pTiles->len ; iTile++) {
 						maptile_t* pTile = g_ptr_array_index(pTiles, iTile);
-						map_draw_cairo_layer_lines(pMap, pCairo, pRenderMetrics,
+						map_draw_cairo_layer_lines(pCairo, pRenderMetrics,
 												 pTile->apMapObjectArrays[pLayer->nDataSource],               // data
 												 pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);       // style
 					}
@@ -167,7 +167,7 @@ void map_draw_cairo(map_t* pMap, GPtrArray* pTiles, rendermetrics_t* pRenderMetr
 					gint iTile;
 					for(iTile=0 ; iTile < pTiles->len ; iTile++) {
 						maptile_t* pTile = g_ptr_array_index(pTiles, iTile);
-						map_draw_cairo_layer_polygons(pMap, pCairo, pRenderMetrics,
+						map_draw_cairo_layer_polygons(pCairo, pRenderMetrics,
 												 pTile->apMapObjectArrays[pLayer->nDataSource],               // data
 												 pLayer->paStylesAtZoomLevels[nStyleZoomLevel-1]);       // style
 					}
@@ -331,7 +331,7 @@ void map_draw_cairo_layer_polygon_labels(map_t* pMap, cairo_t* pCairo, rendermet
 //
 // Draw a whole layer of lines
 //
-void map_draw_cairo_layer_lines(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
+void map_draw_cairo_layer_lines(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
 {
 	mappoint_t* pPoint;
 	road_t* pRoad;
@@ -431,7 +431,7 @@ void map_draw_cairo_polygon(cairo_t* pCairo, const rendermetrics_t* pRenderMetri
 	}
 }
 
-void map_draw_cairo_layer_polygons(map_t* pMap, cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
+void map_draw_cairo_layer_polygons(cairo_t* pCairo, rendermetrics_t* pRenderMetrics, GPtrArray* pRoadsArray, maplayerstyle_t* pLayerStyle)
 {
 	road_t* pRoad;
 
